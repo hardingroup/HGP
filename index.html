@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jake Hardin | Academic Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1014;--surface:#161922;--surface-2:#1f2330;--surface-3:#2a2f3e;
+    --border:#353b47;--border-strong:#4a5160;--text:#e8eaed;--text-dim:#9aa3af;--text-faint:#6b7280;
+    --amber:#ffb000;--amber-hover:#ffc933;--orange:#ff6b35;--cyan:#00d4ff;--green:#4ade80;--red:#ef4444;
+    --glow:radial-gradient(circle at 20% 10%,rgba(255,176,0,.04) 0%,transparent 42%),radial-gradient(circle at 80% 90%,rgba(255,107,53,.04) 0%,transparent 42%);
+    --stripe:repeating-linear-gradient(45deg,#ffb000 0px,#ffb000 12px,#0e1014 12px,#0e1014 24px);
+    /* Element-family tile colors — theme-independent on purpose: each cell is a
+       self-contained light tile with fixed dark text, so it reads on any theme. */
+    --alkali:#f2a9a0;--alkaline:#f7ce96;--transition:#f2de8e;--post:#a9d6c2;
+    --metalloid:#c3de97;--nonmetal:#a6c8ec;--halogen:#a9ddec;--noble:#cbb6e6;
+    --lanthanide:#ebb4d4;--actinide:#e3aac6;--unknown:#c9d0d6;--tile-ink:#191c22;
+  }
+  body.dark-mode{--bg:#0e1014;--surface:#161922;--surface-2:#1f2330;--surface-3:#2a2f3e;--border:#353b47;--border-strong:#4a5160;--text:#e8eaed;--text-dim:#9aa3af;--text-faint:#6b7280;--amber:#ffb000;--amber-hover:#ffc933;--orange:#ff6b35;--cyan:#00d4ff;--green:#4ade80;--red:#ef4444;--glow:radial-gradient(circle at 20% 10%,rgba(255,176,0,.04),transparent 42%),radial-gradient(circle at 80% 90%,rgba(255,107,53,.04),transparent 42%);--stripe:repeating-linear-gradient(45deg,#ffb000 0,#ffb000 12px,#0e1014 12px,#0e1014 24px)}
+  body.midnight-mode{--bg:#0a1428;--surface:#122039;--surface-2:#1a2a4a;--surface-3:#25365c;--border:#364668;--border-strong:#4d5e80;--text:#e2e8f3;--text-dim:#94a3bc;--text-faint:#6c7c99;--amber:#ffb000;--amber-hover:#ffc933;--orange:#ff7a4d;--cyan:#4dd4ff;--green:#5be888;--red:#ff5757;--glow:radial-gradient(circle at 20% 10%,rgba(255,176,0,.05),transparent 42%),radial-gradient(circle at 80% 90%,rgba(77,212,255,.05),transparent 42%);--stripe:repeating-linear-gradient(45deg,#ffb000 0,#ffb000 12px,#0a1428 12px,#0a1428 24px)}
+  body.slate-mode{--bg:#1a1d24;--surface:#252932;--surface-2:#2f343f;--surface-3:#3a404d;--border:#4a5160;--border-strong:#606878;--text:#e0e3e8;--text-dim:#98a0ab;--text-faint:#6a7280;--amber:#ffb000;--amber-hover:#ffc933;--orange:#ff7e3a;--cyan:#4dc9e8;--green:#4ade80;--red:#f55050;--glow:radial-gradient(circle at 20% 10%,rgba(255,176,0,.04),transparent 42%),radial-gradient(circle at 80% 90%,rgba(255,126,58,.04),transparent 42%);--stripe:repeating-linear-gradient(45deg,#ffb000 0,#ffb000 12px,#1a1d24 12px,#1a1d24 24px)}
+  body.ember-mode{--bg:#1a1410;--surface:#221a14;--surface-2:#2c2218;--surface-3:#382a1f;--border:#4a3a2a;--border-strong:#6b5238;--text:#f0e8dc;--text-dim:#b0a290;--text-faint:#7a6e5f;--amber:#ffb000;--amber-hover:#ffc933;--orange:#ff7e3a;--cyan:#5bb4d4;--green:#84d088;--red:#f87171;--glow:radial-gradient(circle at 20% 10%,rgba(255,176,0,.06),transparent 42%),radial-gradient(circle at 80% 90%,rgba(255,126,58,.05),transparent 42%);--stripe:repeating-linear-gradient(45deg,#ffb000 0,#ffb000 12px,#1a1410 12px,#1a1410 24px)}
+  body.twilight-mode{--bg:#161222;--surface:#1f1a2e;--surface-2:#292239;--surface-3:#342c47;--border:#443a58;--border-strong:#5b4f73;--text:#e6e1f0;--text-dim:#a99fc0;--text-faint:#7d7396;--amber:#ffb000;--amber-hover:#ffc933;--orange:#e07a55;--cyan:#6fb8d8;--green:#6cc98b;--red:#e05c6a;--glow:radial-gradient(circle at 20% 10%,rgba(255,176,0,.05),transparent 42%),radial-gradient(circle at 80% 90%,rgba(111,184,216,.05),transparent 42%);--stripe:repeating-linear-gradient(45deg,#ffb000 0,#ffb000 12px,#161222 12px,#161222 24px)}
+  body.ultraviolet-mode{--bg:#14091f;--surface:#1f1230;--surface-2:#2a1a40;--surface-3:#382454;--border:#4c3370;--border-strong:#6a4a96;--text:#efe8f8;--text-dim:#b3a0cc;--text-faint:#8672a6;--amber:#ffb000;--amber-hover:#ffc933;--orange:#ff8a5c;--cyan:#5ee6ff;--green:#6dff9e;--red:#ff5e7a;--glow:radial-gradient(circle at 20% 10%,rgba(255,176,0,.06),transparent 42%),radial-gradient(circle at 80% 90%,rgba(94,230,255,.05),transparent 42%);--stripe:repeating-linear-gradient(45deg,#ffb000 0,#ffb000 12px,#14091f 12px,#14091f 24px)}
+  body.light-mode{--bg:#ebe7d8;--surface:#f6f3e9;--surface-2:#fcfaf2;--surface-3:#d8d3c0;--border:#b4ad97;--border-strong:#847d65;--text:#1a180f;--text-dim:#585240;--text-faint:#847d65;--amber:#b56b00;--amber-hover:#d28000;--orange:#c64419;--cyan:#1e6f88;--green:#15803d;--red:#b91c1c;--glow:radial-gradient(circle at 20% 10%,rgba(181,107,0,.05),transparent 45%),radial-gradient(circle at 80% 90%,rgba(198,68,25,.04),transparent 45%);--stripe:repeating-linear-gradient(45deg,#b56b00 0,#b56b00 12px,#1a180f 12px,#1a180f 24px)}
+  body.arctic-mode{--bg:#e8edf2;--surface:#f3f6fa;--surface-2:#fbfcfd;--surface-3:#d8dde5;--border:#b5bdc8;--border-strong:#8995a5;--text:#11161e;--text-dim:#4b5563;--text-faint:#8995a5;--amber:#b56b00;--amber-hover:#d28000;--orange:#c4451c;--cyan:#0e7490;--green:#15803d;--red:#b91c1c;--glow:radial-gradient(circle at 20% 10%,rgba(181,107,0,.05),transparent 45%),radial-gradient(circle at 80% 90%,rgba(14,116,144,.04),transparent 45%);--stripe:repeating-linear-gradient(45deg,#b56b00 0,#b56b00 12px,#11161e 12px,#11161e 24px)}
+  body.sepia-mode{--bg:#f4ead0;--surface:#fbf5e1;--surface-2:#fefae9;--surface-3:#e2d6b8;--border:#c2b591;--border-strong:#8f8261;--text:#1f1a0d;--text-dim:#5c513a;--text-faint:#8f8261;--amber:#a55a00;--amber-hover:#c46d00;--orange:#b53d10;--cyan:#1d6175;--green:#166d33;--red:#a91515;--glow:radial-gradient(circle at 20% 10%,rgba(165,90,0,.05),transparent 45%),radial-gradient(circle at 80% 90%,rgba(181,61,16,.04),transparent 45%);--stripe:repeating-linear-gradient(45deg,#a55a00 0,#a55a00 12px,#1f1a0d 12px,#1f1a0d 24px)}
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--bg);scroll-behavior:smooth}
+  body{background:var(--bg);background-image:var(--glow);color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .hazard-bar{height:6px;background:var(--stripe)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(14px,3.5vw,28px) 48px}
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  /* ===== Topbar / brand ===== */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+          background:var(--surface);border-bottom:1px solid var(--border);padding:16px clamp(14px,3.5vw,28px)}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand-mark{width:48px;height:48px;background:var(--amber);color:var(--bg);display:grid;place-items:center;
+              font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;clip-path:polygon(10% 0,100% 0,90% 100%,0 100%)}
+  .brand-name{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;line-height:1}
+  .brand-name span{color:var(--amber)}
+  .brand-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+  .brand-sub .ver{color:var(--amber);opacity:.8}
+  .top-right{display:flex;align-items:center;gap:12px}
+  .user-chip{display:flex;flex-direction:column;background:var(--surface-2);padding:7px 14px;border:1px solid var(--border);border-left:3px solid var(--amber)}
+  .user-chip .n{font-weight:700;font-size:13px}
+  .user-chip .t{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-top:2px}
+  .gear{width:42px;height:42px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-size:18px;cursor:pointer;display:grid;place-items:center;transition:color .15s,border-color .15s}
+  .gear:hover{color:var(--amber);border-color:var(--border-strong)}
+
+  /* ===== Theme menu ===== */
+  .theme-menu{position:relative}
+  .theme-pop{position:absolute;right:0;top:52px;z-index:40;background:var(--surface);border:1px solid var(--border-strong);padding:12px;min-width:230px;display:none;box-shadow:0 18px 40px rgba(0,0,0,.4)}
+  .theme-pop.open{display:block}
+  .theme-pop .tp-h{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--text-faint);margin-bottom:10px}
+  .swatches{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .swatch{display:flex;align-items:center;gap:8px;padding:8px 9px;background:var(--surface-2);border:1px solid var(--border);cursor:pointer;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.04em;transition:border-color .15s}
+  .swatch:hover{border-color:var(--border-strong)}
+  .swatch[aria-current="true"]{border-color:var(--amber);border-left-width:3px}
+  .swatch .chip{display:flex;flex:0 0 auto}
+  .swatch .chip i{width:11px;height:16px;display:block}
+  .swatch .chip i:first-child{border:1px solid rgba(128,128,128,.35)}
+
+  /* ===== Tabs ===== */
+  .tabs{display:flex;overflow-x:auto;border:1px solid var(--border);background:var(--surface);-webkit-overflow-scrolling:touch;margin-top:clamp(20px,4vw,30px)}
+  .tab{flex:0 0 auto;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.5px;padding:13px 20px;border:none;border-right:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:color .15s,background .15s;white-space:nowrap;display:flex;align-items:center;gap:9px}
+  .tab .dot{width:7px;height:7px;background:var(--border-strong);transform:rotate(45deg);transition:background .15s}
+  .tab:hover{color:var(--text);background:var(--surface-2)}
+  .tab[aria-selected="true"]{color:var(--text);background:var(--surface-2);box-shadow:inset 0 -3px 0 var(--amber)}
+  .tab[aria-selected="true"] .dot{background:var(--amber)}
+  .tab.addcls{color:var(--text-faint);border-right:none}
+  .tab.addcls:hover{color:var(--amber)}
+  .addhint{display:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);border:1px dashed var(--border-strong);background:var(--surface);padding:11px 14px;margin-top:10px;letter-spacing:.03em;line-height:1.6}
+  .addhint.show{display:block}
+
+  .panel{display:none;margin-top:clamp(20px,4vw,30px)}
+  .panel.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ===== Card shell ===== */
+  .card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);margin-bottom:clamp(18px,3.2vw,26px)}
+  .card-h{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .card-h .no{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.12em}
+  .card-h h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,4.6vw,30px);letter-spacing:1.5px;line-height:1}
+  .card-h .sub{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;text-align:right}
+  .card-body{padding:clamp(15px,3.2vw,22px)}
+  .intro{font-size:14.5px;color:var(--text-dim);line-height:1.6;margin-bottom:18px;max-width:66ch}
+  .intro b{color:var(--text);font-weight:600}
+  .intro:last-child{margin-bottom:0}
+
+  /* ===== Hero ===== */
+  .hero{background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden;margin-bottom:clamp(18px,3.2vw,26px)}
+  .hero::before{content:"";position:absolute;inset:0;background:var(--glow);pointer-events:none}
+  .hero-in{position:relative;padding:clamp(20px,4.5vw,34px)}
+  .hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:14px}
+  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,6vw,48px);letter-spacing:1px;line-height:1;margin-bottom:14px}
+  .hero h1 .amber{color:var(--amber)}
+  .hero p{font-size:15px;color:var(--text-dim);line-height:1.55;max-width:60ch}
+  .hero p b{color:var(--text);font-weight:600}
+  .hero-meta{display:flex;gap:26px;flex-wrap:wrap;margin-top:20px;font-family:'JetBrains Mono',monospace}
+  .hero-meta .k{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-faint)}
+  .hero-meta .v{font-size:13px;font-weight:500;margin-top:4px;color:var(--text)}
+  .hero-meta .v.amber{color:var(--amber)}
+
+  .btn{display:inline-flex;align-items:center;gap:9px;background:var(--amber);color:var(--bg);border:none;padding:12px 22px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;transition:transform .05s,background .15s;margin-top:18px}
+  .btn:hover{background:var(--amber-hover)}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border-strong)}
+  .btn.ghost:hover{background:var(--surface-2);color:var(--amber)}
+  .btn .arw{transition:transform .15s}
+  .btn:hover .arw{transform:translateX(3px)}
+
+  /* ===== Interactive lists ===== */
+  .lists{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2.6vw,20px)}
+  .listcard{background:var(--surface-2);border:1px solid var(--border);display:flex;flex-direction:column}
+  .lc-h{display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .lc-h .ic{color:var(--amber);font-size:13px;width:16px;text-align:center}
+  .lc-h h3{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1.2px}
+  .lc-h .count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-faint)}
+  ul.items{list-style:none;flex:1;min-height:18px;padding:5px 0}
+  ul.items li{display:flex;align-items:flex-start;gap:10px;padding:8px 14px;font-size:14px;line-height:1.4}
+  ul.items li .cb{flex:0 0 auto;width:17px;height:17px;border:2px solid var(--text-faint);background:transparent;cursor:pointer;margin-top:1px;position:relative;transition:background .15s,border-color .15s}
+  ul.items li .cb:hover{border-color:var(--amber)}
+  ul.items li.done .cb{background:var(--amber);border-color:var(--amber)}
+  ul.items li.done .cb::after{content:"✓";position:absolute;inset:0;color:var(--bg);font-size:12px;line-height:14px;text-align:center;font-weight:700}
+  ul.items li .txt{flex:1;cursor:pointer}
+  ul.items li.done .txt{text-decoration:line-through;color:var(--text-faint)}
+  ul.items li .del{flex:0 0 auto;border:none;background:none;color:var(--text-faint);font-size:17px;line-height:1;cursor:pointer;padding:0 2px;transition:color .15s}
+  ul.items li .del:hover{color:var(--red)}
+  ul.items li.empty{color:var(--text-faint);font-style:italic;font-size:12.5px;padding:11px 14px}
+  ul.items li.empty .cb,ul.items li.empty .del{display:none}
+  .additem{display:flex;border-top:1px solid var(--border)}
+  .additem input{flex:1;border:none;background:var(--surface);padding:10px 14px;font-family:'Barlow',sans-serif;font-size:14px;color:var(--text)}
+  .additem input::placeholder{color:var(--text-faint)}
+  .additem input:focus{outline:none;background:var(--surface-3)}
+  .additem button{border:none;border-left:1px solid var(--border);background:var(--surface);color:var(--amber);font-size:19px;font-weight:600;padding:0 16px;cursor:pointer;transition:background .15s,color .15s}
+  .additem button:hover{background:var(--amber);color:var(--bg)}
+  .cc-note{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--text-faint);margin-top:16px;text-align:center;text-transform:uppercase}
+
+  /* ===== Roadmap timeline ===== */
+  .era{display:flex;align-items:baseline;gap:12px;margin:24px 0 14px}
+  .era:first-child{margin-top:4px}
+  .era .en{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--amber);letter-spacing:.1em}
+  .era h3{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1.5px}
+  .era .es{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;text-align:right}
+  .track{position:relative;padding-left:26px}
+  .track::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--border-strong)}
+  .node{position:relative;margin-bottom:12px}
+  .node::before{content:"";position:absolute;left:-22px;top:16px;width:9px;height:9px;background:var(--surface);border:2px solid var(--border-strong);transform:rotate(45deg)}
+  .node.key::before{background:var(--amber);border-color:var(--amber)}
+  .entry{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--border-strong);padding:13px 16px}
+  .node.key .entry{border-left-color:var(--amber)}
+  .entry .et{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+  .entry .pn{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint);letter-spacing:.05em}
+  .rtag{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--border-strong);color:var(--text-dim)}
+  .rtag.amber{color:var(--amber);border-color:var(--amber)}
+  .entry h4{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.6px;margin-bottom:3px}
+  .entry p{font-size:13px;color:var(--text-dim);line-height:1.5}
+  .entry p b{color:var(--text);font-weight:600}
+  .acts{margin-top:8px}
+  .act{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--border)}
+  .act:last-child{border-bottom:none}
+  .act .m{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--amber);min-width:62px;padding-top:2px;letter-spacing:.05em}
+  .act h5{font-family:'Barlow',sans-serif;font-weight:700;font-size:14px;margin-bottom:2px}
+  .act p{font-size:12.5px;color:var(--text-dim);line-height:1.45}
+
+  /* ===== Calculus concept cards ===== */
+  .concept{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--amber);padding:15px 18px;margin-bottom:13px}
+  .concept .c-tag{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--amber);margin-bottom:7px}
+  .concept h4{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.8px;margin-bottom:6px}
+  .concept p{font-size:14px;color:var(--text-dim);line-height:1.55}
+  .concept p b{color:var(--text);font-weight:600}
+  .eqn{font-family:'JetBrains Mono',monospace;font-size:14.5px;background:var(--bg);border:1px solid var(--border);padding:11px 14px;margin:10px 0;display:block;overflow-x:auto;color:var(--text)}
+  .eqn .v{color:var(--amber);font-weight:700}
+  sub,sup{font-size:.72em}
+  .placeholder{border:1px dashed var(--border-strong);background:transparent;padding:15px 17px;font-size:13px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:.02em;line-height:1.7}
+
+  /* ===== Chemistry ===== */
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);font-family:'JetBrains Mono',monospace;margin-bottom:18px}
+  .facts .f{padding:12px 14px;border-right:1px solid var(--border);background:var(--surface-2)}
+  .facts .f:last-child{border-right:none}
+  .facts .f .k{font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-faint)}
+  .facts .f .v{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;margin-top:3px}
+  .facts .f .v.amber{color:var(--amber)}
+  .targets{list-style:none}
+  .targets li{display:flex;gap:13px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--border)}
+  .targets li:last-child{border-bottom:none}
+  .targets .pr{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--amber);min-width:24px}
+  .targets .body{flex:1}
+  .targets .body .nm{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.5px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .targets .body .nm .wt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--amber);letter-spacing:.05em}
+  .targets .body p{font-size:13px;color:var(--text-dim);line-height:1.5;margin-top:4px}
+  .rt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .rt{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--amber);padding:13px 15px}
+  .rt h4{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.6px;margin-bottom:5px}
+  .rt p{font-size:13px;color:var(--text-dim);line-height:1.5}
+  .play{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--amber);padding:14px 16px;margin-bottom:12px}
+  .play h4{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.6px;margin-bottom:5px}
+  .play p{font-size:13px;color:var(--text-dim);line-height:1.55}
+  .play a.inline{color:var(--amber);border-bottom:1px solid var(--border-strong);word-break:break-all}
+  .play a.inline:hover{border-color:var(--amber)}
+  .subhead{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--amber);margin:22px 0 10px}
+
+  /* ===== Periodic table ===== */
+  .pt-hint{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:.06em;margin-bottom:12px;text-transform:uppercase}
+  .scroller{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px}
+  .ptable{display:grid;grid-template-columns:repeat(18,minmax(52px,1fr));grid-auto-rows:60px;gap:4px;width:1080px;margin:0 auto 8px}
+  .ptable::before{content:"";grid-row:8;grid-column:1 / -1}
+  .el{border:1px solid rgba(0,0,0,.28);padding:3px 3px 2px;display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden;color:var(--tile-ink);transition:transform .12s,box-shadow .12s}
+  .el:hover{transform:translateY(-2px);box-shadow:0 5px 14px rgba(0,0,0,.45);z-index:2}
+  .el .num{font-family:'JetBrains Mono',monospace;font-size:8px;align-self:flex-start;line-height:1;opacity:.72}
+  .el .sym{font-family:'Bebas Neue',sans-serif;font-size:19px;line-height:1.05;letter-spacing:.5px;color:var(--tile-ink)}
+  .el .nm{font-size:6.1px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+  .el .mass{font-family:'JetBrains Mono',monospace;font-size:6.6px;opacity:.72;margin-top:1px}
+  .el.ph{justify-content:center}
+  .el.ph .sym{font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700}
+  .el.ph .nm{font-size:7px;margin-top:2px}
+  .alkali{background:var(--alkali)}.alkaline{background:var(--alkaline)}.transition{background:var(--transition)}
+  .post{background:var(--post)}.metalloid{background:var(--metalloid)}.nonmetal{background:var(--nonmetal)}
+  .halogen{background:var(--halogen)}.noble{background:var(--noble)}.lanthanide{background:var(--lanthanide)}
+  .actinide{background:var(--actinide)}.unknown{background:var(--unknown)}
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:7px 14px;background:var(--surface-2);border:1px solid var(--border);padding:15px 16px;margin-top:10px}
+  .lg{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text)}
+  .sw{width:15px;height:15px;border:1px solid rgba(0,0,0,.3);flex:none}
+  .sw.alkali{background:var(--alkali)}.sw.alkaline{background:var(--alkaline)}.sw.transition{background:var(--transition)}
+  .sw.post{background:var(--post)}.sw.metalloid{background:var(--metalloid)}.sw.nonmetal{background:var(--nonmetal)}
+  .sw.halogen{background:var(--halogen)}.sw.noble{background:var(--noble)}.sw.lanthanide{background:var(--lanthanide)}
+  .sw.actinide{background:var(--actinide)}.sw.unknown{background:var(--unknown)}
+  .pt-foot{margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-faint);letter-spacing:.06em;text-transform:uppercase}
+
+  footer{text-align:center;margin-top:38px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase}
+
+  @media(max-width:720px){
+    .lists{grid-template-columns:1fr}
+    .rt-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:640px){
+    .facts{grid-template-columns:1fr 1fr}
+    .facts .f:nth-child(2){border-right:none}
+    .facts .f:nth-child(1),.facts .f:nth-child(2){border-bottom:1px solid var(--border)}
+    .user-chip{display:none}
+    .swatches{grid-template-columns:1fr}
+  }
+  @media(prefers-reduced-motion:reduce){.panel.active{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body class="dark-mode">
+  <div class="hazard-bar"></div>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">JH</div>
+      <div>
+        <div class="brand-name">COMMAND <span>CENTER</span></div>
+        <div class="brand-sub"><span>// Academic Operations · Texas Tech </span><span class="ver">v1</span></div>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="user-chip"><span class="n">Jake Hardin</span><span class="t">Industrial Engineering</span></div>
+      <div class="theme-menu">
+        <button class="gear" id="gearBtn" aria-label="Themes" aria-haspopup="true" aria-expanded="false">⚙</button>
+        <div class="theme-pop" id="themePop" role="menu">
+          <div class="tp-h">Theme</div>
+          <div class="swatches" id="swatches"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" aria-selected="true" data-panel="home"><span class="dot"></span>Home</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="calc"><span class="dot"></span>Calculus I</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="chem"><span class="dot"></span>General Chemistry</button>
+      <button class="tab addcls" role="tab" aria-selected="false" data-panel="__add">＋ Add class</button>
+    </div>
+    <div class="addhint" id="addhint">Tell Claude the class name and I'll build its tab — Calc II, Physics, Intro to Industrial Engineering, whatever's next.</div>
+
+    <!-- ================= HOME ================= -->
+    <section class="panel active" id="panel-home" role="tabpanel">
+      <div class="hero">
+        <div class="hero-in">
+          <div class="hero-eyebrow">The Pointing Arrow · 10-Year Roadmap</div>
+          <h1>Warehouse floor today<span class="amber"> →</span> Industrial Engineer <span class="amber">→</span> your own shop</h1>
+          <p>An analytical mind and a creative eye, converging on one thing: <b>designing better systems.</b> The big picture's below — everything under it is the next brick.</p>
+          <div class="hero-meta">
+            <div><div class="k">Origin</div><div class="v">Lubbock, TX</div></div>
+            <div><div class="k">Now</div><div class="v">Ops Mgr · Pay &amp; Save</div></div>
+            <div><div class="k">Next Build</div><div class="v amber">Texas Tech · IE</div></div>
+            <div><div class="k">Horizon</div><div class="v amber">10 YR</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="no">01</span><h2>Command Center</h2><span class="sub">what's next · mark it off</span></div>
+        <div class="card-body">
+          <p class="intro">The living part — your <b>stream of consciousness with a direction on it</b>. Add what's coming, check off what's done. It grows into your homework, tests, and study list as the semester fills in.</p>
+          <div class="lists">
+            <div class="listcard" data-list="upnext">
+              <div class="lc-h"><span class="ic">▶</span><h3>Up Next</h3><span class="count"></span></div>
+              <ul class="items"></ul>
+              <div class="additem"><input type="text" placeholder="Add next step…" aria-label="Add to Up Next"><button aria-label="Add">＋</button></div>
+            </div>
+            <div class="listcard" data-list="homework">
+              <div class="lc-h"><span class="ic">✎</span><h3>Homework</h3><span class="count"></span></div>
+              <ul class="items"></ul>
+              <div class="additem"><input type="text" placeholder="Add assignment…" aria-label="Add homework"><button aria-label="Add">＋</button></div>
+            </div>
+            <div class="listcard" data-list="tests">
+              <div class="lc-h"><span class="ic">◆</span><h3>Upcoming Tests</h3><span class="count"></span></div>
+              <ul class="items"></ul>
+              <div class="additem"><input type="text" placeholder="Add test + date…" aria-label="Add test"><button aria-label="Add">＋</button></div>
+            </div>
+            <div class="listcard" data-list="study">
+              <div class="lc-h"><span class="ic">★</span><h3>To Study</h3><span class="count"></span></div>
+              <ul class="items"></ul>
+              <div class="additem"><input type="text" placeholder="Add study topic…" aria-label="Add study topic"><button aria-label="Add">＋</button></div>
+            </div>
+            <div class="listcard" data-list="future">
+              <div class="lc-h"><span class="ic">➜</span><h3>Future Classes</h3><span class="count"></span></div>
+              <ul class="items"></ul>
+              <div class="additem"><input type="text" placeholder="Add a class to take later…" aria-label="Add future class"><button aria-label="Add">＋</button></div>
+            </div>
+          </div>
+          <p class="cc-note">Saved on this device</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="no">02</span><h2>The Roadmap</h2><span class="sub">past · present · future</span></div>
+        <div class="card-body">
+          <p class="intro">Two rails — the engineer and the maker — running separately for years, now merging into one track. Amber nodes are the turning points.</p>
+
+          <div class="era"><span class="en">01</span><h3>Past</h3><span class="es">Foundations · 1997–2022</span></div>
+          <div class="track">
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[01.01]</span></div><h4>Rooted in Lubbock</h4><p>Sugar &amp; Spice → Rush Elementary → Lubbock Christian, K through 12. A hometown that keeps pulling you back.</p></div></div>
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[01.02]</span><span class="rtag">Analytical</span></div><h4>Math + Mechanical Engineering @ LCU</h4><p>Full-ride, 2016–2022. Ran the numbers all the way through <b>Calculus III</b>. The systems brain was there from the start.</p></div></div>
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[01.03]</span><span class="rtag">Creative</span></div><h4>Spain — the camera clicks</h4><p>Studied abroad and discovered <b>photography</b>. The first real signal that a creative eye was part of the wiring.</p></div></div>
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[01.04]</span><span class="rtag">Creative</span></div><h4>Degree: Digital Media Arts &amp; Applications</h4><p>Mastered the <b>Adobe Suite</b> and photography. Two rails now running: the engineer and the maker.</p></div></div>
+          </div>
+
+          <div class="era"><span class="en">02</span><h3>Present</h3><span class="es">The Build · Littlefield → Lubbock</span></div>
+          <div class="track">
+            <div class="node key"><div class="entry"><div class="et"><span class="pn">[02.01]</span><span class="rtag amber">Convergence</span></div><h4>Warehouse Operations Manager · Pay &amp; Save</h4><p>Five years in. This is where the two rails <b>merge</b> — analytical rigor meets hands-on problem-solving, every single day.</p></div></div>
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[02.02]</span></div><h4>Rebuilt the warehouse, end to end</h4><p>Pallet racking, full reorganization, real documentation, product research from scratch. You saw the broken system and fixed it.</p></div></div>
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[02.03]</span></div><h4>Built a custom inventory system</h4><p>Designed and built it yourself — with Claude as a coding assistant — and made it <b>better than what was even asked for</b>. Proof of the founder instinct already firing.</p></div></div>
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[02.04]</span></div><h4>Family &amp; home base</h4><p>Wife finishing her <b>MBA — concentration in AI &amp; Data Sciences</b>; daughter, 3. Moving the whole home base back to Lubbock.</p></div></div>
+            <div class="node key"><div class="entry"><div class="et"><span class="pn">[02.05]</span><span class="rtag amber">Now</span></div><h4>Accepted to Texas Tech · Fall 2026</h4><p>The door back to engineering is open. Driven by one thing above all: <b>the love of growing.</b></p></div></div>
+          </div>
+
+          <div class="era"><span class="en">03</span><h3>Future</h3><span class="es">The Roadmap · 2026 → 2036</span></div>
+          <div class="track">
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[03.01]</span></div><h4>Enter as Math → transfer into Engineering</h4><p>Retake Calc I–III, rebuild the foundation, then cross over into the engineering college.</p></div></div>
+            <div class="node key"><div class="entry"><div class="et"><span class="pn">[03.02]</span><span class="rtag amber">The Pivot</span></div><h4>Target: Industrial Engineering</h4><p>Not mechanical — <b>industrial</b>. The discipline of designing systems, operations, and efficiency. It's the thing you've been doing unofficially for five years. TTU ran the <b>first IE program in Texas</b>; an accelerated BS/MS is on the table.</p></div></div>
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[03.03]</span><span class="rtag amber">Credential</span></div><h4>Earn Lean Six Sigma · Green → Black Belt</h4><p>The formal toolkit for eliminating waste and improving processes. High demand, short supply — and the backbone of a consulting career.</p></div></div>
+            <div class="node"><div class="entry"><div class="et"><span class="pn">[03.04]</span></div><h4>Work as an Industrial / Operations Engineer</h4><p>Build the track record and credibility. Learn what the field looks like from the inside — the gap we're closing right now.</p></div></div>
+            <div class="node key"><div class="entry"><div class="et"><span class="pn">[03.05]</span><span class="rtag amber">The Goal</span></div><h4>Launch your own consultancy</h4><p>Walk into a business, diagnose what's broken, design the fix, get paid for the transformation. <b>Something of your own</b> — built to outgrow just you.</p></div></div>
+          </div>
+
+          <div class="subhead">△ Next Actions</div>
+          <div class="acts">
+            <div class="act"><span class="m">TERM 1</span><div><h5>Retake Calculus I–III</h5><p>Rebuild the math foundation before crossing into engineering.</p></div></div>
+            <div class="act"><span class="m">SOON</span><div><h5>Meet an IMSE advisor about the Industrial Engineering track</h5><p>Confirm the transfer path and ask about the accelerated BS/MS.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CALCULUS I ================= -->
+    <section class="panel" id="panel-calc" role="tabpanel">
+      <div class="card">
+        <div class="card-h"><span class="no">01</span><h2>Calculus I</h2><span class="sub">Texas Tech · registered</span></div>
+        <div class="card-body">
+          <p class="intro">You ran the numbers through Calc III back at LCU — this is a <b>re-wakening, not a cold start</b>. Two big questions in a trench coat: <b>how fast is something changing?</b> (derivatives) and <b>how much has piled up?</b> (integrals). Warm back up on these before the semester lands.</p>
+          <div class="concept"><div class="c-tag">Warm-up · Algebra bridge</div><h4>Slope is the whole seed</h4><p>Calculus is built on one thing you already own: <b>slope = rise over run</b>. A straight line has one slope everywhere. Calculus asks the same question about <i>curvy</i> lines, where the slope keeps changing.</p><span class="eqn">slope <span class="v">m</span> = (y<sub>2</sub> − y<sub>1</sub>) / (x<sub>2</sub> − x<sub>1</sub>)</span></div>
+          <div class="concept"><div class="c-tag">Idea 01 · Limits</div><h4>Sneaking up on a value</h4><p>A <b>limit</b> asks: as x creeps toward some number, what does f(x) head toward? It's the tool that makes "instantaneous" change legal. Read it as "the limit, as x approaches a, of f of x."</p><span class="eqn">lim<sub>x→a</sub> f(x)</span></div>
+          <div class="concept"><div class="c-tag">Idea 02 · The derivative</div><h4>Slope of a curve, at one exact point</h4><p>The <b>derivative</b> is slope for curves — the rate of change at a single instant. It's the slope formula, shrunk with a limit until the two points collapse into one.</p><span class="eqn">f′(x) = lim<sub>h→0</sub> [ f(x+h) − f(x) ] / h</span></div>
+          <div class="concept"><div class="c-tag">Idea 03 · Power rule</div><h4>The shortcut you'll use constantly</h4><p>Once the limit above is proven, you rarely do it the long way. To differentiate x to a power: <b>bring the exponent down front, then drop it by one.</b></p><span class="eqn">d/dx [ x<sup class="v">n</sup> ] = <span class="v">n</span>·x<sup>(<span class="v">n</span>−1)</sup></span><p style="margin-top:8px">Example: d/dx[x³] = 3x². That's it.</p></div>
+          <div class="concept"><div class="c-tag">Idea 04 · Integrals (the flip side)</div><h4>Adding up the accumulation</h4><p>An <b>integral</b> runs the derivative backward — instead of "how fast," it asks "how much total." Geometrically it's the <b>area under the curve</b>. You'll meet it after derivatives, but good to know the destination.</p><span class="eqn">∫ f(x) dx</span></div>
+          <div class="placeholder">This tab fills in with real coursework — assignments, notes, worked problems — once the semester starts. Send me a topic or a homework problem and I'll drop it in here.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CHEMISTRY ================= -->
+    <section class="panel" id="panel-chem" role="tabpanel">
+      <div class="card">
+        <div class="card-h"><span class="no">CPE</span><h2>Placement Exam</h2><span class="sub">CHEM 1307 · one attempt</span></div>
+        <div class="card-body">
+          <p class="intro">Study by <b>where the points are</b>. The exam isn't evenly weighted — nearly half of it lives in one category. Aim your energy there first.</p>
+          <div class="facts">
+            <div class="f"><div class="k">Questions</div><div class="v">35</div></div>
+            <div class="f"><div class="k">Time</div><div class="v">90<span style="font-size:12px"> min</span></div></div>
+            <div class="f"><div class="k">Enroll</div><div class="v amber">50%</div></div>
+            <div class="f"><div class="k">Clear</div><div class="v amber">60%</div></div>
+          </div>
+          <div class="play"><h4>Practice → Prove</h4><p>The practice exam is your rehearsal: 20 questions, no time limit, unlimited retakes — the real one is a single 90-minute attempt. Run the practice test until you're consistently above 50%, ideally into the 60%+ range that clears you straight into 1307. Videos teach it; the practice test proves it. Practice lives inside the portal — log in first: <a class="inline" href="https://apps.depts.ttu.edu/cpex/cpe_intro.aspx" target="_blank" rel="noopener">apps.depts.ttu.edu/cpex</a></p></div>
+          <div class="play"><h4>Safety Net</h4><p>Score low? You're not stuck. <b>ALEKS</b> is a $30 online course that teaches from the ground up — hit 95% mastery any time in the 90-day window and you're eligible for 1307. Or take the <b>CHEM 1301</b> prep course. Either way, there's a path in.</p></div>
+          <div class="play"><h4>Refresher Video</h4><p>Crash Course Chemistry #6 (Stoichiometry) — ~10 min, covers moles, molar mass, balancing, and molar ratios: <a class="inline" href="https://www.youtube.com/watch?v=UL1jmJaUkaQ" target="_blank" rel="noopener">youtube.com/watch?v=UL1jmJaUkaQ</a></p></div>
+          <a class="btn" href="https://apps.depts.ttu.edu/cpex/cpe_intro.aspx" target="_blank" rel="noopener">Open the CPE portal <span class="arw">→</span></a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="no">01</span><h2>Study Targets</h2><span class="sub">ranked by points ↓</span></div>
+        <div class="card-body">
+          <ul class="targets">
+            <li><span class="pr">P1</span><div class="body"><div class="nm">Properties of atoms &amp; molecules <span class="wt">15 q</span></div><p>Nearly half the test — your #1 priority. Atomic structure (protons, neutrons, electrons), reading the periodic table, periodic trends (atomic size, metals vs. nonmetals across &amp; down), electron arrangement, and ionic vs. covalent bonding.</p></div></li>
+            <li><span class="pr">P2</span><div class="body"><div class="nm">Problem solving &amp; algebra <span class="wt">7 q</span></div><p>Your strong suit — you're about to take Calc I. Solving for unknowns, rearranging equations, ratios &amp; proportions, scientific notation, and unit conversions (dimensional analysis). Nearly free points.</p></div></li>
+            <li><span class="pr">P3</span><div class="body"><div class="nm">Formulas, naming &amp; balancing <span class="wt">6 q</span></div><p>Reading a formula like H₂O, naming basic compounds, and balancing equations — the LEGO-brick bookkeeping where atoms in = atoms out. The Crash Course video covers most of this.</p></div></li>
+            <li><span class="pr">P4</span><div class="body"><div class="nm">Quantitative chemical problems <span class="wt">5 q</span></div><p>The mole concept (a chemist's "dozen" — just a counting unit) and basic stoichiometry: using a balanced equation to find how much you get. Same stoichiometry video hits this directly.</p></div></li>
+            <li><span class="pr">P5</span><div class="body"><div class="nm">Chemical reactions <span class="wt">2 q</span></div><p>Lowest weight — skim this last. Just recognize basic reaction types: things combining, things breaking apart, things swapping partners.</p></div></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="no">02</span><h2>Reading the Table</h2><span class="sub">navigate, don't memorize</span></div>
+        <div class="card-body">
+          <p class="intro">The periodic table is the best-organized warehouse ever built. Every element has a shelf location, and the location itself tells you what's on it. On the exam you'll have one in front of you — your job is to read it, not recall it.</p>
+          <div class="rt-grid">
+            <div class="rt"><h4>One box = one element</h4><p>A letter symbol (O, Na), a whole number = the atomic number (protons — the ID badge), and a decimal = the atomic mass. That's the whole box.</p></div>
+            <div class="rt"><h4>Reads like text</h4><p>Left→right, top→bottom. The atomic number climbs by one each step — the table isn't random, it's counting.</p></div>
+            <div class="rt"><h4>Columns = families</h4><p>Elements stacked in the same column behave alike — same number of outer electrons. Know one, and you roughly know the whole column.</p></div>
+            <div class="rt"><h4>Metals vs. nonmetals</h4><p>Left &amp; middle = metals (shiny, conduct). Upper right = nonmetals. A staircase line on the right divides them.</p></div>
+            <div class="rt"><h4>Three neighborhoods</h4><p>Far-left = alkali metals (super reactive). Far-right = noble gases (loners). Just before them = halogens (reactive nonmetals).</p></div>
+            <div class="rt"><h4>Trends move in directions</h4><p>Atoms get bigger down &amp; left, smaller up &amp; right. Position encodes behavior — exactly like a well-run warehouse.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="no">03</span><h2>Periodic Table</h2><span class="sub">118 elements · reference</span></div>
+        <div class="card-body">
+          <div class="pt-hint">↔ scroll sideways · pinch to zoom · rotate to landscape for the full view</div>
+          <div class="scroller">
+            <div class="ptable">
+<div class="el nonmetal" style="grid-row:1;grid-column:1"><span class="num">1</span><span class="sym">H</span><span class="nm">Hydrogen</span><span class="mass">1.008</span></div>
+<div class="el noble" style="grid-row:1;grid-column:18"><span class="num">2</span><span class="sym">He</span><span class="nm">Helium</span><span class="mass">4.003</span></div>
+<div class="el alkali" style="grid-row:2;grid-column:1"><span class="num">3</span><span class="sym">Li</span><span class="nm">Lithium</span><span class="mass">6.94</span></div>
+<div class="el alkaline" style="grid-row:2;grid-column:2"><span class="num">4</span><span class="sym">Be</span><span class="nm">Beryllium</span><span class="mass">9.012</span></div>
+<div class="el metalloid" style="grid-row:2;grid-column:13"><span class="num">5</span><span class="sym">B</span><span class="nm">Boron</span><span class="mass">10.81</span></div>
+<div class="el nonmetal" style="grid-row:2;grid-column:14"><span class="num">6</span><span class="sym">C</span><span class="nm">Carbon</span><span class="mass">12.011</span></div>
+<div class="el nonmetal" style="grid-row:2;grid-column:15"><span class="num">7</span><span class="sym">N</span><span class="nm">Nitrogen</span><span class="mass">14.007</span></div>
+<div class="el nonmetal" style="grid-row:2;grid-column:16"><span class="num">8</span><span class="sym">O</span><span class="nm">Oxygen</span><span class="mass">15.999</span></div>
+<div class="el halogen" style="grid-row:2;grid-column:17"><span class="num">9</span><span class="sym">F</span><span class="nm">Fluorine</span><span class="mass">18.998</span></div>
+<div class="el noble" style="grid-row:2;grid-column:18"><span class="num">10</span><span class="sym">Ne</span><span class="nm">Neon</span><span class="mass">20.180</span></div>
+<div class="el alkali" style="grid-row:3;grid-column:1"><span class="num">11</span><span class="sym">Na</span><span class="nm">Sodium</span><span class="mass">22.990</span></div>
+<div class="el alkaline" style="grid-row:3;grid-column:2"><span class="num">12</span><span class="sym">Mg</span><span class="nm">Magnesium</span><span class="mass">24.305</span></div>
+<div class="el post" style="grid-row:3;grid-column:13"><span class="num">13</span><span class="sym">Al</span><span class="nm">Aluminum</span><span class="mass">26.982</span></div>
+<div class="el metalloid" style="grid-row:3;grid-column:14"><span class="num">14</span><span class="sym">Si</span><span class="nm">Silicon</span><span class="mass">28.085</span></div>
+<div class="el nonmetal" style="grid-row:3;grid-column:15"><span class="num">15</span><span class="sym">P</span><span class="nm">Phosphorus</span><span class="mass">30.974</span></div>
+<div class="el nonmetal" style="grid-row:3;grid-column:16"><span class="num">16</span><span class="sym">S</span><span class="nm">Sulfur</span><span class="mass">32.06</span></div>
+<div class="el halogen" style="grid-row:3;grid-column:17"><span class="num">17</span><span class="sym">Cl</span><span class="nm">Chlorine</span><span class="mass">35.45</span></div>
+<div class="el noble" style="grid-row:3;grid-column:18"><span class="num">18</span><span class="sym">Ar</span><span class="nm">Argon</span><span class="mass">39.948</span></div>
+<div class="el alkali" style="grid-row:4;grid-column:1"><span class="num">19</span><span class="sym">K</span><span class="nm">Potassium</span><span class="mass">39.098</span></div>
+<div class="el alkaline" style="grid-row:4;grid-column:2"><span class="num">20</span><span class="sym">Ca</span><span class="nm">Calcium</span><span class="mass">40.078</span></div>
+<div class="el transition" style="grid-row:4;grid-column:3"><span class="num">21</span><span class="sym">Sc</span><span class="nm">Scandium</span><span class="mass">44.956</span></div>
+<div class="el transition" style="grid-row:4;grid-column:4"><span class="num">22</span><span class="sym">Ti</span><span class="nm">Titanium</span><span class="mass">47.867</span></div>
+<div class="el transition" style="grid-row:4;grid-column:5"><span class="num">23</span><span class="sym">V</span><span class="nm">Vanadium</span><span class="mass">50.942</span></div>
+<div class="el transition" style="grid-row:4;grid-column:6"><span class="num">24</span><span class="sym">Cr</span><span class="nm">Chromium</span><span class="mass">51.996</span></div>
+<div class="el transition" style="grid-row:4;grid-column:7"><span class="num">25</span><span class="sym">Mn</span><span class="nm">Manganese</span><span class="mass">54.938</span></div>
+<div class="el transition" style="grid-row:4;grid-column:8"><span class="num">26</span><span class="sym">Fe</span><span class="nm">Iron</span><span class="mass">55.845</span></div>
+<div class="el transition" style="grid-row:4;grid-column:9"><span class="num">27</span><span class="sym">Co</span><span class="nm">Cobalt</span><span class="mass">58.933</span></div>
+<div class="el transition" style="grid-row:4;grid-column:10"><span class="num">28</span><span class="sym">Ni</span><span class="nm">Nickel</span><span class="mass">58.693</span></div>
+<div class="el transition" style="grid-row:4;grid-column:11"><span class="num">29</span><span class="sym">Cu</span><span class="nm">Copper</span><span class="mass">63.546</span></div>
+<div class="el transition" style="grid-row:4;grid-column:12"><span class="num">30</span><span class="sym">Zn</span><span class="nm">Zinc</span><span class="mass">65.38</span></div>
+<div class="el post" style="grid-row:4;grid-column:13"><span class="num">31</span><span class="sym">Ga</span><span class="nm">Gallium</span><span class="mass">69.723</span></div>
+<div class="el metalloid" style="grid-row:4;grid-column:14"><span class="num">32</span><span class="sym">Ge</span><span class="nm">Germanium</span><span class="mass">72.630</span></div>
+<div class="el metalloid" style="grid-row:4;grid-column:15"><span class="num">33</span><span class="sym">As</span><span class="nm">Arsenic</span><span class="mass">74.922</span></div>
+<div class="el nonmetal" style="grid-row:4;grid-column:16"><span class="num">34</span><span class="sym">Se</span><span class="nm">Selenium</span><span class="mass">78.971</span></div>
+<div class="el halogen" style="grid-row:4;grid-column:17"><span class="num">35</span><span class="sym">Br</span><span class="nm">Bromine</span><span class="mass">79.904</span></div>
+<div class="el noble" style="grid-row:4;grid-column:18"><span class="num">36</span><span class="sym">Kr</span><span class="nm">Krypton</span><span class="mass">83.798</span></div>
+<div class="el alkali" style="grid-row:5;grid-column:1"><span class="num">37</span><span class="sym">Rb</span><span class="nm">Rubidium</span><span class="mass">85.468</span></div>
+<div class="el alkaline" style="grid-row:5;grid-column:2"><span class="num">38</span><span class="sym">Sr</span><span class="nm">Strontium</span><span class="mass">87.62</span></div>
+<div class="el transition" style="grid-row:5;grid-column:3"><span class="num">39</span><span class="sym">Y</span><span class="nm">Yttrium</span><span class="mass">88.906</span></div>
+<div class="el transition" style="grid-row:5;grid-column:4"><span class="num">40</span><span class="sym">Zr</span><span class="nm">Zirconium</span><span class="mass">91.224</span></div>
+<div class="el transition" style="grid-row:5;grid-column:5"><span class="num">41</span><span class="sym">Nb</span><span class="nm">Niobium</span><span class="mass">92.906</span></div>
+<div class="el transition" style="grid-row:5;grid-column:6"><span class="num">42</span><span class="sym">Mo</span><span class="nm">Molybdenum</span><span class="mass">95.95</span></div>
+<div class="el transition" style="grid-row:5;grid-column:7"><span class="num">43</span><span class="sym">Tc</span><span class="nm">Technetium</span><span class="mass">[98]</span></div>
+<div class="el transition" style="grid-row:5;grid-column:8"><span class="num">44</span><span class="sym">Ru</span><span class="nm">Ruthenium</span><span class="mass">101.07</span></div>
+<div class="el transition" style="grid-row:5;grid-column:9"><span class="num">45</span><span class="sym">Rh</span><span class="nm">Rhodium</span><span class="mass">102.906</span></div>
+<div class="el transition" style="grid-row:5;grid-column:10"><span class="num">46</span><span class="sym">Pd</span><span class="nm">Palladium</span><span class="mass">106.42</span></div>
+<div class="el transition" style="grid-row:5;grid-column:11"><span class="num">47</span><span class="sym">Ag</span><span class="nm">Silver</span><span class="mass">107.868</span></div>
+<div class="el transition" style="grid-row:5;grid-column:12"><span class="num">48</span><span class="sym">Cd</span><span class="nm">Cadmium</span><span class="mass">112.414</span></div>
+<div class="el post" style="grid-row:5;grid-column:13"><span class="num">49</span><span class="sym">In</span><span class="nm">Indium</span><span class="mass">114.818</span></div>
+<div class="el post" style="grid-row:5;grid-column:14"><span class="num">50</span><span class="sym">Sn</span><span class="nm">Tin</span><span class="mass">118.710</span></div>
+<div class="el metalloid" style="grid-row:5;grid-column:15"><span class="num">51</span><span class="sym">Sb</span><span class="nm">Antimony</span><span class="mass">121.760</span></div>
+<div class="el metalloid" style="grid-row:5;grid-column:16"><span class="num">52</span><span class="sym">Te</span><span class="nm">Tellurium</span><span class="mass">127.60</span></div>
+<div class="el halogen" style="grid-row:5;grid-column:17"><span class="num">53</span><span class="sym">I</span><span class="nm">Iodine</span><span class="mass">126.904</span></div>
+<div class="el noble" style="grid-row:5;grid-column:18"><span class="num">54</span><span class="sym">Xe</span><span class="nm">Xenon</span><span class="mass">131.293</span></div>
+<div class="el alkali" style="grid-row:6;grid-column:1"><span class="num">55</span><span class="sym">Cs</span><span class="nm">Cesium</span><span class="mass">132.905</span></div>
+<div class="el alkaline" style="grid-row:6;grid-column:2"><span class="num">56</span><span class="sym">Ba</span><span class="nm">Barium</span><span class="mass">137.327</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:3"><span class="num">57</span><span class="sym">La</span><span class="nm">Lanthanum</span><span class="mass">138.905</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:4"><span class="num">58</span><span class="sym">Ce</span><span class="nm">Cerium</span><span class="mass">140.116</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:5"><span class="num">59</span><span class="sym">Pr</span><span class="nm">Praseodymium</span><span class="mass">140.908</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:6"><span class="num">60</span><span class="sym">Nd</span><span class="nm">Neodymium</span><span class="mass">144.242</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:7"><span class="num">61</span><span class="sym">Pm</span><span class="nm">Promethium</span><span class="mass">[145]</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:8"><span class="num">62</span><span class="sym">Sm</span><span class="nm">Samarium</span><span class="mass">150.36</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:9"><span class="num">63</span><span class="sym">Eu</span><span class="nm">Europium</span><span class="mass">151.964</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:10"><span class="num">64</span><span class="sym">Gd</span><span class="nm">Gadolinium</span><span class="mass">157.25</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:11"><span class="num">65</span><span class="sym">Tb</span><span class="nm">Terbium</span><span class="mass">158.925</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:12"><span class="num">66</span><span class="sym">Dy</span><span class="nm">Dysprosium</span><span class="mass">162.500</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:13"><span class="num">67</span><span class="sym">Ho</span><span class="nm">Holmium</span><span class="mass">164.930</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:14"><span class="num">68</span><span class="sym">Er</span><span class="nm">Erbium</span><span class="mass">167.259</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:15"><span class="num">69</span><span class="sym">Tm</span><span class="nm">Thulium</span><span class="mass">168.934</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:16"><span class="num">70</span><span class="sym">Yb</span><span class="nm">Ytterbium</span><span class="mass">173.045</span></div>
+<div class="el lanthanide" style="grid-row:9;grid-column:17"><span class="num">71</span><span class="sym">Lu</span><span class="nm">Lutetium</span><span class="mass">174.967</span></div>
+<div class="el transition" style="grid-row:6;grid-column:4"><span class="num">72</span><span class="sym">Hf</span><span class="nm">Hafnium</span><span class="mass">178.486</span></div>
+<div class="el transition" style="grid-row:6;grid-column:5"><span class="num">73</span><span class="sym">Ta</span><span class="nm">Tantalum</span><span class="mass">180.948</span></div>
+<div class="el transition" style="grid-row:6;grid-column:6"><span class="num">74</span><span class="sym">W</span><span class="nm">Tungsten</span><span class="mass">183.84</span></div>
+<div class="el transition" style="grid-row:6;grid-column:7"><span class="num">75</span><span class="sym">Re</span><span class="nm">Rhenium</span><span class="mass">186.207</span></div>
+<div class="el transition" style="grid-row:6;grid-column:8"><span class="num">76</span><span class="sym">Os</span><span class="nm">Osmium</span><span class="mass">190.23</span></div>
+<div class="el transition" style="grid-row:6;grid-column:9"><span class="num">77</span><span class="sym">Ir</span><span class="nm">Iridium</span><span class="mass">192.217</span></div>
+<div class="el transition" style="grid-row:6;grid-column:10"><span class="num">78</span><span class="sym">Pt</span><span class="nm">Platinum</span><span class="mass">195.084</span></div>
+<div class="el transition" style="grid-row:6;grid-column:11"><span class="num">79</span><span class="sym">Au</span><span class="nm">Gold</span><span class="mass">196.967</span></div>
+<div class="el transition" style="grid-row:6;grid-column:12"><span class="num">80</span><span class="sym">Hg</span><span class="nm">Mercury</span><span class="mass">200.592</span></div>
+<div class="el post" style="grid-row:6;grid-column:13"><span class="num">81</span><span class="sym">Tl</span><span class="nm">Thallium</span><span class="mass">204.38</span></div>
+<div class="el post" style="grid-row:6;grid-column:14"><span class="num">82</span><span class="sym">Pb</span><span class="nm">Lead</span><span class="mass">207.2</span></div>
+<div class="el post" style="grid-row:6;grid-column:15"><span class="num">83</span><span class="sym">Bi</span><span class="nm">Bismuth</span><span class="mass">208.980</span></div>
+<div class="el post" style="grid-row:6;grid-column:16"><span class="num">84</span><span class="sym">Po</span><span class="nm">Polonium</span><span class="mass">[209]</span></div>
+<div class="el halogen" style="grid-row:6;grid-column:17"><span class="num">85</span><span class="sym">At</span><span class="nm">Astatine</span><span class="mass">[210]</span></div>
+<div class="el noble" style="grid-row:6;grid-column:18"><span class="num">86</span><span class="sym">Rn</span><span class="nm">Radon</span><span class="mass">[222]</span></div>
+<div class="el alkali" style="grid-row:7;grid-column:1"><span class="num">87</span><span class="sym">Fr</span><span class="nm">Francium</span><span class="mass">[223]</span></div>
+<div class="el alkaline" style="grid-row:7;grid-column:2"><span class="num">88</span><span class="sym">Ra</span><span class="nm">Radium</span><span class="mass">[226]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:3"><span class="num">89</span><span class="sym">Ac</span><span class="nm">Actinium</span><span class="mass">[227]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:4"><span class="num">90</span><span class="sym">Th</span><span class="nm">Thorium</span><span class="mass">232.038</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:5"><span class="num">91</span><span class="sym">Pa</span><span class="nm">Protactinium</span><span class="mass">231.036</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:6"><span class="num">92</span><span class="sym">U</span><span class="nm">Uranium</span><span class="mass">238.029</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:7"><span class="num">93</span><span class="sym">Np</span><span class="nm">Neptunium</span><span class="mass">[237]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:8"><span class="num">94</span><span class="sym">Pu</span><span class="nm">Plutonium</span><span class="mass">[244]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:9"><span class="num">95</span><span class="sym">Am</span><span class="nm">Americium</span><span class="mass">[243]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:10"><span class="num">96</span><span class="sym">Cm</span><span class="nm">Curium</span><span class="mass">[247]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:11"><span class="num">97</span><span class="sym">Bk</span><span class="nm">Berkelium</span><span class="mass">[247]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:12"><span class="num">98</span><span class="sym">Cf</span><span class="nm">Californium</span><span class="mass">[251]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:13"><span class="num">99</span><span class="sym">Es</span><span class="nm">Einsteinium</span><span class="mass">[252]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:14"><span class="num">100</span><span class="sym">Fm</span><span class="nm">Fermium</span><span class="mass">[257]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:15"><span class="num">101</span><span class="sym">Md</span><span class="nm">Mendelevium</span><span class="mass">[258]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:16"><span class="num">102</span><span class="sym">No</span><span class="nm">Nobelium</span><span class="mass">[259]</span></div>
+<div class="el actinide" style="grid-row:10;grid-column:17"><span class="num">103</span><span class="sym">Lr</span><span class="nm">Lawrencium</span><span class="mass">[266]</span></div>
+<div class="el transition" style="grid-row:7;grid-column:4"><span class="num">104</span><span class="sym">Rf</span><span class="nm">Rutherfordium</span><span class="mass">[267]</span></div>
+<div class="el transition" style="grid-row:7;grid-column:5"><span class="num">105</span><span class="sym">Db</span><span class="nm">Dubnium</span><span class="mass">[268]</span></div>
+<div class="el transition" style="grid-row:7;grid-column:6"><span class="num">106</span><span class="sym">Sg</span><span class="nm">Seaborgium</span><span class="mass">[269]</span></div>
+<div class="el transition" style="grid-row:7;grid-column:7"><span class="num">107</span><span class="sym">Bh</span><span class="nm">Bohrium</span><span class="mass">[270]</span></div>
+<div class="el transition" style="grid-row:7;grid-column:8"><span class="num">108</span><span class="sym">Hs</span><span class="nm">Hassium</span><span class="mass">[269]</span></div>
+<div class="el unknown" style="grid-row:7;grid-column:9"><span class="num">109</span><span class="sym">Mt</span><span class="nm">Meitnerium</span><span class="mass">[278]</span></div>
+<div class="el unknown" style="grid-row:7;grid-column:10"><span class="num">110</span><span class="sym">Ds</span><span class="nm">Darmstadtium</span><span class="mass">[281]</span></div>
+<div class="el unknown" style="grid-row:7;grid-column:11"><span class="num">111</span><span class="sym">Rg</span><span class="nm">Roentgenium</span><span class="mass">[282]</span></div>
+<div class="el transition" style="grid-row:7;grid-column:12"><span class="num">112</span><span class="sym">Cn</span><span class="nm">Copernicium</span><span class="mass">[285]</span></div>
+<div class="el post" style="grid-row:7;grid-column:13"><span class="num">113</span><span class="sym">Nh</span><span class="nm">Nihonium</span><span class="mass">[286]</span></div>
+<div class="el post" style="grid-row:7;grid-column:14"><span class="num">114</span><span class="sym">Fl</span><span class="nm">Flerovium</span><span class="mass">[289]</span></div>
+<div class="el post" style="grid-row:7;grid-column:15"><span class="num">115</span><span class="sym">Mc</span><span class="nm">Moscovium</span><span class="mass">[290]</span></div>
+<div class="el post" style="grid-row:7;grid-column:16"><span class="num">116</span><span class="sym">Lv</span><span class="nm">Livermorium</span><span class="mass">[293]</span></div>
+<div class="el halogen" style="grid-row:7;grid-column:17"><span class="num">117</span><span class="sym">Ts</span><span class="nm">Tennessine</span><span class="mass">[294]</span></div>
+<div class="el noble" style="grid-row:7;grid-column:18"><span class="num">118</span><span class="sym">Og</span><span class="nm">Oganesson</span><span class="mass">[294]</span></div>
+<div class="el ph lanthanide" style="grid-row:6;grid-column:3"><span class="sym">57–71</span><span class="nm">La–Lu</span></div>
+<div class="el ph actinide" style="grid-row:7;grid-column:3"><span class="sym">89–103</span><span class="nm">Ac–Lr</span></div>
+            </div>
+          </div>
+          <div class="legend">
+<div class="lg"><span class="sw alkali"></span>Alkali metals</div><div class="lg"><span class="sw alkaline"></span>Alkaline earth metals</div><div class="lg"><span class="sw transition"></span>Transition metals</div><div class="lg"><span class="sw post"></span>Post-transition (basic) metals</div><div class="lg"><span class="sw metalloid"></span>Metalloids</div><div class="lg"><span class="sw nonmetal"></span>Reactive nonmetals</div><div class="lg"><span class="sw halogen"></span>Halogens</div><div class="lg"><span class="sw noble"></span>Noble gases</div><div class="lg"><span class="sw lanthanide"></span>Lanthanides</div><div class="lg"><span class="sw actinide"></span>Actinides</div><div class="lg"><span class="sw unknown"></span>Unknown properties</div>
+          </div>
+          <div class="pt-foot">Mass in [brackets] = most stable isotope</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>Living document · built brick by brick · Rev A</footer>
+  </div>
+
+<script>
+(function(){
+  var THEMES=[
+    {id:'dark-mode',label:'Dark',bg:'#0e1014',am:'#ffb000'},
+    {id:'midnight-mode',label:'Midnight',bg:'#0a1428',am:'#ffb000'},
+    {id:'slate-mode',label:'Slate',bg:'#1a1d24',am:'#ffb000'},
+    {id:'ember-mode',label:'Ember',bg:'#1a1410',am:'#ffb000'},
+    {id:'twilight-mode',label:'Twilight',bg:'#161222',am:'#ffb000'},
+    {id:'ultraviolet-mode',label:'Ultraviolet',bg:'#14091f',am:'#ffb000'},
+    {id:'light-mode',label:'Light',bg:'#ebe7d8',am:'#b56b00'},
+    {id:'arctic-mode',label:'Arctic',bg:'#e8edf2',am:'#b56b00'},
+    {id:'sepia-mode',label:'Sepia',bg:'#f4ead0',am:'#a55a00'}
+  ];
+  var TKEY='jake_cc_theme',current='dark-mode';
+  try{var s=localStorage.getItem(TKEY);if(s)current=s;}catch(e){}
+  function applyTheme(id){current=id;document.body.className=id;try{localStorage.setItem(TKEY,id);}catch(e){}
+    document.querySelectorAll('.swatch').forEach(function(x){x.setAttribute('aria-current',x.dataset.theme===id?'true':'false');});}
+  var sw=document.getElementById('swatches');
+  THEMES.forEach(function(t){var b=document.createElement('button');b.className='swatch';b.dataset.theme=t.id;b.setAttribute('role','menuitem');
+    b.innerHTML='<span class="chip"><i style="background:'+t.bg+'"></i><i style="background:'+t.am+'"></i></span>'+t.label;
+    b.addEventListener('click',function(){applyTheme(t.id);});sw.appendChild(b);});
+  applyTheme(current);
+  var gear=document.getElementById('gearBtn'),pop=document.getElementById('themePop');
+  gear.addEventListener('click',function(e){e.stopPropagation();var o=pop.classList.toggle('open');gear.setAttribute('aria-expanded',o?'true':'false');});
+  document.addEventListener('click',function(e){if(!pop.contains(e.target)&&e.target!==gear){pop.classList.remove('open');gear.setAttribute('aria-expanded','false');}});
+
+  var tabs=Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var addhint=document.getElementById('addhint');
+  tabs.forEach(function(t){t.addEventListener('click',function(){
+    if(t.dataset.panel==='__add'){addhint.classList.toggle('show');return;}
+    addhint.classList.remove('show');
+    tabs.forEach(function(x){x.setAttribute('aria-selected',x===t?'true':'false');});
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+    var panel=document.getElementById('panel-'+t.dataset.panel);if(panel)panel.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });});
+
+  var STORE='jake_cc_v1';
+  var seeds={
+    upnext:[{t:"Log into the CPE portal & take the practice exam",d:false},{t:"Watch Tyler DeWitt 'Intro to the Atom' tonight",d:false},{t:"Study P1 — properties of atoms & molecules",d:false}],
+    homework:[],
+    tests:[{t:"Chemistry Placement Exam (CPE) — one attempt",d:false}],
+    study:[{t:"Valence electrons & the octet rule",d:false},{t:"Ionic vs. covalent bonding",d:false},{t:"Periodic trends",d:false},{t:"Moles & molar mass",d:false}],
+    future:[{t:"Chemistry (1301 prep or 1307)",d:false},{t:"Calculus II",d:false},{t:"Intro to Industrial Engineering",d:false}]
+  };
+  var mem=null;
+  function load(){if(mem)return mem;try{var r=localStorage.getItem(STORE);if(r){mem=JSON.parse(r);return mem;}}catch(e){}mem=JSON.parse(JSON.stringify(seeds));return mem;}
+  function save(){try{localStorage.setItem(STORE,JSON.stringify(mem));}catch(e){}}
+  var EMPTY={upnext:"Nothing queued — add your next move.",homework:"No assignments yet.",tests:"No tests on the board.",study:"Study list is clear.",future:"Map out what comes next."};
+  function render(key){
+    var data=load()[key],card=document.querySelector('.listcard[data-list="'+key+'"]');
+    var ul=card.querySelector('ul.items'),count=card.querySelector('.count');ul.innerHTML='';var doneN=0;
+    if(!data.length){var li=document.createElement('li');li.className='empty';li.textContent=EMPTY[key];ul.appendChild(li);}
+    else data.forEach(function(item,i){
+      if(item.d)doneN++;
+      var li=document.createElement('li');if(item.d)li.className='done';
+      var cb=document.createElement('span');cb.className='cb';cb.setAttribute('role','checkbox');cb.setAttribute('aria-checked',item.d?'true':'false');cb.tabIndex=0;
+      var tx=document.createElement('span');tx.className='txt';tx.textContent=item.t;
+      var del=document.createElement('button');del.className='del';del.innerHTML='×';del.setAttribute('aria-label','Remove');
+      function toggle(){item.d=!item.d;save();render(key);}
+      cb.addEventListener('click',toggle);
+      cb.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();toggle();}});
+      tx.addEventListener('click',toggle);
+      del.addEventListener('click',function(){data.splice(i,1);save();render(key);});
+      li.appendChild(cb);li.appendChild(tx);li.appendChild(del);ul.appendChild(li);
+    });
+    count.textContent=data.length?(doneN+'/'+data.length):'';
+  }
+  document.querySelectorAll('.listcard').forEach(function(card){
+    var key=card.dataset.list,input=card.querySelector('.additem input'),btn=card.querySelector('.additem button');
+    function add(){var v=input.value.trim();if(!v)return;load()[key].push({t:v,d:false});save();input.value='';render(key);input.focus();}
+    btn.addEventListener('click',add);
+    input.addEventListener('keydown',function(e){if(e.key==='Enter')add();});
+    render(key);
+  });
+})();
+</script>
+</body>
+</html>
