@@ -19,7 +19,7 @@ npx serve .
 ```
 
 then visit the address it prints. The game opens on a region map; Thistledown Hollow (ten lessons) and the
-Mallow Orchards (nine lessons) and Fernwater Crossing (five lessons so far) are playable. Any lesson can be started directly, which is handy for testing.
+Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playable. Any lesson can be started directly, which is handy for testing.
 
 ## Controls
 
@@ -50,7 +50,8 @@ During a conversation, A presses the highlighted button and the d-pad moves betw
 - **Fernwater Crossing**: a river town on stilts with a market, a bakery, a money-changer, a rope-walk, a ferry and a river
   gauge. Lessons: half a rope (fractions as equal pieces), the baker's cakes (fractions of a whole and of a group,
   equivalence), adding slices, the money-changer (acorn coins, silver leaves, gold rings and the decimal point),
-  and decimals on the dock (reading, comparing and rounding).
+  decimals on the dock (reading, comparing and rounding), fractions of a trip (multiplying and dividing fractions),
+  price per (unit price), percent off, and Fen's barge (a ledger that reviews the whole region).
 - A world map (press M) showing the whole land, where you are, and the layout of the region you're in, with every built lesson one click away. Lessons can also be opened by URL hash,
   for example `index.html#lesson-3` or `index.html#orch-2`.
 
@@ -66,7 +67,7 @@ principles live in the project's design documents. The short version:
 
 ## Roadmap
 
-- Finish Fernwater (fractions of a trip, unit price, percent off, Fen's barge), then the regions beyond.
+- The Cairnhold Highlands (geometry and measurement) and the regions beyond.
 - Real 3D models and textures in place of the code-built shapes.
 - Characters backed by a language model so a learner can ask Bramblewick why.
 - Classroom mode (one teacher, a class in a shared village), then an open shared world.

@@ -3109,7 +3109,118 @@
                 () => ask('Gauge <b>2.38</b>, ferry needs <b>2.5</b>. Does she run?', ['Yes, 2.38 is more', 'No, 2.38 is less', 'Only at noon'], 'No, 2.38 is less',
                   back => { visual.hidden = false; visual.innerHTML = gaugeSvg(2.38, [2.5]) + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">2.38 against 2.50: three tenths is less than five tenths. The water’s below the line.</p>'; setTimeout(back, 2200); },
                   () => say(['She stays tied up. Three tenths is less than five, never mind the eight after it.', 'You can read a gauge, which is more than half my deckhands. <b>2 coins</b>, and the ferry log’s yours to keep this week.'],
-                    () => { setCoins(coins + 2); rewardFern(5, 'The ferry log', 'You read <b style="color:var(--gold)">decimals</b> off a gauge, compared them point to point, and rounded to the nearest tenth.', null); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+                    () => { setCoins(coins + 2); rewardFern(5, 'The ferry log', 'You read <b style="color:var(--gold)">decimals</b> off a gauge, compared them point to point, and rounded to the nearest tenth.', startF6); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+  }
+
+  // ---------- Region 3, Lessons 6 to 9: fractions of a trip, price per, percent off, Fen's barge ----------
+  const FEN2POS = new THREE.Vector3(19, 1.9, 56);
+  let fen2 = null, nearFen2 = false;
+  function barSvg(parts, total, color = 'var(--gold)', labels) {
+    const W = 320, H = 54, pad = 10, w = W - pad * 2; let out = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;margin:0 auto">`;
+    for (let k = 0; k < total; k++) out += `<rect x="${pad + w * k / total + 1}" y="10" width="${w / total - 2}" height="26" rx="3" fill="${k < parts ? color : 'rgba(255,255,255,.06)'}" stroke="var(--ink)" stroke-width="1.5"/>`;
+    if (labels) labels.forEach(([k, txt]) => { out += `<text x="${pad + w * k / total}" y="50" text-anchor="middle" font-size="11" fill="var(--ink-soft)">${txt}</text>`; });
+    return out + '</svg>';
+  }
+  // Lesson 6: fractions of a trip (multiplying and dividing fractions)
+  function startF6() {
+    phase = 'f6';
+    say([
+      'Fractions of fractions now. The ferry run to the far landing takes <b>half a day</b>. We stop at the sandbar <b>a third</b> of the way along.',
+      'So the first leg is a third of a half. A third of a half of a day. How much of a day is that?'
+    ], () => ask('A <b>third</b> of a <b>half</b> day. What fraction of a day is the first leg?', ['1/5', '1/6', '2/3'], '1/6',
+      back => { visual.hidden = false; visual.innerHTML = barSvg(1, 6, 'var(--gold)', [[1.5, 'half day = 3 sixths'], [0.5, 'one third of it']]) + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">Cut the half into 3 equal pieces. Each is 1/6 of the whole day.</p>'; setTimeout(back, 2200); },
+      () => say(['A sixth. <b>1/3 of 1/2 = 1/6</b>. “Of” means multiply: multiply the tops, 1 × 1, multiply the bottoms, 3 × 2.', 'Now, <b>two thirds</b> of <b>three quarters</b> of the cargo is apples.'],
+        () => ask('<b>2/3 × 3/4</b>. What fraction of the cargo is apples?', ['6/12', '5/7', '6/7'], '6/12',
+          back => stepLines(['Tops: 2 × 3 = 6', 'Bottoms: 3 × 4 = 12', '<b style="color:var(--gold)">6/12</b>, which is 1/2'], () => setTimeout(back, 1000)),
+          () => say(['<b>6/12</b>, half the cargo. Tops together, bottoms together, then say it simple.', 'Dividing is the other question: <b>how many of these fit in that?</b> The barge holds <b>3</b> crates of space. Each sack takes a <b>quarter</b> crate.'],
+            () => askNumber('<b>3 ÷ 1/4</b>. How many quarter-crate sacks fit in 3 crates?', 12, barSvg(12, 12, 'var(--berry)', [[2, 'crate 1'], [6, 'crate 2'], [10, 'crate 3']]),
+              back => stepLines(['Each crate holds 4 quarters', '3 crates × 4 = <b style="color:var(--gold)">12</b> sacks'], () => setTimeout(back, 900)),
+              () => say(['Twelve sacks. Dividing by a quarter is the same as multiplying by 4: <b>3 ÷ 1/4 = 3 × 4 = 12</b>. Flip the fraction and multiply.', 'And a half day of ferrying, in trips of <b>1/6</b> day each.'],
+                () => askNumber('<b>1/2 ÷ 1/6</b>. How many sixth-day trips in half a day?', 3, '',
+                  back => stepLines(['Half a day is 3 sixths', 'So <b style="color:var(--gold)">3</b> trips', 'Or flip and multiply: 1/2 × 6 = 3'], () => setTimeout(back, 1000)),
+                  () => say(['Three trips. Flip the one you’re dividing by, multiply, and you’re done.', '<b>2 coins</b>. Now to the market proper. Everybody here is trying to sell you something, and the only defence is arithmetic.'],
+                    () => { setCoins(coins + 2); rewardFern(6, 'A ferry timetable', 'You <b style="color:var(--gold)">multiplied fractions</b> (tops together, bottoms together) and <b style="color:var(--gold)">divided</b> by flipping and multiplying.', startF7); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+  }
+  // Lesson 7: price per (unit price)
+  function startF7() {
+    phase = 'f7';
+    say([
+      'The Nets & Lines stall and the Ropes stall both sell twine. Nets sells <b>6 yards for 12 coins</b>. Ropes sells <b>10 yards for 15 coins</b>.',
+      'Which is the better deal? You can’t tell by the price alone. Work out the price <b>per yard</b>.'
+    ], () => askNumber('Nets & Lines: 6 yards for 12 coins. How many coins <b>per yard</b>?', 2, '',
+      back => stepLines(['12 coins ÷ 6 yards', '= <b style="color:var(--gold)">2</b> coins a yard'], () => setTimeout(back, 900)),
+      () => askNumber('Ropes: 10 yards for 15 coins. How many coins per yard? (Use the point.)', 1.5, '',
+        back => stepLines(['15 ÷ 10', '= <b style="color:var(--gold)">1.5</b> coins a yard, one and a half'], () => setTimeout(back, 900)),
+        () => ask('2 coins a yard against 1.5 coins a yard. Which stall is the better deal?', ['Nets & Lines', 'Ropes', 'The same'], 'Ropes',
+          back => stepLines(['1.5 is less than 2', 'Cheaper per yard is the better deal'], () => setTimeout(back, 900)),
+          () => say(['Ropes, at 1.5 a yard. A bigger price for a bigger bundle can still be the cheaper buy. Always divide down to <b>one</b>.', 'Maudie does the same with buns. <b>4 buns for 6 coins</b>. You want <b>10</b> buns for the crew.'],
+            () => askNumber('If 4 buns cost 6 coins, what do 10 buns cost? (Use the point if you need it.)', 15, '',
+              back => stepLines(['6 ÷ 4 = 1.5 coins per bun', '10 × 1.5 = <b style="color:var(--gold)">15</b> coins'], () => setTimeout(back, 900)),
+              () => say(['Fifteen. Price per one, then times how many you want. That works for anything in any market in the world.', 'And here’s the one that catches people. Apples: <b>3 for 2 coins</b>. You buy <b>9</b>.'],
+                () => askNumber('Apples at 3 for 2 coins. What do 9 apples cost?', 6, '',
+                  back => stepLines(['9 apples is 3 lots of 3', '3 lots × 2 coins = <b style="color:var(--gold)">6</b>'], () => setTimeout(back, 900)),
+                  () => say(['Six coins. Three lots of three. Sometimes you work by the lot instead of by the one, whichever comes out cleaner.', '<b>2 coins</b>. Tomorrow the market closes for the season, and that means <b>prices come down</b>. Come find me early.'],
+                    () => { setCoins(coins + 2); rewardFern(7, 'A yard of good twine', 'You compared deals by the <b style="color:var(--gold)">price per one</b>, then scaled it back up to what you wanted.', startF8); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+  }
+  // Lesson 8: percent off (percent as parts of a hundred)
+  function hundredBar(pct, color = 'var(--berry)') {
+    const cell = 12, W = cell * 10 + 2, H = cell * 10 + 2; let out = `<svg viewBox="0 0 ${W} ${H}" width="${W + 40}" style="display:block;margin:0 auto">`;
+    for (let i = 0; i < 100; i++) { const x = (i % 10) * cell + 1, y = Math.floor(i / 10) * cell + 1; out += `<rect x="${x}" y="${y}" width="${cell - 2}" height="${cell - 2}" rx="2" fill="${i < pct ? color : 'none'}" stroke="var(--panel-edge)" stroke-width="1"/>`; }
+    return out + '</svg>';
+  }
+  function startF8() {
+    phase = 'f8';
+    say([
+      'Closing day. Every stall has a sign up: <b>25% off</b>, <b>10% off</b>, <b>50% off</b>. Percent means <b>out of a hundred</b>. 25% is 25 out of every 100.',
+      'Maudie’s big cake was <b>40 coins</b>. Today it’s <b>50% off</b>. Fifty out of a hundred is half.'
+    ], () => askNumber('A 40-coin cake at <b>50% off</b>. How much do you <b>save</b>?', 20, hundredBar(50),
+      back => stepLines(['50% is 50 out of 100, which is a half', 'Half of 40 = <b style="color:var(--gold)">20</b>'], () => setTimeout(back, 900)),
+      () => say(['Twenty off, so you pay 20. Half price.', 'The twine at Ropes was <b>60 coins</b> a bundle. <b>25% off</b>. Twenty-five out of a hundred is a quarter.'],
+        () => askNumber('60 coins at <b>25% off</b>. What do you <b>pay</b>?', 45, hundredBar(25),
+          back => stepLines(['25% is a quarter', 'A quarter of 60 is 15 off', '60 − 15 = <b style="color:var(--gold)">45</b>'], () => setTimeout(back, 900)),
+          () => say(['Forty-five. Find the discount, take it off. Or notice you’re paying 75%, three quarters, and go straight there.', 'Now <b>10%</b>, the handiest one of all. Ten out of a hundred is a tenth. To find 10% of anything, divide by 10.'],
+            () => askNumber('A 35-coin net at <b>10% off</b>. How much is 10% of 35? (Use the point.)', 3.5, hundredBar(10),
+              back => stepLines(['10% is one tenth', '35 ÷ 10 = <b style="color:var(--gold)">3.5</b>'], () => setTimeout(back, 900)),
+              () => say(['3.5 coins off. Shift the point one place to the left and there’s your tenth.', 'And with that, every percent is easy. <b>30%</b> is three tenths. The ferry ticket is <b>20 coins</b>.'],
+                () => askNumber('A 20-coin ferry ticket at <b>30% off</b>. How much do you save?', 6, hundredBar(30),
+                  back => stepLines(['10% of 20 is 2', '30% is three of those: 3 × 2 = <b style="color:var(--gold)">6</b>'], () => setTimeout(back, 900)),
+                  () => say(['Six coins off. Find 10%, then take as many of them as you need. 30%, 70%, 90%, all the same trick.', 'That’s the market beaten. <b>2 coins</b>. Now there’s a barge coming in with a very familiar face at the pole. Go and meet it at the dock.'],
+                    () => { setCoins(coins + 2); rewardFern(8, 'A closing-day bargain', 'You read <b style="color:var(--gold)">percent</b> as parts of a hundred: 50% is a half, 25% a quarter, 10% a tenth, and the rest built from tenths.', () => { phase = 'tofen2'; nearFen2 = false; fenArrives(); hint('Fen’s barge is tying up at the dock. Go and say hello.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+  }
+  // Lesson 9: Fen's barge (a messy ledger, and everything from the river in one go)
+  function fenArrives() {
+    if (fen2) return;
+    fen2 = fen.clone(); fen2.position.copy(FEN2POS); fernScene.add(fen2); fernSolids.push({ x: FEN2POS.x, z: FEN2POS.z, r: 1.2 });
+    const sign = signBoard('Dewberry Barge', 4, 1, '#4a5fb8', '#f6e7c2'); sign.position.set(16, 6.2, 64); fernScene.add(sign);
+  }
+  function reachFen2() {
+    if (phase !== 'tofen2') return;
+    phase = 'f9';
+    say([
+      'It’s you! Look at this. My own barge! Well, a third of it. Maudie and Oriel own the rest. We carry berries down from the Hollow.',
+      'I’ve been keeping the ledger myself and, um. It’s gone a bit wrong. Oriel says you’re good at this now. Would you check it?',
+      'First page. We loaded <b>3/4</b> of a crate of berries at the Hollow and <b>1/2</b> a crate at the orchards.'
+    ], () => ask('<b>3/4 + 1/2</b> crates of berries. How much is that altogether?', ['4/6', '1 1/4', '5/4 of a half'], '1 1/4',
+      back => { visual.hidden = false; visual.innerHTML = pieRow([4, 3], [4, 2], [4, 4], '+') + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">1/2 is 2/4. Then 3/4 + 2/4 = 5/4: one whole crate and a quarter left over.</p>'; setTimeout(back, 2400); },
+      () => say(['One and a quarter crates. I wrote 4/6. I just added everything. Oops.', 'Second page. The berries sold for <b>2.4 leaves</b>, and the jars for <b>1.8 leaves</b>.'],
+        () => askNumber('<b>2.4 + 1.8</b> silver leaves. How much did we take? (Use the point.)', 4.2, ledgerPage('Barge takings', [['Berries', '2.4 leaves'], ['Jars', '1.8 leaves']], 'Total'),
+          back => stepLines(['Line up the points', '2.4 + 1.8: tenths first, 4 + 8 = 12, that’s 1 and 2 tenths', '2 + 1 + 1 = 4, and 2 tenths: <b style="color:var(--gold)">4.2</b>'], () => setTimeout(back, 1100)),
+          () => say(['4.2 leaves. Forty-two coins! I wrote 3.12. I didn’t line up the points.', 'Third page. The ferry charges <b>20%</b> of takings for the crossing.'],
+            () => askNumber('20% of 4.2 leaves. How many <b>coins</b> is the ferry fee? (4.2 leaves is 42 coins.)', 8, '',
+              back => stepLines(['10% of 42 is 4.2', '20% is twice that: <b style="color:var(--gold)">8.4</b> coins, call it 8 and a bit', 'Oriel rounds down. 8.'], () => setTimeout(back, 1100)),
+              () => say(['Eight coins, give or take the bit Oriel rounds off. We keep <b>34</b>.', 'Last page. Thirty-four coins, split <b>three ways</b> between me, Maudie and Oriel. Equal shares.'],
+                () => askNumber('<b>34 coins</b> shared three ways. How many coins each, with how many left over? (Write the coins each.)', 11, '',
+                  back => dealRow(34, 3, 'coin', () => setTimeout(back, 1400)),
+                  () => say(['Eleven each, and one left over. The one goes in the barge’s jar for repairs. I wrote 12 each and wondered where the extra coins went.', 'You fixed the whole book. You know what, if you’re ever back this way… you could run a stall. Oriel! Tell them!'],
+                    () => { setCoins(coins + 3); finishFern(); }, 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry');
+  }
+  function finishFern() {
+    phase = 'f9b';
+    say([
+      'A market licence. Yours. Buy, price, make change in three coins, and don’t let Maudie talk you into a cake you can’t shift.',
+      'And the wing. Let’s see it. Hm. Third symbol. I’ve seen that on the old lock gates. It means <b>“part.”</b> One, many, part.',
+      'The road runs on over the bridge and up into the hills. Surveyors up there. Sharp folk. Mind your angles.'
+    ], () => rewardFern(9, 'A Fernwater market licence', 'Fernwater is done. You checked Fen’s whole ledger with <b style="color:var(--gold)">fractions, decimals and percent</b>, and read the third mark on the wing: <b style="color:var(--gold)">“part.”</b> The Cairnhold Highlands are next.', null), ORI);
   }
 
   // ---------- input ----------
@@ -3391,6 +3502,7 @@
       const fy = fernScene.userData.ferry; if (fy && !reduce) { fy.position.y = 0.1 + Math.sin(t * 1.1) * 0.12; fy.rotation.z = Math.sin(t * 0.9) * 0.02; fy.rotation.x = Math.sin(t * 0.7) * 0.015; }
       if (water) water.material.map.offset.x += dt * 0.02;
       const rA = fernScene.userData.ropeA; if (rA) rA.visible = !(['todock', 'tofern', 'ori1'].includes(phase));
+      if (fen2) { const dF2 = Math.hypot(player.position.x - FEN2POS.x, player.position.z - FEN2POS.z); if (dF2 < 30) fen2.lookAt(player.position.x, 0, player.position.z); if (dF2 < 7.5 && !nearFen2 && !talking() && phase === 'tofen2') { nearFen2 = true; reachFen2(); } if (dF2 > 10.5) nearFen2 = false; }
     }
     // your beetle trots along behind you
     if (beetle && beetle.userData.follow) {
@@ -3444,7 +3556,7 @@
   const REGIONS = [
     { name: 'Thistledown Hollow', math: 'Counting, place value, adding and subtracting', lessons: [['Lesson 1: The spill', 'lesson-1'], ['Lesson 2: The first trade', 'lesson-2'], ['Lesson 3: The big harvest', 'lesson-3'], ['Lesson 4: The ledger', 'lesson-4'], ['Lesson 5: The nursery', 'lesson-5'], ['Lesson 6: Winter stores', 'lesson-6'], ['Lesson 7: The measuring stick', 'lesson-7'], ['Lesson 8: Shapes in the woodshop', 'lesson-8'], ['Lesson 9: The hundred-acorn count', 'lesson-9'], ['Lesson 10: The beetle', 'lesson-10']] },
     { name: 'Mallow Orchards', math: 'Multiplying, dividing, factors, remainders', lessons: [['Lesson 1: Rows and rows', 'orch-1'], ['Lesson 2: The mill songs', 'orch-2'], ['Lesson 3: Fair shares', 'orch-3'], ['Lesson 4: Leftovers', 'orch-4'], ['Lesson 5: Pip\u2019s puzzle', 'orch-5'], ['Lesson 6: Big orders', 'orch-6'], ['Lesson 7: The long split', 'orch-7'], ['Lesson 8: The cider press', 'orch-8'], ['Lesson 9: The Season Fair', 'orch-9']] },
-    { name: 'Fernwater Crossing', math: 'Fractions, decimals, money', lessons: [['Lesson 1: Half a rope', 'fern-1'], ['Lesson 2: The baker\u2019s cakes', 'fern-2'], ['Lesson 3: Adding slices', 'fern-3'], ['Lesson 4: The money-changer', 'fern-4'], ['Lesson 5: Decimals on the dock', 'fern-5']] },
+    { name: 'Fernwater Crossing', math: 'Fractions, decimals, money', lessons: [['Lesson 1: Half a rope', 'fern-1'], ['Lesson 2: The baker\u2019s cakes', 'fern-2'], ['Lesson 3: Adding slices', 'fern-3'], ['Lesson 4: The money-changer', 'fern-4'], ['Lesson 5: Decimals on the dock', 'fern-5'], ['Lesson 6: Fractions of a trip', 'fern-6'], ['Lesson 7: Price per', 'fern-7'], ['Lesson 8: Percent off', 'fern-8'], ['Lesson 9: Fen\u2019s barge', 'fern-9']] },
     { name: 'Cairnhold Highlands', math: 'Geometry and measurement' },
     { name: 'Cogsworth', math: 'Ratios, rates, percent, negative numbers' },
     { name: 'Emberdeep', math: 'Algebra 1 and 2' },
@@ -3601,7 +3713,7 @@
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }
     else if (/^orch-[2-9]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); setCoins(25 + 2 * (n - 2)); phase = 'doneO1'; pendingStart = { 'orch-2': startO2, 'orch-3': startO3, 'orch-4': startO4, 'orch-5': startO5, 'orch-6': startO6, 'orch-7': startO7, 'orch-8': startO8, 'orch-9': startO9 }[key]; setTimeout(goToOrchards, 200); }
-    else if (/^fern-[1-5]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); setCoins(27 + 2 * (n - 1)); if (n === 1) { phase = 'tofern'; } else { phase = 'doneF1'; pendingStart = { 'fern-2': () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb\u2019s bakery is the red-and-cream stall, left of the lane.'); }, 'fern-3': startF3, 'fern-4': startF4, 'fern-5': startF5 }[key]; } setTimeout(goToFernwater, 200); }
+    else if (/^fern-[1-9]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); setCoins(27 + 2 * (n - 1)); if (n === 1) { phase = 'tofern'; } else { phase = 'doneF1'; pendingStart = { 'fern-2': () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb\u2019s bakery is the red-and-cream stall, left of the lane.'); }, 'fern-3': startF3, 'fern-4': startF4, 'fern-5': startF5, 'fern-6': startF6, 'fern-7': startF7, 'fern-8': startF8, 'fern-9': () => { phase = 'tofen2'; nearFen2 = false; fenArrives(); hint('Fen\u2019s barge is at the dock. Go and say hello.'); } }[key]; } setTimeout(goToFernwater, 200); }
     else if (key === 'orch-1') { kid.satchel.visible = true; setCoins(22); phase = 'toorch'; setTimeout(goToOrchards, 200); }
     else if (key === 'road') { kid.satchel.visible = true; setCoins(19); setTimeout(goToRoad, 200); }
     else if (key === 'street' || key === 'gate') {
@@ -3616,7 +3728,7 @@
     else setTimeout(start, 500);
   }
   const h = location.hash.replace('#', '');
-  if (['lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5'].includes(h)) launch(h);
+  if (['lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5', 'fern-6', 'fern-7', 'fern-8', 'fern-9'].includes(h)) launch(h);
   else { startEl.hidden = false; drawMap(); }
 })();
 </script>
