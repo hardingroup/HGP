@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>[hidden]{display:none!important} html{height:100%} body{margin:0;font-family:system-ui,sans-serif} img{max-width:100%}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Long Road</title>
+<style>[hidden]{display:none!important} html{height:100%} body{margin:0;height:100%;overflow:hidden}</style>
 <title>Bramblewick's First Lesson</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -174,6 +175,8 @@
   <div class="maphead">
     <h1>The Long Road</h1>
     <p id="maphint">The whole land, from the Hollow to Skyhaven. Pick a place, then a lesson, to begin.</p>
+    <button class="btn primary" id="mapcontinue" hidden>Continue where you left off</button>
+    <button class="btn" id="mapreset" hidden>Start over</button>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
   </div>
   <div class="mapbody">
@@ -1122,7 +1125,7 @@
     const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), mat('#8fbf4a')); leaf.scale.set(0.4, 0.12, 1); leaf.position.set(0.2, 0.55, -0.35); leaf.rotation.set(0.6, 0.4, 0.4); hd.add(leaf);
     const satchel = new THREE.Group();
     const bag = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, 0.25), mat('#8a5a2b')); bag.position.set(0.68, 1.35, 0.1); satchel.add(bag);
-    const strap = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.04, 4, 20), mat('#6b4422')); strap.rotation.set(0, Math.PI / 2, 0.75); strap.position.set(0, 1.75, 0); satchel.add(strap);
+    [[0.5, 0.52], [0.5, -0.52]].forEach(([, z]) => { const strap = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.7, 0.05), mat('#6b4422')); strap.position.set(0.22, 1.75, z); strap.rotation.z = -0.42; satchel.add(strap); });
     satchel.visible = false; player.add(satchel);
     Object.assign(kid, { legs, arms, hd, satchel });
   }
@@ -1220,7 +1223,7 @@
   }
   function fadeTo(text, mid, after) {
     fading = true; fadeEl.textContent = text; fadeEl.classList.add('on');
-    setTimeout(() => { mid(); setTimeout(() => { fadeEl.classList.remove('on'); fading = false; after && after(); }, 500); }, 800);
+    setTimeout(() => { mid(); if (typeof restoreAfter === 'function') { const f = restoreAfter; restoreAfter = null; f(); } setTimeout(() => { fadeEl.classList.remove('on'); fading = false; after && after(); }, 500); }, 800);
   }
   function moveCompany(from, to) { from.remove(player); to.add(player); if (beetle) { from.remove(beetle); to.add(beetle); } }
   function goToRoad() {
@@ -1418,22 +1421,86 @@
   {
     const g = new THREE.Mesh(new THREE.PlaneGeometry(700, 900), mat('#ffffff', { map: groundTex })); g.rotation.x = -Math.PI / 2; g.position.set(0, 0, FERN_LEN / 2); g.receiveShadow = true; fernScene.add(g);
     // the river: a wide band of water across the middle, with the far bank beyond
-    const waterTex = canvasTex(256, 256, (gg, w, h) => { gg.fillStyle = '#4a7fb8'; gg.fillRect(0, 0, w, h); for (let i = 0; i < 300; i++) { gg.strokeStyle = pick(['#6f9fd0', '#3d6ea8', '#8fb9e0']); gg.lineWidth = rnd(1, 3); gg.beginPath(); const y = rnd(0, h); gg.moveTo(rnd(0, w), y); gg.bezierCurveTo(rnd(0, w), y + rnd(-4, 4), rnd(0, w), y + rnd(-4, 4), rnd(0, w), y); gg.stroke(); } }, [12, 3]);
-    water = new THREE.Mesh(new THREE.PlaneGeometry(700, 46), new THREE.MeshStandardMaterial({ map: waterTex, roughness: 0.15, metalness: 0.3, transparent: true, opacity: 0.92 })); water.rotation.x = -Math.PI / 2; water.position.set(0, 0.06, 78); fernScene.add(water);
-    [[57, -1], [99, 1]].forEach(([z, d]) => { const bank = new THREE.Mesh(new THREE.BoxGeometry(700, 1.2, 3), mat('#6a5534')); bank.position.set(0, 0.3, z); fernScene.add(bank); for (let x = -120; x < 120; x += 7) { const reed = new THREE.Mesh(new THREE.ConeGeometry(0.4, rnd(3, 6), 4), mat('#6b8c3a')); reed.position.set(x + rnd(-2, 2), 2, z + d * rnd(1, 3)); fernScene.add(reed); } });
+    const waterTex = canvasTex(256, 256, (gg, w, h) => { gg.fillStyle = '#6f9fd0'; gg.fillRect(0, 0, w, h); for (let i = 0; i < 300; i++) { gg.strokeStyle = pick(['#6f9fd0', '#3d6ea8', '#8fb9e0']); gg.lineWidth = rnd(1, 3); gg.beginPath(); const y = rnd(0, h); gg.moveTo(rnd(0, w), y); gg.bezierCurveTo(rnd(0, w), y + rnd(-4, 4), rnd(0, w), y + rnd(-4, 4), rnd(0, w), y); gg.stroke(); } }, [12, 3]);
+    water = new THREE.Mesh(new THREE.PlaneGeometry(300, 46), new THREE.MeshStandardMaterial({ map: waterTex, roughness: 0.5, metalness: 0, transparent: true, opacity: 0.95 })); water.rotation.x = -Math.PI / 2; water.position.set(0, 0.06, 78); fernScene.add(water);
+    [[57, -1], [99, 1]].forEach(([z, d]) => { [-1, 1].forEach(sd => { const bank = new THREE.Mesh(new THREE.BoxGeometry(144, 1.2, 3), mat('#6a5534')); bank.position.set(sd * 78, 0.3, z); fernScene.add(bank); }); for (let x = -120; x < 120; x += 7) { if (Math.abs(x) < 8) continue; const reed = new THREE.Mesh(new THREE.ConeGeometry(0.4, rnd(3, 6), 4), mat('#6b8c3a')); reed.position.set(x + rnd(-2, 2), 2, z + d * rnd(1, 3)); fernScene.add(reed); } });
     // the lane to the boardwalk, then a plank boardwalk on stilts across the river
     const lane = new THREE.Mesh(new THREE.PlaneGeometry(9, 56), mat('#ffffff', { map: dirtTex })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.03, 28); lane.receiveShadow = true; fernScene.add(lane);
     const walk = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 50), mat('#ffffff', { map: plankTex })); walk.position.set(0, 1.6, 78); fernScene.add(walk);
     for (let z = 56; z <= 100; z += 6) [-4.6, 4.6].forEach(x => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 3.4, 8), mat('#5a3d22')); st.position.set(x, 0.4, z); fernScene.add(st); const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 6, 6), mat('#8a6438')); rail.rotation.x = Math.PI / 2; rail.position.set(x, 3.2, z + 3); fernScene.add(rail); const bal = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.4, 6), mat('#8a6438')); bal.position.set(x, 2.5, z); fernScene.add(bal); });
     [[0, 54], [0, 102]].forEach(([x, z]) => { const ramp = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, 5), mat('#ffffff', { map: plankTex })); ramp.position.set(x, 1.1, z); ramp.rotation.x = z < 70 ? -0.35 : 0.35; fernScene.add(ramp); });
     // the market: stalls on stilts either side of the lane
-    [[-13, 36, '#c8384a', '#f2e6c8', 'Crumb\u2019s Bakery'], [16, 30, '#4a5fb8', '#f2e6c8', 'Money-Changer'], [-16, 20, '#3e8a52', '#f2e6c8', 'Ropes'], [17, 44, '#d9a33f', '#f2e6c8', 'Nets & Lines']].forEach(([x, z, c1, c2, label]) => {
-      const st = stallCart(c1, c2, label); st.position.set(x, 0, z); st.rotation.y = x < 0 ? -Math.PI / 2 : Math.PI / 2; fernScene.add(st);
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(9, 0.4, 9), mat('#ffffff', { map: plankTex })); deck.position.set(x + (x < 0 ? -2 : 2), 0.2, z); fernScene.add(deck);
-      fernSolids.push({ x: x, z, r: 3.4 });
+    // proper shops: a timber building each, open shopfront facing the lane, counter, sign and wares inside
+    function shopBuilding(x, z, facing, color, label, decorate) {
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = facing; fernScene.add(g);
+      const wallM = mat(color), trimM = mat('#5a3d22');
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(11, 0.4, 10), mat('#ffffff', { map: plankTex })); floor.position.y = 0.2; g.add(floor);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(10, 6.5, 0.4), wallM); back.position.set(0, 3.45, -4.8); g.add(back);
+      [-1, 1].forEach(d => { const side = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.5, 9.6), wallM); side.position.set(d * 4.8, 3.45, 0); g.add(side); const post = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.8, 0.5), trimM); post.position.set(d * 4.8, 3.6, 4.8); g.add(post); for (let k = 0; k < 4; k++) { const beam = new THREE.Mesh(new THREE.BoxGeometry(0.18, 6.5, 0.18), trimM); beam.position.set(d * 4.9, 3.45, -4.5 + k * 2.4); g.add(beam); } });
+      const lintel = new THREE.Mesh(new THREE.BoxGeometry(10.2, 0.6, 0.6), trimM); lintel.position.set(0, 6.5, 4.8); g.add(lintel);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(12, 0.5, 11.5), mat('#6b4a2b')); roof.position.set(0, 6.95, 0.3); g.add(roof);
+      const ridge = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 6.2, 3.2, 4), mat('#8a3a3a', { roughness: 1 })); ridge.rotation.y = Math.PI / 4; ridge.scale.set(1, 1, 0.95); ridge.position.set(0, 8.8, 0.3); g.add(ridge);
+      const chimney = new THREE.Mesh(new THREE.BoxGeometry(1, 2.6, 1), mat('#8d7a66')); chimney.position.set(-3, 9.2, -2.5); g.add(chimney);
+      const counter = new THREE.Mesh(new THREE.BoxGeometry(7, 2.2, 1.4), mat('#8a6438')); counter.position.set(0, 1.5, 3.2); g.add(counter);
+      const ctop = new THREE.Mesh(new THREE.BoxGeometry(7.4, 0.2, 1.8), mat('#ffffff', { map: plankTex })); ctop.position.set(0, 2.7, 3.2); g.add(ctop);
+      [-1, 1].forEach(d => { const w = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.6), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.6, side: THREE.DoubleSide })); w.position.set(d * 2.6, 4.2, -4.58); g.add(w); const fr = new THREE.Mesh(new THREE.BoxGeometry(2, 0.12, 0.12), trimM); fr.position.set(d * 2.6, 4.2, -4.55); g.add(fr); const fr2 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.8, 0.12), trimM); fr2.position.set(d * 2.6, 4.2, -4.55); g.add(fr2); });
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(0, 5.4, 0); g.add(lamp);
+      const light = new THREE.PointLight('#ffc46a', 0.9, 18); light.position.set(0, 5, 0); g.add(light);
+      const sign = signBoard(label, 6, 1.3, '#5a3d22', '#f6e7c2'); sign.position.set(0, 7.9, 5.2); g.add(sign);
+      const steps = new THREE.Mesh(new THREE.BoxGeometry(6, 0.3, 1.6), mat('#8a7458')); steps.position.set(0, 0.15, 5.6); g.add(steps);
+      decorate && decorate(g);
+      return g;
+    }
+    // Crumb's Bakery: a brick oven with a glowing mouth, bread on shelves, a flour barrel
+    shopBuilding(-13, 36, Math.PI / 2, '#c8384a', 'Crumb\u2019s Bakery', g => {
+      const oven = new THREE.Mesh(new THREE.SphereGeometry(2.2, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat('#9b7a62')); oven.position.set(-2.4, 0.4, -2.8); oven.scale.y = 0.9; g.add(oven);
+      const mouth = new THREE.Mesh(new THREE.CircleGeometry(0.7, 14, 0, Math.PI), mat('#ff8a2a', { emissive: '#ff6a10', emissiveIntensity: 1.4 })); mouth.position.set(-2.4, 0.5, -0.65); g.add(mouth);
+      const glow = new THREE.PointLight('#ff7a30', 0.8, 10); glow.position.set(-2.4, 1, 0); g.add(glow);
+      [2.2, 3.6, 5].forEach(y => { const shelf = new THREE.Mesh(new THREE.BoxGeometry(4, 0.15, 1), mat('#ffffff', { map: plankTex })); shelf.position.set(2.4, y, -4.1); g.add(shelf); for (let k = 0; k < 4; k++) { const loaf = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), mat(pick(['#c9a06a', '#b8864a', '#d9b57a']))); loaf.scale.set(1.4, 0.8, 0.9); loaf.position.set(0.9 + k * 0.95, y + 0.35, -4.1); g.add(loaf); } });
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.8, 1.8, 14), mat('#8a6438')); barrel.position.set(3.8, 0.9, 1.2); g.add(barrel);
+      const flour = new THREE.Mesh(new THREE.CircleGeometry(0.8, 14), mat('#f5f0e6')); flour.rotation.x = -Math.PI / 2; flour.position.set(3.8, 1.82, 1.2); g.add(flour);
+      const peel = new THREE.Mesh(new THREE.BoxGeometry(0.15, 5, 0.6), mat('#c9a06a')); peel.position.set(-4.4, 2.8, 1.5); peel.rotation.z = 0.25; g.add(peel);
     });
+    // the Money-Changer: barred window at the counter, scales, stacks of three coins, a strongbox
+    shopBuilding(16, 30, -Math.PI / 2, '#4a5fb8', 'Money-Changer', g => {
+      for (let k = -3; k <= 3; k++) { const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3, 6), mat('#4b4b4b', { metalness: 0.6 })); bar.position.set(k * 0.9, 4.3, 3.2); g.add(bar); }
+      const scale = new THREE.Group(); scale.position.set(-2, 2.8, 3.2); g.add(scale);
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.2, 1.2, 8), mat('#c9a440', { metalness: 0.7, roughness: 0.3 })); stand.position.y = 0.6; scale.add(stand);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.06, 0.06), mat('#c9a440', { metalness: 0.7 })); arm.position.y = 1.2; arm.rotation.z = 0.08; scale.add(arm);
+      [-0.85, 0.85].forEach(x => { const pan = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 12), mat('#c9a440', { metalness: 0.7 })); pan.position.set(x, 0.75 + (x < 0 ? -0.06 : 0.06), 0); scale.add(pan); });
+      [[0.4, '#e8b64c', 5], [1.1, '#c0c0c0', 4], [1.8, '#e8b64c', 3], [2.5, '#e3c16f', 6]].forEach(([x, c, n]) => { for (let k = 0; k < n; k++) { const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.07, 14), mat(c, { metalness: 0.8, roughness: 0.25 })); coin.position.set(x, 2.84 + k * 0.08, 3.1); g.add(coin); } });
+      const box = new THREE.Mesh(new THREE.BoxGeometry(2, 1.4, 1.4), mat('#3b3b3b', { metalness: 0.5 })); box.position.set(-3, 0.7, -3); g.add(box);
+      const lock = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.1), mat('#e8b64c', { metalness: 0.7 })); lock.position.set(-3, 0.7, -2.25); g.add(lock);
+      const board = signBoard('10 coins = 1 leaf', 3.6, 0.8, '#f2e6c8', '#3a2a18'); board.position.set(0, 5.6, -4.4); g.add(board);
+      const board2 = signBoard('10 leaves = 1 ring', 3.6, 0.8, '#f2e6c8', '#3a2a18'); board2.position.set(0, 4.6, -4.4); g.add(board2);
+    });
+    // the Rope-maker: coils on pegs, a spinning wheel, hanks of twine
+    shopBuilding(-16, 20, Math.PI / 2, '#3e8a52', 'Tideknot Ropes', g => {
+      for (let k = 0; k < 5; k++) { const coil = new THREE.Mesh(new THREE.TorusGeometry(0.6 + (k % 2) * 0.2, 0.18, 8, 20), mat('#c7b386', { roughness: 1 })); coil.position.set(-3.4 + k * 1.7, 4.6 - (k % 2) * 0.4, -4.3); g.add(coil); const peg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.6, 6), mat('#5a3d22')); peg.rotation.x = Math.PI / 2; peg.position.set(-3.4 + k * 1.7, 5.4 - (k % 2) * 0.4, -4.3); g.add(peg); }
+      const wheel = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.1, 8, 24), mat('#8a6438')); wheel.position.set(-3, 1.6, 0); wheel.rotation.y = Math.PI / 2; g.add(wheel);
+      for (let k = 0; k < 6; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.1, 0.06), mat('#8a6438')); sp.position.set(-3, 1.6, 0); sp.rotation.x = k * Math.PI / 6; g.add(sp); }
+      for (let k = 0; k < 3; k++) { const hank = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.1, 10), mat('#d9c6a0')); hank.position.set(1 + k * 1.1, 3.25, 3.1); g.add(hank); }
+    });
+    // Nets & Lines: nets strung from the rafters, floats, a fishing rod, baskets of fish
+    shopBuilding(17, 44, -Math.PI / 2, '#d9a33f', 'Nets & Lines', g => {
+      const net = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.5, 7, 4), new THREE.MeshStandardMaterial({ color: '#c7b386', wireframe: true })); net.position.set(0, 4.6, -3.5); net.rotation.x = 0.25; g.add(net);
+      for (let k = 0; k < 6; k++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), mat(pick(['#c8384a', '#f4c53a', '#4a5fb8']))); fl.position.set(-3 + k * 1.2, 6.1, -2.5); g.add(fl); }
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.08, 6, 6), mat('#c9a06a')); rod.position.set(4.2, 3.2, 0.5); rod.rotation.z = 0.2; g.add(rod);
+      const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.7, 0.9, 14, 1, true), mat('#a07a44', { side: THREE.DoubleSide })); basket.position.set(-2.4, 3.15, 3.1); g.add(basket);
+      for (let k = 0; k < 4; k++) { const fish = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), mat('#8fb9c9', { metalness: 0.4, roughness: 0.3 })); fish.scale.set(1.8, 0.6, 0.8); fish.position.set(-2.4 + rnd(-0.4, 0.4), 3.5 + k * 0.1, 3.1 + rnd(-0.3, 0.3)); fish.rotation.y = rnd(0, 3); g.add(fish); }
+    });
+    [[-13, 36], [16, 30], [-16, 20], [17, 44]].forEach(([x, z]) => { fernSolids.push({ x: x + (x < 0 ? -1 : 1), z, r: 5.6 }); });
+    // Oriel's ferry office on the dock: a hut with a timetable
+    const office = new THREE.Group(); office.position.set(22, 1.65, 58); office.rotation.y = -Math.PI / 2; fernScene.add(office);
+    const ow = new THREE.Mesh(new THREE.BoxGeometry(5, 4.5, 4.5), mat('#2f4a6a')); ow.position.y = 2.25; office.add(ow);
+    const orf = new THREE.Mesh(new THREE.ConeGeometry(4, 2.4, 4), mat('#5a3d22')); orf.position.y = 5.7; orf.rotation.y = Math.PI / 4; office.add(orf);
+    const od = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 3), mat('#3e2812')); od.position.set(0, 1.5, 2.26); office.add(od);
+    const owin = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.2), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.6 })); owin.position.set(1.6, 2.8, 2.26); office.add(owin);
+    const osign = signBoard('Ferry Office', 4.2, 1, '#2f4a6a', '#f6e7c2'); osign.position.set(0, 4.9, 2.5); office.add(osign);
+    const tt = signBoard('Crossings: dawn, noon, dusk', 4.4, 1, '#f2e6c8', '#3a2a18'); tt.position.set(-1.2, 1.8, 2.3); tt.rotation.y = 0.1; office.add(tt);
+    fernSolids.push({ x: 22, z: 58, r: 3.2 });
     // bakery goods: cakes on the counter, cut into slices
-    const bakery = new THREE.Group(); bakery.position.set(MAUDPOS.x, 2.6, MAUDPOS.z); fernScene.add(bakery);
+    const bakery = new THREE.Group(); bakery.position.set(MAUDPOS.x + 1.4, 2.8, MAUDPOS.z); fernScene.add(bakery);
     [[0, 0, 6], [0, -2.2, 4], [0, 2.2, 8]].forEach(([x, z, n]) => { for (let k = 0; k < n; k++) { const slice = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.6, 12, 1, false, k * Math.PI * 2 / n + 0.04, Math.PI * 2 / n - 0.08), mat(pick(['#e8b64c', '#d9a0a0', '#c9a06a']))); slice.position.set(x + 2.3, 0.3, z); bakery.add(slice); } });
     for (let k = 0; k < 12; k++) { const bun = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), mat('#c9a06a')); bun.position.set(2.0 + (k % 4) * 0.5 - 0.7, 0.4, -3.8 + Math.floor(k / 4) * 0.5); bakery.add(bun); }
     // the rope-walk: a long frame with ropes stretched along it, and knots
@@ -1467,7 +1534,7 @@
       [[-3, -3], [3, -3], [-3, 3], [3, 3]].forEach(([sx, sz]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 4, 8), mat('#5a3d22')); st.position.set(sx, 2, sz); h.add(st); });
       const fl = new THREE.Mesh(new THREE.BoxGeometry(8, 0.4, 8), mat('#ffffff', { map: plankTex })); fl.position.y = 4.1; h.add(fl);
       const wall = new THREE.Mesh(new THREE.BoxGeometry(7, 5, 7), mat(c)); wall.position.y = 6.8; h.add(wall);
-      const rf = new THREE.Mesh(new THREE.ConeGeometry(6, 3.5, 4), mat('#5a3d22')); rf.position.y = 11; rf.rotation.y = Math.PI / 4; h.add(rf);
+      const rf = new THREE.Mesh(new THREE.ConeGeometry(6, 3.5, 4), mat('#8a6240', { roughness: 1 })); rf.position.y = 11; rf.rotation.y = Math.PI / 4; h.add(rf);
       const win = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.6 })); win.position.set(0, 7, 3.51); h.add(win);
       const ladder = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4.6, 0.2), mat('#8a6438')); ladder.position.set(0, 2.3, 4.2); ladder.rotation.x = -0.25; h.add(ladder);
       fernSolids.push({ x, z, r: 4.6 });
@@ -1484,7 +1551,7 @@
     const geo2 = new THREE.ConeGeometry(0.24, 1, 3); geo2.translate(0, 0.5, 0);
     const tallF = new THREE.InstancedMesh(geo2, mat('#ffffff', { roughness: 0.9 }), 3500);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 3500; i++) { const side = i % 2 ? 1 : -1; pv.set(side * rnd(46, 140), 0, rnd(-40, 56)); if (i % 3 === 0) pv.set(rnd(-140, 140), 0, rnd(104, 220)); q.setFromEuler(new THREE.Euler(rnd(-0.25, 0.25), rnd(0, 6.3), rnd(-0.25, 0.25))); sv.set(1, rnd(3, 10), 1); tallF.setMatrixAt(i, m4.compose(pv, q, sv)); tallF.setColorAt(i, col.set(pick(['#7d9c45', '#6b8c3a', '#8fae52', '#5f7f33']))); }
+    for (let i = 0; i < 3500; i++) { const side = i % 2 ? 1 : -1; pv.set(side * rnd(46, 140), 0, rnd(-40, 56)); if (i % 3 === 0) { pv.set(rnd(-140, 140), 0, rnd(104, 220)); if (Math.abs(pv.x) < 9) pv.x += pv.x < 0 ? -9 : 9; } q.setFromEuler(new THREE.Euler(rnd(-0.25, 0.25), rnd(0, 6.3), rnd(-0.25, 0.25))); sv.set(1, rnd(3, 10), 1); tallF.setMatrixAt(i, m4.compose(pv, q, sv)); tallF.setColorAt(i, col.set(pick(['#7d9c45', '#6b8c3a', '#8fae52', '#5f7f33']))); }
     fernScene.add(tallF);
     // the gate back to the orchards
     const railM = mat('#8a6438'), postM = mat('#6b4a2b');
@@ -1693,7 +1760,17 @@
   }
 
   let coins = 0;
-  function setCoins(n) { coins = n; const c = $('coins'); c.hidden = false; c.innerHTML = ICON.coin + `<span>${n} acorn coin${n === 1 ? '' : 's'}</span>`; }
+  // ---------- saving: the browser remembers your coins, finished lessons, beetle and where you were ----------
+  const SAVE_KEY = 'long-road-save-v1';
+  let save = { coins: 0, done: [], where: 'village', pos: [0, 0, 6.5], yaw: Math.PI, beetle: '', started: false };
+  try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const parsed = JSON.parse(raw); if (parsed && typeof parsed === 'object') save = Object.assign(save, parsed); } } catch (e) {}
+  let saveTimer = 0;
+  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+  function markDone(key) { if (!save.done.includes(key)) { save.done.push(key); persist(); } }
+  function isDone(key) { return save.done.includes(key); }
+  function clearSave() { save = { coins: 0, done: [], where: 'village', pos: [0, 0, 6.5], yaw: Math.PI, beetle: '', started: false }; try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+  function setCoins(n) { coins = n; save.coins = n; persist(); const c = $('coins'); c.hidden = false; c.innerHTML = ICON.coin + `<span>${n} acorn coin${n === 1 ? '' : 's'}</span>`; }
+  function coinsAtLeast(n) { setCoins(Math.max(n, save.coins || 0)); }
 
   // ---------- the lesson ----------
   let phase = 'intro', tipT = -1, nearBW = true, nearFen = false;
@@ -1907,6 +1984,7 @@
     ], () => { setCoins(2); reward2(); });
   }
   function reward2() {
+    markDone('lesson-2');
     phase = 'done2'; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Lesson 2 complete</h2>
@@ -1994,6 +2072,7 @@
           ], () => { setCoins(coins + 3); reward3(); })))));
   }
   function reward3() {
+    markDone('lesson-3');
     phase = 'done3'; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Lesson 3 complete</h2>
@@ -2053,6 +2132,7 @@
         }))));
   }
   function reward4() {
+    markDone('lesson-4');
     phase = 'done4'; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Lesson 4 complete</h2>
@@ -2165,6 +2245,7 @@
     else hint('One bed watered. Fill the can again for the other.');
   }
   function reward5() {
+    markDone('lesson-5');
     phase = 'done5'; $('tasks').innerHTML = '';
     const s = seedling(1.2); s.position.set(3.6, 0, R + 2.5); scene.add(s);
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
@@ -2241,6 +2322,7 @@
               }))))));
   }
   function reward6() {
+    markDone('lesson-6');
     phase = 'done6'; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Lesson 6 complete</h2>
@@ -2316,6 +2398,7 @@
           ], () => { clearLaid(); setCoins(coins + 2); reward7(); })))));
   }
   function reward7() {
+    markDone('lesson-7');
     phase = 'done7'; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Lesson 7 complete</h2>
@@ -2394,6 +2477,7 @@
                 ], () => { setCoins(coins + 2); reward8(); }, 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough');
   }
   function reward8() {
+    markDone('lesson-8');
     phase = 'done8'; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Lesson 8 complete</h2>
@@ -2459,6 +2543,7 @@
                     ], () => { setCoins(coins + 3); reward9(); })))))))));
   }
   function reward9() {
+    markDone('lesson-9');
     phase = 'done9'; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Lesson 9 complete</h2>
@@ -2552,11 +2637,12 @@
           }))));
   }
   function nameBeetle(name) {
-    beetleName = name; beetle.userData.follow = true;
+    beetleName = name; beetle.userData.follow = true; save.beetle = name; persist();
     say([`<b>${name}</b>. A good strong name for a good strong beetle.`, `You raised a hauler from a grub, and you know how its whole life goes round. That’s <b>3 coins</b>, and ${name} is worth more than all of them.`, 'That’s the Hollow done, little one. Out past the signpost, the Long Road starts. The orchards, and old Hollis Quern at the mill, are waiting.'],
       () => { setCoins(coins + 3); reward10(); });
   }
   function reward10() {
+    markDone('lesson-10');
     phase = 'done10'; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Thistledown Hollow complete</h2>
@@ -2641,11 +2727,14 @@
       say(['Marigold’s nursery is west, down the path past the signpost. Off you go!']);
     } else if (phase === 'harvest') {
       labels.shop.visible = false; reachBramblewickHarvest();
+    } else if (phase === 'free') {
+      say(['Back again! Good. Open the map, press M, and pick up wherever you left off.']);
     } else if (phase === 'tofen' || phase === 'sort') {
-      say(['No jars yet? Fen’s stall is down the lane, past the signpost.']);
+      say(['No jars yet? Fen\u2019s stall is down the lane, past the signpost.']);
     }
   }
   function reward() {
+    markDone('lesson-1');
     phase = 'done'; kid.satchel.visible = true; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Lesson 1 complete</h2>
@@ -2725,6 +2814,7 @@
               ], () => { setCoins(coins + 3); rewardO1(); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
   }
   function rewardO1() {
+    markDone('orch-1');
     phase = 'doneO1'; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Orchards, Lesson 1 complete</h2>
@@ -2772,6 +2862,7 @@
                       ], () => { setCoins(coins + 2); rewardOrch(2, 'The mill songbook', 'You sang the <b>times tables</b> as songs, and jumped straight to any verse.', startO3); }, 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern');
   }
   function rewardOrch(n, item, text, next) {
+    markDone('orch-' + n);
     phase = 'doneO' + n; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Orchards, Lesson ${n} complete</h2>
@@ -3012,6 +3103,7 @@
     else if (phase === 'f5go') { startF5(); }
   }
   function rewardFern(n, item, text, next) {
+    markDone('fern-' + n);
     phase = 'doneF' + n; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>Fernwater, Lesson ${n} complete</h2>
@@ -3317,6 +3409,15 @@
   canvas.addEventListener('pointercancel', () => { down = null; dragged = false; });
 
   // ---------- movement and collisions ----------
+  function groundHeight() {
+    if (where !== 'fernwater') return 0;
+    const x = player.position.x, z = player.position.z; if (Math.abs(x) > 5.2) return 0;
+    const top = 1.85;
+    if (z >= 56.5 && z <= 99.5) return top;
+    if (z > 51.5 && z < 56.5) return top * (z - 51.5) / 5;
+    if (z > 99.5 && z < 104.5) return top * (104.5 - z) / 5;
+    return 0;
+  }
   function collide(prev) {
     const p = player.position;
     if (where === 'village') solids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
@@ -3366,7 +3467,7 @@
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), fwd = new THREE.Vector3(), prev = new THREE.Vector3();
   function camTarget() {
     const dist = view === 'front' ? 6.5 : 8, off = view === 'front' ? bodyYaw : camYaw + Math.PI;
-    const base = player.position.clone(); base.y = py + 2.4;
+    const base = player.position.clone(); base.y = groundHeight() + py + 2.4;
     let dd = dist, pos;
     for (let i = 0; i < 12; i++) {
       pos = base.clone().add(new THREE.Vector3(Math.sin(off) * Math.cos(pitch) * dd, Math.sin(pitch) * dd + 0.8, Math.cos(off) * Math.cos(pitch) * dd));
@@ -3432,7 +3533,8 @@
       kid.arms[0].rotation.x = -swing * 0.8 - (grabT < 1 ? Math.sin(grabT * Math.PI) * 1.8 : 0) - (onGround ? 0 : 1.2);
       kid.arms[1].rotation.x = swing * 0.8 - (onGround ? 0 : 1.2);
     }
-    player.position.y = sitting ? py : py + (moving && onGround ? Math.abs(Math.sin(walkPhase)) * (running ? 0.18 : 0.12) : 0);
+    const gY = groundHeight();
+    player.position.y = gY + (sitting ? py : py + (moving && onGround ? Math.abs(Math.sin(walkPhase)) * (running ? 0.18 : 0.12) : 0));
     kid.hd.rotation.y = headYaw; kid.hd.rotation.x = -pitch * 0.5 + (reduce ? 0 : Math.sin(t * 1.3) * 0.02);
     if (grabT < 1) grabT = Math.min(1, grabT + dt * 3);
 
@@ -3510,6 +3612,7 @@
       if (db > 3.2) { const sp = Math.min(9, (db - 3) * 3) * dt; beetle.position.x += dxb / db * sp; beetle.position.z += dzb / db * sp; beetle.userData.walk = (beetle.userData.walk || 0) + dt * 14; }
       if (db > 0.5) { const want = Math.atan2(dxb, dzb); beetle.rotation.y += wrap(want - beetle.rotation.y) * Math.min(1, dt * 6); }
       beetle.userData.legs.forEach((leg, i) => { leg.rotation.x = Math.sin((beetle.userData.walk || 0) + i * 1.05) * (db > 3.2 ? 0.5 : 0); });
+      if (where === 'fernwater') { const bx = beetle.position.x, bz = beetle.position.z; beetle.position.y = Math.abs(bx) <= 5.2 ? (bz >= 56.5 && bz <= 99.5 ? 1.85 : bz > 51.5 && bz < 56.5 ? 1.85 * (bz - 51.5) / 5 : bz > 99.5 && bz < 104.5 ? 1.85 * (104.5 - bz) / 5 : 0) : 0; } else beetle.position.y = 0;
     }
 
     pickables.forEach(o => {
@@ -3540,6 +3643,7 @@
       snow.geometry.attributes.position.needsUpdate = true;
     }
 
+    if (gameStarted && !fading) { saveTimer += dt; if (saveTimer > 2) { saveTimer = 0; save.where = where; save.pos = [player.position.x, py, player.position.z]; save.yaw = bodyYaw; save.started = true; persist(); } }
     updateMapLive();
     renderer.render(where === 'village' ? scene : where === 'road' ? roadScene : where === 'orchards' ? orchScene : fernScene, camera);
     requestAnimationFrame(tick);
@@ -3659,7 +3763,8 @@
     });
     const [yx, yy] = youAreHere();
     svg += `<g id="youmark" transform="translate(${yx} ${yy})" ${gameStarted ? '' : 'visibility="hidden"'}><circle class="you" r="9"/><circle r="5" fill="#d23b4e" stroke="#fff" stroke-width="2"/><text y="-14" text-anchor="middle" font-size="11" font-weight="700" fill="#d23b4e">You are here</text></g></svg>`;
-    mapSvgEl.innerHTML = svg;
+    mapSvgEl.innerHTML = svg; refreshSaveButtons();
+    if (!gameStarted && save.started) $('maphint').textContent = `Welcome back: ${save.coins} acorn coins and ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Continue, or pick any lesson.`;
     mapSvgEl.querySelectorAll('.mapmark').forEach(g => { g.addEventListener('click', () => selectRegion(parseInt(g.dataset.i, 10))); g.setAttribute('tabindex', '0'); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRegion(parseInt(g.dataset.i, 10)); } }); });
     drawPanel();
   }
@@ -3669,7 +3774,8 @@
     const m = document.createElement('div'); m.className = 'math'; m.textContent = r.math; mapPanel.appendChild(m);
     if (r.lessons) {
       const list = document.createElement('div'); list.className = 'lessons';
-      r.lessons.forEach(([label, key]) => { const b = document.createElement('button'); b.className = 'btn small primary'; b.textContent = label; b.onclick = () => { if (gameStarted) { location.hash = key; location.reload(); } else launch(key); }; list.appendChild(b); });
+      r.lessons.forEach(([label, key]) => { const b = document.createElement('button'); b.className = 'btn small ' + (isDone(key) ? '' : 'primary'); b.textContent = (isDone(key) ? '\u2713 ' : '') + label; b.title = isDone(key) ? 'Finished. Play it again any time.' : ''; b.onclick = () => { if (gameStarted) { location.hash = key; location.reload(); } else launch(key); }; list.appendChild(b); });
+      const doneN = r.lessons.filter(([, k]) => isDone(k)).length; if (doneN) { const dn = document.createElement('div'); dn.className = 'math'; dn.textContent = `${doneN} of ${r.lessons.length} finished`; mapPanel.insertBefore(dn, list); }
       mapPanel.appendChild(list);
     } else { const sn = document.createElement('div'); sn.className = 'soon'; sn.textContent = 'Not built yet. The road will reach it.'; mapPanel.appendChild(sn); }
     if (gameStarted) {
@@ -3690,38 +3796,54 @@
   function closeMap() { if (!gameStarted) return; mapOpen = false; startEl.hidden = true; }
   function toggleMap() { mapOpen ? closeMap() : openMap(); }
   mapClose.addEventListener('click', closeMap);
+  const mapContinue = $('mapcontinue'), mapReset = $('mapreset');
+  function refreshSaveButtons() { mapContinue.hidden = gameStarted || !save.started; mapReset.hidden = !(save.started || save.done.length || save.coins); }
+  mapContinue.addEventListener('click', () => continueGame());
+  let resetArmed = false;
+  mapReset.addEventListener('click', () => { if (!resetArmed) { resetArmed = true; mapReset.textContent = 'Really start over? Click again'; setTimeout(() => { resetArmed = false; mapReset.textContent = 'Start over'; }, 4000); return; } clearSave(); location.hash = ''; location.reload(); });
+  function continueGame() {
+    startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false;
+    kid.satchel.visible = save.done.length > 0; setCoins(save.coins || 0); phase = 'free';
+    if (save.beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(save.pos[0] - 2, 0, save.pos[2] - 2); }
+    const place = () => { player.position.set(save.pos[0], 0, save.pos[2]); py = 0; bodyYaw = camYaw = save.yaw || 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(player.position.x - 2, 0, player.position.z - 2); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); };
+    if (save.where === 'road') { restoreAfter = place; goToRoad(); }
+    else if (save.where === 'orchards') { restoreAfter = place; goToOrchards(); }
+    else if (save.where === 'fernwater') { restoreAfter = place; goToFernwater(); }
+    else { place(); hint(`Welcome back. ${coins} acorn coins, ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Press M for the map.`); }
+  }
+  let restoreAfter = null;
   $('mapbtn').addEventListener('click', toggleMap);
   window.addEventListener('keydown', e => { if (e.code === 'KeyM' && !e.repeat && !talking()) toggleMap(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {
-    startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
-    if (key === 'lesson-2') { placeInShop(); kid.satchel.visible = true; setCoins(1); setTimeout(startLesson2, 500); }
-    else if (key === 'lesson-3') { placeInShop(); kid.satchel.visible = true; setCoins(3); setTimeout(startLesson3, 500); }
-    else if (key === 'lesson-4') { placeInShop(); kid.satchel.visible = true; setCoins(6); setTimeout(startLesson4, 500); }
-    else if (key === 'lesson-9') { placeInShop(); kid.satchel.visible = true; setCoins(16); setTimeout(startLesson9, 500); }
-    else if (key === 'lesson-10') { placeInShop(); kid.satchel.visible = true; setCoins(19); setTimeout(startLesson10, 500); }
+    startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; save.started = true; if (save.beetle && !beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(-3, 0, 8); } if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
+    if (key === 'lesson-2') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(1); setTimeout(startLesson2, 500); }
+    else if (key === 'lesson-3') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(3); setTimeout(startLesson3, 500); }
+    else if (key === 'lesson-4') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(6); setTimeout(startLesson4, 500); }
+    else if (key === 'lesson-9') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(16); setTimeout(startLesson9, 500); }
+    else if (key === 'lesson-10') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(19); setTimeout(startLesson10, 500); }
     else if (key === 'lesson-8') {
-      player.position.set(WOOD.x - 12, 0, WOOD.z + 8); bodyYaw = camYaw = Math.PI / 2; kid.satchel.visible = true; setCoins(14);
+      player.position.set(WOOD.x - 12, 0, WOOD.z + 8); bodyYaw = camYaw = Math.PI / 2; kid.satchel.visible = true; coinsAtLeast(14);
       phase = 'towood'; labels.wood.visible = true; hint('The woodshop is just ahead. Walk up to Aldric.');
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }
-    else if (key === 'lesson-7') { placeInShop(); kid.satchel.visible = true; setCoins(12); setTimeout(startLesson7, 500); }
-    else if (key === 'lesson-6') { placeInShop(); kid.satchel.visible = true; setCoins(10); setTimeout(startLesson6, 500); }
+    else if (key === 'lesson-7') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(12); setTimeout(startLesson7, 500); }
+    else if (key === 'lesson-6') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(10); setTimeout(startLesson6, 500); }
     else if (key === 'lesson-5') {
-      player.position.set(NURS.x + 11, 0, NURS.z + 4); bodyYaw = camYaw = -Math.PI / 2; kid.satchel.visible = true; setCoins(8);
+      player.position.set(NURS.x + 11, 0, NURS.z + 4); bodyYaw = camYaw = -Math.PI / 2; kid.satchel.visible = true; coinsAtLeast(8);
       phase = 'tonursery'; labels.nursery.visible = true; hint('The nursery is just ahead. Walk up to Marigold.');
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }
-    else if (/^orch-[2-9]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); setCoins(25 + 2 * (n - 2)); phase = 'doneO1'; pendingStart = { 'orch-2': startO2, 'orch-3': startO3, 'orch-4': startO4, 'orch-5': startO5, 'orch-6': startO6, 'orch-7': startO7, 'orch-8': startO8, 'orch-9': startO9 }[key]; setTimeout(goToOrchards, 200); }
-    else if (/^fern-[1-9]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); setCoins(27 + 2 * (n - 1)); if (n === 1) { phase = 'tofern'; } else { phase = 'doneF1'; pendingStart = { 'fern-2': () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb\u2019s bakery is the red-and-cream stall, left of the lane.'); }, 'fern-3': startF3, 'fern-4': startF4, 'fern-5': startF5, 'fern-6': startF6, 'fern-7': startF7, 'fern-8': startF8, 'fern-9': () => { phase = 'tofen2'; nearFen2 = false; fenArrives(); hint('Fen\u2019s barge is at the dock. Go and say hello.'); } }[key]; } setTimeout(goToFernwater, 200); }
-    else if (key === 'orch-1') { kid.satchel.visible = true; setCoins(22); phase = 'toorch'; setTimeout(goToOrchards, 200); }
-    else if (key === 'road') { kid.satchel.visible = true; setCoins(19); setTimeout(goToRoad, 200); }
+    else if (/^orch-[2-9]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); coinsAtLeast(25 + 2 * (n - 2)); phase = 'doneO1'; pendingStart = { 'orch-2': startO2, 'orch-3': startO3, 'orch-4': startO4, 'orch-5': startO5, 'orch-6': startO6, 'orch-7': startO7, 'orch-8': startO8, 'orch-9': startO9 }[key]; setTimeout(goToOrchards, 200); }
+    else if (/^fern-[1-9]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); coinsAtLeast(27 + 2 * (n - 1)); if (n === 1) { phase = 'tofern'; } else { phase = 'doneF1'; pendingStart = { 'fern-2': () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb\u2019s bakery is the red building with the oven, left of the lane.'); }, 'fern-3': startF3, 'fern-4': startF4, 'fern-5': startF5, 'fern-6': startF6, 'fern-7': startF7, 'fern-8': startF8, 'fern-9': () => { phase = 'tofen2'; nearFen2 = false; fenArrives(); hint('Fen\u2019s barge is at the dock. Go and say hello.'); } }[key]; } setTimeout(goToFernwater, 200); }
+    else if (key === 'orch-1') { kid.satchel.visible = true; coinsAtLeast(22); phase = 'toorch'; setTimeout(goToOrchards, 200); }
+    else if (key === 'road') { kid.satchel.visible = true; coinsAtLeast(19); setTimeout(goToRoad, 200); }
     else if (key === 'street' || key === 'gate') {
-      player.position.set(0, 0, key === 'gate' ? 90 : 20); bodyYaw = camYaw = 0; kid.satchel.visible = true; setCoins(19);
+      player.position.set(0, 0, key === 'gate' ? 90 : 20); bodyYaw = camYaw = 0; kid.satchel.visible = true; coinsAtLeast(19);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }
     else if (key === 'fen') {
-      player.position.set(FEN.x, 0, FEN.z - 14); bodyYaw = camYaw = 0; kid.satchel.visible = true; setCoins(1);
+      player.position.set(FEN.x, 0, FEN.z - 14); bodyYaw = camYaw = 0; kid.satchel.visible = true; coinsAtLeast(1);
       phase = 'tofen'; setTasks([{ id: 'jars', icon: 'jar', label: 'Jars', have: 0, need: 3 }]); labels.fen.visible = true;
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }
