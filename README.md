@@ -52,6 +52,8 @@ During a conversation, A presses the highlighted button and the d-pad moves betw
   equivalence), adding slices, the money-changer (acorn coins, silver leaves, gold rings and the decimal point),
   decimals on the dock (reading, comparing and rounding), fractions of a trip (multiplying and dividing fractions),
   price per (unit price), percent off, and Fen's barge (a ledger that reviews the whole region).
+- **Saving**: the browser remembers your coins, finished lessons, your beetle and where you were standing. Sign in on the map screen (email + password) and the same save goes to the cloud too, so progress follows you between devices; the browser copy is the offline fallback. Accounts live in a Supabase project with row-level security, so each player can only read their own save.
+  close the tab and continue later from the map. (Local to one browser for now; accounts come next.)
 - A world map (press M) showing the whole land, where you are, and the layout of the region you're in, with every built lesson one click away. Lessons can also be opened by URL hash,
   for example `index.html#lesson-3` or `index.html#orch-2`.
 

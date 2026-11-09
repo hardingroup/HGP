@@ -162,6 +162,11 @@
   .you { fill: none; stroke: #d23b4e; stroke-width: 3; animation: pulse 1.6s ease-out infinite; }
   @media (prefers-reduced-motion: reduce) { .you { animation: none; r: 12; } }
   .btn.small { font-size: 13px; padding: 5px 12px; }
+  .account { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--ink-soft); }
+  .account input { font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--panel-edge); background: var(--bg); color: var(--ink); width: 170px; }
+  .account .status { flex-basis: 100%; font-size: 13px; min-height: 1.2em; }
+  .account .status.err { color: #e0655f; }
+  .account .status.ok { color: #7cc47a; }
   @media (max-width: 480px) { .line { font-size: 17px; } }
   @media (prefers-reduced-motion: reduce) { .tok { transition: none; } }
 </style>
@@ -177,6 +182,19 @@
     <p id="maphint">The whole land, from the Hollow to Skyhaven. Pick a place, then a lesson, to begin.</p>
     <button class="btn primary" id="mapcontinue" hidden>Continue where you left off</button>
     <button class="btn" id="mapreset" hidden>Start over</button>
+    <div class="account" id="account">
+      <span id="acctwho" hidden></span>
+      <button class="btn small" id="acctopen">Sign in to save to the cloud</button>
+      <button class="btn small" id="acctout" hidden>Sign out</button>
+      <form id="acctform" hidden style="display:contents">
+        <input type="email" id="acctemail" placeholder="email" autocomplete="username" required>
+        <input type="password" id="acctpass" placeholder="password (8+)" autocomplete="current-password" minlength="8" required>
+        <button class="btn small primary" id="acctin" type="submit">Sign in</button>
+        <button class="btn small" id="acctup" type="button">Create account</button>
+        <button class="btn small" id="acctcancel" type="button">Cancel</button>
+      </form>
+      <div class="status" id="acctstatus"></div>
+    </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
   </div>
   <div class="mapbody">
@@ -1765,12 +1783,83 @@
   let save = { coins: 0, done: [], where: 'village', pos: [0, 0, 6.5], yaw: Math.PI, beetle: '', started: false };
   try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const parsed = JSON.parse(raw); if (parsed && typeof parsed === 'object') save = Object.assign(save, parsed); } } catch (e) {}
   let saveTimer = 0;
-  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof cloudSoon === 'function') cloudSoon(); }
   function markDone(key) { if (!save.done.includes(key)) { save.done.push(key); persist(); } }
   function isDone(key) { return save.done.includes(key); }
   function clearSave() { save = { coins: 0, done: [], where: 'village', pos: [0, 0, 6.5], yaw: Math.PI, beetle: '', started: false }; try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
   function setCoins(n) { coins = n; save.coins = n; persist(); const c = $('coins'); c.hidden = false; c.innerHTML = ICON.coin + `<span>${n} acorn coin${n === 1 ? '' : 's'}</span>`; }
   function coinsAtLeast(n) { setCoins(Math.max(n, save.coins || 0)); }
+
+  // ---------- cloud saves (Supabase) ----------
+  // The local save is always written; when signed in the same save is pushed to the cloud a few seconds later.
+  const SB_URL = 'https://vxiwbghlmibuodcqrigh.supabase.co', SB_KEY = 'sb_publishable_H8Xnym3klfBLHzyS6hsg3Q_sTeHO11H', SESSION_KEY = 'long-road-session-v1';
+  let session = null, cloudTimer = null, cloudDirty = false, cloudBusy = false;
+  try { const raw = localStorage.getItem(SESSION_KEY); if (raw) session = JSON.parse(raw); } catch (e) {}
+  function keepSession(sess) { session = sess; try { if (sess) localStorage.setItem(SESSION_KEY, JSON.stringify(sess)); else localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+  async function sbAuth(path, body) {
+    const r = await fetch(`${SB_URL}/auth/v1/${path}`, { method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.msg || j.error_description || j.message || j.error || `Sign-in failed (${r.status})`);
+    return j;
+  }
+  function sessionFrom(j) { return j && j.access_token ? { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Math.floor(Date.now() / 1000) + (j.expires_in || 3600), email: (j.user && j.user.email) || '' } : null; }
+  async function freshToken() {
+    if (!session) return null;
+    if (session.expires_at - 60 > Date.now() / 1000) return session.access_token;
+    try { const j = await sbAuth('token?grant_type=refresh_token', { refresh_token: session.refresh_token }); keepSession(sessionFrom(j)); return session.access_token; }
+    catch (e) { keepSession(null); acctRefresh('Your sign-in expired. Sign in again to keep saving to the cloud.', 'err'); return null; }
+  }
+  async function rpc(name, args) {
+    const token = await freshToken(); if (!token) throw new Error('not signed in');
+    const r = await fetch(`${SB_URL}/rest/v1/rpc/${name}`, { method: 'POST', headers: { apikey: SB_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) });
+    if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error(`${name}: ${r.status} ${t.slice(0, 120)}`); }
+    const t = await r.text(); return t ? JSON.parse(t) : null;
+  }
+  function cloudSoon() { if (!session) return; cloudDirty = true; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudPush, 3000); }
+  async function cloudPush() {
+    if (!session || cloudBusy || !cloudDirty) return; cloudBusy = true; cloudDirty = false;
+    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started } }); acctRefresh('Saved to the cloud.', 'ok'); }
+    catch (e) { cloudDirty = true; acctRefresh('Cloud save failed, kept locally. ' + e.message, 'err'); }
+    cloudBusy = false;
+  }
+  function progressOf(sv) { return (sv.done ? sv.done.length : 0) * 1000 + (sv.coins || 0) + (sv.started ? 1 : 0); }
+  async function cloudPull() {
+    const c = await rpc('game_load_progress'); if (!c) return 'empty';
+    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0) };
+    if (progressOf(cloud) >= progressOf(save)) { save = cloud; persist(); return 'cloud'; }
+    cloudSoon(); return 'local';
+  }
+  // the sign-in box on the map screen
+  const acctOpen = $('acctopen'), acctOut = $('acctout'), acctForm = $('acctform'), acctWho = $('acctwho'), acctStatus = $('acctstatus');
+  function acctRefresh(msg, kind) {
+    const on = !!session; acctWho.hidden = !on; acctWho.textContent = on ? `Signed in as ${session.email}` : ''; acctOut.hidden = !on; acctOpen.hidden = on || !acctForm.hidden;
+    if (msg !== undefined) { acctStatus.textContent = msg; acctStatus.className = 'status ' + (kind || ''); }
+  }
+  acctOpen.addEventListener('click', () => { acctForm.hidden = false; acctOpen.hidden = true; acctRefresh('', ''); $('acctemail').focus(); });
+  $('acctcancel').addEventListener('click', () => { acctForm.hidden = true; acctRefresh('', ''); });
+  async function afterSignIn() {
+    acctForm.hidden = true; acctRefresh('Loading your progress\u2026', '');
+    try { const r = await cloudPull(); acctRefresh(r === 'cloud' ? 'Progress loaded from the cloud.' : r === 'local' ? 'Your progress here was further along, so it was sent to the cloud.' : 'Signed in. Your progress will save to the cloud.', 'ok'); }
+    catch (e) { acctRefresh('Signed in, but loading failed: ' + e.message, 'err'); }
+    if (!gameStarted) drawMap(); else { setCoins(save.coins || 0); refreshSaveButtons(); }
+  }
+  acctForm.addEventListener('submit', async e => {
+    e.preventDefault(); acctRefresh('Signing in\u2026', '');
+    try { const j = await sbAuth('token?grant_type=password', { email: $('acctemail').value.trim(), password: $('acctpass').value }); keepSession(sessionFrom(j)); await afterSignIn(); }
+    catch (err) { acctRefresh(err.message, 'err'); }
+  });
+  $('acctup').addEventListener('click', async () => {
+    if (!acctForm.reportValidity()) return; acctRefresh('Creating your account\u2026', '');
+    try {
+      const j = await sbAuth('signup', { email: $('acctemail').value.trim(), password: $('acctpass').value });
+      const sess = sessionFrom(j);
+      if (sess) { keepSession(sess); await afterSignIn(); }
+      else acctRefresh('Account created. Check your email for a confirmation link, then sign in here.', 'ok');
+    } catch (err) { acctRefresh(err.message, 'err'); }
+  });
+  acctOut.addEventListener('click', async () => { clearTimeout(cloudTimer); if (cloudDirty) await cloudPush(); keepSession(null); acctRefresh('Signed out. Progress still saves in this browser.', ''); });
+  if (session) { acctRefresh('Loading your progress\u2026', ''); freshToken().then(t => t ? cloudPull().then(r => { acctRefresh(r === 'cloud' ? 'Progress loaded from the cloud.' : '', 'ok'); if (!gameStarted) drawMap(); }) : null).catch(e => acctRefresh('Could not reach the cloud: ' + e.message, 'err')); }
+  else acctRefresh();
 
   // ---------- the lesson ----------
   let phase = 'intro', tipT = -1, nearBW = true, nearFen = false;
@@ -3331,6 +3420,7 @@
   });
   window.addEventListener('keyup', e => { if (MOVE[e.code]) keys[MOVE[e.code]] = false; });
   window.addEventListener('blur', () => Object.keys(keys).forEach(k => (keys[k] = false)));
+  document.addEventListener('visibilitychange', () => { if (document.hidden && cloudDirty) { clearTimeout(cloudTimer); cloudPush(); } });
   pad.querySelectorAll('[data-move]').forEach(btn => {
     const k = btn.dataset.move; const on = e => { e.preventDefault(); keys[k] = true; }, off = () => { keys[k] = false; };
     btn.addEventListener('pointerdown', on); btn.addEventListener('pointerup', off); btn.addEventListener('pointerleave', off); btn.addEventListener('pointercancel', off);
@@ -3775,7 +3865,7 @@
     if (r.lessons) {
       const list = document.createElement('div'); list.className = 'lessons';
       r.lessons.forEach(([label, key]) => { const b = document.createElement('button'); b.className = 'btn small ' + (isDone(key) ? '' : 'primary'); b.textContent = (isDone(key) ? '\u2713 ' : '') + label; b.title = isDone(key) ? 'Finished. Play it again any time.' : ''; b.onclick = () => { if (gameStarted) { location.hash = key; location.reload(); } else launch(key); }; list.appendChild(b); });
-      const doneN = r.lessons.filter(([, k]) => isDone(k)).length; if (doneN) { const dn = document.createElement('div'); dn.className = 'math'; dn.textContent = `${doneN} of ${r.lessons.length} finished`; mapPanel.insertBefore(dn, list); }
+      const doneN = r.lessons.filter(([, k]) => isDone(k)).length; if (doneN) { const dn = document.createElement('div'); dn.className = 'math'; dn.textContent = `${doneN} of ${r.lessons.length} finished`; mapPanel.appendChild(dn); }
       mapPanel.appendChild(list);
     } else { const sn = document.createElement('div'); sn.className = 'soon'; sn.textContent = 'Not built yet. The road will reach it.'; mapPanel.appendChild(sn); }
     if (gameStarted) {
@@ -3800,7 +3890,7 @@
   function refreshSaveButtons() { mapContinue.hidden = gameStarted || !save.started; mapReset.hidden = !(save.started || save.done.length || save.coins); }
   mapContinue.addEventListener('click', () => continueGame());
   let resetArmed = false;
-  mapReset.addEventListener('click', () => { if (!resetArmed) { resetArmed = true; mapReset.textContent = 'Really start over? Click again'; setTimeout(() => { resetArmed = false; mapReset.textContent = 'Start over'; }, 4000); return; } clearSave(); location.hash = ''; location.reload(); });
+  mapReset.addEventListener('click', () => { if (!resetArmed) { resetArmed = true; mapReset.textContent = 'Really start over? Click again'; setTimeout(() => { resetArmed = false; mapReset.textContent = 'Start over'; }, 4000); return; } clearSave(); if (session) { cloudDirty = true; cloudPush().finally(() => { location.hash = ''; location.reload(); }); } else { location.hash = ''; location.reload(); } });
   function continueGame() {
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false;
     kid.satchel.visible = save.done.length > 0; setCoins(save.coins || 0); phase = 'free';
