@@ -19,7 +19,7 @@ npx serve .
 ```
 
 then visit the address it prints. The game opens on a region map; Thistledown Hollow (ten lessons) and the
-Mallow Orchards (five so far) are playable. Any lesson can be started directly, which is handy for testing.
+Mallow Orchards (nine lessons) and Fernwater Crossing (five lessons so far) are playable. Any lesson can be started directly, which is handy for testing.
 
 ## Controls
 
@@ -31,6 +31,7 @@ Mallow Orchards (five so far) are playable. Any lesson can be started directly, 
 | Space jump | A | Jump button |
 | E pick up, talk, sit | X | Pick up button |
 | V switch between the back view and the front view | Y | View button |
+| M open the world map | Start | Map button |
 
 During a conversation, A presses the highlighted button and the d-pad moves between choices.
 
@@ -44,8 +45,13 @@ During a conversation, A presses the highlighted button and the d-pad moves betw
 - **The Long Road**: a separate scene reached through the gate, linking the villages.
 - **The Mallow Orchards**: Quern Mill with its mouse-powered wheel, orchards in rows, crates, a cider press.
   Lessons: rows and rows (multiplication as arrays), the mill songs (times tables), fair shares, leftovers
-  (remainders), and Pip's puzzle (factors and multiples).
-- A region map for jumping straight to any built lesson. Lessons can also be opened by URL hash,
+  (remainders), Pip's puzzle (factors and multiples), big orders (the area model), the long split (long division
+  in chunks), the cider press (mixed problems), and the Season Fair (a re-test of the Hollow).
+- **Fernwater Crossing**: a river town on stilts with a market, a bakery, a money-changer, a rope-walk, a ferry and a river
+  gauge. Lessons: half a rope (fractions as equal pieces), the baker's cakes (fractions of a whole and of a group,
+  equivalence), adding slices, the money-changer (acorn coins, silver leaves, gold rings and the decimal point),
+  and decimals on the dock (reading, comparing and rounding).
+- A world map (press M) showing the whole land, where you are, and the layout of the region you're in, with every built lesson one click away. Lessons can also be opened by URL hash,
   for example `index.html#lesson-3` or `index.html#orch-2`.
 
 ## Design notes
@@ -60,8 +66,7 @@ principles live in the project's design documents. The short version:
 
 ## Roadmap
 
-- Finish the orchards (big orders, long division, the cider press, the Season Fair).
-- Fernwater Crossing (fractions, decimals, money) and the regions beyond.
+- Finish Fernwater (fractions of a trip, unit price, percent off, Fen's barge), then the regions beyond.
 - Real 3D models and textures in place of the code-built shapes.
 - Characters backed by a language model so a learner can ask Bramblewick why.
 - Classroom mode (one teacher, a class in a shared village), then an open shared world.

@@ -100,7 +100,7 @@
   .ledger .mark { color: #8a3a3a; }
   .numpad { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .numpad .entry { font-size: 26px; font-weight: 700; color: var(--gold); min-height: 1.4em; font-variant-numeric: tabular-nums; }
-  .numpad .keys-row { display: grid; grid-template-columns: repeat(6, 44px); gap: 6px; }
+  .numpad .keys-row { display: grid; grid-template-columns: repeat(6, 44px); gap: 6px; justify-content: center; }
   .numpad button { font-family: var(--font-body); font-size: 18px; font-weight: 700; background: var(--bg); color: var(--ink); border: 2px solid var(--panel-edge); border-radius: 10px; height: 42px; cursor: pointer; }
   .reward { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
   .reward h2 { font-family: var(--font-display); color: var(--gold); font-size: 26px; margin: 0; text-wrap: balance; }
@@ -132,23 +132,34 @@
   .stam.low .fill { background: var(--berry); }
   .fade { position: fixed; inset: 0; z-index: 30; background: #000; opacity: 0; transition: opacity .7s; pointer-events: none; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); color: var(--gold); font-size: clamp(22px, 4vw, 34px); letter-spacing: .04em; text-align: center; padding: 0 24px; }
   .fade.on { opacity: 1; pointer-events: auto; }
-  /* region picker */
-  .start {
-    position: fixed; inset: 0; z-index: 20; overflow: auto; background: rgba(15,26,18,.92);
+  /* the world map */
+  .mapview {
+    position: fixed; inset: 0; z-index: 20; overflow: auto; background: #1a2416;
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: calc(24px + env(safe-area-inset-top, 0px)) calc(24px + env(safe-area-inset-bottom, 0px));
-    display: flex; flex-direction: column; align-items: center; gap: 18px;
+    padding-block: calc(16px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
   }
-  .start h1 { font-family: var(--font-display); color: var(--gold); font-size: clamp(28px, 5vw, 44px); margin: 0; text-align: center; text-wrap: balance; }
-  .start p { margin: 0; color: var(--ink-soft); text-align: center; max-width: 60ch; }
-  .regions { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; width: min(1000px, 100%); }
-  .region { background: var(--panel); border: 2px solid var(--panel-edge); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-  .region.open { border-color: var(--gold); }
-  .region h2 { font-family: var(--font-display); font-size: 18px; margin: 0; color: var(--ink); }
-  .region.open h2 { color: var(--gold); }
-  .region .math { font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
-  .region .lessons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-  .region .soon { font-size: 13px; color: var(--ink-soft); font-style: italic; }
+  .maphead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: min(1240px, 100%); }
+  .maphead h1 { font-family: var(--font-display); color: var(--gold); font-size: clamp(24px, 4vw, 38px); margin: 0; }
+  .maphead p { margin: 0; color: var(--ink-soft); flex: 1 1 240px; }
+  .mapbody { display: flex; gap: 14px; width: min(1240px, 100%); align-items: flex-start; flex-wrap: wrap; }
+  .mapsvg { flex: 1 1 560px; min-width: 0; background: #d9c69a; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.5); overflow: hidden; }
+  .mapsvg svg { display: block; width: 100%; height: auto; }
+  .mappanel { flex: 0 1 320px; min-width: 260px; background: var(--panel); border: 2px solid var(--panel-edge); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 240px; }
+  .mappanel h2 { font-family: var(--font-display); color: var(--gold); margin: 0; font-size: 20px; }
+  .mappanel .math { color: var(--ink-soft); font-size: 14px; }
+  .mappanel .lessons { display: flex; flex-direction: column; gap: 6px; }
+  .mappanel .lessons button { text-align: left; }
+  .mappanel .soon { color: var(--ink-soft); font-style: italic; font-size: 14px; }
+  .mappanel .here { font-size: 13px; color: var(--ink-soft); border-top: 1px solid var(--panel-edge); padding-top: 10px; margin-top: auto; }
+  .mappanel .here svg { display: block; width: 100%; height: auto; background: #d9c69a; border-radius: 8px; margin-top: 6px; }
+  .mapmark { cursor: pointer; }
+  .mapmark:hover .ring, .mapmark.sel .ring { stroke: #f4c53a; stroke-width: 4; }
+  .mapmark.unbuilt { opacity: .72; }
+  .mapmark text { pointer-events: none; }
+  @keyframes pulse { 0% { r: 9; opacity: 1 } 100% { r: 22; opacity: 0 } }
+  .you { fill: none; stroke: #d23b4e; stroke-width: 3; animation: pulse 1.6s ease-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .you { animation: none; r: 12; } }
   .btn.small { font-size: 13px; padding: 5px 12px; }
   @media (max-width: 480px) { .line { font-size: 17px; } }
   @media (prefers-reduced-motion: reduce) { .tok { transition: none; } }
@@ -159,15 +170,21 @@
 
 <canvas id="scene" aria-label="Bramblewick's shop and the forest clearing outside, seen from seven inches tall"></canvas>
 <div class="fade" id="fade" aria-live="polite"></div>
-<div class="start" id="start">
-  <h1>The Long Road</h1>
-  <p>Pick a region to test. Only Thistledown Hollow is built so far; the rest are placeholders from the storyline.</p>
-  <div class="regions" id="regions"></div>
+<div class="mapview" id="start">
+  <div class="maphead">
+    <h1>The Long Road</h1>
+    <p id="maphint">The whole land, from the Hollow to Skyhaven. Pick a place, then a lesson, to begin.</p>
+    <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
+  </div>
+  <div class="mapbody">
+    <div class="mapsvg" id="mapsvg"></div>
+    <aside class="mappanel" id="mappanel"></aside>
+  </div>
 </div>
 <div class="hud">
   <div>
     <div class="top">
-      <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>mouse</kbd> look (inverted) &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> pick up / sit &middot; <kbd>V</kbd> view<br><span id="lockhint">Click the game to grab the mouse, <kbd>Esc</kbd> to let go.</span><br><span id="gphint">Controller: sticks move and look, <kbd>A</kbd> jump, <kbd>X</kbd> pick up, <kbd>Y</kbd> view.</span></div>
+      <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>mouse</kbd> look (inverted) &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> pick up / sit &middot; <kbd>V</kbd> view &middot; <kbd>M</kbd> map<br><span id="lockhint">Click the game to grab the mouse, <kbd>Esc</kbd> to let go.</span><br><span id="gphint">Controller: sticks move and look, <kbd>A</kbd> jump, <kbd>X</kbd> pick up, <kbd>Y</kbd> view.</span></div>
       <div class="right">
         <div class="chip gold" id="coins" hidden></div>
         <div class="tasks" id="tasks"></div>
@@ -191,6 +208,7 @@
         <button class="right" data-move="r" aria-label="Walk right">&rarr;</button>
       </div>
       <div class="acts">
+        <button class="act" id="mapbtn">Map</button>
         <button class="act" id="runbtn">Run</button>
         <button class="act" id="viewbtn">View</button>
         <button class="act" id="jumpbtn">Jump</button>
@@ -1150,7 +1168,7 @@
   scene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.isSprite && o !== ground && o !== dirt) { o.castShadow = true; o.receiveShadow = true; } });
 
   // ---------- the Long Road: a separate, simpler scene beyond the gate ----------
-  let where = 'village', fading = false;
+  let where = 'village', fading = false, mapOpen = true, gameStarted = false, selRegion = 0;
   const ROAD_LEN = 220;
   const roadScene = new THREE.Scene();
   roadScene.fog = new THREE.Fog('#d8d3a4', 60, 220);
@@ -1292,12 +1310,12 @@
     for (let r = 0; r < 3; r++) for (let k = 0; k < 5; k++) { const c = crate(); c.position.set(14 + k * 2.4, 0.65, 84 + r * 2.0); orchScene.add(c); }
     for (let r = 0; r < 2; r++) for (let k = 0; k < 4; k++) { const c = crate(); c.position.set(-20 + k * 2.4, 0.65 + r * 1.3, 90 + (r ? 0.3 : 0)); orchScene.add(c); }
     orchSolids.push({ x: 19, z: 86, r: 6.5 }, { x: -16.5, z: 90, r: 5 });
-    const press = new THREE.Group(); press.position.set(-14, 0, 76); press.rotation.y = 0.5; orchScene.add(press);
+    const press = new THREE.Group(); press.position.set(-14, 0, 76); press.rotation.y = 0.5; press.userData.press = true; press.userData.squeeze = 0; orchScene.add(press);
     [-1, 1].forEach(d => { const up = new THREE.Mesh(new THREE.BoxGeometry(0.5, 7, 0.5), mat('#5a3d22')); up.position.set(d * 2, 3.5, 0); press.add(up); });
     const top = new THREE.Mesh(new THREE.BoxGeometry(5, 0.6, 0.8), mat('#5a3d22')); top.position.y = 6.8; press.add(top);
     const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 4, 8), mat('#4b4b4b', { metalness: 0.6 })); screw.position.y = 4.8; press.add(screw);
     for (let k = 0; k < 8; k++) { const th = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.06, 5, 12), mat('#4b4b4b', { metalness: 0.6 })); th.rotation.x = Math.PI / 2; th.position.y = 3 + k * 0.45; press.add(th); }
-    const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.4, 14), mat('#8a6438')); plate.position.y = 2.8; press.add(plate);
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.4, 14), mat('#8a6438')); plate.position.y = 2.8; press.add(plate); press.userData.plate = plate; press.userData.screw = screw;
     const tub = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 1.7, 2.6, 16, 1, true), mat('#8a6438', { side: THREE.DoubleSide })); tub.position.y = 1.3; press.add(tub);
     const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 5, 8), mat('#8a6438')); bar.rotation.z = Math.PI / 2; bar.position.y = 6.3; press.add(bar);
     const juice = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.8, 1.6, 12), mat('#c9a06a')); juice.position.set(2.8, 0.8, 1.2); press.add(juice);
@@ -1312,6 +1330,13 @@
     const arch = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), railM); arch.position.set(0, 7.6, 0); orchScene.add(arch);
     const gs = signBoard('Mallow Orchards', 7, 1.6, '#5a3d22', '#f6e7c2'); gs.position.set(0, 10.2, 0); orchScene.add(gs);
     orchSolids.push({ x: -5, z: 0, r: 0.9 }, { x: 5, z: 0, r: 0.9 });
+    // the lane continues past the mill to a gate for the river road
+    const lane2 = new THREE.Mesh(new THREE.PlaneGeometry(7, 40), mat('#ffffff', { map: dirtTex })); lane2.rotation.x = -Math.PI / 2; lane2.rotation.z = -0.6; lane2.position.set(18, 0.032, 92); orchScene.add(lane2);
+    const lane3 = new THREE.Mesh(new THREE.PlaneGeometry(7, 16), mat('#ffffff', { map: dirtTex })); lane3.rotation.x = -Math.PI / 2; lane3.position.set(30, 0.033, ORCH_LEN - 6); orchScene.add(lane3);
+    [25, 35].forEach(x => { const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 9, 10), mat('#6b4a2b')); gp.position.set(x, 4.5, ORCH_LEN); orchScene.add(gp); });
+    const arch2 = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), mat('#8a6438')); arch2.position.set(30, 7.6, ORCH_LEN); orchScene.add(arch2);
+    const gs2 = signBoard('To Fernwater', 5.4, 1.3, '#4a5fb8', '#f6e7c2'); gs2.position.set(30, 10.2, ORCH_LEN); orchScene.add(gs2);
+    orchSolids.push({ x: 25, z: ORCH_LEN, r: 0.9 }, { x: 35, z: ORCH_LEN, r: 0.9 });
     // a bench by the mill
     const bench = makeBench(true); bench.position.set(8, 0, 74); bench.rotation.y = Math.PI + 0.6; orchScene.add(bench);
     bench.userData = { pickable: true, kind: 'seat', yaw: Math.PI + 0.6, seatTop: 1.51, label: 'bench by the mill' }; orchSolids.push({ x: 8, z: 74, r: 1.4 });
@@ -1369,9 +1394,169 @@
     }, () => hint('Back on the Long Road. The Hollow is the other way.'));
   }
 
+  // ---------- Region 3: Fernwater Crossing, the river town on stilts ----------
+  const FERN_LEN = 120, ORIPOS = new THREE.Vector3(10, 0, 58), MAUDPOS = new THREE.Vector3(-13, 0, 36), CHANGEPOS = new THREE.Vector3(16, 0, 30);
+  const fernScene = new THREE.Scene();
+  fernScene.fog = new THREE.Fog('#d8dfd4', 70, 260);
+  fernScene.add(new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
+  fernScene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.85));
+  const fernSun = new THREE.DirectionalLight('#ffd99a', 1.0); fernSun.castShadow = true;
+  Object.assign(fernSun.shadow.camera, { left: -50, right: 50, top: 50, bottom: -50, near: 1, far: 170 }); fernSun.shadow.mapSize.set(2048, 2048); fernSun.shadow.bias = -0.0006;
+  fernScene.add(fernSun); fernScene.add(fernSun.target);
+  const fernSolids = [];
+  let water = null;
+  function stallCart(color1, color2, label) {
+    const g = new THREE.Group();
+    const stripe = canvasTex(256, 64, (gg, w, h) => { for (let x = 0; x < w; x += 32) { gg.fillStyle = (x / 32) % 2 ? color2 : color1; gg.fillRect(x, 0, 32, h); } }, [3, 1]);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(6, 1.6, 2.4), mat('#8a6438')); body.position.y = 1.6; g.add(body);
+    const top = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.25, 3), mat('#ffffff', { map: plankTex })); top.position.y = 2.5; g.add(top);
+    [[-2.8, -1.1], [2.8, -1.1], [-2.8, 1.1], [2.8, 1.1]].forEach(([x, z]) => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 5, 8), mat('#5a3d22')); post.position.set(x, 5, z); g.add(post); });
+    const awn = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.12, 3.6), mat('#ffffff', { map: stripe, side: THREE.DoubleSide })); awn.position.set(0, 7.5, 0.3); awn.rotation.x = 0.15; g.add(awn);
+    const sign = signBoard(label, 4, 1, '#5a3d22', '#f6e7c2'); sign.position.set(0, 8.4, 0.4); g.add(sign);
+    return g;
+  }
+  {
+    const g = new THREE.Mesh(new THREE.PlaneGeometry(700, 900), mat('#ffffff', { map: groundTex })); g.rotation.x = -Math.PI / 2; g.position.set(0, 0, FERN_LEN / 2); g.receiveShadow = true; fernScene.add(g);
+    // the river: a wide band of water across the middle, with the far bank beyond
+    const waterTex = canvasTex(256, 256, (gg, w, h) => { gg.fillStyle = '#4a7fb8'; gg.fillRect(0, 0, w, h); for (let i = 0; i < 300; i++) { gg.strokeStyle = pick(['#6f9fd0', '#3d6ea8', '#8fb9e0']); gg.lineWidth = rnd(1, 3); gg.beginPath(); const y = rnd(0, h); gg.moveTo(rnd(0, w), y); gg.bezierCurveTo(rnd(0, w), y + rnd(-4, 4), rnd(0, w), y + rnd(-4, 4), rnd(0, w), y); gg.stroke(); } }, [12, 3]);
+    water = new THREE.Mesh(new THREE.PlaneGeometry(700, 46), new THREE.MeshStandardMaterial({ map: waterTex, roughness: 0.15, metalness: 0.3, transparent: true, opacity: 0.92 })); water.rotation.x = -Math.PI / 2; water.position.set(0, 0.06, 78); fernScene.add(water);
+    [[57, -1], [99, 1]].forEach(([z, d]) => { const bank = new THREE.Mesh(new THREE.BoxGeometry(700, 1.2, 3), mat('#6a5534')); bank.position.set(0, 0.3, z); fernScene.add(bank); for (let x = -120; x < 120; x += 7) { const reed = new THREE.Mesh(new THREE.ConeGeometry(0.4, rnd(3, 6), 4), mat('#6b8c3a')); reed.position.set(x + rnd(-2, 2), 2, z + d * rnd(1, 3)); fernScene.add(reed); } });
+    // the lane to the boardwalk, then a plank boardwalk on stilts across the river
+    const lane = new THREE.Mesh(new THREE.PlaneGeometry(9, 56), mat('#ffffff', { map: dirtTex })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.03, 28); lane.receiveShadow = true; fernScene.add(lane);
+    const walk = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 50), mat('#ffffff', { map: plankTex })); walk.position.set(0, 1.6, 78); fernScene.add(walk);
+    for (let z = 56; z <= 100; z += 6) [-4.6, 4.6].forEach(x => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 3.4, 8), mat('#5a3d22')); st.position.set(x, 0.4, z); fernScene.add(st); const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 6, 6), mat('#8a6438')); rail.rotation.x = Math.PI / 2; rail.position.set(x, 3.2, z + 3); fernScene.add(rail); const bal = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.4, 6), mat('#8a6438')); bal.position.set(x, 2.5, z); fernScene.add(bal); });
+    [[0, 54], [0, 102]].forEach(([x, z]) => { const ramp = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, 5), mat('#ffffff', { map: plankTex })); ramp.position.set(x, 1.1, z); ramp.rotation.x = z < 70 ? -0.35 : 0.35; fernScene.add(ramp); });
+    // the market: stalls on stilts either side of the lane
+    [[-13, 36, '#c8384a', '#f2e6c8', 'Crumb\u2019s Bakery'], [16, 30, '#4a5fb8', '#f2e6c8', 'Money-Changer'], [-16, 20, '#3e8a52', '#f2e6c8', 'Ropes'], [17, 44, '#d9a33f', '#f2e6c8', 'Nets & Lines']].forEach(([x, z, c1, c2, label]) => {
+      const st = stallCart(c1, c2, label); st.position.set(x, 0, z); st.rotation.y = x < 0 ? -Math.PI / 2 : Math.PI / 2; fernScene.add(st);
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(9, 0.4, 9), mat('#ffffff', { map: plankTex })); deck.position.set(x + (x < 0 ? -2 : 2), 0.2, z); fernScene.add(deck);
+      fernSolids.push({ x: x, z, r: 3.4 });
+    });
+    // bakery goods: cakes on the counter, cut into slices
+    const bakery = new THREE.Group(); bakery.position.set(MAUDPOS.x, 2.6, MAUDPOS.z); fernScene.add(bakery);
+    [[0, 0, 6], [0, -2.2, 4], [0, 2.2, 8]].forEach(([x, z, n]) => { for (let k = 0; k < n; k++) { const slice = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.6, 12, 1, false, k * Math.PI * 2 / n + 0.04, Math.PI * 2 / n - 0.08), mat(pick(['#e8b64c', '#d9a0a0', '#c9a06a']))); slice.position.set(x + 2.3, 0.3, z); bakery.add(slice); } });
+    for (let k = 0; k < 12; k++) { const bun = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), mat('#c9a06a')); bun.position.set(2.0 + (k % 4) * 0.5 - 0.7, 0.4, -3.8 + Math.floor(k / 4) * 0.5); bakery.add(bun); }
+    // the rope-walk: a long frame with ropes stretched along it, and knots
+    const ropeWalk = new THREE.Group(); ropeWalk.position.set(-24, 0, 20); fernScene.add(ropeWalk);
+    [-7, 7].forEach(z => { const post = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4, 0.5), mat('#5a3d22')); post.position.set(0, 2, z); ropeWalk.add(post); });
+    for (let k = 0; k < 3; k++) { const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 14, 8), mat('#c7b386', { roughness: 1 })); rope.rotation.x = Math.PI / 2; rope.position.set(0, 1.6 + k * 0.9, 0); ropeWalk.add(rope); }
+    fernSolids.push({ x: -24, z: 13, r: 0.7 }, { x: -24, z: 27, r: 0.7 });
+    // the ferry: a flat barge moored at the dock with a cabin, a pole, and a lantern
+    const dock = new THREE.Mesh(new THREE.BoxGeometry(14, 0.5, 6), mat('#ffffff', { map: plankTex })); dock.position.set(14, 1.4, 58); fernScene.add(dock);
+    [8, 14, 20].forEach(x => [55.5, 60.5].forEach(z => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 3, 8), mat('#5a3d22')); st.position.set(x, 0.3, z); fernScene.add(st); }));
+    const ferry = new THREE.Group(); ferry.position.set(16, 0.1, 66); fernScene.add(ferry); fernScene.userData.ferry = ferry;
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(12, 1.4, 6), mat('#6b4a2b')); hull.position.y = 0.7; ferry.add(hull);
+    const deckF = new THREE.Mesh(new THREE.BoxGeometry(11.4, 0.2, 5.4), mat('#ffffff', { map: plankTex })); deckF.position.y = 1.5; ferry.add(deckF);
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 4), mat('#8a3a3a')); cabin.position.set(-3, 3, 0); ferry.add(cabin);
+    const croof = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.3, 4.6), mat('#3e2812')); croof.position.set(-3, 4.6, 0); ferry.add(croof);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 9, 6), mat('#c9a06a')); pole.position.set(4, 4, 2.4); pole.rotation.z = 0.3; ferry.add(pole);
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(5.5, 3.2, 0); ferry.add(lamp);
+    for (let k = 0; k < 6; k++) { const c = crate(0.7); c.position.set(1 + (k % 3) * 1.6, 2.1 + Math.floor(k / 3) * 0.9, -1.5); ferry.add(c); }
+    // ferry rope to the far bank, snapped (for the first lesson): two frayed ends
+    const ropeA = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10, 6), mat('#c7b386')); ropeA.rotation.x = Math.PI / 2; ropeA.position.set(16, 2.2, 72); fernScene.add(ropeA); fernScene.userData.ropeA = ropeA;
+    const ropeB = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10, 6), mat('#c7b386')); ropeB.rotation.x = Math.PI / 2; ropeB.position.set(16, 2.2, 94); fernScene.add(ropeB);
+    fernSolids.push({ x: 14, z: 58, r: 7 });
+    // the river gauge: a tall post with marks, by the dock
+    const gauge = new THREE.Group(); gauge.position.set(6, 0, 62); fernScene.add(gauge);
+    const gpost = new THREE.Mesh(new THREE.BoxGeometry(0.6, 8, 0.6), mat('#efe6d2')); gpost.position.y = 4; gauge.add(gpost);
+    for (let k = 0; k <= 8; k++) { const mk = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.08, 0.1), mat(k % 2 ? '#3a2a18' : '#c4362e')); mk.position.set(0, 0.5 + k * 0.9, 0.31); gauge.add(mk); }
+    const glabel = signBoard('River gauge', 2.6, 0.7, '#efe6d2', '#3a2a18'); glabel.position.set(0, 8.6, 0.2); gauge.add(glabel);
+    // houses on stilts along the bank, lanterns, nets, a kingfisher
+    [[-30, 48, '#8a6a9a'], [-18, 52, '#3e8a52'], [28, 50, '#c8384a'], [36, 42, '#4a5fb8'], [-36, 34, '#d9a33f']].forEach(([x, z, c]) => {
+      const h = new THREE.Group(); h.position.set(x, 0, z); h.rotation.y = rnd(-0.3, 0.3); fernScene.add(h);
+      [[-3, -3], [3, -3], [-3, 3], [3, 3]].forEach(([sx, sz]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 4, 8), mat('#5a3d22')); st.position.set(sx, 2, sz); h.add(st); });
+      const fl = new THREE.Mesh(new THREE.BoxGeometry(8, 0.4, 8), mat('#ffffff', { map: plankTex })); fl.position.y = 4.1; h.add(fl);
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(7, 5, 7), mat(c)); wall.position.y = 6.8; h.add(wall);
+      const rf = new THREE.Mesh(new THREE.ConeGeometry(6, 3.5, 4), mat('#5a3d22')); rf.position.y = 11; rf.rotation.y = Math.PI / 4; h.add(rf);
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.6 })); win.position.set(0, 7, 3.51); h.add(win);
+      const ladder = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4.6, 0.2), mat('#8a6438')); ladder.position.set(0, 2.3, 4.2); ladder.rotation.x = -0.25; h.add(ladder);
+      fernSolids.push({ x, z, r: 4.6 });
+    });
+    for (let z = 10; z < 52; z += 12) [-6.5, 6.5].forEach(x => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 5, 6), mat('#5a3d22')); post.position.set(x, 2.5, z); fernScene.add(post); const lamp2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp2.position.set(x, 5.3, z); fernScene.add(lamp2); });
+    const net = new THREE.Mesh(new THREE.PlaneGeometry(6, 4, 6, 4), new THREE.MeshStandardMaterial({ color: '#c7b386', wireframe: true })); net.position.set(22, 4, 46); net.rotation.y = -0.4; fernScene.add(net);
+    const kf = new THREE.Group(); kf.position.set(-8, 4.2, 56); fernScene.add(kf);
+    const kfPost = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 4.2, 6), mat('#5a3d22')); kfPost.position.y = -2.1; kf.add(kfPost);
+    const kfb = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 8), mat('#2f7fb8')); kfb.scale.set(0.8, 0.8, 1.2); kfb.position.y = 0.5; kf.add(kfb);
+    const kfc = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), mat('#e86a2a')); kfc.scale.set(0.7, 0.6, 1); kfc.position.set(0, 0.25, 0.2); kf.add(kfc);
+    const kfh = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 8), mat('#2f7fb8')); kfh.position.set(0, 0.95, 0.5); kf.add(kfh);
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.7, 6), mat('#1b1b1b')); beak.position.set(0, 0.9, 1.1); beak.rotation.x = Math.PI / 2; kf.add(beak);
+    // tall grass beyond the town, hedges along the sides
+    const geo2 = new THREE.ConeGeometry(0.24, 1, 3); geo2.translate(0, 0.5, 0);
+    const tallF = new THREE.InstancedMesh(geo2, mat('#ffffff', { roughness: 0.9 }), 3500);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
+    for (let i = 0; i < 3500; i++) { const side = i % 2 ? 1 : -1; pv.set(side * rnd(46, 140), 0, rnd(-40, 56)); if (i % 3 === 0) pv.set(rnd(-140, 140), 0, rnd(104, 220)); q.setFromEuler(new THREE.Euler(rnd(-0.25, 0.25), rnd(0, 6.3), rnd(-0.25, 0.25))); sv.set(1, rnd(3, 10), 1); tallF.setMatrixAt(i, m4.compose(pv, q, sv)); tallF.setColorAt(i, col.set(pick(['#7d9c45', '#6b8c3a', '#8fae52', '#5f7f33']))); }
+    fernScene.add(tallF);
+    // the gate back to the orchards
+    const railM = mat('#8a6438'), postM = mat('#6b4a2b');
+    for (let x = -44; x <= 44; x += 4) { if (Math.abs(x) < 5) continue; const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 2.4, 7), postM); pm.position.set(x, 1.2, 0); fernScene.add(pm); }
+    [[-44, -5], [5, 44]].forEach(([a, b]) => [1.0, 1.9].forEach(y => { const r = new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.14, 0.14), railM); r.position.set((a + b) / 2, y, 0); fernScene.add(r); }));
+    [-5, 5].forEach(x => { const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 9, 10), postM); gp.position.set(x, 4.5, 0); fernScene.add(gp); });
+    const arch = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), railM); arch.position.set(0, 7.6, 0); fernScene.add(arch);
+    const gs = signBoard('Fernwater Crossing', 7.4, 1.6, '#4a5fb8', '#f6e7c2'); gs.position.set(0, 10.2, 0); fernScene.add(gs);
+    fernSolids.push({ x: -5, z: 0, r: 0.9 }, { x: 5, z: 0, r: 0.9 });
+    const bench = makeBench(true); bench.position.set(-6, 0, 50); bench.rotation.y = Math.PI; fernScene.add(bench);
+    bench.userData = { pickable: true, kind: 'seat', yaw: Math.PI, seatTop: 1.51, label: 'bench by the river', world: 'fernwater' }; fernSolids.push({ x: -6, z: 50, r: 1.4 }); fernScene.userData.bench = bench;
+    fernScene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o !== g && o !== water) { o.castShadow = true; o.receiveShadow = true; } });
+  }
+  // Captain Oriel Tideknot: brisk, weathered, a long coat and a knotted scarf
+  const ori = new THREE.Group(); ori.position.copy(ORIPOS); fernScene.add(ori);
+  const oriHead = new THREE.Group();
+  {
+    const skinO = mat('#c9956a'), coatO = mat('#2f4a6a');
+    const prof = []; for (let i = 0; i <= 8; i++) { const t = i / 8; prof.push(new THREE.Vector2(1.7 - t * 0.6, t * 6.2)); }
+    ori.add(new THREE.Mesh(new THREE.LatheGeometry(prof, 20), coatO));
+    const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3, 0.1), mat('#1f3348')); lapel.position.set(0, 4.5, 1.25); ori.add(lapel);
+    [4.0, 4.8, 5.6].forEach(y => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), mat('#e8b64c', { metalness: 0.6 })); b.position.set(0.35, y, 1.3); ori.add(b); });
+    const scarf = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.3, 8, 18), mat('#c8384a')); scarf.rotation.x = Math.PI / 2; scarf.position.y = 6.1; ori.add(scarf);
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), mat('#c8384a')); knot.position.set(0.6, 5.8, 1.0); ori.add(knot);
+    [-0.6, 0.6].forEach(x => { const boot = new THREE.Mesh(new THREE.SphereGeometry(0.45, 10, 8), mat('#2a2a2a')); boot.scale.set(1, 0.6, 1.6); boot.position.set(x, 0.15, 1.1); ori.add(boot); });
+    [-1, 1].forEach(d => { const sh = new THREE.Group(); sh.position.set(d * 1.6, 5.5, 0); ori.add(sh); const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 2.6, 8), coatO); arm.position.y = -1.3; sh.add(arm); const hand = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), skinO); hand.position.y = -2.7; sh.add(hand); sh.rotation.set(d === 1 ? -1.4 : -0.3, 0, d * 0.4); if (d === 1) { const rope = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.1, 6, 14), mat('#c7b386')); rope.position.y = -2.8; sh.add(rope); } });
+    oriHead.position.y = 7.4; ori.add(oriHead);
+    oriHead.add(new THREE.Mesh(new THREE.SphereGeometry(0.95, 20, 16), skinO));
+    [-1, 1].forEach(d => { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.26, 1.5, 8), skinO); ear.position.set(d * 1.0, 0.3, -0.05); ear.rotation.z = -d * 1.25; oriHead.add(ear); const eyeW = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), mat('#eee8dc')); eyeW.position.set(d * 0.35, 0.12, 0.85); oriHead.add(eyeW); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), mat('#2a3a4a')); eye.position.set(d * 0.35, 0.12, 0.97); oriHead.add(eye); const brow = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.1, 0.12), mat('#5a4a3a')); brow.position.set(d * 0.36, 0.4, 0.86); brow.rotation.z = -d * 0.3; oriHead.add(brow); });
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), skinO); nose.scale.z = 1.5; nose.position.set(0, -0.08, 0.95); oriHead.add(nose);
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.08), mat('#7a4a3a')); mouth.position.set(0, -0.4, 0.9); oriHead.add(mouth);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(1.0, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), mat('#7a7a72')); hair.position.y = 0.1; oriHead.add(hair);
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.1, 1.8, 8), mat('#7a7a72')); tail.position.set(0, -0.3, -0.9); tail.rotation.x = 0.5; oriHead.add(tail);
+    const capO = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.05, 0.5, 18), mat('#1f3348')); capO.position.y = 0.95; oriHead.add(capO);
+    const peak = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.1, 0.7), mat('#111c28')); peak.position.set(0, 0.75, 1.0); oriHead.add(peak);
+    const badge = new THREE.Mesh(new THREE.CircleGeometry(0.18, 10), mat('#e8b64c', { metalness: 0.6 })); badge.position.set(0, 1.0, 1.02); oriHead.add(badge);
+  }
+  fernSolids.push({ x: ORIPOS.x, z: ORIPOS.z, r: 1.4 });
+  // Maudie Crumb, the baker: round, floury, cheerful
+  const maud = new THREE.Group(); maud.position.set(MAUDPOS.x - 3.2, 0, MAUDPOS.z); fernScene.add(maud);
+  const maudHead = new THREE.Group();
+  {
+    const skinB = mat('#f0c9a0'), dressB = mat('#c8384a');
+    const prof = []; for (let i = 0; i <= 8; i++) { const t = i / 8; prof.push(new THREE.Vector2(2.0 - Math.abs(t - 0.4) * 1.2, t * 5.2)); }
+    maud.add(new THREE.Mesh(new THREE.LatheGeometry(prof, 20), dressB));
+    const apron = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3.2, 0.1), mat('#f2e6c8', { roughness: 1 })); apron.position.set(0, 2.3, 1.7); maud.add(apron);
+    for (let k = 0; k < 8; k++) { const d = new THREE.Mesh(new THREE.CircleGeometry(rnd(0.08, 0.18), 6), mat('#ffffff')); d.position.set(rnd(-0.9, 0.9), rnd(1, 3.6), 1.76); maud.add(d); }
+    [-1, 1].forEach(d => { const sh = new THREE.Group(); sh.position.set(d * 1.9, 4.4, 0); maud.add(sh); const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 2.2, 8), dressB); arm.position.y = -1.1; sh.add(arm); const hand = new THREE.Mesh(new THREE.SphereGeometry(0.36, 8, 6), skinB); hand.position.y = -2.3; sh.add(hand); sh.rotation.set(-0.9, 0, d * 0.5); });
+    maudHead.position.y = 6.2; maud.add(maudHead);
+    maudHead.add(new THREE.Mesh(new THREE.SphereGeometry(1.0, 20, 16), skinB));
+    [-1, 1].forEach(d => { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.26, 1.4, 8), skinB); ear.position.set(d * 1.05, 0.3, -0.05); ear.rotation.z = -d * 1.25; maudHead.add(ear); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), mat('#3a3a2a')); eye.position.set(d * 0.35, 0.12, 0.95); maudHead.add(eye); const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), mat('#e3a189')); cheek.position.set(d * 0.6, -0.2, 0.75); maudHead.add(cheek); });
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 5, 12, Math.PI), mat('#a0503a')); smile.position.set(0, -0.35, 0.92); smile.rotation.z = Math.PI; maudHead.add(smile);
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), mat('#5a3d22')); bun.position.set(0, 0.9, -0.3); maudHead.add(bun);
+    const kerchief = new THREE.Mesh(new THREE.SphereGeometry(1.03, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.45), mat('#f4c53a')); kerchief.position.y = 0.1; maudHead.add(kerchief);
+  }
+  fernSolids.push({ x: MAUDPOS.x - 3.2, z: MAUDPOS.z, r: 1.6 });
+  function goToFernwater() {
+    fadeTo('Fernwater Crossing', () => {
+      moveCompany(where === 'orchards' ? orchScene : where === 'village' ? scene : roadScene, fernScene); where = 'fernwater'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => { hint('Fernwater Crossing. The ferry dock is at the end of the lane, by the water.'); if (phase === 'tofern') phase = 'todock'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(4, 0, 48); bodyYaw = camYaw = 0.4; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
+  }
+  function goToOrchardsFromFern() {
+    fadeTo('The Mallow Orchards', () => {
+      moveCompany(fernScene, orchScene); where = 'orchards'; player.position.set(0, 0, ORCH_LEN - 6); bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; if (beetle) beetle.position.set(2, 0, ORCH_LEN - 4);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => hint('Back in the orchards. The mill is ahead; the Long Road is behind it.'));
+  }
+
   // ---------- pickables ----------
   const pickables = [];
-  pickables.push(orchScene.userData.bench);
+  pickables.push(orchScene.userData.bench); pickables.push(fernScene.userData.bench);
   addSeat(makeBench(true), 5.5, R + 3.2, 0, 1.51, 'bench by the shop');
   addSeat(makeBench(false), FEN.x + 6.5, FEN.z - 5.5, -Math.PI / 2, 1.51, 'bench at the stall');
   addSeat(makeBench(true), WOOD.x - 9.5, WOOD.z + 7, Math.PI / 2, 1.51, 'bench at the woodshop');
@@ -1399,7 +1584,7 @@
     }
     return g;
   }
-  function addPickable(obj, kind, data = {}) { const target = where === 'village' ? scene : where === 'road' ? roadScene : orchScene; obj.userData = { pickable: true, kind, world: where, ...data }; target.add(obj); pickables.push(obj); return obj; }
+  function addPickable(obj, kind, data = {}) { const target = where === 'village' ? scene : where === 'road' ? roadScene : where === 'orchards' ? orchScene : fernScene; obj.userData = { pickable: true, kind, world: where, ...data }; target.add(obj); pickables.push(obj); return obj; }
   const flying = [];
   let grabT = 1;
   function flyAway(obj, dest) { const i = pickables.indexOf(obj); if (i >= 0) pickables.splice(i, 1); flying.push({ obj, t: 0, from: obj.position.clone(), dest }); grabT = 0; }
@@ -1447,16 +1632,17 @@
     const rows = document.createElement('div'); rows.className = 'keys-row';
     let val = '';
     const show = () => { entry.textContent = val || '_'; const b = visual.querySelector('.blank'); if (b) b.textContent = val || ' '; };
-    const press = k => { if (k === '⌫') val = val.slice(0, -1); else if (val.length < 3) val += k; show(); };
-    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'].forEach(k => { const b = document.createElement('button'); b.textContent = k; b.onclick = () => press(k); rows.appendChild(b); });
+    const dec = !Number.isInteger(answer);
+    const press = k => { if (k === '\u232b') val = val.slice(0, -1); else if (k === '.' && (val.includes('.') || !dec)) return; else if (val.length < (dec ? 5 : 3)) val += k; show(); };
+    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'].concat(dec ? ['.'] : []).forEach(k => { const b = document.createElement('button'); b.textContent = k; b.onclick = () => press(k); rows.appendChild(b); });
     const del = document.createElement('button'); del.textContent = '⌫'; del.setAttribute('aria-label', 'Delete'); del.onclick = () => press('⌫'); rows.appendChild(del);
     pad.append(entry, rows); visual.appendChild(pad);
     const check = document.createElement('button'); check.className = 'btn primary'; check.textContent = 'Write it in';
-    const keyHandler = e => { if (talking() && /^[0-9]$/.test(e.key)) { press(e.key); e.preventDefault(); } else if (e.key === 'Backspace') { press('⌫'); e.preventDefault(); } else if (e.key === 'Enter') { check.click(); } };
+    const keyHandler = e => { if (talking() && /^[0-9.]$/.test(e.key)) { press(e.key); e.preventDefault(); } else if (e.key === 'Backspace') { press('⌫'); e.preventDefault(); } else if (e.key === 'Enter') { check.click(); } };
     window.addEventListener('keydown', keyHandler);
     check.onclick = () => {
       if (!val) return;
-      if (parseInt(val, 10) === answer) { window.removeEventListener('keydown', keyHandler); showDialog(false); then(); return; }
+      if (Math.abs(parseFloat(val) - answer) < 0.001) { window.removeEventListener('keydown', keyHandler); showDialog(false); then(); return; }
       line.innerHTML = `Not quite. ${val} isn’t it, and that’s okay. Let’s add it up another way.`; val = ''; show();
       showAnotherWay(() => { line.innerHTML = question; });
     };
@@ -1578,6 +1764,7 @@
     if (k === 'seat') return !sitting;
     if (k === 'orow') return phase === 'orows';
     if (k === 'apple') return phase === 'apples' && applesGot < 12;
+    if (k === 'press') return phase === 'press';
     return false;
   }
   const REACH = 4.2;
@@ -1597,6 +1784,7 @@
     else if (d.kind === 'shape') sortShape(obj);
     else if (d.kind === 'seat') sitDown(obj);
     else if (d.kind === 'orow') countRowOfTrees(obj);
+    else if (d.kind === 'press') pullPress(obj);
     else if (d.kind === 'apple') { flyAway(obj); applesGot++; tasks.apples.have = applesGot; renderTasks(); if (applesGot >= 12) hint('Twelve apples! Back to Hollis by the press.'); }
     else if (d.kind === 'grub') { flyAway(obj); grubHeld = true; afterGrub(); }
     else if (d.kind === 'rot') { flyAway(obj); rotCount++; tasks.rot.have = rotCount; renderTasks(); if (rotCount >= 5) { labels.oak.visible = false; labels.shop.visible = true; hint('Five pieces. Take them and the grub to Bramblewick\u2019s shop.'); } }
@@ -1635,6 +1823,7 @@
     else if (phase === 'rot') hint('Rotten wood lies under the Old Oak.');
     else if (phase === 'orows') hint('Walk to a yellow flag at the head of a row and press E.');
     else if (phase === 'apples') hint('Windfall apples lie under the apple trees.');
+    else if (phase === 'press') hint('The cider press is by the mill, past the bench. Press E at the glowing ring.');
     else if (['spill', 'errand', 'fresh', 'sort', 'harvest', 'water'].includes(phase)) hint('Nothing in reach. Walk up close to it.');
   }
 
@@ -2660,7 +2849,267 @@
             () => ask('Which of these is a <b>multiple of 6</b>?', ['20', '30', '32'], '30',
               back => stepLines(['Sing the six-song: 6, 12, 18, 24, <b style="color:var(--gold)">30</b>, 36', '20 and 32 never come up'], () => setTimeout(back, 1200)),
               () => say(['Thirty. Five rows of six.', 'Factors go <b>into</b> a number. Multiples come <b>out</b> of it. Same rows, two directions.', '\u2026I made you a crate. A small one. It\u2019s 2 by 3. Six.'],
-                () => { setCoins(coins + 2); rewardOrch(5, 'Pip\u2019s little crate', 'You found the <b style="color:var(--gold)">factors</b> of 24 by stacking it in rows, and sang out its <b style="color:var(--gold)">multiples</b>.', null); }, 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby');
+                () => { setCoins(coins + 2); rewardOrch(5, 'Pip\u2019s little crate', 'You found the <b style="color:var(--gold)">factors</b> of 24 by stacking it in rows, and sang out its <b style="color:var(--gold)">multiples</b>.', startO6); }, 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby');
+  }
+
+  // ---------- Region 2, Lessons 6 to 9: big orders, the long split, the cider press, the Season Fair ----------
+  function areaSvg(a, b, splitA, splitB, color = 'var(--gold)') {
+    // a rectangle a wide by b tall, split at splitA columns and splitB rows, labelled with the partial products
+    const W = 320, H = 150, pad = 28, w = W - pad * 2, h = H - pad * 2, x1 = pad + w * splitA / a, y1 = pad + h * splitB / b;
+    let out = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;margin:0 auto" font-family="var(--font-body)" font-size="13" fill="var(--ink)">`;
+    out += `<rect x="${pad}" y="${pad}" width="${w}" height="${h}" fill="none" stroke="${color}" stroke-width="2"/>`;
+    if (splitA < a) out += `<line x1="${x1}" y1="${pad}" x2="${x1}" y2="${pad + h}" stroke="${color}" stroke-dasharray="4 3"/>`;
+    if (splitB < b) out += `<line x1="${pad}" y1="${y1}" x2="${pad + w}" y2="${y1}" stroke="${color}" stroke-dasharray="4 3"/>`;
+    out += `<text x="${(pad + x1) / 2}" y="${pad - 8}" text-anchor="middle" fill="var(--ink-soft)">${splitA}</text>`;
+    if (splitA < a) out += `<text x="${(x1 + pad + w) / 2}" y="${pad - 8}" text-anchor="middle" fill="var(--ink-soft)">${a - splitA}</text>`;
+    out += `<text x="${pad - 8}" y="${(pad + y1) / 2 + 4}" text-anchor="end" fill="var(--ink-soft)">${splitB}</text>`;
+    if (splitB < b) out += `<text x="${pad - 8}" y="${(y1 + pad + h) / 2 + 4}" text-anchor="end" fill="var(--ink-soft)">${b - splitB}</text>`;
+    const cell = (x0, x2, y0, y2, v) => `<text x="${(x0 + x2) / 2}" y="${(y0 + y2) / 2 + 5}" text-anchor="middle" font-weight="700" fill="${color}">${v}</text>`;
+    out += cell(pad, x1, pad, y1, splitA * splitB);
+    if (splitA < a) out += cell(x1, pad + w, pad, y1, (a - splitA) * splitB);
+    if (splitB < b) { out += cell(pad, x1, y1, pad + h, splitA * (b - splitB)); if (splitA < a) out += cell(x1, pad + w, y1, pad + h, (a - splitA) * (b - splitB)); }
+    return out + '</svg>';
+  }
+  // Lesson 6: big orders (multi-digit multiplication with the area model)
+  function startO6() {
+    phase = 'o6';
+    say([
+      'A buyer\u2019s come up from Fernwater. Wants <b>12</b> crates, and I pack <b>6</b> apples to a crate for the river trade. How many apples is that?',
+      'Twelve rows of six. Too many to sing. So we <b>break the big number up</b>: 12 is 10 and 2. Ten rows of six, then two rows of six.'
+    ], () => askNumber('<b>12 \u00d7 6</b>. Ten sixes, plus two sixes. How many apples?', 72, areaSvg(12, 6, 10, 6),
+      back => stepLines(['10 \u00d7 6 = 60', '2 \u00d7 6 = 12', '60 + 12 = <b style="color:var(--gold)">72</b>'], () => setTimeout(back, 900)),
+      () => say(['Seventy-two. <b>12 \u00d7 6 = 72</b>. You multiplied the tens, multiplied the ones, and added. Every big multiply is just that.', 'Bigger order. The baker wants <b>23</b> bags of <b>4</b> hazelnuts.'],
+        () => askNumber('<b>23 \u00d7 4</b>. Twenty fours, plus three fours.', 92, areaSvg(23, 4, 20, 4),
+          back => stepLines(['20 \u00d7 4 = 80', '3 \u00d7 4 = 12', '80 + 12 = <b style="color:var(--gold)">92</b>'], () => setTimeout(back, 900)),
+          () => say(['Ninety-two. Now the real one. Both numbers big. <b>24</b> trees, and this year each gave <b>12</b> crates.', 'Break <b>both</b> up. 24 is 20 and 4. 12 is 10 and 2. Four little rectangles instead of one big one.'],
+            () => askNumber('<b>24 \u00d7 12</b>. Add up the four pieces.', 288, areaSvg(24, 12, 20, 10),
+              back => stepLines(['20 \u00d7 10 = 200', '4 \u00d7 10 = 40', '20 \u00d7 2 = 40', '4 \u00d7 2 = 8', '200 + 40 + 40 + 8 = <b style="color:var(--gold)">288</b>'], () => setTimeout(back, 1100)),
+              () => say(['Two hundred and eighty-eight crates! <b>24 \u00d7 12 = 288</b>. Four pieces, added up. That\u2019s the <b>area</b> way: the big rectangle is the sum of its little ones.', 'That buyer\u2019s going to need a bigger barge. <b>3 coins</b>, and the orchard map, with every row on it.'],
+                () => { setCoins(coins + 3); rewardOrch(6, 'The orchard map', 'You multiplied <b style="color:var(--gold)">big numbers</b> by breaking them into tens and ones and adding the pieces.', startO7); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+  }
+  // Lesson 7: the long split (long division by chunks)
+  function startO7() {
+    phase = 'o7';
+    say([
+      'The hazel harvest is in: <b>96</b> nuts on the floor, and sacks that hold <b>4</b>. How many sacks?',
+      'Dividing big numbers goes the same way as multiplying them: in <b>chunks</b>. Take a big easy chunk first, then the rest.'
+    ], () => askNumber('<b>96 \u00f7 4</b>. Eighty is twenty fours. Then sixteen.', 24, '',
+      back => stepLines(['80 \u00f7 4 = 20 sacks', '16 \u00f7 4 = 4 sacks', '20 + 4 = <b style="color:var(--gold)">24</b> sacks'], () => setTimeout(back, 900)),
+      () => say(['Twenty-four sacks. <b>96 \u00f7 4 = 24</b>. The chunk you take first can be any size, as long as it\u2019s easy.', 'Next: <b>132</b> apples into crates of <b>6</b>.'],
+        () => askNumber('<b>132 \u00f7 6</b>. Try 120 first, then what\u2019s left.', 22, '',
+          back => stepLines(['120 \u00f7 6 = 20 crates', '132 \u2212 120 = 12, and 12 \u00f7 6 = 2', '20 + 2 = <b style="color:var(--gold)">22</b>'], () => setTimeout(back, 900)),
+          () => say(['Twenty-two crates. Now the long split itself. <b>648</b> hazelnuts, sacks of <b>12</b>. Chunk it.', 'Fifty sacks of 12 is 600. That\u2019s the big chunk. Then see what\u2019s left.'],
+            () => askNumber('<b>648 \u00f7 12</b>. Fifty twelves, then the rest.', 54, '',
+              back => stepLines(['50 \u00d7 12 = 600, so 50 sacks', '648 \u2212 600 = 48', '48 \u00f7 12 = 4 more sacks', '50 + 4 = <b style="color:var(--gold)">54</b>'], () => setTimeout(back, 1100)),
+              () => say(['Fifty-four sacks, and not a nut left over. <b>648 \u00f7 12 = 54</b>.', 'Chunk, subtract, chunk again. That\u2019s long division, and most grown elves can\u2019t do it. <b>3 coins</b>, and the sack-tally string: one knot per sack.'],
+                () => { setCoins(coins + 3); rewardOrch(7, 'The sack-tally string', 'You divided <b style="color:var(--gold)">big numbers</b> in chunks: take an easy chunk, subtract, and finish the rest.', startO8); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+  }
+  // Lesson 8: the cider press (mixed word problems, and you work the press)
+  let presses = 0;
+  function startO8() {
+    phase = 'o8';
+    say([
+      'Cider day! Everything you\u2019ve learned, all at once, and a lever to pull.',
+      'A <b>bushel</b> is 48 apples. Three bushels went into the press this morning. The press gives one bottle for every <b>8</b> apples.',
+      'First: how many apples went in?'
+    ], () => askNumber('<b>3</b> bushels of <b>48</b> apples. How many apples?', 144, areaSvg(48, 3, 40, 3),
+      back => stepLines(['40 \u00d7 3 = 120', '8 \u00d7 3 = 24', '120 + 24 = <b style="color:var(--gold)">144</b>'], () => setTimeout(back, 900)),
+      () => say(['A hundred and forty-four apples. Now go and <b>press</b> them. The lever\u2019s on the press by the mill. Three good pulls.'],
+        () => { phase = 'press'; presses = 0; setTasks([{ id: 'press', icon: 'apple', label: 'Pulls', have: 0, need: 3 }]); const ring = makeRing('#e8b64c'); ring.position.set(-14 + 2.4, 1.2, 76 + 1.4); addPickable(ring, 'press'); hint('Walk to the cider press and press E to pull the lever.'); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+  }
+  function pullPress(obj) {
+    presses++; tasks.press.have = presses; renderTasks(); grabT = 0;
+    const pr = orchScene.children.find(o => o.userData && o.userData.press); if (pr) pr.userData.squeeze = presses;
+    if (presses >= 3) { const i = pickables.indexOf(obj); if (i >= 0) pickables.splice(i, 1); obj.parent.remove(obj); hint(''); setTimeout(afterPress, 900); }
+    else hint(`${presses} pull${presses === 1 ? '' : 's'}. Juice is running. Again!`);
+  }
+  function afterPress() {
+    phase = 'o8b';
+    say(['Listen to it run! 144 apples, 8 to a bottle.'], () =>
+      askNumber('<b>144</b> apples, <b>8</b> apples per bottle. How many bottles of cider?', 18, '',
+        back => stepLines(['80 \u00f7 8 = 10 bottles', '64 \u00f7 8 = 8 bottles', '10 + 8 = <b style="color:var(--gold)">18</b>'], () => setTimeout(back, 900)),
+        () => say(['Eighteen bottles. Bottles go in crates of <b>6</b>.'],
+          () => askNumber('<b>18</b> bottles, crates of <b>6</b>. How many crates?', 3, '',
+            back => dealRow(18, 3, 'apple', () => setTimeout(back, 1200)),
+            () => say(['Three crates. And the buyer pays <b>3 coins</b> a bottle.'],
+              () => askNumber('<b>18</b> bottles at <b>3</b> coins each. How many coins?', 54, areaSvg(18, 3, 10, 3),
+                back => stepLines(['10 \u00d7 3 = 30', '8 \u00d7 3 = 24', '30 + 24 = <b style="color:var(--gold)">54</b>'], () => setTimeout(back, 900)),
+                () => say(['Fifty-four coins for a morning\u2019s pressing. Multiply, divide, divide, multiply, and you never once lost count.', 'Have a bottle. And <b>3 coins</b>. The rest goes to the mice.'],
+                  () => { setCoins(coins + 3); rewardOrch(8, 'A bottle of Quern cider', 'You chained <b style="color:var(--gold)">multiplying and dividing</b> through a whole day at the press.', startO9); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+  }
+  // Lesson 9: the Season Fair (a contest against Pip that quietly re-tests the Hollow)
+  let fairScore = 0;
+  function startO9() {
+    phase = 'o9'; fairScore = 0;
+    say([
+      'Season Fair! Once a year the whole orchard stops work and counts for fun. This year it\u2019s you against Pip.',
+      'Pip\u2019s quick. But Pip also forgets to carry. Five questions, Hollow stuff, nothing you haven\u2019t done. Ready?'
+    ], () => fairQ(0), 'Hollis Quern');
+  }
+  const FAIR = [
+    ['One full tray of ten and 7 loose acorns. How many?', 17, ['17'], 'Tens and ones: 10 + 7'],
+    ['The stores had 42, and 15 went out. How many left?', 27, ['27'], '42 \u2212 10 = 32, then 32 \u2212 5 = 27'],
+    ['Fen brought 23 and Marigold 31. Together?', 54, ['54'], 'Tens: 50. Ones: 4. 54'],
+    ['The counter is 8 acorns and the bench is 4. How much longer is the counter?', 4, ['4'], '8 \u2212 4 = 4'],
+    ['Three rows of seedlings, 5 in each. How many?', 15, ['15'], '5, 10, 15']
+  ];
+  function fairQ(i) {
+    if (i >= FAIR.length) { finishFair(); return; }
+    const [q, a, , how] = FAIR[i];
+    let tries = 0;
+    askNumber(`Question ${i + 1} of 5. ${q}`, a, `<p style="text-align:center;margin:0;color:var(--ink-soft)">You: <b style="color:var(--gold)">${fairScore}</b> \u00b7 Pip: <b style="color:var(--berry)">${Math.min(i, 3)}</b></p>`,
+      back => { tries++; stepLines([how], () => setTimeout(back, 900)); },
+      () => { if (tries === 0) fairScore++; fairQ(i + 1); }, 'Hollis Quern');
+  }
+  function finishFair() {
+    phase = 'o9b';
+    const won = fairScore >= 3;
+    say([
+      `Time! You got <b>${fairScore}</b> first time. Pip got 3, and then ate the leftovers bowl.`,
+      won ? 'You win the fair! The Hollow stuck. Bramblewick will be insufferable when he hears.' : 'Pip takes it this year, but you were close, and every one you missed you got on the second go. That counts.',
+      'Now. Before you go on down the road, I want to see that broken wing Bramblewick found. Show me the mark.',
+      'Hm. Yes. The second symbol. I know that one. It\u2019s the old miller\u2019s sign for <b>\u201cmany.\u201d</b> One, then many. Two down, and the road goes on to the river.'
+    ], () => { setCoins(coins + (won ? 4 : 2)); rewardOrch(9, won ? 'The Season Fair ribbon' : 'A Season Fair rosette', `The orchards are done. You re-tested the Hollow and read the second mark on the wing: <b style="color:var(--gold)">\u201cmany.\u201d</b> Fernwater Crossing is next.`, () => { phase = 'tofern'; hint('The road to Fernwater leaves past the mill, through the gate on the right.'); }); }, 'Hollis Quern');
+  }
+
+  // ---------- Region 3, Lessons 1 to 5: half a rope, the baker's cakes, adding slices, the money-changer, decimals on the dock ----------
+  let nearOri = false, nearMaud = false;
+  function pieSvg(n, shaded, color = 'var(--gold)', size = 120, labels = true) {
+    const r = size / 2 - 4, cx = size / 2, cy = size / 2; let out = `<svg viewBox="0 0 ${size} ${size}" width="${size}" style="display:inline-block;vertical-align:middle;margin:0 6px">`;
+    for (let k = 0; k < n; k++) {
+      const a0 = -Math.PI / 2 + k * 2 * Math.PI / n, a1 = a0 + 2 * Math.PI / n;
+      const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0), x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+      out += n === 1 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${shaded > 0 ? color : 'none'}" stroke="var(--ink)" stroke-width="2"/>` : `<path d="M${cx} ${cy} L${x0} ${y0} A${r} ${r} 0 ${n === 2 ? 1 : 0} 1 ${x1} ${y1}Z" fill="${k < shaded ? color : 'rgba(255,255,255,.06)'}" stroke="var(--ink)" stroke-width="2"/>`;
+    }
+    return out + '</svg>' + (labels ? `<span style="font-size:22px;font-weight:700;color:${color};vertical-align:middle">${shaded}/${n}</span>` : '');
+  }
+  function ropeSvg(knots, cuts) {
+    const W = 320, y = 30; let out = `<svg viewBox="0 0 ${W} 60" width="100%" style="max-width:${W}px;display:block;margin:0 auto"><line x1="10" y1="${y}" x2="${W - 10}" y2="${y}" stroke="#c7b386" stroke-width="8" stroke-linecap="round"/>`;
+    for (let k = 0; k <= knots; k++) { const x = 10 + (W - 20) * k / knots; out += `<circle cx="${x}" cy="${y}" r="5" fill="#8a6438"/><text x="${x}" y="${y + 22}" text-anchor="middle" font-size="11" fill="var(--ink-soft)">${k}</text>`; }
+    cuts.forEach(k => { const x = 10 + (W - 20) * k / knots; out += `<line x1="${x}" y1="${y - 16}" x2="${x}" y2="${y + 10}" stroke="var(--berry)" stroke-width="3"/>`; });
+    return out + '</svg>';
+  }
+  const ORI = 'Captain Oriel', MAUD = 'Maudie Crumb';
+  function reachOriel() {
+    if (['todock', 'tofern'].includes(phase)) {
+      phase = 'ori1';
+      say([
+        'You’ll be the one from the Hollow with the beetle. I’m <b>Oriel Tideknot</b>. Captain. Of that.',
+        'The ferry rope snapped in the night, so nobody’s crossing till it’s mended, and the rope-walk only has an 8-knot length left.',
+        'I need it cut <b>in half</b>. Two pieces, and they must be <b>equal</b>, or the ferry pulls crooked. Where do you cut?'
+      ], () => ask('An 8-knot rope, cut in <b>half</b>. Cut at which knot?', ['Knot 2', 'Knot 4', 'Knot 6'], 'Knot 4',
+        back => { visual.hidden = false; visual.innerHTML = ropeSvg(8, [4]) + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">Half means two equal pieces. 4 knots and 4 knots.</p>'; setTimeout(back, 1800); },
+        () => say(['Knot 4. Two pieces of <b>4</b>. That’s a <b>half</b>: one of two equal pieces. Written <b>1/2</b>.', 'The deckhands want the other 8-knot rope in <b>quarters</b>. Four equal pieces.'],
+          () => askNumber('An 8-knot rope cut into <b>quarters</b>. How many knots in each piece?', 2, ropeSvg(8, []),
+            back => { visual.innerHTML = ropeSvg(8, [2, 4, 6]) + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">Four equal pieces: cut at 2, 4 and 6. Each piece is 2 knots: one quarter, 1/4.</p>'; setTimeout(back, 2000); },
+            () => say(['Two knots each. A <b>quarter</b>, 1/4: one of four equal pieces. Cut a half in half and you get quarters.', 'Now a plank. 16 notches long. The boatwright wants <b>eighths</b>.'],
+              () => askNumber('A 16-notch plank cut into <b>eighths</b>. How many notches in each piece?', 2, '',
+                back => stepLines(['Eighths: eight equal pieces', '16 ÷ 8 = <b style="color:var(--gold)">2</b> notches each'], () => setTimeout(back, 900)),
+                () => say(['Two notches. The more pieces you cut, the <b>smaller</b> each one gets. Halves are big, quarters are smaller, eighths smaller still.', 'The bottom number says how many pieces. The top says how many you’ve got. Here’s <b>2 coins</b>. Now go and see Maudie at the bakery, she’s got cake.'],
+                  () => { setCoins(coins + 2); rewardFern(1, 'The ferry rope, mended', 'You cut things into <b style="color:var(--gold)">halves, quarters and eighths</b>: equal pieces, named by how many.', () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb’s bakery is the red-and-cream stall, left of the lane.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+    } else if (phase === 'tomaud') { say(['Maudie’s stall. Left of the lane. Go on, she’ll feed you.'], null, ORI); }
+    else if (phase === 'f4go') { startF4(); }
+    else if (phase === 'f5go') { startF5(); }
+  }
+  function rewardFern(n, item, text, next) {
+    phase = 'doneF' + n; $('tasks').innerHTML = '';
+    showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
+    visual.innerHTML = `<div class="reward"><h2>Fernwater, Lesson ${n} complete</h2>
+      <div class="items"><div>${ICON.coin}<span>${coins} acorn coins saved</span></div><div><svg viewBox="0 0 64 64"><path d="M8 40 Q32 20 56 40" stroke="#4a7fb8" stroke-width="5" fill="none"/><path d="M4 48 q7 -5 14 0 t14 0 t14 0 t14 0" stroke="#6f9fd0" stroke-width="3" fill="none"/></svg><span>${item}</span></div></div>
+      <p style="margin:0;color:var(--ink-soft)">${text}</p></div>`;
+    if (next) { const go = document.createElement('button'); go.className = 'btn primary'; go.textContent = 'Keep going'; go.onclick = () => { showDialog(false); next(); }; actions.append(go); }
+    const walk = document.createElement('button'); walk.className = next ? 'btn' : 'btn primary'; walk.textContent = 'Walk around'; walk.onclick = () => { showDialog(false); hint('More Fernwater lessons are coming.'); };
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Back to the map'; b.onclick = () => { location.hash = ''; location.reload(); };
+    actions.append(walk, b); actions.querySelector('button').focus({ preventScroll: true });
+  }
+  // Lesson 2: the baker's cakes (fractions of a whole, equivalent fractions, fractions of a group)
+  function reachMaudie() {
+    if (phase === 'tomaud') {
+      phase = 'f2';
+      say([
+        'Hello, duck! Oriel sent you? Then you’re hungry. Everyone Oriel sends is hungry.',
+        'This cake’s cut in <b>6</b> slices. Go on, have two. Now then, what fraction of the cake did you just eat?'
+      ], () => ask('A cake cut into 6 slices. You ate 2. What fraction of the cake is that?', ['1/6', '2/6', '2/3'], '2/6',
+        back => { visual.hidden = false; visual.innerHTML = '<div style="text-align:center">' + pieSvg(6, 2, 'var(--berry)') + '</div><p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">6 slices altogether, 2 of them yours: 2 out of 6, written 2/6.</p>'; setTimeout(back, 2000); },
+        () => say(['Two sixths, <b>2/6</b>. Bottom number, how many slices in the whole cake. Top, how many you took.', 'Now look at this. If I’d cut the same cake into <b>3</b> and you took <b>1</b>…'],
+          () => ask('Is <b>2/6</b> of a cake more, less, or the same as <b>1/3</b> of the same cake?', ['More', 'Less', 'The same'], 'The same',
+            back => { visual.hidden = false; visual.innerHTML = '<div style="text-align:center">' + pieSvg(6, 2, 'var(--berry)') + '<span style="font-size:24px;color:var(--ink-soft)">=</span>' + pieSvg(3, 1, 'var(--berry)') + '</div><p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">Same cake, same amount. Two small slices make one big one.</p>'; setTimeout(back, 2200); },
+            () => say(['The same! <b>2/6 = 1/3</b>. Different names, same amount of cake. We call those <b>equivalent</b>. Cut every slice in two and the fraction doesn’t change.', 'Now fractions aren’t only for cakes. I’ve 12 buns, and a <b>quarter</b> of them are for the ferry crew.'],
+              () => askNumber('A <b>quarter</b> of 12 buns. How many buns is that?', 3, '',
+                back => dealRow(12, 4, 'acorn', () => { visual.lastChild.textContent = 'Four equal piles of 3. One pile is a quarter.'; setTimeout(back, 1200); }),
+                () => say(['Three buns. A quarter of 12 is 12 shared four ways: <b>12 ÷ 4 = 3</b>. Fractions of a group are just dividing.', 'And <b>two thirds</b> of the 12 go to the market.'],
+                  () => askNumber('<b>Two thirds</b> of 12 buns. How many?', 8, '',
+                    back => stepLines(['One third of 12 is 12 ÷ 3 = 4', 'Two thirds is 2 × 4 = <b style="color:var(--gold)">8</b>'], () => setTimeout(back, 900)),
+                    () => say(['Eight! Find one third, then take two of them. That’s every fraction of a group, duck.', 'Take a slice for the road, and <b>2 coins</b>. Come back when you want to learn to <b>add</b> slices.'],
+                      () => { setCoins(coins + 2); rewardFern(2, 'A slice of Maudie’s cake', 'You named <b style="color:var(--gold)">fractions of a cake</b>, found two that are equal, and took a fraction of a group by dividing.', startF3); }, MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD);
+    } else if (['todock', 'tofern'].includes(phase)) say(['Oriel’s at the dock, duck, by the ferry. Then come back for cake.'], null, MAUD);
+  }
+  // Lesson 3: adding slices (same and different denominators, and taking slices away)
+  const pieRow = (a, b, c, op) => '<div style="text-align:center">' + pieSvg(...a) + `<span style="font-size:24px;color:var(--ink-soft)">${op}</span>` + pieSvg(...b) + '<span style="font-size:24px;color:var(--ink-soft)">=</span>' + pieSvg(...c) + '</div>';
+  function startF3() {
+    phase = 'f3';
+    say(['Right. Two pies on the counter, both cut in <b>quarters</b>. You take a slice of each. How much pie is that?'],
+      () => ask('<b>1/4 + 1/4</b>. How much pie?', ['1/8', '2/4', '2/8'], '2/4',
+        back => { visual.hidden = false; visual.innerHTML = pieRow([4, 1], [4, 1], [4, 2], '+') + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">Same size slices, so count them: 2 quarters. The bottom number stays put.</p>'; setTimeout(back, 2200); },
+        () => say(['Two quarters, <b>2/4</b>. Which is <b>1/2</b>, same as we said. When the slices are the same size, you just count them.', 'Now a half and a quarter.'],
+          () => ask('<b>1/2 + 1/4</b>. How much pie?', ['2/6', '3/4', '2/4'], '3/4',
+            back => { visual.hidden = false; visual.innerHTML = pieRow([4, 2], [4, 1], [4, 3], '+') + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">Cut the half into quarters first: 1/2 = 2/4. Then 2/4 + 1/4 = 3/4.</p>'; setTimeout(back, 2400); },
+            () => say(['Three quarters. Different-sized slices can’t be counted together, so cut the big one till they match: <b>1/2 = 2/4</b>, then count.', 'Harder. A third and a sixth.'],
+              () => ask('<b>1/3 + 1/6</b>. How much pie?', ['2/9', '1/2', '2/6'], '1/2',
+                back => { visual.hidden = false; visual.innerHTML = pieRow([6, 2], [6, 1], [6, 3], '+') + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">1/3 is 2/6. Then 2/6 + 1/6 = 3/6, and 3/6 is half the pie.</p>'; setTimeout(back, 2400); },
+                () => say(['Half a pie! <b>1/3 = 2/6</b>, add the sixth, <b>3/6</b>, which is <b>1/2</b>. Match the slices, count, then say it the simple way.', 'Taking away works the same. Three quarters of a pie, and the kingfisher pinches a quarter.'],
+                  () => ask('<b>3/4 − 1/4</b>. How much pie is left?', ['2/4', '2/0', '3/3'], '2/4',
+                    back => { visual.hidden = false; visual.innerHTML = pieRow([4, 3], [4, 1], [4, 2], '−'); setTimeout(back, 1800); },
+                    () => say(['Two quarters, half a pie, and one fat kingfisher.', 'You can add and take away slices now. <b>2 coins</b>. Oriel wants you at the money-changer’s next. Mind your purse.'],
+                      () => { setCoins(coins + 2); rewardFern(3, 'Maudie’s pie slice', 'You <b style="color:var(--gold)">added and subtracted fractions</b>: match the slice sizes, then count.', () => { phase = 'f4go'; nearOri = false; hint('Back to Oriel at the dock.'); }); }, MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD);
+  }
+  // Lesson 4: the money-changer (silver leaves, gold rings, and the decimal point)
+  function coinsPage(c) { return `<div class="ledger"><h3>Your purse</h3><table><tr><td>Acorn coins</td><td>${c}</td></tr><tr><td>10 acorn coins</td><td>1 silver leaf</td></tr><tr><td>10 silver leaves</td><td>1 gold ring</td></tr><tr class="total"><td>Whole silver leaves</td><td><span class="blank"> </span></td></tr></table></div>`; }
+  function startF4() {
+    phase = 'f4'; const c = coins, leaves = Math.floor(c / 10), rem = c % 10;
+    say([
+      'Fernwater runs on three coins. <b>Ten acorn coins</b> make a <b>silver leaf</b>. <b>Ten leaves</b> make a <b>gold ring</b>. Ten, ten, ten.',
+      `You’re carrying <b>${c}</b> acorn coins, which is a lot of jangling. Change them up. How many whole silver leaves is that?`
+    ], () => askNumber(`<b>${c}</b> acorn coins. How many <b>whole</b> silver leaves?`, leaves, coinsPage(c),
+      back => stepLines(['Ten coins to a leaf', `${c} = ${leaves} tens and ${rem} ones`, `<b style="color:var(--gold)">${leaves}</b> leaves, with ${rem} coins left`], () => setTimeout(back, 900)),
+      () => say([`${cap(words(leaves))} leaves, and <b>${rem}</b> coins left over that won’t make a leaf.`, `Here’s the trick. We write that as <b>${leaves}.${rem}</b> leaves. The dot is the <b>decimal point</b>. Whole leaves on the left, loose coins on the right.`, 'Each coin is one <b>tenth</b> of a leaf. So 3 coins is 0.3 leaves, and 7 coins is 0.7.'],
+        () => askNumber('Fen’s barge fee is <b>2.4</b> silver leaves. How many acorn coins is that?', 24, '',
+          back => stepLines(['2 leaves = 20 coins', '.4 is 4 tenths = 4 coins', '20 + 4 = <b style="color:var(--gold)">24</b>'], () => setTimeout(back, 900)),
+          () => say(['Twenty-four coins. Two whole leaves and four tenths.', 'Other way now. Maudie charged you <b>35</b> coins for the cake. Write that in leaves, with the point.'],
+            () => askNumber('<b>35</b> acorn coins, written in silver leaves. (Use the point.)', 3.5, '',
+              back => stepLines(['35 = 3 tens and 5 ones', '3 whole leaves, 5 tenths', '<b style="color:var(--gold)">3.5</b> leaves'], () => setTimeout(back, 900)),
+              () => say(['<b>3.5</b> leaves. Three and a half, which is three and five tenths, which is 35 coins. All the same money.', 'And bigger. <b>Ten leaves</b> make a gold ring, so a ring is 100 coins.'],
+                () => askNumber('<b>1 gold ring, 2 silver leaves and 6 acorn coins.</b> How many acorn coins altogether?', 126, '',
+                  back => stepLines(['1 ring = 100 coins', '2 leaves = 20 coins', '6 coins', '100 + 20 + 6 = <b style="color:var(--gold)">126</b>'], () => setTimeout(back, 1000)),
+                  () => say(['A hundred and twenty-six. Rings, leaves, coins: hundreds, tens, ones. The same tens-and-ones you learned in the Hollow, just with a point in it.', 'Here, your purse changed, and <b>2 coins</b> on top. Now walk out to the gauge on the dock. The river’s got a number for you.'],
+                    () => { setCoins(coins + 2); rewardFern(4, 'A silver leaf', 'You changed coins into leaves and rings, and read the <b style="color:var(--gold)">decimal point</b>: wholes on the left, tenths on the right.', () => { phase = 'f5go'; nearOri = false; hint('Walk to the river gauge by the dock, near Oriel.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+  }
+  // Lesson 5: decimals on the dock (reading the gauge, comparing, rounding)
+  function gaugeSvg(level, marks, showLabel = !!marks) {
+    const H = 170, W = 120, top = 10, bot = 160; let out = `<svg viewBox="0 0 ${W} ${H}" width="${W}" style="display:block;margin:0 auto"><rect x="48" y="${top}" width="24" height="${bot - top}" fill="#efe6d2" stroke="#3a2a18"/>`;
+    for (let k = 0; k <= 4; k++) { const y = bot - (k / 4) * (bot - top); out += `<line x1="40" y1="${y}" x2="80" y2="${y}" stroke="#3a2a18" stroke-width="2"/><text x="86" y="${y + 4}" font-size="11" fill="var(--ink)">${k}</text>`; for (let j = 1; j < 10 && k < 4; j++) { const yy = y - j * (bot - top) / 40; out += `<line x1="48" y1="${yy}" x2="${j === 5 ? 64 : 58}" y2="${yy}" stroke="#3a2a18" stroke-width="1"/>`; } }
+    const wy = bot - level / 4 * (bot - top); out += `<rect x="0" y="${wy}" width="${W}" height="${bot - wy}" fill="#4a7fb8" opacity=".55"/>${showLabel ? `<text x="4" y="${wy - 4}" font-size="12" font-weight="700" fill="var(--gold)">${level.toFixed(2)}</text>` : ''}`;
+    (marks || []).forEach(m => { const y = bot - m / 4 * (bot - top); out += `<line x1="30" y1="${y}" x2="90" y2="${y}" stroke="var(--berry)" stroke-width="2" stroke-dasharray="4 3"/>`; });
+    return out + '</svg>';
+  }
+  function startF5() {
+    phase = 'f5';
+    say([
+      'The gauge. Every morning I read it, because the ferry needs <b>2.5 marks</b> of water, or she grounds.',
+      'The big numbers are whole marks. Between each pair are ten little lines: <b>tenths</b>. Read where the water sits.'
+    ], () => askNumber('Where does the water sit on the gauge? (Write it with the point.)', 2.7, gaugeSvg(2.7),
+      back => stepLines(['Past the 2, so 2 and something', 'Count the little lines above 2: seven', '<b style="color:var(--gold)">2.7</b>'], () => setTimeout(back, 900)),
+      () => say(['<b>2.7</b>. Two whole marks and seven tenths. Ferry runs. Now yesterday it read <b>2.65</b>. Six little lines, and halfway to the seventh.'],
+        () => ask('Which is <b>deeper</b> water: 2.7 or 2.65?', ['2.65', '2.7', 'They’re the same'], '2.7',
+          back => { visual.hidden = false; visual.innerHTML = gaugeSvg(2.7, [2.65]) + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">2.7 is 2.70. Seventy hundredths beats sixty-five. More digits doesn’t mean more water.</p>'; setTimeout(back, 2200); },
+          () => say(['<b>2.7</b>, because it’s 2.<b>70</b>. Line the points up and compare tenths first, then hundredths. The longer number isn’t the bigger one.', 'Now, a rough reading is good enough for the log. <b>3.46</b> marks this morning. Round it to one place after the point.'],
+            () => askNumber('Round <b>3.46</b> to the nearest tenth.', 3.5, gaugeSvg(3.46),
+              back => stepLines(['3.46 sits between 3.4 and 3.5', 'The 6 hundredths push it up', '<b style="color:var(--gold)">3.5</b>'], () => setTimeout(back, 900)),
+              () => say(['<b>3.5</b>. Closer to 3.5 than 3.4, so up it goes. Five or more rounds up.', 'Last. A dry week. The gauge reads <b>2.38</b>, and the ferry needs 2.5.'],
+                () => ask('Gauge <b>2.38</b>, ferry needs <b>2.5</b>. Does she run?', ['Yes, 2.38 is more', 'No, 2.38 is less', 'Only at noon'], 'No, 2.38 is less',
+                  back => { visual.hidden = false; visual.innerHTML = gaugeSvg(2.38, [2.5]) + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">2.38 against 2.50: three tenths is less than five tenths. The water’s below the line.</p>'; setTimeout(back, 2200); },
+                  () => say(['She stays tied up. Three tenths is less than five, never mind the eight after it.', 'You can read a gauge, which is more than half my deckhands. <b>2 coins</b>, and the ferry log’s yours to keep this week.'],
+                    () => { setCoins(coins + 2); rewardFern(5, 'The ferry log', 'You read <b style="color:var(--gold)">decimals</b> off a gauge, compared them point to point, and rounded to the nearest tenth.', null); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
   }
 
   // ---------- input ----------
@@ -2671,7 +3120,7 @@
   const SENS = 0.0022;
   function toggleView() { view = view === 'back' ? 'front' : 'back'; if (view === 'front') camYaw = bodyYaw; }
   window.addEventListener('keydown', e => {
-    if (talking()) return;
+    if (talking() || mapOpen) return;
     if (MOVE[e.code]) { keys[MOVE[e.code]] = true; e.preventDefault(); }
     if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) wantJump = true; }
     if (e.code === 'KeyE' && !e.repeat) pickNearest();
@@ -2700,11 +3149,12 @@
     if (!gp.seen) { gp.seen = true; $('gphint').textContent = 'Controller connected.'; }
     const dz = v => (Math.abs(v) < 0.18 ? 0 : v);
     const ax = dz(pad.axes[0] || 0), ay = dz(pad.axes[1] || 0), rx = dz(pad.axes[2] || 0), ry = dz(pad.axes[3] || 0);
-    if (!talking()) { gp.mx = -ax; gp.mz = -ay; if (rx || ry) look(rx * dt * 1000, ry * dt * 750); }
+    if (!talking() && !mapOpen) { gp.mx = -ax; gp.mz = -ay; if (rx || ry) look(rx * dt * 1000, ry * dt * 750); }
     gp.run = !!(pad.buttons[10] && pad.buttons[10].pressed) || !!(pad.buttons[1] && pad.buttons[1].pressed);
     const now = pad.buttons.map(b => b.pressed);
     const hit = i => now[i] && !gp.prev[i];
     const picker = $('start');
+    if (hit(9)) toggleMap();
     if (!picker.hidden) {
       const bs = Array.from(picker.querySelectorAll('button'));
       if (hit(0)) { const f = bs.includes(document.activeElement) ? document.activeElement : bs[0]; if (f) f.click(); }
@@ -2767,7 +3217,7 @@
       const target = wasInside ? R - 1.0 : R + 1.0;
       p.x = SHOP.x + dx / d * target; p.z = SHOP.z + dz / d * target;
     }
-    if (where === 'orchards') { /* handled below */ } else if (where === 'village') {
+    if (where === 'orchards' || where === 'fernwater') { /* handled below */ } else if (where === 'village') {
       // the fence keeps you in, except through the gate
       const atGate = Math.abs(p.x) < 4.2;
       p.x = clamp(p.x, FENCE.x0 + 0.8, FENCE.x1 - 0.8); p.z = Math.max(p.z, FENCE.z0 + 0.8);
@@ -2780,8 +3230,16 @@
     }
     if (where === 'orchards') {
       orchSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      p.x = clamp(p.x, -47, 47); p.z = Math.min(p.z, ORCH_LEN - 2);
+      p.x = clamp(p.x, -47, 47);
+      if (p.z > ORCH_LEN - 1 && Math.abs(p.x - 30) < 4.5 && !fading) goToFernwater(); else p.z = Math.min(p.z, Math.abs(p.x - 30) < 4.5 ? ORCH_LEN + 1 : ORCH_LEN - 2);
       if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToRoadFromOrchards(); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
+    }
+    if (where === 'fernwater') {
+      fernSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
+      // the river: stay on the boardwalk when over the water
+      if (p.z > 57 && p.z < 99) p.x = clamp(p.x, -4.4, 4.4);
+      p.x = clamp(p.x, -44, 44); p.z = Math.min(p.z, FERN_LEN - 2);
+      if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToOrchardsFromFern(); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
     }
   }
   const sameSideOfWall = (a, b) => where !== 'village' || ((Math.hypot(a.x, a.z) < R) === (Math.hypot(b.x, b.z) < R));
@@ -2827,7 +3285,7 @@
     // walking, running, sitting
     pollGamepad(dt);
     let mx = gp.mx, mz = gp.mz;
-    if (!talking() && !fading) { if (keys.f) mz += 1; if (keys.b) mz -= 1; if (keys.l) mx += 1; if (keys.r) mx -= 1; }
+    if (!talking() && !fading && !mapOpen) { if (keys.f) mz += 1; if (keys.b) mz -= 1; if (keys.l) mx += 1; if (keys.r) mx -= 1; }
     const mag = Math.min(1, Math.hypot(mx, mz));
     if (sitting && mag > 0.05) standUp();
     const moving = mag > 0.05 && !sitting;
@@ -2872,7 +3330,7 @@
     const k = 1 - Math.pow(0.002, dt);
     camPos.lerp(cp, k); camLook.lerp(cl, k);
     camera.position.copy(camPos); camera.lookAt(camLook);
-    const sunNow = where === 'village' ? sun : where === 'road' ? roadSun : orchSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-30, 50, 28));
+    const sunNow = where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-30, 50, 28));
 
     // Bramblewick watches you
     if (!reduce) { bw.position.y = Math.sin(t * 1.6) * 0.06; head.rotation.z = Math.sin(t * 0.9) * 0.05; }
@@ -2917,7 +3375,22 @@
       if (dPip < 6 && !nearPip && !talking() && ['opip', 'orows', 'tomill', 'toorch', 'o5go'].includes(phase)) { nearPip = true; reachPip(); }
       if (dPip > 9) nearPip = false;
       const mg = orchScene.children.find(o => o.userData && o.userData.wheel); if (mg) { mg.userData.wheel.rotation.x += dt * wheelSpeed; mg.userData.mice.forEach((m, i) => { m.position.y = 1.2 + Math.abs(Math.sin(t * 6 * wheelSpeed / 0.9 + i)) * 0.25; m.rotation.z = Math.sin(t * 6 + i) * 0.08; }); }
+      const prG = orchScene.children.find(o => o.userData && o.userData.press); if (prG) { const target = 2.8 - prG.userData.squeeze * 0.45; prG.userData.plate.position.y += (target - prG.userData.plate.position.y) * Math.min(1, dt * 3); prG.userData.screw.position.y = prG.userData.plate.position.y + 2; prG.userData.screw.rotation.y += dt * prG.userData.squeeze; }
       orchTrees.forEach(tr => { if (tr.userData.bounce > 0) { tr.userData.bounce = Math.max(0, tr.userData.bounce - dt * 1.6); tr.scale.setScalar(1 + Math.sin(tr.userData.bounce * Math.PI) * 0.12); } });
+    }
+    // Fernwater: Oriel at the dock, Maudie at the bakery, the ferry rocking, the water moving
+    if (where === 'fernwater') {
+      const dOri = Math.hypot(player.position.x - ORIPOS.x, player.position.z - ORIPOS.z);
+      if (dOri < 30) ori.lookAt(player.position.x, 0, player.position.z); if (!reduce) oriHead.rotation.y = Math.sin(t * 0.7) * 0.1;
+      if (dOri < 7.5 && !nearOri && !talking() && ['todock', 'tofern', 'tomaud', 'f4go', 'f5go'].includes(phase)) { nearOri = true; reachOriel(); }
+      if (dOri > 10.5) nearOri = false;
+      const dMaud = Math.hypot(player.position.x - (MAUDPOS.x - 3.2), player.position.z - MAUDPOS.z);
+      if (dMaud < 30) maud.lookAt(player.position.x, 0, player.position.z); if (!reduce) { maudHead.rotation.z = Math.sin(t * 1.4) * 0.06; maud.position.y = Math.abs(Math.sin(t * 2.4)) * 0.06; }
+      if (dMaud < 7.5 && !nearMaud && !talking() && ['tomaud', 'todock', 'tofern'].includes(phase)) { nearMaud = true; reachMaudie(); }
+      if (dMaud > 10.5) nearMaud = false;
+      const fy = fernScene.userData.ferry; if (fy && !reduce) { fy.position.y = 0.1 + Math.sin(t * 1.1) * 0.12; fy.rotation.z = Math.sin(t * 0.9) * 0.02; fy.rotation.x = Math.sin(t * 0.7) * 0.015; }
+      if (water) water.material.map.offset.x += dt * 0.02;
+      const rA = fernScene.userData.ropeA; if (rA) rA.visible = !(['todock', 'tofern', 'ori1'].includes(phase));
     }
     // your beetle trots along behind you
     if (beetle && beetle.userData.follow) {
@@ -2955,7 +3428,8 @@
       snow.geometry.attributes.position.needsUpdate = true;
     }
 
-    renderer.render(where === 'village' ? scene : where === 'road' ? roadScene : orchScene, camera);
+    updateMapLive();
+    renderer.render(where === 'village' ? scene : where === 'road' ? roadScene : where === 'orchards' ? orchScene : fernScene, camera);
     requestAnimationFrame(tick);
   }
   tick();
@@ -2969,28 +3443,146 @@
   // ---------- region picker ----------
   const REGIONS = [
     { name: 'Thistledown Hollow', math: 'Counting, place value, adding and subtracting', lessons: [['Lesson 1: The spill', 'lesson-1'], ['Lesson 2: The first trade', 'lesson-2'], ['Lesson 3: The big harvest', 'lesson-3'], ['Lesson 4: The ledger', 'lesson-4'], ['Lesson 5: The nursery', 'lesson-5'], ['Lesson 6: Winter stores', 'lesson-6'], ['Lesson 7: The measuring stick', 'lesson-7'], ['Lesson 8: Shapes in the woodshop', 'lesson-8'], ['Lesson 9: The hundred-acorn count', 'lesson-9'], ['Lesson 10: The beetle', 'lesson-10']] },
-    { name: 'Mallow Orchards', math: 'Multiplying, dividing, factors, remainders', lessons: [['Lesson 1: Rows and rows', 'orch-1'], ['Lesson 2: The mill songs', 'orch-2'], ['Lesson 3: Fair shares', 'orch-3'], ['Lesson 4: Leftovers', 'orch-4'], ['Lesson 5: Pip\u2019s puzzle', 'orch-5']] },
-    { name: 'Fernwater Crossing', math: 'Fractions, decimals, money' },
+    { name: 'Mallow Orchards', math: 'Multiplying, dividing, factors, remainders', lessons: [['Lesson 1: Rows and rows', 'orch-1'], ['Lesson 2: The mill songs', 'orch-2'], ['Lesson 3: Fair shares', 'orch-3'], ['Lesson 4: Leftovers', 'orch-4'], ['Lesson 5: Pip\u2019s puzzle', 'orch-5'], ['Lesson 6: Big orders', 'orch-6'], ['Lesson 7: The long split', 'orch-7'], ['Lesson 8: The cider press', 'orch-8'], ['Lesson 9: The Season Fair', 'orch-9']] },
+    { name: 'Fernwater Crossing', math: 'Fractions, decimals, money', lessons: [['Lesson 1: Half a rope', 'fern-1'], ['Lesson 2: The baker\u2019s cakes', 'fern-2'], ['Lesson 3: Adding slices', 'fern-3'], ['Lesson 4: The money-changer', 'fern-4'], ['Lesson 5: Decimals on the dock', 'fern-5']] },
     { name: 'Cairnhold Highlands', math: 'Geometry and measurement' },
     { name: 'Cogsworth', math: 'Ratios, rates, percent, negative numbers' },
     { name: 'Emberdeep', math: 'Algebra 1 and 2' },
     { name: 'Lanternreach', math: 'Trigonometry, functions, pre-calculus' },
     { name: 'Skyhaven', math: 'Calculus 1 and 2' }
   ];
-  const startEl = $('start'), regionsEl = $('regions');
-  REGIONS.forEach(r => {
-    const card = document.createElement('div'); card.className = 'region' + (r.lessons ? ' open' : '');
-    card.innerHTML = `<h2>${r.name}</h2><div class="math">${r.math}</div>`;
+  const startEl = $('start'), mapSvgEl = $('mapsvg'), mapPanel = $('mappanel'), mapClose = $('mapclose');
+  // where each region sits on the parchment, and a glyph for it
+  const MAPPOS = [[150, 540], [330, 468], [505, 548], [630, 392], [470, 262], [705, 196], [862, 336], [884, 96]];
+  const GLYPH = [
+    '<ellipse cx="0" cy="3" rx="7" ry="9" fill="#b06b2c"/><path d="M-9 -3 Q0 -12 9 -3 Q0 0 -9 -3Z" fill="#6b4a2b"/>',
+    '<circle cx="0" cy="0" r="9" fill="none" stroke="#6b4a2b" stroke-width="2.5"/><line x1="-9" y1="0" x2="9" y2="0" stroke="#6b4a2b" stroke-width="2"/><line x1="0" y1="-9" x2="0" y2="9" stroke="#6b4a2b" stroke-width="2"/><circle cx="0" cy="0" r="2.5" fill="#c4362e"/>',
+    '<path d="M-10 4 Q0 -8 10 4" stroke="#6b4a2b" stroke-width="3" fill="none"/><line x1="-10" y1="4" x2="10" y2="4" stroke="#6b4a2b" stroke-width="2.5"/><path d="M-12 9 q4 -3 8 0 t8 0 t8 0" stroke="#4a7fb8" stroke-width="2" fill="none"/>',
+    '<path d="M-11 9 L-3 -7 L2 2 L6 -3 L11 9Z" fill="#8a8578" stroke="#5a564c" stroke-width="1.5"/><path d="M-5 -3 L-3 -7 L-1 -3Z" fill="#ffffff"/>',
+    '<circle cx="0" cy="0" r="7" fill="none" stroke="#4b4b4b" stroke-width="3"/>' + [0,1,2,3,4,5,6,7].map(k => `<rect x="-1.5" y="-11" width="3" height="4" fill="#4b4b4b" transform="rotate(${k*45})"/>`).join('') + '<circle cx="0" cy="0" r="2" fill="#e8b64c"/>',
+    '<path d="M-10 6 h20 v3 h-20z M-6 -2 h12 l3 8 h-18z M-2 -8 h4 v6 h-4z" fill="#3b3b3b"/><circle cx="0" cy="-9" r="2.5" fill="#ff7a30"/>',
+    '<path d="M-4 9 L-2 -8 h4 l2 17z" fill="#f2e6c8" stroke="#8a3a3a" stroke-width="1.5"/><circle cx="0" cy="-9" r="3" fill="#f4c53a"/><path d="M3 -9 l9 -3 v6z" fill="#f4c53a" opacity=".7"/>',
+    '<path d="M-12 4 q0 -6 6 -6 q2 -6 8 -4 q6 -2 8 4 q5 0 4 6z" fill="#ffffff" stroke="#9fb7f0" stroke-width="1.5"/><path d="M-6 0 L10 -4 L2 2z" fill="#8a6438"/>'
+  ];
+  function roadPath(pts) {
+    let d = `M${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+      d += ` C${c1[0]} ${c1[1]} ${c2[0]} ${c2[1]} ${p2[0]} ${p2[1]}`;
+    }
+    return d;
+  }
+  // insets: the real layout of each built region, drawn from the same numbers the world uses
+  const INSET = {
+    village(w, h) {
+      const X = x => (x + 46) / 92 * w, Z = z => (z + 20) / 126 * h, out = [];
+      out.push(`<rect x="${X(FENCE.x0)}" y="${Z(FENCE.z0)}" width="${X(FENCE.x1) - X(FENCE.x0)}" height="${Z(FENCE.z1) - Z(FENCE.z0)}" fill="none" stroke="#8a6438" stroke-width="1.5" stroke-dasharray="3 2"/>`);
+      out.push(`<line x1="${X(0)}" y1="${Z(13)}" x2="${X(0)}" y2="${Z(104)}" stroke="#b08a52" stroke-width="5" stroke-linecap="round"/>`);
+      pathEnds.slice(1).forEach(([a, b]) => out.push(`<line x1="${X(a.x)}" y1="${Z(a.z)}" x2="${X(b.x)}" y2="${Z(b.z)}" stroke="#b08a52" stroke-width="2.5" stroke-linecap="round"/>`));
+      const spot = (x, z, r, fill, label) => `<circle cx="${X(x)}" cy="${Z(z)}" r="${r}" fill="${fill}" stroke="#3a2a18" stroke-width="1"/><text x="${X(x)}" y="${Z(z) + r + 9}" text-anchor="middle" font-size="8" fill="#3a2a18">${label}</text>`;
+      out.push(spot(0, 0, 11, '#8a6438', 'Shop'), spot(NURS.x, NURS.z, 8, '#6f9a3a', 'Nursery'), spot(WOOD.x, WOOD.z, 8, '#c9a06a', 'Woodshop'), spot(FEN.x, FEN.z, 5, '#c8384a', 'Stall'), spot(BUSH.x, BUSH.z, 5, '#2c5527', 'Bush'), spot(OAK.x, OAK.z, 10, '#3e6b2b', 'Old Oak'));
+      out.push(`<rect x="${X(-5)}" y="${Z(102)}" width="${X(5) - X(-5)}" height="4" fill="#6b4a2b"/><text x="${X(0)}" y="${Z(104) + 12}" text-anchor="middle" font-size="8" fill="#3a2a18">Gate</text>`);
+      return { svg: out.join(''), X, Z };
+    },
+    orchards(w, h) {
+      const X = x => (x + 52) / 104 * w, Z = z => (112 - z) / 116 * h, out = [];
+      out.push(`<line x1="${X(0)}" y1="${Z(0)}" x2="${X(0)}" y2="${Z(80)}" stroke="#b08a52" stroke-width="5" stroke-linecap="round"/>`);
+      for (let r = 0; r < ROWS.rows; r++) for (let k = 0; k < ROWS.per; k++) out.push(`<circle cx="${X(ROWS.x0 + r * ROWS.dx)}" cy="${Z(ROWS.z0 + k * ROWS.dz)}" r="3" fill="#4a7a31"/>`);
+      for (let r = 0; r < 3; r++) for (let k = 0; k < 5; k++) out.push(`<circle cx="${X(14 + r * 8)}" cy="${Z(16 + k * 10)}" r="2.5" fill="#8a9a3a"/>`);
+      out.push(`<circle cx="${X(0)}" cy="${Z(92)}" r="11" fill="#8f8a7a" stroke="#3a2a18"/><text x="${X(0)}" y="${Z(92) - 14}" text-anchor="middle" font-size="8" fill="#3a2a18">Quern Mill</text>`);
+      out.push(`<circle cx="${X(11.5)}" cy="${Z(92)}" r="6" fill="none" stroke="#6b4a2b" stroke-width="2"/>`);
+      out.push(`<rect x="${X(13)}" y="${Z(90)}" width="${X(26) - X(13)}" height="${Z(84) - Z(90)}" fill="#9a7448"/><text x="${X(19.5)}" y="${Z(84) + 9}" text-anchor="middle" font-size="7" fill="#3a2a18">Crates</text>`);
+      out.push(`<circle cx="${X(-14)}" cy="${Z(76)}" r="4" fill="#5a3d22"/><text x="${X(-14)}" y="${Z(76) + 12}" text-anchor="middle" font-size="7" fill="#3a2a18">Press</text>`);
+      out.push(`<rect x="${X(-5)}" y="${Z(0) - 2}" width="${X(5) - X(-5)}" height="4" fill="#6b4a2b"/><text x="${X(0)}" y="${Z(0) + 12}" text-anchor="middle" font-size="8" fill="#3a2a18">Gate</text>`);
+      out.push(`<text x="${X(-26)}" y="${Z(6)}" text-anchor="middle" font-size="8" fill="#3a2a18">Apple rows</text><text x="${X(22)}" y="${Z(8)}" text-anchor="middle" font-size="8" fill="#3a2a18">Hazels</text>`);
+      return { svg: out.join(''), X, Z };
+    },
+    fernwater(w, h) {
+      const X = x => (x + 46) / 92 * w, Z = z => (122 - z) / 126 * h, out = [];
+      out.push(`<rect x="0" y="${Z(99)}" width="${w}" height="${Z(57) - Z(99)}" fill="#8fb9c9"/>`);
+      out.push(`<line x1="${X(0)}" y1="${Z(0)}" x2="${X(0)}" y2="${Z(104)}" stroke="#b08a52" stroke-width="5" stroke-linecap="round"/>`);
+      const spot = (x, z, r, fill, label) => `<circle cx="${X(x)}" cy="${Z(z)}" r="${r}" fill="${fill}" stroke="#3a2a18" stroke-width="1"/><text x="${X(x)}" y="${Z(z) + r + 9}" text-anchor="middle" font-size="8" fill="#3a2a18">${label}</text>`;
+      out.push(spot(-13, 36, 6, '#c8384a', 'Bakery'), spot(16, 30, 6, '#4a5fb8', 'Changer'), spot(-24, 20, 5, '#3e8a52', 'Ropes'), spot(17, 44, 5, '#d9a33f', 'Nets'), spot(14, 60, 7, '#6b4a2b', 'Ferry'), spot(6, 62, 3, '#efe6d2', 'Gauge'));
+      out.push(`<rect x="${X(-5)}" y="${Z(0) - 2}" width="${X(5) - X(-5)}" height="4" fill="#6b4a2b"/><text x="${X(0)}" y="${Z(0) + 12}" text-anchor="middle" font-size="8" fill="#3a2a18">Gate</text><text x="${X(-30)}" y="${Z(78)}" font-size="9" fill="#2f4a6a">the river</text>`);
+      return { svg: out.join(''), X, Z };
+    }
+  };
+  function currentRegionIndex() { return where === 'fernwater' ? 2 : where === 'orchards' ? 1 : 0; }
+  function youAreHere() {
+    // the player's spot on the parchment
+    if (where === 'village') { const [cx, cy] = MAPPOS[0]; return [cx + player.position.x * 0.25, cy + (player.position.z - 45) * 0.2]; }
+    if (where === 'orchards') { const [cx, cy] = MAPPOS[1]; return [cx + player.position.x * 0.2, cy - (player.position.z - 55) * 0.22]; }
+    if (where === 'fernwater') { const [cx, cy] = MAPPOS[2]; return [cx + player.position.x * 0.2, cy - (player.position.z - 60) * 0.2]; }
+    const t = clamp(player.position.z / ROAD_LEN, 0, 1), a = MAPPOS[0], b = MAPPOS[1];
+    return [a[0] + (b[0] - a[0]) * t + 40 * Math.sin(t * Math.PI) * 0.3, a[1] + (b[1] - a[1]) * t - 22 * Math.sin(t * Math.PI)];
+  }
+  function drawMap() {
+    const road = roadPath(MAPPOS);
+    let svg = `<svg viewBox="0 0 1000 640" role="img" aria-label="Map of the Long Road from Thistledown Hollow to Skyhaven">
+      <defs><filter id="parch" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="3" seed="7"/><feColorMatrix values="0 0 0 0 .86  0 0 0 0 .78  0 0 0 0 .60  0 0 0 .5 .55"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+      <radialGradient id="vig" cx="50%" cy="50%" r="72%"><stop offset="70%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#3a2a18" stop-opacity=".45"/></radialGradient></defs>
+      <rect width="1000" height="640" fill="#e4d2a4"/><rect width="1000" height="640" filter="url(#parch)"/>
+      <!-- the sea, the river, the hills -->
+      <path d="M905 0 Q880 160 930 300 Q900 440 960 640 L1000 640 L1000 0Z" fill="#8fb9c9" opacity=".85"/>
+      <path d="M905 0 Q880 160 930 300 Q900 440 960 640" stroke="#5f8fa8" stroke-width="3" fill="none"/>
+      ${[0,1,2,3,4].map(k => `<path d="M${925 + k*12} ${120 + k*95} q8 -6 16 0 q8 6 16 0" stroke="#dff0f6" stroke-width="2" fill="none" opacity=".8"/>`).join('')}
+      <path d="M560 0 Q540 120 505 230 Q470 330 500 440 Q520 500 505 548 Q490 600 530 640" stroke="#4a7fb8" stroke-width="7" fill="none" opacity=".75" stroke-linecap="round"/>
+      <path d="M560 0 Q540 120 505 230 Q470 330 500 440 Q520 500 505 548 Q490 600 530 640" stroke="#9fc3e8" stroke-width="2.5" fill="none"/>
+      ${[[600,330],[650,300],[690,350],[560,360],[740,230],[780,170],[660,150],[720,120]].map(([x,y]) => `<path d="M${x-26} ${y+16} L${x-8} ${y-18} L${x+2} ${y-2} L${x+10} ${y-14} L${x+28} ${y+16}Z" fill="#9a9484" stroke="#5a564c" stroke-width="1.5"/><path d="M${x-13} ${y-8} L${x-8} ${y-18} L${x-3} ${y-9}Z" fill="#fff"/>`).join('')}
+      ${[[820,60],[930,50],[760,40],[870,150]].map(([x,y]) => `<path d="M${x-22} ${y+8} q0 -12 12 -12 q4 -12 16 -8 q12 -4 16 8 q10 0 8 12z" fill="#fff" stroke="#c7d6ee" stroke-width="1.5"/>`).join('')}
+      ${[[60,120],[120,80],[200,160],[80,300],[260,250],[380,120],[160,420],[400,600]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="${14}" fill="#5f8a3a"/><circle cx="${x+10}" cy="${y+6}" r="10" fill="#4a7a31"/><rect x="${x-2}" y="${y+10}" width="4" height="9" fill="#5a4027"/>`).join('')}
+      <!-- the Long Road -->
+      <path d="${road}" stroke="#7a5a30" stroke-width="9" fill="none" stroke-linecap="round" opacity=".55"/>
+      <path d="${road}" stroke="#c9a06a" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="14 8"/>
+      <text x="28" y="620" font-family="Uncial Antiqua, Georgia, serif" font-size="28" fill="#5a3d22" opacity=".85">The Long Road</text>
+      <text x="28" y="40" font-size="13" fill="#5a3d22" opacity=".8">One, many, part, shape, balance, unknown, change, and home.</text>`;
+    REGIONS.forEach((r, i) => {
+      const [x, y] = MAPPOS[i], built = !!r.lessons;
+      svg += `<g class="mapmark${built ? '' : ' unbuilt'}${i === selRegion ? ' sel' : ''}" data-i="${i}" transform="translate(${x} ${y})">
+        <circle class="ring" r="22" fill="${built ? '#f6e7c2' : '#d9c69a'}" stroke="${built ? '#5a3d22' : '#8a8578'}" stroke-width="2.5" ${built ? '' : 'stroke-dasharray="5 4"'}/>
+        <g>${GLYPH[i]}</g>
+        <text y="40" text-anchor="middle" font-family="Uncial Antiqua, Georgia, serif" font-size="14" fill="#3a2a18">${r.name}</text>
+        <text y="55" text-anchor="middle" font-size="10" fill="#5a3d22">${built ? r.lessons.length + ' lessons' : 'not yet built'}</text></g>`;
+    });
+    const [yx, yy] = youAreHere();
+    svg += `<g id="youmark" transform="translate(${yx} ${yy})" ${gameStarted ? '' : 'visibility="hidden"'}><circle class="you" r="9"/><circle r="5" fill="#d23b4e" stroke="#fff" stroke-width="2"/><text y="-14" text-anchor="middle" font-size="11" font-weight="700" fill="#d23b4e">You are here</text></g></svg>`;
+    mapSvgEl.innerHTML = svg;
+    mapSvgEl.querySelectorAll('.mapmark').forEach(g => { g.addEventListener('click', () => selectRegion(parseInt(g.dataset.i, 10))); g.setAttribute('tabindex', '0'); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRegion(parseInt(g.dataset.i, 10)); } }); });
+    drawPanel();
+  }
+  function drawPanel() {
+    const r = REGIONS[selRegion]; mapPanel.innerHTML = '';
+    const h2 = document.createElement('h2'); h2.textContent = r.name; mapPanel.appendChild(h2);
+    const m = document.createElement('div'); m.className = 'math'; m.textContent = r.math; mapPanel.appendChild(m);
     if (r.lessons) {
-      const row = document.createElement('div'); row.className = 'lessons';
-      r.lessons.forEach(([label, key]) => { const b = document.createElement('button'); b.className = 'btn small primary'; b.textContent = label; b.onclick = () => launch(key); row.appendChild(b); });
-      card.appendChild(row);
-    } else { const s = document.createElement('div'); s.className = 'soon'; s.textContent = 'Not built yet'; card.appendChild(s); }
-    regionsEl.appendChild(card);
-  });
+      const list = document.createElement('div'); list.className = 'lessons';
+      r.lessons.forEach(([label, key]) => { const b = document.createElement('button'); b.className = 'btn small primary'; b.textContent = label; b.onclick = () => { if (gameStarted) { location.hash = key; location.reload(); } else launch(key); }; list.appendChild(b); });
+      mapPanel.appendChild(list);
+    } else { const sn = document.createElement('div'); sn.className = 'soon'; sn.textContent = 'Not built yet. The road will reach it.'; mapPanel.appendChild(sn); }
+    if (gameStarted) {
+      const here = document.createElement('div'); here.className = 'here';
+      const key = where === 'orchards' ? 'orchards' : where === 'village' ? 'village' : where === 'fernwater' ? 'fernwater' : null;
+      here.innerHTML = `<b>You are here:</b> ${where === 'village' ? 'Thistledown Hollow' : where === 'road' ? 'on the Long Road' : where === 'fernwater' ? 'Fernwater Crossing' : 'the Mallow Orchards'}${coins ? ` · ${coins} acorn coins` : ''}`;
+      if (key) { const ins = INSET[key](300, key === 'village' ? 410 : 330); here.innerHTML += `<svg viewBox="0 0 300 ${key === 'village' ? 410 : 330}">${ins.svg}<circle id="inset-me" cx="${ins.X(player.position.x)}" cy="${ins.Z(player.position.z)}" r="5" fill="#d23b4e" stroke="#fff" stroke-width="1.5"/></svg>`; mapPanel._ins = ins; }
+      mapPanel.appendChild(here);
+    }
+  }
+  function selectRegion(i) { selRegion = i; mapSvgEl.querySelectorAll('.mapmark').forEach(g => g.classList.toggle('sel', parseInt(g.dataset.i, 10) === i)); drawPanel(); }
+  function updateMapLive() {
+    if (!mapOpen || !gameStarted) return;
+    const ym = document.getElementById('youmark'); if (ym) { const [x, y] = youAreHere(); ym.setAttribute('transform', `translate(${x} ${y})`); }
+    const me = document.getElementById('inset-me'); if (me && mapPanel._ins) { me.setAttribute('cx', mapPanel._ins.X(player.position.x)); me.setAttribute('cy', mapPanel._ins.Z(player.position.z)); }
+  }
+  function openMap() { if (mapOpen) return; mapOpen = true; selRegion = currentRegionIndex(); if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} } startEl.hidden = false; mapClose.hidden = false; $('maphint').textContent = 'The whole land. Pick another lesson from the side, or go back to the game.'; drawMap(); mapClose.focus({ preventScroll: true }); }
+  function closeMap() { if (!gameStarted) return; mapOpen = false; startEl.hidden = true; }
+  function toggleMap() { mapOpen ? closeMap() : openMap(); }
+  mapClose.addEventListener('click', closeMap);
+  $('mapbtn').addEventListener('click', toggleMap);
+  window.addEventListener('keydown', e => { if (e.code === 'KeyM' && !e.repeat && !talking()) toggleMap(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {
-    startEl.hidden = true; if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
+    startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
     if (key === 'lesson-2') { placeInShop(); kid.satchel.visible = true; setCoins(1); setTimeout(startLesson2, 500); }
     else if (key === 'lesson-3') { placeInShop(); kid.satchel.visible = true; setCoins(3); setTimeout(startLesson3, 500); }
     else if (key === 'lesson-4') { placeInShop(); kid.satchel.visible = true; setCoins(6); setTimeout(startLesson4, 500); }
@@ -3008,7 +3600,8 @@
       phase = 'tonursery'; labels.nursery.visible = true; hint('The nursery is just ahead. Walk up to Marigold.');
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }
-    else if (['orch-2', 'orch-3', 'orch-4', 'orch-5'].includes(key)) { kid.satchel.visible = true; setCoins(25 + 2 * (parseInt(key.slice(-1), 10) - 2)); phase = 'doneO1'; pendingStart = { 'orch-2': startO2, 'orch-3': startO3, 'orch-4': startO4, 'orch-5': startO5 }[key]; setTimeout(goToOrchards, 200); }
+    else if (/^orch-[2-9]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); setCoins(25 + 2 * (n - 2)); phase = 'doneO1'; pendingStart = { 'orch-2': startO2, 'orch-3': startO3, 'orch-4': startO4, 'orch-5': startO5, 'orch-6': startO6, 'orch-7': startO7, 'orch-8': startO8, 'orch-9': startO9 }[key]; setTimeout(goToOrchards, 200); }
+    else if (/^fern-[1-5]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); setCoins(27 + 2 * (n - 1)); if (n === 1) { phase = 'tofern'; } else { phase = 'doneF1'; pendingStart = { 'fern-2': () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb\u2019s bakery is the red-and-cream stall, left of the lane.'); }, 'fern-3': startF3, 'fern-4': startF4, 'fern-5': startF5 }[key]; } setTimeout(goToFernwater, 200); }
     else if (key === 'orch-1') { kid.satchel.visible = true; setCoins(22); phase = 'toorch'; setTimeout(goToOrchards, 200); }
     else if (key === 'road') { kid.satchel.visible = true; setCoins(19); setTimeout(goToRoad, 200); }
     else if (key === 'street' || key === 'gate') {
@@ -3023,8 +3616,8 @@
     else setTimeout(start, 500);
   }
   const h = location.hash.replace('#', '');
-  if (['lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5'].includes(h)) launch(h);
-  else { startEl.hidden = false; regionsEl.querySelector('button').focus({ preventScroll: true }); }
+  if (['lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5'].includes(h)) launch(h);
+  else { startEl.hidden = false; drawMap(); }
 })();
 </script>
 
