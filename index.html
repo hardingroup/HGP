@@ -285,8 +285,8 @@
   scene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.8));
   const sun = new THREE.DirectionalLight('#ffd99a', 1.0);
   sun.castShadow = true;
-  Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 170 });
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006;
+  Object.assign(sun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 });
+  sun.shadow.mapSize.set(4096, 4096); sun.shadow.radius = 2; sun.shadow.bias = -0.0006;
   scene.add(sun); scene.add(sun.target);
 
   const mat = (c, extra = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, ...extra });
@@ -1197,7 +1197,7 @@
   roadScene.add(new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
   roadScene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.8));
   const roadSun = new THREE.DirectionalLight('#ffd99a', 1.0); roadSun.castShadow = true;
-  Object.assign(roadSun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 170 }); roadSun.shadow.mapSize.set(2048, 2048); roadSun.shadow.bias = -0.0006;
+  Object.assign(roadSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 }); roadSun.shadow.mapSize.set(4096, 4096); roadSun.shadow.radius = 2; roadSun.shadow.bias = -0.0006;
   roadScene.add(roadSun); roadScene.add(roadSun.target);
   {
     const g = new THREE.Mesh(new THREE.PlaneGeometry(600, 800), mat('#ffffff', { map: groundTex })); g.rotation.x = -Math.PI / 2; g.position.set(0, 0, ROAD_LEN / 2); g.receiveShadow = true; roadScene.add(g);
@@ -1265,7 +1265,7 @@
   orchScene.add(new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
   orchScene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.8));
   const orchSun = new THREE.DirectionalLight('#ffd99a', 1.0); orchSun.castShadow = true;
-  Object.assign(orchSun.shadow.camera, { left: -50, right: 50, top: 50, bottom: -50, near: 1, far: 170 }); orchSun.shadow.mapSize.set(2048, 2048); orchSun.shadow.bias = -0.0006;
+  Object.assign(orchSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 }); orchSun.shadow.mapSize.set(4096, 4096); orchSun.shadow.radius = 2; orchSun.shadow.bias = -0.0006;
   orchScene.add(orchSun); orchScene.add(orchSun.target);
   const orchSolids = [], orchTrees = [], rowFlags = [];
   const ROWS = { rows: 4, per: 6, x0: -14, dx: -8, z0: 14, dz: 9 };
@@ -1418,15 +1418,16 @@
 
   // ---------- the River Road: hills between the orchards and Fernwater ----------
   // A heightfield with a winding road laid over it. The ground is flat only inside towns; out here you climb.
-  const HILL_LEN = 330;
+  const HILL_LEN = 620;
   const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   function roadX(z) { return 30 * Math.sin(z / 52) + 11 * Math.sin(z / 21 + 1.3); }
   function rawH(x, z) {
     let h = 8 * Math.sin(x / 37 + 1) * Math.cos(z / 41) + 4.5 * Math.sin(x / 17) * Math.sin(z / 19 + 2) + 2 * Math.sin(x / 7.3) * Math.cos(z / 8.1);
-    h += 20 * Math.exp(-Math.pow((z - 165) / 48, 2));                 // the ridge in the middle
-    h += 9 * Math.exp(-(Math.pow((x + 70) / 40, 2) + Math.pow((z - 80) / 50, 2)));   // a hill off to the west
-    h += 13 * Math.exp(-(Math.pow((x - 75) / 45, 2) + Math.pow((z - 250) / 55, 2))); // and a bigger one to the east
-    h += Math.max(0, Math.abs(x) - 110) * 0.35;                       // the valley walls rise at the edges
+    h += 20 * Math.exp(-Math.pow((z - 300) / 60, 2));                 // the ridge in the middle
+    h += 9 * Math.exp(-(Math.pow((x + 90) / 50, 2) + Math.pow((z - 120) / 60, 2)));   // a hill off to the west
+    h += 13 * Math.exp(-(Math.pow((x - 100) / 55, 2) + Math.pow((z - 460) / 70, 2))); // and a bigger one to the east
+    h += 11 * Math.exp(-(Math.pow((x + 120) / 60, 2) + Math.pow((z - 520) / 60, 2)));  // a long shoulder in the north-west
+    h += Math.max(0, Math.abs(x) - 170) * 0.35;                       // the valley walls rise at the edges
     return h * sstep(0, 26, z) * sstep(HILL_LEN, HILL_LEN - 26, z);
   }
   function roadProfile(z) { return rawH(roadX(z), z); }
@@ -1435,16 +1436,16 @@
     const k = sstep(4.5, 16, d); return roadProfile(z) * (1 - k) + rawH(x, z) * k;
   }
   const hillScene = new THREE.Scene();
-  hillScene.fog = new THREE.Fog('#d9e2c6', 90, 340);
-  const hillSky = new THREE.Mesh(new THREE.SphereGeometry(420, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); hillScene.add(hillSky);
+  hillScene.fog = new THREE.Fog('#d9e2c6', 110, 380);
+  const hillSky = new THREE.Mesh(new THREE.SphereGeometry(440, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); hillScene.add(hillSky);
   hillScene.add(new THREE.HemisphereLight('#fff1d0', '#5e6e3e', 0.9));
   const hillSun = new THREE.DirectionalLight('#ffd99a', 1.05); hillSun.castShadow = true;
-  Object.assign(hillSun.shadow.camera, { left: -50, right: 50, top: 50, bottom: -50, near: 1, far: 190 }); hillSun.shadow.mapSize.set(2048, 2048); hillSun.shadow.bias = -0.0006;
+  Object.assign(hillSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 }); hillSun.shadow.mapSize.set(4096, 4096); hillSun.shadow.radius = 2; hillSun.shadow.bias = -0.0006;
   hillScene.add(hillSun); hillScene.add(hillSun.target);
   const hillSolids = [];
   {
     // the ground
-    const W = 400, L = HILL_LEN + 160, SX = 160, SZ = 196;
+    const W = 520, L = HILL_LEN + 160, SX = 200, SZ = 300;
     const geo = new THREE.PlaneGeometry(W, L, SX, SZ); geo.rotateX(-Math.PI / 2); geo.translate(0, 0, HILL_LEN / 2);
     const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
@@ -1468,18 +1469,18 @@
     const roadMesh = new THREE.Mesh(rg, mat('#ffffff', { map: dirtTex, side: THREE.DoubleSide })); roadMesh.receiveShadow = true; hillScene.add(roadMesh);
     // grass that sits on the slopes
     const gg = new THREE.ConeGeometry(0.24, 1, 3); gg.translate(0, 0.5, 0);
-    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 9000);
+    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 16000);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 9000; i++) {
-      pv.set(rnd(-150, 150), 0, rnd(-30, HILL_LEN + 40)); if (Math.abs(pv.x - roadX(pv.z)) < 5.5) { i--; continue; }
+    for (let i = 0; i < 16000; i++) {
+      pv.set(rnd(-210, 210), 0, rnd(-30, HILL_LEN + 40)); if (Math.abs(pv.x - roadX(pv.z)) < 5.5) { i--; continue; }
       pv.y = hillH(pv.x, pv.z) - 0.1;
       q.setFromEuler(new THREE.Euler(rnd(-0.25, 0.25), rnd(0, 6.3), rnd(-0.25, 0.25))); sv.set(1, rnd(2, 7), 1);
       grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#7d9c45', '#6b8c3a', '#8fae52', '#5f7f33', '#a3b25a'])));
     }
     hillScene.add(grass);
     // trees: round-headed oaks low down, pines on the ridge
-    for (let i = 0; i < 110; i++) {
-      const x = rnd(-150, 150), z = rnd(-20, HILL_LEN + 30); if (Math.abs(x - roadX(z)) < 14) { i--; continue; }
+    for (let i = 0; i < 240; i++) {
+      const x = rnd(-210, 210), z = rnd(-20, HILL_LEN + 30); if (Math.abs(x - roadX(z)) < 14) { i--; continue; }
       const h = hillH(x, z), tr = new THREE.Group(); tr.position.set(x, h - 0.3, z); hillScene.add(tr);
       if (h > 14 || Math.random() < 0.3) {
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 7, 7), mat('#4e3a25')); trunk.position.y = 3.5; tr.add(trunk);
@@ -1492,15 +1493,15 @@
       }
     }
     // rocks and boulders
-    for (let i = 0; i < 70; i++) {
-      const x = rnd(-150, 150), z = rnd(-20, HILL_LEN + 30); if (Math.abs(x - roadX(z)) < 6) { i--; continue; }
+    for (let i = 0; i < 140; i++) {
+      const x = rnd(-210, 210), z = rnd(-20, HILL_LEN + 30); if (Math.abs(x - roadX(z)) < 6) { i--; continue; }
       const sc = rnd(0.8, 3.2), rock = new THREE.Mesh(new THREE.DodecahedronGeometry(sc, 0), mat(pick(['#8c8577', '#9b958a', '#7a7468']), { flatShading: true, roughness: 1 }));
       rock.position.set(x, hillH(x, z) + sc * 0.3, z); rock.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); rock.scale.y = rnd(0.6, 1); hillScene.add(rock);
       if (sc > 1.4) hillSolids.push({ x, z, r: sc * 0.9 });
     }
-    for (let i = 0; i < 60; i++) { const z = rnd(0, HILL_LEN), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(5, 30); const f = makeFlower(pick(flowerColors)); f.position.set(x, hillH(x, z), z); f.scale.setScalar(1.3); hillScene.add(f); }
+    for (let i = 0; i < 90; i++) { const z = rnd(0, HILL_LEN), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(5, 30); const f = makeFlower(pick(flowerColors)); f.position.set(x, hillH(x, z), z); f.scale.setScalar(1.3); hillScene.add(f); }
     // waymarks: a cairn every so often, so you can tell how far you have come
-    for (let z = 30; z < HILL_LEN; z += 50) { const x = roadX(z) + 6, h = hillH(x, z); [1.2, 0.9, 0.6].forEach((r, k) => { const st = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), mat('#9b9789', { flatShading: true })); st.position.set(x, h + 0.6 + k * 1.3, z); st.scale.y = 0.7; hillScene.add(st); }); hillSolids.push({ x, z, r: 1.2 }); }
+    for (let z = 40; z < HILL_LEN; z += 70) { const x = roadX(z) + 6, h = hillH(x, z); [1.2, 0.9, 0.6].forEach((r, k) => { const st = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), mat('#9b9789', { flatShading: true })); st.position.set(x, h + 0.6 + k * 1.3, z); st.scale.y = 0.7; hillScene.add(st); }); hillSolids.push({ x, z, r: 1.2 }); }
     // signposts at both ends
     const postM = mat('#6b4a2b');
     [[3, 'The Mallow Orchards', Math.PI, '#8a6438'], [HILL_LEN - 3, 'Fernwater Crossing', 0, '#4a5fb8']].forEach(([z, label, ry, colr]) => {
@@ -1649,7 +1650,7 @@
   fernScene.add(new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
   fernScene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.85));
   const fernSun = new THREE.DirectionalLight('#ffd99a', 1.0); fernSun.castShadow = true;
-  Object.assign(fernSun.shadow.camera, { left: -50, right: 50, top: 50, bottom: -50, near: 1, far: 170 }); fernSun.shadow.mapSize.set(2048, 2048); fernSun.shadow.bias = -0.0006;
+  Object.assign(fernSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 }); fernSun.shadow.mapSize.set(4096, 4096); fernSun.shadow.radius = 2; fernSun.shadow.bias = -0.0006;
   fernScene.add(fernSun); fernScene.add(fernSun.target);
   const fernSolids = [];
   let water = null;
@@ -1863,8 +1864,8 @@
   addFlock(scene, 0, 50, 45, 42, 5, () => 0);
   addFlock(roadScene, 0, 110, 60, 48, 6, () => 0);
   addFlock(orchScene, 0, 60, 50, 46, 5, () => 0);
-  addFlock(hillScene, roadX(120), 120, 70, 60, 7, hillH);
-  addFlock(hillScene, roadX(250), 250, 55, 58, 4, hillH);
+  addFlock(hillScene, roadX(150), 150, 80, 60, 6, hillH);
+  addFlock(hillScene, roadX(470), 470, 70, 58, 4, hillH);
   addFlock(fernScene, 0, 70, 55, 40, 6, () => 0);
   // rabbits: real scale next to a seven-inch elf, so about as long as you are tall
   function makeRabbit() {
@@ -1877,8 +1878,8 @@
     g.traverse(o => { if (o.isMesh) o.castShadow = true; });
     return g;
   }
-  for (let i = 0; i < 6; i++) {
-    const z = rnd(20, HILL_LEN - 20), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(12, 40); const r = makeRabbit(); r.position.set(x, hillH(x, z), z); hillScene.add(r);
+  for (let i = 0; i < 5; i++) {
+    const z = 60 + i * (HILL_LEN - 120) / 4 + rnd(-25, 25), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(15, 60); const r = makeRabbit(); r.position.set(x, hillH(x, z), z); hillScene.add(r);
     critters.push({ obj: r, kind: 'rabbit', sceneKey: 'hills', state: 'idle', timer: rnd(1, 4), target: null, hop: 0, ground: hillH });
   }
   // a heron on the far bank at Fernwater, stepping now and then
@@ -1900,7 +1901,7 @@
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 5), mat('#2a2420')); body.rotation.x = Math.PI / 2; g.add(body);
     g.userData.wings = wings; g.userData.t = rnd(0, 100); g.userData.base = new THREE.Vector3(); return g;
   }
-  [[scene, 6, [-30, 30], [-5, 95]], [orchScene, 5, [-40, 40], [5, 100]], [fernScene, 3, [-14, 14], [4, 50]], [hillScene, 6, null, null]].forEach(([sc, n, xr, zr]) => {
+  [[scene, 2, [-30, 30], [-5, 95]], [orchScene, 1, [-40, 40], [5, 100]], [fernScene, 1, [-14, 14], [4, 50]], [hillScene, 2, null, null]].forEach(([sc, n, xr, zr]) => {
     for (let i = 0; i < n; i++) { const b = makeButterfly(); let x, z; if (xr) { x = rnd(xr[0], xr[1]); z = rnd(zr[0], zr[1]); } else { z = rnd(10, HILL_LEN - 10); x = roadX(z) + rnd(-30, 30); }
       if (sc === scene && Math.hypot(x, z) < 16) { i--; continue; } if (sc === orchScene && Math.hypot(x - MILL.x, z - MILL.z) < 15) { i--; continue; } if (sc === fernScene && fernBoxes.some(bx => Math.abs(x - bx.x) < bx.hw + 5 && Math.abs(z - bx.z) < bx.hd + 5)) { i--; continue; } b.userData.base.set(x, (sc === hillScene ? hillH(x, z) : 0) + rnd(1.5, 4), z); b.position.copy(b.userData.base); sc.add(b); critters.push({ obj: b, kind: 'butterfly', sceneKey: sc === scene ? 'village' : sc === orchScene ? 'orchards' : sc === fernScene ? 'fernwater' : 'hills' }); }
   });
@@ -1946,27 +1947,27 @@
   function makeCrow() { const b = makeBird(true); b.scale.setScalar(2.4); return b; }
   function wanderer(obj, o) { const c = Object.assign({ obj, state: 'idle', timer: rnd(0.5, 3), speed: 4, flee: 0, fleeSpeed: 12, radius: 20, home: obj.position.clone(), ground: () => 0, bob: 0.3, gait: 8, ok: () => true, kind: 'wander' }, o); critters.push(c); return c; }
   // where the animals live
-  for (let i = 0; i < 3; i++) { const z = rnd(40, HILL_LEN - 40), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(45, 80); const g = makeDeer(i === 0); g.position.set(x, hillH(x, z), z); hillScene.add(g); wanderer(g, { sceneKey: 'hills', kind: 'deer', speed: 4, fleeSpeed: 24, flee: 22, radius: 50, ground: hillH, bob: 0.3, gait: 5, ok: (nx, nz) => Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 12 && Math.abs(nx) < 140 && nz > 8 && nz < HILL_LEN - 8 }); }
-  { const z = 90, x = roadX(z) - 36; const f = makeFox(); f.position.set(x, hillH(x, z), z); hillScene.add(f); wanderer(f, { sceneKey: 'hills', speed: 7, fleeSpeed: 16, flee: 12, radius: 70, ground: hillH, bob: 0.25, gait: 12, restless: true, ok: (nx, nz) => Math.abs(nx) < 140 && nz > 8 && nz < HILL_LEN - 8 }); }
-  { const z = 120, x = roadX(z) + 80; const b = makeBadger(); b.position.set(x, hillH(x, z), z); hillScene.add(b); wanderer(b, { sceneKey: 'hills', speed: 2.2, fleeSpeed: 7, flee: 8, radius: 30, ground: hillH, bob: 0.1, gait: 6, ok: (nx, nz) => Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 10 && Math.abs(nx) < 140 && nz > 8 && nz < HILL_LEN - 8 }); }
-  for (let i = 0; i < 4; i++) { const z = rnd(20, HILL_LEN - 20), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(10, 35); const ph = makePheasant(); ph.position.set(x, hillH(x, z), z); hillScene.add(ph); wanderer(ph, { sceneKey: 'hills', kind: 'pheasant', speed: 3, flee: 9, radius: 15, ground: hillH, bob: 0.1, gait: 10, ok: (nx, nz) => Math.abs(nx) < 140 && nz > 8 && nz < HILL_LEN - 8 }); }
-  [[scene, [[-20, 20], [-5, 95]], 3, () => 0, (x, z) => Math.hypot(x, z) > 15], [orchScene, [[-40, 40], [5, 95]], 2, () => 0, (x, z) => Math.hypot(x - MILL.x, z - MILL.z) > 14], [hillScene, null, 3, hillH, () => true]].forEach(([sc, rng, n, gf, okf]) => {
+  for (let i = 0; i < 3; i++) { const z = 90 + i * (HILL_LEN - 180) / 2 + rnd(-30, 30), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(60, 120); const g = makeDeer(i === 0); g.position.set(x, hillH(x, z), z); hillScene.add(g); wanderer(g, { sceneKey: 'hills', kind: 'deer', speed: 4, fleeSpeed: 24, flee: 22, radius: 90, ground: hillH, bob: 0.3, gait: 5, ok: (nx, nz) => Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 12 && Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
+  { const z = 400, x = roadX(z) - 70; const f = makeFox(); f.position.set(x, hillH(x, z), z); hillScene.add(f); wanderer(f, { sceneKey: 'hills', speed: 7, fleeSpeed: 16, flee: 12, radius: 160, ground: hillH, bob: 0.25, gait: 12, restless: true, ok: (nx, nz) => Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
+  { const z = 180, x = roadX(z) + 130; const b = makeBadger(); b.position.set(x, hillH(x, z), z); hillScene.add(b); wanderer(b, { sceneKey: 'hills', speed: 2.2, fleeSpeed: 7, flee: 8, radius: 30, ground: hillH, bob: 0.1, gait: 6, ok: (nx, nz) => Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 10 && Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
+  for (let i = 0; i < 3; i++) { const z = 120 + i * 180 + rnd(-40, 40), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(12, 45); const ph = makePheasant(); ph.position.set(x, hillH(x, z), z); hillScene.add(ph); wanderer(ph, { sceneKey: 'hills', kind: 'pheasant', speed: 3, flee: 9, radius: 15, ground: hillH, bob: 0.1, gait: 10, ok: (nx, nz) => Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
+  [[scene, [[-20, 20], [-5, 95]], 0, () => 0, (x, z) => Math.hypot(x, z) > 15], [orchScene, [[-40, 40], [5, 95]], 0, () => 0, (x, z) => Math.hypot(x - MILL.x, z - MILL.z) > 14], [hillScene, null, 2, hillH, () => true]].forEach(([sc, rng, n, gf, okf]) => {
     const key = sc === scene ? 'village' : sc === orchScene ? 'orchards' : 'hills';
-    for (let i = 0; i < n; i++) { let x, z; if (rng) { x = rnd(rng[0][0], rng[0][1]); z = rnd(rng[1][0], rng[1][1]); } else { z = rnd(20, HILL_LEN - 20); x = roadX(z) + rnd(-30, 30); } if (!okf(x, z)) { i--; continue; } const h = makeHedgehog(); h.position.set(x, gf(x, z), z); sc.add(h); wanderer(h, { sceneKey: key, speed: 1.4, fleeSpeed: 1.4, flee: 0, radius: 10, ground: gf, bob: 0.05, gait: 10, ok: (nx, nz) => okf(nx, nz) && (key !== 'village' || inFence(nx, nz, 2)) }); }
-    for (let i = 0; i < n + 1; i++) { let x, z; if (rng) { x = rnd(rng[0][0], rng[0][1]); z = rnd(rng[1][0], rng[1][1]); } else { z = rnd(20, HILL_LEN - 20); x = roadX(z) + rnd(-30, 30); } if (!okf(x, z)) { i--; continue; } const mo = makeMouse(); mo.position.set(x, gf(x, z), z); sc.add(mo); wanderer(mo, { sceneKey: key, speed: 9, fleeSpeed: 12, flee: 6, radius: 8, ground: gf, bob: 0.08, gait: 20, ok: (nx, nz) => okf(nx, nz) && (key !== 'village' || inFence(nx, nz, 2)) }); }
+    for (let i = 0; i < n; i++) { let x, z; if (rng) { x = rnd(rng[0][0], rng[0][1]); z = rnd(rng[1][0], rng[1][1]); } else { z = rnd(60, HILL_LEN - 60); x = roadX(z) + rnd(-80, 80); } if (!okf(x, z)) { i--; continue; } const h = makeHedgehog(); h.position.set(x, gf(x, z), z); sc.add(h); wanderer(h, { sceneKey: key, speed: 1.4, fleeSpeed: 1.4, flee: 0, radius: 10, ground: gf, bob: 0.05, gait: 10, ok: (nx, nz) => okf(nx, nz) && (key !== 'village' || inFence(nx, nz, 2)) }); }
+    for (let i = 0; i < (rng ? 1 : 3); i++) { let x, z; if (rng) { x = rnd(rng[0][0], rng[0][1]); z = rnd(rng[1][0], rng[1][1]); } else { z = rnd(60, HILL_LEN - 60); x = roadX(z) + rnd(-80, 80); } if (!okf(x, z)) { i--; continue; } const mo = makeMouse(); mo.position.set(x, gf(x, z), z); sc.add(mo); wanderer(mo, { sceneKey: key, speed: 9, fleeSpeed: 12, flee: 6, radius: 8, ground: gf, bob: 0.08, gait: 20, ok: (nx, nz) => okf(nx, nz) && (key !== 'village' || inFence(nx, nz, 2)) }); }
   });
   // squirrels run up and down the oaks: the Old Oak in the Hollow, and a few of the River Road's trees
   function squirrelOn(sc, x, z, baseY, key) { const sq = makeSquirrel(); sq.position.set(x + 1.5, baseY, z); sc.add(sq); critters.push({ obj: sq, kind: 'squirrel', sceneKey: key, tx: x, tz: z, baseY, h: 0, dir: 1, timer: rnd(1, 3), a: rnd(0, 6.3) }); }
-  squirrelOn(scene, OAK.x, OAK.z, 0, 'village'); squirrelOn(scene, OAK.x, OAK.z, 0, 'village');
-  hillScene.children.filter(o => o.isGroup && o.children.length === 2 && o.children[1].geometry && o.children[1].geometry.type === 'IcosahedronGeometry').slice(0, 5).forEach(tr => squirrelOn(hillScene, tr.position.x, tr.position.z, tr.position.y + 0.3, 'hills'));
+  squirrelOn(scene, OAK.x, OAK.z, 0, 'village');
+  hillScene.children.filter(o => o.isGroup && o.children.length === 2 && o.children[1].geometry && o.children[1].geometry.type === 'IcosahedronGeometry').filter((tr, k) => k % 9 === 0).slice(0, 5).forEach(tr => squirrelOn(hillScene, tr.position.x, tr.position.z, tr.position.y + 0.3, 'hills'));
   // ducks on the river, frogs on the bank
-  for (let i = 0; i < 5; i++) { const x = (i % 2 ? 1 : -1) * rnd(12, 40), z = rnd(62, 94); const du = makeDuck(); du.position.set(x, -0.3, z); fernScene.add(du); wanderer(du, { sceneKey: 'fernwater', speed: 2.2, fleeSpeed: 6, flee: 7, radius: 25, ground: () => -0.3, bob: 0, gait: 0, ok: (nx, nz) => nz > 61 && nz < 95 && Math.abs(nx) > 8 && Math.abs(nx) < 60 }); }
-  for (let i = 0; i < 4; i++) { const x = (i % 2 ? 1 : -1) * rnd(8, 30), z = i < 2 ? 55.8 : 100.2; const fr = makeFrog(); fr.position.set(x, 0.9, z); fr.rotation.y = i < 2 ? 0 : Math.PI; fernScene.add(fr); critters.push({ obj: fr, kind: 'frog', sceneKey: 'fernwater', home: fr.position.clone(), state: 'sit', timer: 0 }); }
+  for (let i = 0; i < 3; i++) { const x = (i % 2 ? 1 : -1) * rnd(14, 44), z = rnd(62, 94); const du = makeDuck(); du.position.set(x, -0.3, z); fernScene.add(du); wanderer(du, { sceneKey: 'fernwater', speed: 2.2, fleeSpeed: 6, flee: 7, radius: 25, ground: () => -0.3, bob: 0, gait: 0, ok: (nx, nz) => nz > 61 && nz < 95 && Math.abs(nx) > 8 && Math.abs(nx) < 60 }); }
+  for (let i = 0; i < 2; i++) { const x = (i % 2 ? 1 : -1) * rnd(10, 30), z = i < 1 ? 55.8 : 100.2; const fr = makeFrog(); fr.position.set(x, 0.9, z); fr.rotation.y = i < 2 ? 0 : Math.PI; fernScene.add(fr); critters.push({ obj: fr, kind: 'frog', sceneKey: 'fernwater', home: fr.position.clone(), state: 'sit', timer: 0 }); }
   // dogs: one in the Hollow, one in Fernwater; they come and say hello
   [[scene, 6, 40, 'village', (nx, nz) => inFence(nx, nz, 3) && Math.hypot(nx, nz) > 14], [fernScene, 0, 24, 'fernwater', (nx, nz) => Math.abs(nx) < 14 && nz > 3 && nz < 50]].forEach(([sc, x, z, key, okf]) => { const dg = makeDog(); dg.position.set(x, 0, z); sc.add(dg); wanderer(dg, { sceneKey: key, kind: 'dog', speed: 6, fleeSpeed: 11, flee: 0, radius: 30, ground: () => 0, bob: 0.25, gait: 10, ok: okf }); });
   // crows on the fences and gate posts; a hawk alone over the hills and the orchards
-  [[scene, -10, 0, FENCE.z1, 'village'], [scene, 14, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 0, 'fernwater'], [fernScene, 24, 0, 0, 'fernwater'], [orchScene, 30, 0, 110, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(); cr.position.set(x, y + 2.6, z); cr.rotation.y = rnd(0, 6.3); sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.6, z), state: 'perch', t: 0, a: 0 }); });
-  addFlock(hillScene, roadX(200), 200, 90, 95, 1, hillH); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
+  [[scene, 14, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 0, 'fernwater'], [orchScene, 30, 0, 110, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(); cr.position.set(x, y + 2.6, z); cr.rotation.y = rnd(0, 6.3); sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.6, z), state: 'perch', t: 0, a: 0 }); });
+  addFlock(hillScene, roadX(330), 330, 120, 95, 1, hillH); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   addFlock(orchScene, 0, 50, 70, 80, 1, () => 0); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   function animalTick(c, dt, t) {
     const o = c.obj, dp = Math.hypot(player.position.x - o.position.x, player.position.z - o.position.z);
@@ -2008,7 +2009,7 @@
         if (c.state === 'hop' || c.state === 'flee') {
           const dx = c.target.x - o.position.x, dz = c.target.z - o.position.z, d = Math.hypot(dx, dz), sp = c.state === 'flee' ? 14 : 5;
           if (d < 0.5 || c.timer <= 0) { c.state = 'idle'; c.timer = rnd(1.5, 5); c.hop = 0; }
-          else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt; if (Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 6 && Math.abs(nx) < 140 && nz > 5 && nz < HILL_LEN - 5) { o.position.x = nx; o.position.z = nz; } else { c.state = 'idle'; c.timer = 1; } o.rotation.y = Math.atan2(dx, dz); c.hop += dt * (c.state === 'flee' ? 14 : 9); }
+          else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt; if (Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 6 && Math.abs(nx) < 200 && nz > 5 && nz < HILL_LEN - 5) { o.position.x = nx; o.position.z = nz; } else { c.state = 'idle'; c.timer = 1; } o.rotation.y = Math.atan2(dx, dz); c.hop += dt * (c.state === 'flee' ? 14 : 9); }
         }
         o.position.y = c.ground(o.position.x, o.position.z) + Math.abs(Math.sin(c.hop)) * (c.state === 'idle' ? 0 : 0.9);
         if (c.state === 'idle') { o.children[1].position.y = 1.9 - Math.abs(Math.sin(t * 2.2)) * 0.25; }
@@ -3946,7 +3947,7 @@
     }
     if (where === 'hills') {
       hillSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      p.x = clamp(p.x, -150, 150);
+      p.x = clamp(p.x, -210, 210);
       // a cliff is a wall: you cannot climb a slope steeper than about forty-five degrees
       const dh = hillH(p.x, p.z) - hillH(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
       if (run > 0.001 && dh / run > 1.0) { p.x = prev.x; p.z = prev.z; }
@@ -4058,7 +4059,7 @@
     camPos.lerp(cp, k); camLook.lerp(cl, k);
     camera.position.copy(camPos); camera.lookAt(camLook);
     if (where === 'hills') hillSky.position.set(player.position.x, 0, player.position.z);
-    if (where !== 'in') { const sunNow = where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : where === 'hills' ? hillSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-30, 50, 28)); }
+    if (where !== 'in') { const sunNow = where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : where === 'hills' ? hillSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-60, 110, 56)); }
 
     // Bramblewick watches you
     if (!reduce) { bw.position.y = Math.sin(t * 1.6) * 0.06; head.rotation.z = Math.sin(t * 0.9) * 0.05; }
