@@ -42,20 +42,22 @@ During a conversation, A presses the highlighted button and the d-pad moves betw
 - **Ten Hollow lessons**: the spill, the first trade, the big harvest (tens and ones), the ledger, the nursery
   (counting by 2s, 5s and 10s, the water cycle), winter stores (subtracting and a first bar chart), the measuring
   stick, shapes in the woodshop, the hundred-acorn count, and raising a rhinoceros beetle (life cycle).
-- **The Long Road**: a separate scene reached through the gate, linking the villages.
+- **The Long Road**: a separate scene reached through the gate, linking the Hollow to the orchards.
+- **The River Road**: real hills between the orchards and Fernwater. A winding dirt road climbs a ridge past oaks, pines, boulders and cairns; slopes slow you down, running uphill burns stamina, anything steeper than about 45 degrees is a wall, and you can leave the road and wander the whole valley.
+- **Buildings you walk into**: Fernwater's four shops and Quern Mill each load their own interior when you step through the door (bakery with oven, counter and tables; the money-changer's barred counter; the rope and net shops; the mill's stones, hopper and gearing). Shopkeepers talk to you inside.
+- **Ambient life**: flocks of birds overhead, rabbits in the hills that bolt when you get close, a heron on the river bank, butterflies, and synthesized birdsong outdoors (after the first click or key press).
 - **The Mallow Orchards**: Quern Mill with its mouse-powered wheel, orchards in rows, crates, a cider press.
   Lessons: rows and rows (multiplication as arrays), the mill songs (times tables), fair shares, leftovers
   (remainders), Pip's puzzle (factors and multiples), big orders (the area model), the long split (long division
   in chunks), the cider press (mixed problems), and the Season Fair (a re-test of the Hollow).
-- **Fernwater Crossing**: a river town on stilts with a market, a bakery, a money-changer, a rope-walk, a ferry and a river
+- **Fernwater Crossing**: a river town on stilts with a street of shops, a bakery, a money-changer, a rope-walk, a ferry and a river
   gauge. Lessons: half a rope (fractions as equal pieces), the baker's cakes (fractions of a whole and of a group,
   equivalence), adding slices, the money-changer (acorn coins, silver leaves, gold rings and the decimal point),
   decimals on the dock (reading, comparing and rounding), fractions of a trip (multiplying and dividing fractions),
   price per (unit price), percent off, and Fen's barge (a ledger that reviews the whole region).
 - **Saving**: the browser remembers your coins, finished lessons, your beetle and where you were standing. Sign in on the map screen (email + password) and the same save goes to the cloud too, so progress follows you between devices; the browser copy is the offline fallback. Accounts live in a Supabase project with row-level security, so each player can only read their own save.
-  close the tab and continue later from the map. (Local to one browser for now; accounts come next.)
 - A world map (press M) showing the whole land, where you are, and the layout of the region you're in, with every built lesson one click away. Lessons can also be opened by URL hash,
-  for example `index.html#lesson-3` or `index.html#orch-2`.
+  for example `index.html#lesson-3`, `index.html#orch-2` or `index.html#hills`.
 
 ## Design notes
 
