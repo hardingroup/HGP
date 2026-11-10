@@ -266,7 +266,7 @@
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog('#d8d3a4', 55, 150);
-  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500);
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1600);
 
   function canvasTex(w, h, draw, rep) {
     const c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -285,7 +285,7 @@
   scene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.8));
   const sun = new THREE.DirectionalLight('#ffd99a', 1.0);
   sun.castShadow = true;
-  Object.assign(sun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 });
+  Object.assign(sun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 });
   sun.shadow.mapSize.set(4096, 4096); sun.shadow.radius = 2; sun.shadow.bias = -0.0006;
   scene.add(sun); scene.add(sun.target);
 
@@ -1197,7 +1197,7 @@
   roadScene.add(new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
   roadScene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.8));
   const roadSun = new THREE.DirectionalLight('#ffd99a', 1.0); roadSun.castShadow = true;
-  Object.assign(roadSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 }); roadSun.shadow.mapSize.set(4096, 4096); roadSun.shadow.radius = 2; roadSun.shadow.bias = -0.0006;
+  Object.assign(roadSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); roadSun.shadow.mapSize.set(4096, 4096); roadSun.shadow.radius = 2; roadSun.shadow.bias = -0.0006;
   roadScene.add(roadSun); roadScene.add(roadSun.target);
   {
     const g = new THREE.Mesh(new THREE.PlaneGeometry(600, 800), mat('#ffffff', { map: groundTex })); g.rotation.x = -Math.PI / 2; g.position.set(0, 0, ROAD_LEN / 2); g.receiveShadow = true; roadScene.add(g);
@@ -1265,7 +1265,7 @@
   orchScene.add(new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
   orchScene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.8));
   const orchSun = new THREE.DirectionalLight('#ffd99a', 1.0); orchSun.castShadow = true;
-  Object.assign(orchSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 }); orchSun.shadow.mapSize.set(4096, 4096); orchSun.shadow.radius = 2; orchSun.shadow.bias = -0.0006;
+  Object.assign(orchSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); orchSun.shadow.mapSize.set(4096, 4096); orchSun.shadow.radius = 2; orchSun.shadow.bias = -0.0006;
   orchScene.add(orchSun); orchScene.add(orchSun.target);
   const orchSolids = [], orchTrees = [], rowFlags = [];
   const ROWS = { rows: 4, per: 6, x0: -14, dx: -8, z0: 14, dz: 9 };
@@ -1436,11 +1436,11 @@
     const k = sstep(4.5, 16, d); return roadProfile(z) * (1 - k) + rawH(x, z) * k;
   }
   const hillScene = new THREE.Scene();
-  hillScene.fog = new THREE.Fog('#d9e2c6', 110, 380);
-  const hillSky = new THREE.Mesh(new THREE.SphereGeometry(440, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); hillScene.add(hillSky);
-  hillScene.add(new THREE.HemisphereLight('#fff1d0', '#5e6e3e', 0.9));
+  hillScene.fog = new THREE.Fog('#d9e2c6', 120, 520);
+  const hillSky = new THREE.Mesh(new THREE.SphereGeometry(900, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); hillScene.add(hillSky);
+  hillScene.add(new THREE.HemisphereLight('#fff1d0', '#5e6e3e', 1.1));
   const hillSun = new THREE.DirectionalLight('#ffd99a', 1.05); hillSun.castShadow = true;
-  Object.assign(hillSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 }); hillSun.shadow.mapSize.set(4096, 4096); hillSun.shadow.radius = 2; hillSun.shadow.bias = -0.0006;
+  Object.assign(hillSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); hillSun.shadow.mapSize.set(4096, 4096); hillSun.shadow.radius = 2; hillSun.shadow.bias = -0.0006;
   hillScene.add(hillSun); hillScene.add(hillSun.target);
   const hillSolids = [];
   {
@@ -1479,18 +1479,27 @@
     }
     hillScene.add(grass);
     // trees: round-headed oaks low down, pines on the ridge
-    for (let i = 0; i < 240; i++) {
-      const x = rnd(-210, 210), z = rnd(-20, HILL_LEN + 30); if (Math.abs(x - roadX(z)) < 14) { i--; continue; }
-      const h = hillH(x, z), tr = new THREE.Group(); tr.position.set(x, h - 0.3, z); hillScene.add(tr);
-      if (h > 14 || Math.random() < 0.3) {
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 7, 7), mat('#4e3a25')); trunk.position.y = 3.5; tr.add(trunk);
-        [0, 1, 2].forEach(k => { const cone = new THREE.Mesh(new THREE.ConeGeometry(4.2 - k * 1.1, 5.5, 8), mat(pick(['#2f5f2a', '#3a6d32', '#2a5426']), { flatShading: true })); cone.position.y = 7 + k * 3.2; tr.add(cone); });
-        hillSolids.push({ x, z, r: 1.2 });
+    // Real trees. To a seven-inch elf an oak is a tower: trunks like pillars, the canopy far overhead.
+    const treeSpots = [];
+    for (let i = 0; i < 70; i++) {
+      const x = rnd(-230, 230), z = rnd(-40, HILL_LEN + 60);
+      if (Math.abs(x - roadX(clamp(z, 0, HILL_LEN))) < 62 || treeSpots.some(t => Math.hypot(t[0] - x, t[1] - z) < 55)) { i--; continue; }
+      treeSpots.push([x, z]);
+      const h = hillH(x, z), tr = new THREE.Group(); tr.position.set(x, h - 2, z); hillScene.add(tr);
+      const pine = h > 14 || Math.random() < 0.3, K = pine ? rnd(17, 23) : rnd(15, 22);
+      if (pine) {
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 7.6, 10), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5; tr.add(trunk);
+        [0, 1, 2, 3].forEach(k => { const cone = new THREE.Mesh(new THREE.ConeGeometry(4.6 - k * 1.0, 5.5, 9), mat(pick(['#2f5f2a', '#3a6d32', '#2a5426']), { flatShading: true })); cone.position.y = 6.5 + k * 3.0; tr.add(cone); });
+        tr.scale.setScalar(K); tr.userData.trunkR = 0.9 * K; hillSolids.push({ x, z, r: 0.9 * K });
       } else {
-        const sc = rnd(0.8, 1.5), trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.7 * sc, 1.1 * sc, 7 * sc, 8), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5 * sc; tr.add(trunk);
-        const can = new THREE.Mesh(new THREE.IcosahedronGeometry(5 * sc, 1), mat(pick(['#4a7a31', '#56863a', '#3e6b2b', '#6b8f3a']), { flatShading: true })); can.position.y = 9 * sc; tr.add(can);
-        hillSolids.push({ x, z, r: 1.3 * sc });
+        const sc = rnd(0.8, 1.3), trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.7 * sc, 1.2 * sc, 7.6 * sc, 12), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5 * sc; tr.add(trunk);
+        for (let b = 0; b < 3; b++) { const br = new THREE.Mesh(new THREE.CylinderGeometry(0.12 * sc, 0.3 * sc, 4 * sc, 6), mat('#ffffff', { map: barkTex })); br.position.set(Math.cos(b * 2.1) * 1.6 * sc, 7 * sc, Math.sin(b * 2.1) * 1.6 * sc); br.rotation.z = Math.cos(b * 2.1) * 0.9; br.rotation.x = -Math.sin(b * 2.1) * 0.9; tr.add(br); }
+        const can = new THREE.Mesh(new THREE.IcosahedronGeometry(5 * sc, 1), mat(pick(['#4a7a31', '#56863a', '#3e6b2b', '#6b8f3a']), { flatShading: true })); can.position.y = 10 * sc; can.scale.y = 0.85; tr.add(can);
+        [[2.5, 8.5], [-2.8, 9.2], [0.4, 12.4]].forEach(([ox, oy]) => { const c2 = new THREE.Mesh(new THREE.IcosahedronGeometry(3.2 * sc, 1), mat(pick(['#4a7a31', '#56863a', '#3e6b2b']), { flatShading: true })); c2.position.set(ox * sc, oy * sc, (ox > 0 ? -1.5 : 1.5) * sc); tr.add(c2); });
+        tr.scale.setScalar(K); tr.userData.trunkR = 1.2 * sc * K; tr.userData.oak = true; hillSolids.push({ x, z, r: 1.2 * sc * K });
       }
+      // roots and a drift of leaves at the foot
+      for (let r = 0; r < 5; r++) { const a = r * 1.26 + rnd(-0.3, 0.3), root = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.35, 2.2, 6), mat('#4e3a25')); root.position.set(Math.cos(a) * 1.4, 0.6, Math.sin(a) * 1.4); root.rotation.z = -Math.cos(a) * 1.25; root.rotation.x = Math.sin(a) * 1.25; tr.add(root); }
     }
     // rocks and boulders
     for (let i = 0; i < 140; i++) {
@@ -1650,7 +1659,7 @@
   fernScene.add(new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
   fernScene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.85));
   const fernSun = new THREE.DirectionalLight('#ffd99a', 1.0); fernSun.castShadow = true;
-  Object.assign(fernSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 320 }); fernSun.shadow.mapSize.set(4096, 4096); fernSun.shadow.radius = 2; fernSun.shadow.bias = -0.0006;
+  Object.assign(fernSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); fernSun.shadow.mapSize.set(4096, 4096); fernSun.shadow.radius = 2; fernSun.shadow.bias = -0.0006;
   fernScene.add(fernSun); fernScene.add(fernSun.target);
   const fernSolids = [];
   let water = null;
@@ -1957,9 +1966,9 @@
     for (let i = 0; i < (rng ? 1 : 3); i++) { let x, z; if (rng) { x = rnd(rng[0][0], rng[0][1]); z = rnd(rng[1][0], rng[1][1]); } else { z = rnd(60, HILL_LEN - 60); x = roadX(z) + rnd(-80, 80); } if (!okf(x, z)) { i--; continue; } const mo = makeMouse(); mo.position.set(x, gf(x, z), z); sc.add(mo); wanderer(mo, { sceneKey: key, speed: 9, fleeSpeed: 12, flee: 6, radius: 8, ground: gf, bob: 0.08, gait: 20, ok: (nx, nz) => okf(nx, nz) && (key !== 'village' || inFence(nx, nz, 2)) }); }
   });
   // squirrels run up and down the oaks: the Old Oak in the Hollow, and a few of the River Road's trees
-  function squirrelOn(sc, x, z, baseY, key) { const sq = makeSquirrel(); sq.position.set(x + 1.5, baseY, z); sc.add(sq); critters.push({ obj: sq, kind: 'squirrel', sceneKey: key, tx: x, tz: z, baseY, h: 0, dir: 1, timer: rnd(1, 3), a: rnd(0, 6.3) }); }
-  squirrelOn(scene, OAK.x, OAK.z, 0, 'village');
-  hillScene.children.filter(o => o.isGroup && o.children.length === 2 && o.children[1].geometry && o.children[1].geometry.type === 'IcosahedronGeometry').filter((tr, k) => k % 9 === 0).slice(0, 5).forEach(tr => squirrelOn(hillScene, tr.position.x, tr.position.z, tr.position.y + 0.3, 'hills'));
+  function squirrelOn(sc, x, z, baseY, key, trunkR, climb) { const sq = makeSquirrel(); sq.position.set(x + trunkR, baseY, z); sc.add(sq); critters.push({ obj: sq, kind: 'squirrel', sceneKey: key, tx: x, tz: z, baseY, h: 0, dir: 1, timer: rnd(1, 3), a: rnd(0, 6.3), r: trunkR, climb }); }
+  squirrelOn(scene, OAK.x, OAK.z, 0, 'village', 5.2, 30);
+  hillScene.children.filter(o => o.userData.oak).filter((tr, k) => k % 6 === 0).slice(0, 5).forEach(tr => squirrelOn(hillScene, tr.position.x, tr.position.z, tr.position.y + 2, 'hills', tr.userData.trunkR, 110));
   // ducks on the river, frogs on the bank
   for (let i = 0; i < 3; i++) { const x = (i % 2 ? 1 : -1) * rnd(14, 44), z = rnd(62, 94); const du = makeDuck(); du.position.set(x, -0.3, z); fernScene.add(du); wanderer(du, { sceneKey: 'fernwater', speed: 2.2, fleeSpeed: 6, flee: 7, radius: 25, ground: () => -0.3, bob: 0, gait: 0, ok: (nx, nz) => nz > 61 && nz < 95 && Math.abs(nx) > 8 && Math.abs(nx) < 60 }); }
   for (let i = 0; i < 2; i++) { const x = (i % 2 ? 1 : -1) * rnd(10, 30), z = i < 1 ? 55.8 : 100.2; const fr = makeFrog(); fr.position.set(x, 0.9, z); fr.rotation.y = i < 2 ? 0 : Math.PI; fernScene.add(fr); critters.push({ obj: fr, kind: 'frog', sceneKey: 'fernwater', home: fr.position.clone(), state: 'sit', timer: 0 }); }
@@ -1971,7 +1980,7 @@
   addFlock(orchScene, 0, 50, 70, 80, 1, () => 0); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   function animalTick(c, dt, t) {
     const o = c.obj, dp = Math.hypot(player.position.x - o.position.x, player.position.z - o.position.z);
-    if (c.kind === 'squirrel') { c.timer -= dt; if (c.timer <= 0) { c.dir = c.h > 12 ? -1 : c.h < 0.5 ? 1 : (Math.random() < 0.5 ? -1 : 1); c.timer = rnd(0.8, 2.5); c.moving = !c.moving; } if (c.moving) { c.h = clamp(c.h + c.dir * dt * 6, 0, 14); c.a += dt * 1.5; } const r = 1.6 + (c.h < 0.5 ? 1.5 : 0); o.position.set(c.tx + Math.cos(c.a) * r, c.baseY + c.h, c.tz + Math.sin(c.a) * r); o.lookAt(c.tx, c.baseY + c.h + (c.moving ? c.dir * 3 : 0.5), c.tz); o.userData.tail.rotation.x = 0.5 + Math.sin(t * 6) * 0.3; return; }
+    if (c.kind === 'squirrel') { c.timer -= dt; if (c.timer <= 0) { c.dir = c.h > c.climb * 0.85 ? -1 : c.h < 0.5 ? 1 : (Math.random() < 0.5 ? -1 : 1); c.timer = rnd(0.8, 3); c.moving = !c.moving; } if (c.moving) { c.h = clamp(c.h + c.dir * dt * 9, 0, c.climb); c.a += dt * 0.6; } const r = c.r + 0.3 + (c.h < 0.5 ? 1.5 : 0); o.position.set(c.tx + Math.cos(c.a) * r, c.baseY + c.h, c.tz + Math.sin(c.a) * r); o.lookAt(c.tx, c.baseY + c.h + (c.moving ? c.dir * 3 : 0.5), c.tz); o.userData.tail.rotation.x = 0.5 + Math.sin(t * 6) * 0.3; return; }
     if (c.kind === 'frog') { c.timer -= dt; if (c.state === 'sit' && dp < 6) { c.state = 'jump'; c.timer = 0.6; c.from = o.position.clone(); } if (c.state === 'jump') { const k = 1 - c.timer / 0.6; o.position.set(c.from.x, c.from.y + Math.sin(k * Math.PI) * 2 - k * 1.6, c.from.z + (c.home.z < 70 ? 1 : -1) * k * 4); if (c.timer <= 0) { c.state = 'gone'; c.timer = rnd(8, 20); o.visible = false; } } else if (c.state === 'gone' && c.timer <= 0) { o.visible = true; o.position.copy(c.home); c.state = 'sit'; } else if (c.state === 'sit') o.scale.y = 1 + Math.sin(t * 3) * 0.06; return; }
     if (c.kind === 'crow') { if (c.state === 'perch') { o.userData.wings.forEach((w, i) => w.rotation.z = 0); o.position.y = c.perch.y + Math.abs(Math.sin(t * 2.2 + c.a)) * 0.05; if (dp < 9) { c.state = 'fly'; c.t = 0; c.a = Math.atan2(o.position.x - c.perch.x + 0.1, 1); } } else { c.t += dt; const r = 10 + c.t * 2, ang = c.a + c.t * 1.2, y = c.perch.y + Math.min(14, c.t * 6); if (c.t < 9) { o.position.set(c.perch.x + Math.cos(ang) * r, y, c.perch.z + Math.sin(ang) * r); o.lookAt(c.perch.x + Math.cos(ang + 0.1) * r, y, c.perch.z + Math.sin(ang + 0.1) * r); } else { o.position.lerp(c.perch, dt * 1.5); o.lookAt(c.perch.x, c.perch.y, c.perch.z - 1); if (o.position.distanceTo(c.perch) < 0.3) c.state = 'perch'; } const fl = Math.sin(c.t * 14) * 0.7; o.userData.wings[0].rotation.z = fl; o.userData.wings[1].rotation.z = -fl; } return; }
     // pheasants burst into the air when startled, glide, and land further off
@@ -4059,7 +4068,7 @@
     camPos.lerp(cp, k); camLook.lerp(cl, k);
     camera.position.copy(camPos); camera.lookAt(camLook);
     if (where === 'hills') hillSky.position.set(player.position.x, 0, player.position.z);
-    if (where !== 'in') { const sunNow = where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : where === 'hills' ? hillSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-60, 110, 56)); }
+    if (where !== 'in') { const sunNow = where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : where === 'hills' ? hillSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-170, 330, 160)); }
 
     // Bramblewick watches you
     if (!reduce) { bw.position.y = Math.sin(t * 1.6) * 0.06; head.rotation.z = Math.sin(t * 0.9) * 0.05; }
