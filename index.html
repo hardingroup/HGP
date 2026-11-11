@@ -163,6 +163,7 @@
   @media (prefers-reduced-motion: reduce) { .you { animation: none; r: 12; } }
   .btn.small { font-size: 13px; padding: 5px 12px; }
   .account { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--ink-soft); }
+  .account select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--panel-edge); background: var(--bg); color: var(--ink); }
   .account input { font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--panel-edge); background: var(--bg); color: var(--ink); width: 170px; }
   .account .status { flex-basis: 100%; font-size: 13px; min-height: 1.2em; }
   .account .status.err { color: #e0655f; }
@@ -182,6 +183,13 @@
     <p id="maphint">The whole land, from the Hollow to Skyhaven. Pick a place, then a lesson, to begin.</p>
     <button class="btn primary" id="mapcontinue" hidden>Continue where you left off</button>
     <button class="btn" id="mapreset" hidden>Start over</button>
+    <div class="account" id="gfxrow">
+      <span>Graphics</span>
+      <select id="gfxq"><option value="auto">Auto</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+      <span>Distance</span>
+      <select id="gfxd"><option value="near">Near</option><option value="mid">Mid</option><option value="far">Far</option></select>
+      <span id="gfxnote" class="status"></span>
+    </div>
     <div class="account" id="account">
       <span id="acctwho" hidden></span>
       <button class="btn small" id="acctopen">Sign in to save to the cloud</button>
@@ -4070,7 +4078,7 @@
     let dd = dist, pos;
     for (let i = 0; i < 24; i++) {
       pos = base.clone().add(new THREE.Vector3(Math.sin(off) * Math.cos(pitch) * dd, Math.sin(pitch) * dd + 0.8, Math.cos(off) * Math.cos(pitch) * dd));
-      if ((camFree(pos) && groundOk(pos)) || dd < 1.5) break;
+      if ((camFree(pos) && groundOk(pos)) || dd < dist * 0.4) break;
       dd -= dist / 24;
     }
     pos.y = Math.max(pos.y, Math.max(groundAt(pos.x, pos.z), -0.1) + 0.5);
@@ -4080,6 +4088,34 @@
   }
   { const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   window.addEventListener('wheel', e => { if (mapOpen || talking()) return; setZoom(zoom + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
+
+  // ---------- graphics settings: quality (shadows, grass, pixels) and render distance (fog, culling) ----------
+  const GFX_KEY = 'long-road-gfx-v1';
+  let gfx = { quality: 'auto', distance: 'mid' };
+  try { Object.assign(gfx, JSON.parse(localStorage.getItem(GFX_KEY) || '{}')); } catch (e) {}
+  function gpuName() { try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : ''; } catch (e) { return ''; } }
+  function autoQuality() { const n = gpuName(); if (/SwiftShader|llvmpipe|Mali|Adreno|PowerVR/i.test(n)) return 'low'; if (/Intel|Iris|UHD|HD Graphics|Apple/i.test(n)) return 'medium'; return n ? 'high' : 'medium'; }
+  const ALL_SCENES = () => [scene, roadScene, orchScene, hillScene, fernScene].concat(Object.values(interiors).map(i => i.scene));
+  ALL_SCENES().forEach(sc => { if (sc.fog) sc.userData.fog0 = [sc.fog.near, sc.fog.far]; sc.traverse(o => { if (o.isInstancedMesh) o.userData.total = o.count; }); });
+  const farThings = []; hillScene.children.forEach(o => { if ((o.isGroup && o.userData.trunkR) || (o.isMesh && o.geometry && o.geometry.type === 'DodecahedronGeometry')) farThings.push(o); });
+  function applyGfx() {
+    const q = gfx.quality === 'auto' ? autoQuality() : gfx.quality, d = gfx.distance;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, q === 'low' ? 1 : q === 'medium' ? 1.5 : 2));
+    renderer.shadowMap.enabled = q !== 'low'; const shadowSize = q === 'high' ? 4096 : 2048;
+    [sun, roadSun, orchSun, hillSun, fernSun].forEach(l => { if (l.shadow.mapSize.x !== shadowSize) { l.shadow.mapSize.set(shadowSize, shadowSize); if (l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null; } } });
+    Object.values(interiors).forEach(it => it.scene.traverse(o => { if (o.isPointLight) o.castShadow = q === 'high'; }));
+    const grassK = q === 'low' ? 0.35 : q === 'medium' ? 0.7 : 1;
+    const distK = d === 'near' ? 0.55 : d === 'far' ? 1.6 : 1;
+    ALL_SCENES().forEach(sc => { sc.traverse(o => { if (o.isInstancedMesh && o.userData.total) o.count = Math.floor(o.userData.total * grassK); }); if (sc.fog && sc.userData.fog0) { sc.fog.near = sc.userData.fog0[0] * distK; sc.fog.far = sc.userData.fog0[1] * distK; } });
+    ALL_SCENES().forEach(sc => sc.traverse(o => { if (o.isMesh && o.material && o.material.needsUpdate !== undefined) o.material.needsUpdate = true; }));
+    $('gfxq').value = gfx.quality; $('gfxd').value = gfx.distance; $('gfxnote').textContent = gfx.quality === 'auto' ? `Auto picked ${q} for this device.` : '';
+    try { localStorage.setItem(GFX_KEY, JSON.stringify(gfx)); } catch (e) {}
+  }
+  function cullFar() { if (where !== 'hills') return; const lim = hillScene.fog.far * 1.15, px = player.position.x, pz = player.position.z; farThings.forEach(o => { o.visible = Math.hypot(o.position.x - px, o.position.z - pz) < lim + (o.userData.trunkR ? 120 : 0); }); }
+  $('gfxq').addEventListener('change', e => { gfx.quality = e.target.value; applyGfx(); });
+  $('gfxd').addEventListener('change', e => { gfx.distance = e.target.value; applyGfx(); });
+  applyGfx();
+  let cullTimer = 0;
 
   const clock = new THREE.Clock();
   let walkPhase = 0, headYaw = 0;
@@ -4216,7 +4252,7 @@
       if (dMaud > 10.5) nearMaud = false;
     }
     if (where === 'in' && interior.id === 'mill') { const u = interior.scene.userData; u.runner.rotation.y += dt * wheelSpeed * 1.5; u.shaft.rotation.y += dt * wheelSpeed * 1.5; u.gear.rotation.y += dt * wheelSpeed * 1.5; u.axle.rotation.x += dt * wheelSpeed; }
-    ambientTick(dt, t); songTick(dt);
+    ambientTick(dt, t); songTick(dt); cullTimer += dt; if (cullTimer > 0.5) { cullTimer = 0; cullFar(); }
     // your beetle trots along behind you
     if (beetle && inRiver(beetle.position.x, beetle.position.z)) { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; }
     if (beetle && beetle.userData.follow && !inRiver(player.position.x, player.position.z)) {

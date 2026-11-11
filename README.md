@@ -21,6 +21,10 @@ npx serve .
 then visit the address it prints. The game opens on a region map; Thistledown Hollow (ten lessons) and the
 Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playable. Any lesson can be started directly, which is handy for testing.
 
+## Graphics settings
+
+On the map screen, **Graphics** (Auto / Low / Medium / High) sets shadows, grass density and pixel resolution; **Distance** (Near / Mid / Far) sets how far you can see before the haze. Auto picks a level for the device's graphics card. Both are remembered per device. On a laptop with an integrated GPU, Low + Near roughly triples the frame rate.
+
 ## Controls
 
 | Keyboard and mouse | Controller | Touch |
