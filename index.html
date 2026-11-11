@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>The Long Road</title>
 <style>[hidden]{display:none!important} html{height:100%} body{margin:0;height:100%;overflow:hidden}</style>
 <title>Bramblewick's First Lesson</title>
@@ -26,6 +26,9 @@
   html, body { height: 100%; }
   body { background: var(--bg); color: var(--ink); font-family: var(--font-body); overflow: hidden; }
   canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; overscroll-behavior: none; }
+  input, textarea { -webkit-user-select: text; user-select: text; }
+  button, kbd, .keys, #hud, .pad { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
   .hud {
     position: fixed; inset: 0; pointer-events: none;
@@ -112,7 +115,7 @@
   .reward svg { width: 64px; height: 64px; }
 
   /* touch controls: shown on touch screens only */
-  .pad { pointer-events: auto; width: 100%; display: none; justify-content: space-between; align-items: flex-end; }
+  .pad { pointer-events: auto; width: 100%; display: none; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 8px; }
   .dpad { display: grid; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 54px); gap: 6px; }
   .dpad button, .act {
     background: rgba(27,43,30,.85); color: var(--ink); border: 2px solid var(--panel-edge);
@@ -122,7 +125,7 @@
   .dpad .left { grid-column: 1; grid-row: 2; }
   .dpad .down { grid-column: 2; grid-row: 2; }
   .dpad .right { grid-column: 3; grid-row: 2; }
-  .acts { display: flex; gap: 8px; align-items: flex-end; }
+  .acts { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; justify-content: flex-end; }
   .act { width: 66px; height: 66px; border-radius: 50%; font-size: 14px; font-weight: 700; }
   .act.main { width: 86px; height: 86px; border-color: var(--gold); font-size: 16px; }
   body.touchmode .pad { display: flex; }
@@ -3969,6 +3972,11 @@
   });
   window.addEventListener('keyup', e => { const a = actionOf(e.code); if (a && isMove(a)) keys[a] = false; });
   window.addEventListener('blur', () => Object.keys(keys).forEach(k => (keys[k] = false)));
+  // on touch screens, a long press or a swipe must never turn into a text selection, a magnifier or a page zoom
+  const noTouchDefault = e => { if (!e.target.closest('canvas, .pad, .keys, #hint, #hud')) return; e.preventDefault(); };
+  document.addEventListener('touchstart', noTouchDefault, { passive: false }); document.addEventListener('touchmove', noTouchDefault, { passive: false }); document.addEventListener('touchend', e => { if (e.target.closest('.pad, canvas')) e.preventDefault(); }, { passive: false });
+  document.addEventListener('contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
+  document.addEventListener('selectstart', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden && cloudDirty) { clearTimeout(cloudTimer); cloudPush(); } });
   pad.querySelectorAll('[data-move]').forEach(btn => {
     const k = btn.dataset.move; const on = e => { e.preventDefault(); keys[k] = true; }, off = () => { keys[k] = false; };
