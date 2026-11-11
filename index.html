@@ -35,6 +35,8 @@
     padding-block: calc(14px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-bottom, 0px));
   }
   .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .keys { transition: opacity .6s; }
+  .keys.gone { opacity: 0; pointer-events: none; }
   .keys {
     background: rgba(27,43,30,.88); border: 2px solid var(--panel-edge); border-radius: 12px;
     padding: 6px 12px; font-size: 13px; color: var(--ink-soft); line-height: 1.7; max-width: 360px;
@@ -213,7 +215,7 @@
 <div class="hud">
   <div>
     <div class="top">
-      <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>mouse</kbd> look (inverted) &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> pick up / sit &middot; <kbd>V</kbd> view &middot; <kbd>Z</kbd> / <kbd>wheel</kbd> zoom &middot; <kbd>M</kbd> map<br><span id="lockhint">Click the game to grab the mouse, <kbd>Esc</kbd> to let go.</span><br><span id="gphint">Controller: sticks move and look, <kbd>A</kbd> jump, <kbd>X</kbd> pick up, <kbd>Y</kbd> view, bumpers zoom.</span></div>
+      <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>mouse</kbd> look (inverted) &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> pick up / sit &middot; <kbd>V</kbd> view &middot; <kbd>Z</kbd> / <kbd>wheel</kbd> zoom &middot; <kbd>M</kbd> map &middot; <kbd>H</kbd> hide this<br><span id="lockhint">Click the game to grab the mouse, <kbd>Esc</kbd> to let go.</span><br><span id="gphint">Controller: sticks move and look, <kbd>A</kbd> jump, <kbd>X</kbd> pick up, <kbd>Y</kbd> view, bumpers zoom, <kbd>Select</kbd> this panel.</span></div>
       <div class="right">
         <div class="chip gold" id="coins" hidden></div>
         <div class="tasks" id="tasks"></div>
@@ -2161,7 +2163,9 @@
   const stamEl = $('stam'), stamFill = $('stamfill'), fadeEl = $('fade');
   const talking = () => !dialog.hidden;
   function showDialog(on) { dialog.hidden = !on; pad.style.visibility = on ? 'hidden' : 'visible'; if (on && document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} } }
-  function hint(t) { hintEl.textContent = t || ''; hintEl.hidden = !t; }
+  function hint(t) { hintEl.textContent = t || ''; hintEl.hidden = !t; hint.current = t || ''; }
+  let flashTimer = null;
+  function flash(t) { const back = flashTimer ? flash.back : hint.current; flash.back = back; clearTimeout(flashTimer); hintEl.textContent = t; hintEl.hidden = false; flashTimer = setTimeout(() => { flashTimer = null; hint(back); }, 1100); }
   function clearDialog() { actions.innerHTML = ''; visual.hidden = true; visual.innerHTML = ''; }
   const speakerEl = $('speaker');
   function say(lines, then, who = 'Old Bramblewick') {
@@ -3899,6 +3903,7 @@
     if (e.code === 'KeyE' && !e.repeat) pickNearest();
     if (e.code === 'KeyV' && !e.repeat) toggleView();
     if (e.code === 'KeyZ' && !e.repeat) setZoom((zoom + 1) % ZOOMS.length);
+    if (e.code === 'KeyH' && !e.repeat) toggleKeys();
   });
   window.addEventListener('keyup', e => { if (MOVE[e.code]) keys[MOVE[e.code]] = false; });
   window.addEventListener('blur', () => Object.keys(keys).forEach(k => (keys[k] = false)));
@@ -3930,6 +3935,7 @@
     const hit = i => now[i] && !gp.prev[i];
     const picker = $('start');
     if (hit(9)) toggleMap();
+    if (hit(8)) toggleKeys();
     if (!picker.hidden) {
       const bs = Array.from(picker.querySelectorAll('button'));
       if (hit(0)) { const f = bs.includes(document.activeElement) ? document.activeElement : bs[0]; if (f) f.click(); }
@@ -4069,7 +4075,7 @@
 
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), fwd = new THREE.Vector3(), prev = new THREE.Vector3();
   const ZOOMS = [1, 1.7, 2.6]; let zoom = 0;
-  function setZoom(z) { zoom = clamp(z, 0, ZOOMS.length - 1); hint(['Close view', 'Mid view', 'Wide view'][zoom]); }
+  function setZoom(z) { const nz = clamp(z, 0, ZOOMS.length - 1); if (nz === zoom) return; zoom = nz; flash(['Close view', 'Mid view', 'Wide view'][zoom]); }
   function camTarget() {
     const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' ? 0.62 : ZOOMS[zoom]), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
     const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4;
@@ -4115,7 +4121,8 @@
   $('gfxq').addEventListener('change', e => { gfx.quality = e.target.value; applyGfx(); });
   $('gfxd').addEventListener('change', e => { gfx.distance = e.target.value; applyGfx(); });
   applyGfx();
-  let cullTimer = 0;
+  let cullTimer = 0, keysShown = 0; const keysEl = document.querySelector('.keys');
+  function toggleKeys() { keysEl.classList.toggle('gone'); keysShown = keysEl.classList.contains('gone') ? 99 : 0; }
 
   const clock = new THREE.Clock();
   let walkPhase = 0, headYaw = 0;
@@ -4252,6 +4259,7 @@
       if (dMaud > 10.5) nearMaud = false;
     }
     if (where === 'in' && interior.id === 'mill') { const u = interior.scene.userData; u.runner.rotation.y += dt * wheelSpeed * 1.5; u.shaft.rotation.y += dt * wheelSpeed * 1.5; u.gear.rotation.y += dt * wheelSpeed * 1.5; u.axle.rotation.x += dt * wheelSpeed; }
+    if (gameStarted && !mapOpen && keysShown < 99) { keysShown += dt; if (keysShown > 9) { keysEl.classList.add('gone'); keysShown = 99; } }
     ambientTick(dt, t); songTick(dt); cullTimer += dt; if (cullTimer > 0.5) { cullTimer = 0; cullFar(); }
     // your beetle trots along behind you
     if (beetle && inRiver(beetle.position.x, beetle.position.z)) { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; }
