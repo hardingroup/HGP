@@ -205,7 +205,7 @@
 <div class="hud">
   <div>
     <div class="top">
-      <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>mouse</kbd> look (inverted) &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> pick up / sit &middot; <kbd>V</kbd> view &middot; <kbd>M</kbd> map<br><span id="lockhint">Click the game to grab the mouse, <kbd>Esc</kbd> to let go.</span><br><span id="gphint">Controller: sticks move and look, <kbd>A</kbd> jump, <kbd>X</kbd> pick up, <kbd>Y</kbd> view.</span></div>
+      <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>mouse</kbd> look (inverted) &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> pick up / sit &middot; <kbd>V</kbd> view &middot; <kbd>Z</kbd> / <kbd>wheel</kbd> zoom &middot; <kbd>M</kbd> map<br><span id="lockhint">Click the game to grab the mouse, <kbd>Esc</kbd> to let go.</span><br><span id="gphint">Controller: sticks move and look, <kbd>A</kbd> jump, <kbd>X</kbd> pick up, <kbd>Y</kbd> view, bumpers zoom.</span></div>
       <div class="right">
         <div class="chip gold" id="coins" hidden></div>
         <div class="tasks" id="tasks"></div>
@@ -1927,7 +1927,7 @@
     return g;
   }
   for (let i = 0; i < 5; i++) {
-    const z = 60 + i * (HILL_LEN - 120) / 4 + rnd(-25, 25), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(15, 60); const r = makeRabbit(); r.position.set(x, hillH(x, z), z); hillScene.add(r);
+    const z = 60 + i * (HILL_LEN - 120) / 4 + rnd(-25, 25), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(15, 60); const r = makeRabbit(); const [rx, rz] = clearSpotNear('hills', x, z, 30, 4); r.position.set(rx, hillH(rx, rz), rz); hillScene.add(r);
     critters.push({ obj: r, kind: 'rabbit', sceneKey: 'hills', state: 'idle', timer: rnd(1, 4), target: null, hop: 0, ground: hillH });
   }
   // a heron on the far bank at Fernwater, stepping now and then
@@ -1998,11 +1998,15 @@
   function makePheasant() { const g = new THREE.Group(), m = mat('#a0522d'); blob(g, sph(1.6), m, 0, 2.6, 0, 1, 0.9, 1.6); blob(g, sph(0.7), mat('#2e5a3a'), 0, 4.6, 2.4); blob(g, sph(0.5), mat('#c8384a'), 0, 4.6, 2.9, 1, 0.8, 0.8); blob(g, new THREE.ConeGeometry(0.2, 0.9, 5), mat('#e0b23c'), 0, 4.5, 3.6).rotation.x = Math.PI / 2; blob(g, new THREE.CylinderGeometry(0.1, 0.35, 7, 5), mat('#7a4a2a'), 0, 3.2, -4.6).rotation.x = Math.PI / 2 + 0.25; g.userData.legs = legSet(g, mat('#8a7a66'), [[-0.5, 0], [0.5, 0]], 1.6, 0.12); g.userData.wings = [-1, 1].map(d => { const piv = new THREE.Group(); piv.position.set(d * 1.2, 3.2, 0); const w = blob(piv, new THREE.PlaneGeometry(3, 1.6), mat('#8a5a2a', { side: THREE.DoubleSide }), d * 1.5, 0, 0); w.rotation.x = -Math.PI / 2; g.add(piv); return piv; }); return g; }
   function makeDuck() { const g = new THREE.Group(), m = mat(pick(['#8a6a3a', '#5a4a3a'])); blob(g, sph(1.5), m, 0, 0.6, 0, 1, 0.8, 1.6); blob(g, sph(0.8), pick([mat('#2e6b3a'), m]), 0, 2.6, 1.8); blob(g, new THREE.BoxGeometry(0.7, 0.3, 1.1), mat('#e0b23c'), 0, 2.4, 2.8); blob(g, sph(0.5), m, 0, 1.2, -2, 0.6, 0.6, 1).rotation.x = -0.5; return g; }
   function makeFrog() { const g = new THREE.Group(), m = mat('#5f9a3a'); blob(g, sph(0.7), m, 0, 0.5, 0, 1, 0.7, 1.2); [-1, 1].forEach(d => { blob(g, sph(0.22), mat('#f4c53a'), d * 0.35, 0.95, 0.4); blob(g, sph(0.1), mat('#1b1b1b'), d * 0.35, 1.0, 0.55); blob(g, sph(0.3), m, d * 0.7, 0.3, -0.5, 1.6, 0.6, 0.8); }); return g; }
-  function makeDog() { const g = new THREE.Group(), m = mat(pick(['#c9a06a', '#3a2a1e', '#e6dcc2'])); blob(g, sph(2.2), m, 0, 5.4, 0, 1, 0.9, 2.2); blob(g, new THREE.CylinderGeometry(1.1, 1.5, 3.2, 8), m, 0, 6.5, 3.6).rotation.x = 0.75; const head = blob(g, sph(1.5), m, 0, 7.2, 5, 1, 0.9, 1.3); blob(g, sph(0.9), m, 0, 6.6, 6.8, 0.8, 0.7, 1.3); blob(g, sph(0.3), mat('#1b1b1b'), 0, 6.8, 7.9); [-1, 1].forEach(d => { blob(g, sph(0.2), mat('#1b1b1b'), d * 0.6, 7.6, 6.1); blob(g, sph(0.6), m, d * 1.4, 7.6, 4.6, 0.6, 1.4, 0.8).rotation.z = -d * 0.5; }); const tail = blob(g, new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5), m, 0, 6.6, -5.2); tail.rotation.x = -1.1; g.userData.tail = tail; g.userData.legs = legSet(g, m, [[-1.2, 3], [1.2, 3], [-1.2, -3], [1.2, -3]], 4.2, 0.4); return g; }
+  function makeDog() { const g = new THREE.Group(); g.scale.setScalar(0.66); const m = mat(pick(['#c9a06a', '#3a2a1e', '#e6dcc2'])); blob(g, sph(2.2), m, 0, 5.4, 0, 1, 0.9, 2.2); blob(g, new THREE.CylinderGeometry(1.1, 1.5, 3.2, 8), m, 0, 6.5, 3.6).rotation.x = 0.75; const head = blob(g, sph(1.5), m, 0, 7.2, 5, 1, 0.9, 1.3); blob(g, sph(0.9), m, 0, 6.6, 6.8, 0.8, 0.7, 1.3); blob(g, sph(0.3), mat('#1b1b1b'), 0, 6.8, 7.9); [-1, 1].forEach(d => { blob(g, sph(0.2), mat('#1b1b1b'), d * 0.6, 7.6, 6.1); blob(g, sph(0.6), m, d * 1.4, 7.6, 4.6, 0.6, 1.4, 0.8).rotation.z = -d * 0.5; }); const tail = blob(g, new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5), m, 0, 6.6, -5.2); tail.rotation.x = -1.1; g.userData.tail = tail; g.userData.legs = legSet(g, m, [[-1.2, 3], [1.2, 3], [-1.2, -3], [1.2, -3]], 4.2, 0.4); return g; }
   function makeCrow() { const b = makeBird(true); b.scale.setScalar(2.4); return b; }
   function solidsFor(key) { return key === 'hills' ? hillSolids : key === 'orchards' ? orchSolids : key === 'fernwater' ? fernSolids : solids; }
   function clearOf(key, x, z, pad) { return !solidsFor(key).some(s => Math.hypot(s.x - x, s.z - z) < s.r + pad); }
-  function wanderer(obj, o) { const c = Object.assign({ obj, state: 'idle', timer: rnd(0.5, 3), speed: 4, flee: 0, fleeSpeed: 12, radius: 20, home: obj.position.clone(), ground: () => 0, bob: 0.3, gait: 8, ok: () => true, kind: 'wander' }, o); critters.push(c); return c; }
+  // push a point out of any solid it overlaps; returns how far it had to move
+  function pushClear(key, o, pad) { let moved = 0; solidsFor(key).forEach(s => { const dx = o.position.x - s.x, dz = o.position.z - s.z, d = Math.hypot(dx, dz), min = s.r + pad; if (d < min) { const k = d > 0.001 ? min / d : 1; o.position.x = s.x + (d > 0.001 ? dx * k : min); o.position.z = s.z + (d > 0.001 ? dz * k : 0); moved += min - d; } }); return moved; }
+  // a spot near home that nothing sits on
+  function clearSpotNear(key, x, z, r, pad, okf) { for (let k = 0; k < 40; k++) { const a = rnd(0, 6.3), rr = rnd(0, r), nx = x + Math.cos(a) * rr, nz = z + Math.sin(a) * rr; if (clearOf(key, nx, nz, pad) && (!okf || okf(nx, nz))) return [nx, nz]; } return [x, z]; }
+  function wanderer(obj, o) { const c = Object.assign({ obj, state: 'idle', timer: rnd(0.5, 3), speed: 4, flee: 0, fleeSpeed: 12, radius: 20, home: obj.position.clone(), ground: () => 0, bob: 0.3, gait: 8, ok: () => true, kind: 'wander', stuck: 0 }, o); if (!clearOf(c.sceneKey, obj.position.x, obj.position.z, (c.pad || 1.5) + 2)) { const [nx, nz] = clearSpotNear(c.sceneKey, obj.position.x, obj.position.z, 40, (c.pad || 1.5) + 2, c.ok); obj.position.x = nx; obj.position.z = nz; obj.position.y = c.ground(nx, nz); c.home.set(nx, 0, nz); } critters.push(c); return c; }
   // where the animals live
   for (let i = 0; i < 3; i++) { const z = 90 + i * (HILL_LEN - 180) / 2 + rnd(-30, 30), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(60, 120); const g = makeDeer(i === 0); g.position.set(x, hillH(x, z), z); hillScene.add(g); wanderer(g, { sceneKey: 'hills', kind: 'deer', pad: 4, speed: 4, fleeSpeed: 24, flee: 22, radius: 90, ground: hillH, bob: 0.3, gait: 5, ok: (nx, nz) => Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 12 && Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
   { const z = 400, x = roadX(z) - 70; const f = makeFox(); f.position.set(x, hillH(x, z), z); hillScene.add(f); wanderer(f, { sceneKey: 'hills', speed: 7, fleeSpeed: 16, flee: 12, radius: 160, ground: hillH, bob: 0.25, gait: 12, restless: true, ok: (nx, nz) => Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
@@ -2051,13 +2055,21 @@
     if (c.kind === 'pheasant' && dp < c.flee && c.state !== 'burst') { c.state = 'burst'; c.timer = 2.2; c.from = o.position.clone(); const ang = Math.atan2(o.position.x - player.position.x, o.position.z - player.position.z) + rnd(-0.6, 0.6); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 28, 0, o.position.z + Math.cos(ang) * 28); if (!c.ok(c.target.x, c.target.z) || !clearOf('hills', c.target.x, c.target.z, 3)) c.target.set(o.position.x - Math.sin(ang) * 10, 0, o.position.z - Math.cos(ang) * 10); o.rotation.y = ang; return; }
     // the general wanderer: idle, wander, flee; dogs come to you instead
     c.timer -= dt;
-    if (c.kind === 'dog') { if (dp < 22 && dp > 6 && c.state !== 'greet' && Math.random() < dt * 0.6) { c.state = 'greet'; c.timer = 6; } if (c.state === 'greet') { c.target = new THREE.Vector3(player.position.x, 0, player.position.z); if (dp < 5 || c.timer <= 0) { c.state = dp < 5 ? 'wag' : 'idle'; c.timer = dp < 5 ? 4 : 2; } } if (c.state === 'wag') { o.lookAt(player.position.x, o.position.y, player.position.z); o.userData.tail.rotation.z = Math.sin(t * 14) * 0.6; o.userData.legs.forEach(l => l.rotation.x = 0); if (c.timer <= 0 || dp > 8) { c.state = 'idle'; c.timer = 3; } return; } }
+    if (c.kind === 'dog') { c.cool = Math.max(0, (c.cool || 0) - dt);
+      if (dp < 22 && dp > 7 && c.state !== 'greet' && c.state !== 'wag' && c.cool <= 0 && Math.random() < dt * 0.5) { c.state = 'greet'; c.timer = 6; const side = Math.random() < 0.5 ? 1 : -1; c.sideA = bodyYaw + side * Math.PI / 2; }
+      if (c.state === 'greet') { c.target = new THREE.Vector3(player.position.x + Math.sin(c.sideA) * 5.5, 0, player.position.z + Math.cos(c.sideA) * 5.5); const dtg = Math.hypot(c.target.x - o.position.x, c.target.z - o.position.z); if (dtg < 1.5 || c.timer <= 0) { c.state = dtg < 1.5 ? 'wag' : 'idle'; c.timer = dtg < 1.5 ? 2.5 : 2; } }
+      if (c.state === 'wag') { o.lookAt(player.position.x, o.position.y, player.position.z); o.userData.tail.rotation.z = Math.sin(t * 14) * 0.6; o.userData.legs.forEach(l => l.rotation.x = 0); if (c.timer <= 0 || dp > 9) { c.state = 'wander'; c.cool = 25; const ang = bodyYaw + Math.PI + rnd(-1, 1); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 18, 0, o.position.z + Math.cos(ang) * 18); c.timer = 6; } return; }
+      // a dog never plants itself in your path: if it ends up right in front of you it steps aside
+      if (dp < 4.5 && c.state !== 'greet') { const ang = Math.atan2(o.position.x - player.position.x, o.position.z - player.position.z); if (Math.abs(wrap(ang - bodyYaw)) < 0.7) { c.state = 'wander'; c.target = new THREE.Vector3(o.position.x + Math.sin(bodyYaw + Math.PI / 2) * 8, 0, o.position.z + Math.cos(bodyYaw + Math.PI / 2) * 8); c.timer = 3; } } }
     if (c.flee && dp < c.flee && c.state !== 'flee') { c.state = 'flee'; c.target = new THREE.Vector3(o.position.x + (o.position.x - player.position.x) * 4, 0, o.position.z + (o.position.z - player.position.z) * 4); c.timer = 3; }
     if (c.state === 'idle' && c.timer <= 0) { c.state = 'wander'; const ang = rnd(0, 6.3), r = rnd(4, c.radius); c.target = new THREE.Vector3(c.home.x + Math.cos(ang) * r, 0, c.home.z + Math.sin(ang) * r); c.timer = rnd(4, 9); }
     if (c.state === 'wander' || c.state === 'flee' || c.state === 'greet') {
       const dx = c.target.x - o.position.x, dz = c.target.z - o.position.z, d = Math.hypot(dx, dz), sp = c.state === 'flee' ? c.fleeSpeed : c.speed;
       if (d < 0.8 || c.timer <= 0) { c.state = 'idle'; c.timer = c.restless ? rnd(0.3, 1.5) : rnd(1.5, 6); o.userData.legs && o.userData.legs.forEach(l => l.rotation.x = 0); }
-      else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt; if (c.ok(nx, nz) && clearOf(c.sceneKey, nx, nz, c.pad || 1.5)) { o.position.x = nx; o.position.z = nz; } else { c.state = 'idle'; c.timer = 1; } const want = Math.atan2(dx, dz); o.rotation.y += wrap(want - o.rotation.y) * Math.min(1, dt * 5); c.gaitT = (c.gaitT || 0) + dt * c.gait * (sp / c.speed); o.userData.legs && o.userData.legs.forEach((l, i) => l.rotation.x = Math.sin(c.gaitT + (i % 2) * Math.PI + Math.floor(i / 2) * 0.5) * 0.6); o.position.y = c.ground(o.position.x, o.position.z) + Math.abs(Math.sin(c.gaitT)) * c.bob; if (o.userData.tail && c.kind !== 'dog') o.userData.tail.rotation.y = Math.sin(c.gaitT) * 0.2; return; }
+      else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt;
+        if (c.ok(nx, nz)) { const ox = o.position.x, oz = o.position.z; o.position.x = nx; o.position.z = nz; const pushed = pushClear(c.sceneKey, o, c.pad || 1.5); if (pushed > 0.01 && Math.hypot(o.position.x - ox, o.position.z - oz) < sp * dt * 0.3) { c.stuck += dt; if (c.stuck > 1.5) { const [hx, hz] = clearSpotNear(c.sceneKey, c.home.x, c.home.z, c.radius, (c.pad || 1.5) + 2, c.ok); if (c.stuck > 6) { o.position.x = hx; o.position.z = hz; c.stuck = 0; } c.target.set(hx, 0, hz); c.timer = 6; } } else c.stuck = 0; }
+        else { c.state = 'idle'; c.timer = 1; }
+        const want = Math.atan2(dx, dz); o.rotation.y += wrap(want - o.rotation.y) * Math.min(1, dt * 5); c.gaitT = (c.gaitT || 0) + dt * c.gait * (sp / c.speed); o.userData.legs && o.userData.legs.forEach((l, i) => l.rotation.x = Math.sin(c.gaitT + (i % 2) * Math.PI + Math.floor(i / 2) * 0.5) * 0.6); o.position.y = c.ground(o.position.x, o.position.z) + Math.abs(Math.sin(c.gaitT)) * c.bob; if (o.userData.tail && c.kind !== 'dog') o.userData.tail.rotation.y = Math.sin(c.gaitT) * 0.2; return; }
     }
     o.position.y = c.ground(o.position.x, o.position.z); if (c.kind === 'dog') o.userData.tail.rotation.z = Math.sin(t * 5) * 0.2;
     if (c.kind === 'deer') { const nk = o.userData.neck, want = Math.sin(t * 0.8 + c.home.x) > 0.6 ? 1.55 : 0; nk.rotation.x += (want - nk.rotation.x) * Math.min(1, dt * 2.5); }
@@ -2081,7 +2093,7 @@
         if (c.state === 'hop' || c.state === 'flee') {
           const dx = c.target.x - o.position.x, dz = c.target.z - o.position.z, d = Math.hypot(dx, dz), sp = c.state === 'flee' ? 14 : 5;
           if (d < 0.5 || c.timer <= 0) { c.state = 'idle'; c.timer = rnd(1.5, 5); c.hop = 0; }
-          else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt; if (Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 6 && Math.abs(nx) < 200 && nz > 5 && nz < HILL_LEN - 5 && clearOf('hills', nx, nz, 1.5)) { o.position.x = nx; o.position.z = nz; } else { c.state = 'idle'; c.timer = 1; } o.rotation.y = Math.atan2(dx, dz); c.hop += dt * (c.state === 'flee' ? 14 : 9); }
+          else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt; if (Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 6 && Math.abs(nx) < 200 && nz > 5 && nz < HILL_LEN - 5) { o.position.x = nx; o.position.z = nz; if (pushClear('hills', o, 1.5) > 0.01) { c.stuck = (c.stuck || 0) + dt; if (c.stuck > 4) { const [hx, hz] = clearSpotNear('hills', o.position.x, o.position.z, 30, 4); o.position.x = hx; o.position.z = hz; c.stuck = 0; } } else c.stuck = 0; } else { c.state = 'idle'; c.timer = 1; } o.rotation.y = Math.atan2(dx, dz); c.hop += dt * (c.state === 'flee' ? 14 : 9); }
         }
         o.position.y = c.ground(o.position.x, o.position.z) + Math.abs(Math.sin(c.hop)) * (c.state === 'idle' ? 0 : 0.9);
         if (c.state === 'idle') { o.children[1].position.y = 1.9 - Math.abs(Math.sin(t * 2.2)) * 0.25; }
@@ -3878,6 +3890,7 @@
     if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) wantJump = true; }
     if (e.code === 'KeyE' && !e.repeat) pickNearest();
     if (e.code === 'KeyV' && !e.repeat) toggleView();
+    if (e.code === 'KeyZ' && !e.repeat) setZoom((zoom + 1) % ZOOMS.length);
   });
   window.addEventListener('keyup', e => { if (MOVE[e.code]) keys[MOVE[e.code]] = false; });
   window.addEventListener('blur', () => Object.keys(keys).forEach(k => (keys[k] = false)));
@@ -3922,6 +3935,7 @@
       if (hit(0)) wantJump = true;
       if (hit(2)) pickNearest();
       if (hit(3)) toggleView();
+      if (hit(4)) setZoom(zoom - 1); if (hit(5)) setZoom(zoom + 1);
     }
     gp.prev = now;
   }
@@ -4046,21 +4060,26 @@
   window.addEventListener('resize', resize); resize();
 
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), fwd = new THREE.Vector3(), prev = new THREE.Vector3();
+  const ZOOMS = [1, 1.7, 2.6]; let zoom = 0;
+  function setZoom(z) { zoom = clamp(z, 0, ZOOMS.length - 1); hint(['Close view', 'Mid view', 'Wide view'][zoom]); }
   function camTarget() {
-    const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' ? 0.62 : 1), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
+    const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' ? 0.62 : ZOOMS[zoom]), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
     const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4;
+    // when ground or a wall is in the way, the camera comes closer; it never climbs, so your view keeps the tilt you chose
+    const groundOk = p => where === 'in' || p.y >= Math.max(groundAt(p.x, p.z), -0.1) + 0.7;
     let dd = dist, pos;
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 24; i++) {
       pos = base.clone().add(new THREE.Vector3(Math.sin(off) * Math.cos(pitch) * dd, Math.sin(pitch) * dd + 0.8, Math.cos(off) * Math.cos(pitch) * dd));
-      if (camFree(pos) || dd < 2) break;
-      dd -= 0.5;
+      if ((camFree(pos) && groundOk(pos)) || dd < 1.5) break;
+      dd -= dist / 24;
     }
-    pos.y = Math.max(pos.y, Math.max(groundAt(pos.x, pos.z), -0.1) + 0.7);
+    pos.y = Math.max(pos.y, Math.max(groundAt(pos.x, pos.z), -0.1) + 0.5);
     if (where === 'in') { pos.x = clamp(pos.x, -interior.w / 2 + 0.6, interior.w / 2 - 0.6); pos.z = clamp(pos.z, -interior.d / 2 + 0.6, interior.d / 2 - 0.6); pos.y = Math.min(pos.y, interior.h - 0.6); }
-    const look = view === 'front' ? base.clone() : base.clone().add(new THREE.Vector3(Math.sin(camYaw) * 3, 0, Math.cos(camYaw) * 3));
+    const look = view === 'front' ? base.clone() : base.clone().add(new THREE.Vector3(Math.sin(camYaw) * Math.cos(pitch) * 3, -Math.sin(pitch) * 3, Math.cos(camYaw) * Math.cos(pitch) * 3));
     return [pos, look];
   }
   { const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
+  window.addEventListener('wheel', e => { if (mapOpen || talking()) return; setZoom(zoom + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
 
   const clock = new THREE.Clock();
   let walkPhase = 0, headYaw = 0;

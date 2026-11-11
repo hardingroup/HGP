@@ -31,6 +31,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 | Space jump | A | Jump button |
 | E pick up, talk, sit | X | Pick up button |
 | V switch between the back view and the front view | Y | View button |
+| Z or mouse wheel: close, mid or wide camera | Bumpers | — |
 | M open the world map | Start | Map button |
 
 During a conversation, A presses the highlighted button and the d-pad moves between choices.
