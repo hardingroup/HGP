@@ -125,10 +125,7 @@
   .acts { display: flex; gap: 8px; align-items: flex-end; }
   .act { width: 66px; height: 66px; border-radius: 50%; font-size: 14px; font-weight: 700; }
   .act.main { width: 86px; height: 86px; border-color: var(--gold); font-size: 16px; }
-  @media (hover: none) and (pointer: coarse) {
-    .pad { display: flex; }
-    .keys { display: none; }
-  }
+  body.touchmode .pad { display: flex; }
   .stam { width: 180px; height: 8px; border-radius: 4px; background: rgba(27,43,30,.85); border: 1px solid var(--panel-edge); overflow: hidden; align-self: flex-start; opacity: 0; transition: opacity .4s; }
   .stam.show { opacity: 1; }
   .stam .fill { height: 100%; width: 100%; background: var(--gold); transition: width .1s linear; }
@@ -165,6 +162,20 @@
   @media (prefers-reduced-motion: reduce) { .you { animation: none; r: 12; } }
   .btn.small { font-size: 13px; padding: 5px 12px; }
   .account { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--ink-soft); }
+  #settings { position: fixed; inset: 0; z-index: 60; background: rgba(14,22,16,.94); color: var(--ink); overflow: auto; padding: 24px 16px 40px; font-size: 15px; }
+  #settings .sheet { max-width: 760px; margin: 0 auto; background: var(--panel); border: 2px solid var(--panel-edge); border-radius: 16px; padding: 18px 22px; }
+  #settings h1 { margin: 0 0 6px; font-size: 26px; }
+  #settings h2 { margin: 18px 0 8px; font-size: 17px; color: var(--ink-soft); border-bottom: 1px solid var(--panel-edge); padding-bottom: 4px; }
+  #settings .row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 6px 0; }
+  #settings label.opt { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--panel-edge); border-radius: 10px; cursor: pointer; }
+  #settings label.opt.on { background: #e8b64c; color: #1b2b1e; border-color: #e8b64c; }
+  #settings label.opt.on .note { color: #3a2a18; }
+  #settings label.opt.off { opacity: .45; cursor: not-allowed; }
+  #settings .binds { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: center; max-width: 420px; }
+  #settings .binds .btn.small { min-width: 96px; }
+  #settings .binds .btn.small.listen { background: #e8b64c; color: #1b2b1e; }
+  #settings input[type=range] { width: 180px; }
+  #settings .note { color: var(--ink-soft); font-size: 13px; }
   .account select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--panel-edge); background: var(--bg); color: var(--ink); }
   .account input { font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--panel-edge); background: var(--bg); color: var(--ink); width: 170px; }
   .account .status { flex-basis: 100%; font-size: 13px; min-height: 1.2em; }
@@ -179,19 +190,53 @@
 
 <canvas id="scene" aria-label="Bramblewick's shop and the forest clearing outside, seen from seven inches tall"></canvas>
 <div class="fade" id="fade" aria-live="polite"></div>
+  <div id="settings" hidden>
+    <div class="sheet">
+      <h1>Settings</h1>
+      <p class="note">Saved on this device. Press <b>Done</b> to go back.</p>
+      <h2>How you play</h2>
+      <div class="row" id="inputrow">
+        <label class="opt" data-v="keyboard">🖱️ Mouse &amp; keyboard</label>
+        <label class="opt" data-v="gamepad">🎮 Controller</label>
+        <label class="opt" data-v="touch">📱 Touch</label>
+        <label class="opt off" data-v="vr">🥽 VR headset <span class="note">(coming later)</span></label>
+      </div>
+      <p class="note" id="inputnote"></p>
+      <div id="kbsection">
+        <h2>Keys</h2>
+        <div class="binds" id="binds"></div>
+        <div class="row"><button class="btn small" id="bindreset">Reset to defaults</button></div>
+        <h2>Mouse</h2>
+        <div class="row"><label class="opt" id="invertopt">Inverted look (push up to look down)</label></div>
+        <div class="row"><span>Sensitivity</span><input type="range" id="sens" min="40" max="220" step="10"><span id="sensval"></span></div>
+      </div>
+      <div id="gpsection">
+        <h2>Controller</h2>
+        <p class="note">Left stick walks, right stick looks. A jump &middot; B run &middot; X pick up / talk / sit &middot; Y flip view &middot; bumpers zoom &middot; Start map &middot; Select settings.</p>
+        <div class="row"><label class="opt" id="gpinvertopt">Inverted look</label></div>
+      </div>
+      <h2>Graphics</h2>
+      <div class="row">
+        <span>Quality</span>
+        <select id="gfxq"><option value="auto">Auto</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+        <span>Distance</span>
+        <select id="gfxd"><option value="near">Near</option><option value="mid">Mid</option><option value="far">Far</option></select>
+      </div>
+      <p class="note" id="gfxnote"></p>
+      <h2>Sound</h2>
+      <div class="row"><label class="opt" id="birdopt">Birdsong</label></div>
+      <h2>Help</h2>
+      <div class="row"><label class="opt" id="keysopt">Show the controls panel while playing</label></div>
+      <div class="row" style="margin-top:18px"><button class="btn primary" id="settingsdone">Done</button></div>
+    </div>
+  </div>
 <div class="mapview" id="start">
   <div class="maphead">
     <h1>The Long Road</h1>
     <p id="maphint">The whole land, from the Hollow to Skyhaven. Pick a place, then a lesson, to begin.</p>
     <button class="btn primary" id="mapcontinue" hidden>Continue where you left off</button>
+    <button class="btn" id="mapsettings">Settings</button>
     <button class="btn" id="mapreset" hidden>Start over</button>
-    <div class="account" id="gfxrow">
-      <span>Graphics</span>
-      <select id="gfxq"><option value="auto">Auto</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
-      <span>Distance</span>
-      <select id="gfxd"><option value="near">Near</option><option value="mid">Mid</option><option value="far">Far</option></select>
-      <span id="gfxnote" class="status"></span>
-    </div>
     <div class="account" id="account">
       <span id="acctwho" hidden></span>
       <button class="btn small" id="acctopen">Sign in to save to the cloud</button>
@@ -2120,7 +2165,7 @@
   }
   function startAudio() { if (audioCtx) return; try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audioCtx = null; } }
   window.addEventListener('pointerdown', startAudio, { once: true }); window.addEventListener('keydown', startAudio, { once: true });
-  function songTick(dt) { if (!audioCtx || where === 'in' || document.hidden) return; if (audioCtx.state === 'suspended') { audioCtx.resume(); return; } nextChirp -= dt; if (nextChirp <= 0) { chirp(audioCtx); nextChirp = rnd(1.5, 6); } }
+  function songTick(dt) { if (!audioCtx || !settings.birds || where === 'in' || document.hidden) return; if (audioCtx.state === 'suspended') { audioCtx.resume(); return; } nextChirp -= dt; if (nextChirp <= 0) { chirp(audioCtx); nextChirp = rnd(1.5, 6); } }
 
   // ---------- pickables ----------
   const pickables = [];
@@ -2163,7 +2208,7 @@
   const stamEl = $('stam'), stamFill = $('stamfill'), fadeEl = $('fade');
   const talking = () => !dialog.hidden;
   function showDialog(on) { dialog.hidden = !on; pad.style.visibility = on ? 'hidden' : 'visible'; if (on && document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} } }
-  function hint(t) { hintEl.textContent = t || ''; hintEl.hidden = !t; hint.current = t || ''; }
+  function hint(t) { t = devText(t); hintEl.textContent = t || ''; hintEl.hidden = !t; hint.current = t || ''; }
   let flashTimer = null;
   function flash(t) { const back = flashTimer ? flash.back : hint.current; flash.back = back; clearTimeout(flashTimer); hintEl.textContent = t; hintEl.hidden = false; flashTimer = setTimeout(() => { flashTimer = null; hint(back); }, 1100); }
   function clearDialog() { actions.innerHTML = ''; visual.hidden = true; visual.innerHTML = ''; }
@@ -2171,7 +2216,7 @@
   function say(lines, then, who = 'Old Bramblewick') {
     let i = 0; showDialog(true); hint(''); speakerEl.textContent = who;
     const show = () => {
-      clearDialog(); line.innerHTML = lines[i];
+      clearDialog(); line.innerHTML = devText(lines[i]);
       const b = document.createElement('button'); b.className = 'btn primary';
       b.textContent = i < lines.length - 1 ? 'Next' : 'Okay!';
       b.onclick = () => { i++; if (i < lines.length) show(); else { showDialog(false); then && then(); } };
@@ -3891,21 +3936,38 @@
 
   // ---------- input ----------
   const keys = {};
-  const MOVE = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r', ShiftLeft: 'run', ShiftRight: 'run' };
+  // ---------- input settings: device, key binds, mouse ----------
+  const SET_KEY = 'long-road-settings-v1';
+  const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', keys: 'KeyH', settings: 'KeyP' };
+  const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', view: 'Flip view', zoom: 'Zoom', map: 'World map', keys: 'Show / hide controls', settings: 'Settings' };
+  const settings = { input: null, binds: Object.assign({}, DEFAULT_BINDS), invert: true, sens: 100, birds: true, showKeys: true };
+  try { const sv = JSON.parse(localStorage.getItem(SET_KEY) || '{}'); Object.assign(settings, sv); settings.binds = Object.assign({}, DEFAULT_BINDS, sv.binds || {}); } catch (e) {}
+  function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) {} }
+  if (!settings.input) settings.input = matchMedia('(hover: none) and (pointer: coarse)').matches ? 'touch' : 'keyboard';
+  const ALIASES = { ArrowUp: 'f', ArrowDown: 'b', ArrowLeft: 'l', ArrowRight: 'r', ShiftRight: 'run' };
+  function actionOf(code) { for (const k in settings.binds) if (settings.binds[k] === code) return k; return ALIASES[code] || null; }
+  const isMove = a => a === 'f' || a === 'b' || a === 'l' || a === 'r' || a === 'run';
+  function keyLabel(code) { if (!code) return '?'; if (code === 'Space') return 'Space'; if (code.startsWith('Key')) return code.slice(3); if (code.startsWith('Digit')) return code.slice(5); if (code.startsWith('Arrow')) return code.slice(5) + ' arrow'; if (code.startsWith('Shift')) return 'Shift'; if (code.startsWith('Control')) return 'Ctrl'; if (code.startsWith('Alt')) return 'Alt'; return code; }
+  // the name of the pick-up control on the device you chose, used in every hint
+  function pickName() { return settings.input === 'gamepad' ? 'X' : settings.input === 'touch' ? 'the hand button' : keyLabel(settings.binds.pick); }
+  function mapName() { return settings.input === 'gamepad' ? 'Start' : settings.input === 'touch' ? 'the map button' : keyLabel(settings.binds.map); }
+  function devText(t) { return (t || '').replace(/\b([Pp]ress) E\b/g, (m, v) => v + ' ' + pickName()).replace(/\b([Pp]ress) M\b/g, (m, v) => v + ' ' + mapName()); }
   let stamina = 100, running = false, sitting = false, sitSeat = null;
   let camYaw = Math.PI, bodyYaw = Math.PI, pitch = 0.08, view = 'back', vy = 0, py = 0, wantJump = false;
   const SENS = 0.0022;
   function toggleView() { view = view === 'back' ? 'front' : 'back'; if (view === 'front') camYaw = bodyYaw; }
   window.addEventListener('keydown', e => {
     if (talking() || mapOpen) return;
-    if (MOVE[e.code]) { keys[MOVE[e.code]] = true; e.preventDefault(); }
-    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) wantJump = true; }
-    if (e.code === 'KeyE' && !e.repeat) pickNearest();
-    if (e.code === 'KeyV' && !e.repeat) toggleView();
-    if (e.code === 'KeyZ' && !e.repeat) setZoom((zoom + 1) % ZOOMS.length);
-    if (e.code === 'KeyH' && !e.repeat) toggleKeys();
+    const a = actionOf(e.code); if (!a) return;
+    if (isMove(a)) { keys[a] = true; e.preventDefault(); }
+    if (a === 'jump') { e.preventDefault(); if (!e.repeat) wantJump = true; }
+    if (e.repeat) return;
+    if (a === 'pick') pickNearest();
+    if (a === 'view') toggleView();
+    if (a === 'zoom') setZoom((zoom + 1) % ZOOMS.length);
+    if (a === 'keys') toggleKeys();
   });
-  window.addEventListener('keyup', e => { if (MOVE[e.code]) keys[MOVE[e.code]] = false; });
+  window.addEventListener('keyup', e => { const a = actionOf(e.code); if (a && isMove(a)) keys[a] = false; });
   window.addEventListener('blur', () => Object.keys(keys).forEach(k => (keys[k] = false)));
   document.addEventListener('visibilitychange', () => { if (document.hidden && cloudDirty) { clearTimeout(cloudTimer); cloudPush(); } });
   pad.querySelectorAll('[data-move]').forEach(btn => {
@@ -3926,16 +3988,16 @@
     if (!navigator.getGamepads) return;
     let pad = null; try { pad = Array.from(navigator.getGamepads()).find(g => g && g.connected); } catch (e) { return; }
     if (!pad) return;
-    if (!gp.seen) { gp.seen = true; $('gphint').textContent = 'Controller connected.'; }
+    if (!gp.seen) { gp.seen = true; if (settings.input === 'keyboard' && !settings.chosen) { settings.input = 'gamepad'; applySettings(); } }
     const dz = v => (Math.abs(v) < 0.18 ? 0 : v);
     const ax = dz(pad.axes[0] || 0), ay = dz(pad.axes[1] || 0), rx = dz(pad.axes[2] || 0), ry = dz(pad.axes[3] || 0);
-    if (!talking() && !mapOpen) { gp.mx = -ax; gp.mz = -ay; if (rx || ry) look(rx * dt * 1000, ry * dt * 750); }
+    if (!talking() && !mapOpen) { gp.mx = -ax; gp.mz = -ay; if (rx || ry) look(rx * dt * 1000, ry * dt * 750 * (settings.gpInvert === false ? -1 : 1) * (settings.invert ? 1 : -1)); }
     gp.run = !!(pad.buttons[10] && pad.buttons[10].pressed) || !!(pad.buttons[1] && pad.buttons[1].pressed);
     const now = pad.buttons.map(b => b.pressed);
     const hit = i => now[i] && !gp.prev[i];
     const picker = $('start');
     if (hit(9)) toggleMap();
-    if (hit(8)) toggleKeys();
+    if (hit(8)) openSettings();
     if (!picker.hidden) {
       const bs = Array.from(picker.querySelectorAll('button'));
       if (hit(0)) { const f = bs.includes(document.activeElement) ? document.activeElement : bs[0]; if (f) f.click(); }
@@ -3958,10 +4020,10 @@
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   let locked = false, down = null, dragged = false, lastX = 0, lastY = 0;
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
-  document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === canvas; $('lockhint').textContent = locked ? 'Mouse grabbed. Press Esc to let go.' : 'Click the game to grab the mouse, Esc to let go.'; });
+  document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === canvas; const lh = $('lockhint'); if (lh) lh.textContent = locked ? 'Mouse grabbed. Press Esc to let go.' : 'Click the game to grab the mouse, Esc to let go.'; });
   function look(dx, dy) {
     if (view === 'front') bodyYaw -= dx * SENS; else camYaw -= dx * SENS;
-    pitch = clamp(pitch + dy * SENS, -0.45, 0.75); // inverted: push up to look down
+    pitch = clamp(pitch + dy * SENS * (settings.sens / 100) * (settings.invert ? 1 : -1), -0.45, 0.75); // inverted by default: push up to look down
   }
   document.addEventListener('mousemove', e => { if (locked && !talking()) look(e.movementX, e.movementY); });
   const toNdc = e => { const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); };
@@ -4118,11 +4180,50 @@
     try { localStorage.setItem(GFX_KEY, JSON.stringify(gfx)); } catch (e) {}
   }
   function cullFar() { if (where !== 'hills') return; const lim = hillScene.fog.far * 1.15, px = player.position.x, pz = player.position.z; farThings.forEach(o => { o.visible = Math.hypot(o.position.x - px, o.position.z - pz) < lim + (o.userData.trunkR ? 120 : 0); }); }
+  // ---------- the settings screen ----------
+  const setEl = $('settings'); let settingsFrom = null, listening = null;
+  function openSettings() { if (!setEl.hidden) return; settingsFrom = mapOpen ? 'map' : 'game'; if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => (keys[k] = false)); renderSettings(); setEl.hidden = false; }
+  function closeSettings() { setEl.hidden = true; listening = null; settings.chosen = true; saveSettings(); applySettings(); }
+  $('settingsdone').addEventListener('click', closeSettings); $('mapsettings').addEventListener('click', openSettings);
+  function renderSettings() {
+    document.querySelectorAll('#inputrow .opt').forEach(l => l.classList.toggle('on', l.dataset.v === settings.input));
+    $('inputnote').textContent = settings.input === 'gamepad' ? 'Buttons in hints and the controls panel will be the controller’s.' : settings.input === 'touch' ? 'On-screen buttons are shown; drag to look.' : 'Click the game to grab the mouse; Esc lets go.';
+    $('kbsection').hidden = settings.input !== 'keyboard'; $('gpsection').hidden = settings.input !== 'gamepad';
+    const b = $('binds'); b.innerHTML = '';
+    Object.keys(BIND_NAMES).forEach(k => { const n = document.createElement('span'); n.textContent = BIND_NAMES[k]; const btn = document.createElement('button'); btn.className = 'btn small' + (listening === k ? ' listen' : ''); btn.textContent = listening === k ? 'press a key…' : keyLabel(settings.binds[k]); btn.onclick = () => { listening = listening === k ? null : k; renderSettings(); }; b.append(n, btn); });
+    $('invertopt').classList.toggle('on', settings.invert); $('gpinvertopt').classList.toggle('on', settings.invert);
+    $('sens').value = settings.sens; $('sensval').textContent = (settings.sens / 100).toFixed(1) + '×';
+    $('birdopt').classList.toggle('on', settings.birds); $('keysopt').classList.toggle('on', settings.showKeys);
+    $('gfxq').value = gfx.quality; $('gfxd').value = gfx.distance;
+  }
+  document.querySelectorAll('#inputrow .opt').forEach(l => l.addEventListener('click', () => { if (l.classList.contains('off')) return; settings.input = l.dataset.v; renderSettings(); }));
+  $('invertopt').addEventListener('click', () => { settings.invert = !settings.invert; renderSettings(); });
+  $('gpinvertopt').addEventListener('click', () => { settings.invert = !settings.invert; renderSettings(); });
+  $('sens').addEventListener('input', e => { settings.sens = +e.target.value; $('sensval').textContent = (settings.sens / 100).toFixed(1) + '×'; });
+  $('birdopt').addEventListener('click', () => { settings.birds = !settings.birds; renderSettings(); });
+  $('keysopt').addEventListener('click', () => { settings.showKeys = !settings.showKeys; renderSettings(); });
+  $('bindreset').addEventListener('click', () => { settings.binds = Object.assign({}, DEFAULT_BINDS); listening = null; renderSettings(); });
+  window.addEventListener('keydown', e => {
+    if (setEl.hidden) return;
+    if (listening) { e.preventDefault(); if (e.code !== 'Escape') { const old = settings.binds[listening]; Object.keys(settings.binds).forEach(k => { if (settings.binds[k] === e.code && k !== listening) settings.binds[k] = old; }); settings.binds[listening] = e.code; } listening = null; renderSettings(); return; }
+    if (e.code === 'Escape') closeSettings();
+  }, true);
+  // the controls panel is written for the device you chose
+  function applySettings() {
+    const kb = settings.binds, L = keyLabel, kbd = t => `<kbd>${t}</kbd>`;
+    const line = settings.input === 'gamepad'
+      ? `${kbd('Left stick')} walk &middot; ${kbd('Right stick')} look &middot; ${kbd('B')} run &middot; ${kbd('A')} jump &middot; ${kbd('X')} pick up / talk / sit &middot; ${kbd('Y')} flip view &middot; ${kbd('LB')}${kbd('RB')} zoom &middot; ${kbd('Start')} map &middot; ${kbd('Select')} settings`
+      : settings.input === 'touch' ? `Drag to look. The buttons below walk, run, jump, pick up and open the map.`
+      : `${kbd(L(kb.f))}${kbd(L(kb.l))}${kbd(L(kb.b))}${kbd(L(kb.r))} walk &middot; ${kbd('mouse')} look${settings.invert ? ' (inverted)' : ''} &middot; ${kbd(L(kb.run))} run &middot; ${kbd(L(kb.jump))} jump &middot; ${kbd(L(kb.pick))} pick up / talk / sit &middot; ${kbd(L(kb.view))} flip view &middot; ${kbd(L(kb.zoom))} / ${kbd('wheel')} zoom &middot; ${kbd(L(kb.map))} map &middot; ${kbd(L(kb.settings))} settings &middot; ${kbd(L(kb.keys))} hide this<br><span id="lockhint">Click the game to grab the mouse, ${kbd('Esc')} to let go.</span>`;
+    keysEl.innerHTML = line; keysEl.classList.toggle('gone', !settings.showKeys); keysShown = settings.showKeys ? 0 : 99;
+    document.body.classList.toggle('touchmode', settings.input === 'touch');
+    if (hint.current) hint(hint.current);
+  }
   $('gfxq').addEventListener('change', e => { gfx.quality = e.target.value; applyGfx(); });
   $('gfxd').addEventListener('change', e => { gfx.distance = e.target.value; applyGfx(); });
-  applyGfx();
   let cullTimer = 0, keysShown = 0; const keysEl = document.querySelector('.keys');
   function toggleKeys() { keysEl.classList.toggle('gone'); keysShown = keysEl.classList.contains('gone') ? 99 : 0; }
+  applyGfx(); applySettings();
 
   const clock = new THREE.Clock();
   let walkPhase = 0, headYaw = 0;
@@ -4474,7 +4575,7 @@
   }
   let restoreAfter = null;
   $('mapbtn').addEventListener('click', toggleMap);
-  window.addEventListener('keydown', e => { if (e.code === 'KeyM' && !e.repeat && !talking()) toggleMap(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
+  window.addEventListener('keydown', e => { if (!$('settings').hidden) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; save.started = true; if (save.beetle && !beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(-3, 0, 8); } if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }

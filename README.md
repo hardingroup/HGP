@@ -21,9 +21,16 @@ npx serve .
 then visit the address it prints. The game opens on a region map; Thistledown Hollow (ten lessons) and the
 Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playable. Any lesson can be started directly, which is handy for testing.
 
-## Graphics settings
+## Settings
 
-On the map screen, **Graphics** (Auto / Low / Medium / High) sets shadows, grass density and pixel resolution; **Distance** (Near / Mid / Far) sets how far you can see before the haze. Auto picks a level for the device's graphics card. Both are remembered per device. On a laptop with an integrated GPU, Low + Near roughly triples the frame rate.
+**Settings** on the map screen (or `P` in play, Select on a controller) opens the settings screen, saved per device:
+
+- **How you play**: mouse & keyboard, controller, or touch (VR is listed for later). Hints and the controls panel use that device's buttons. Plugging in a controller switches to it automatically until you choose otherwise.
+- **Keys**: every keyboard action can be rebound; click a key and press a new one. Reset to defaults is one button.
+- **Mouse**: inverted look on or off, and sensitivity.
+- **Graphics**: Auto / Low / Medium / High sets shadows, grass density and pixel resolution; Distance (Near / Mid / Far) sets how far you can see before the haze. Auto picks a level for the device's graphics card. On a laptop with an integrated GPU, Low + Near roughly triples the frame rate.
+- **Sound**: birdsong on or off.
+- **Help**: whether the controls panel shows while playing (it fades after a few seconds; `H` brings it back).
 
 ## Controls
 
