@@ -41,6 +41,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 | Shift run (stamina bar) | B or left-stick click | Run button |
 | Space jump | A | Jump button |
 | E pick up, talk, sit | X | Pick up button |
+| R ride / get off the bicycle (once you have one) | D-pad up | — |
 | V switch between the back view and the front view | Y | View button |
 | Z or mouse wheel: close, mid or wide camera | Bumpers | — |
 | M open the world map | Start | Map button |
@@ -56,6 +57,12 @@ During a conversation, A presses the highlighted button and the d-pad moves betw
   stick, shapes in the woodshop, the hundred-acorn count, and raising a rhinoceros beetle (life cycle).
 - **The Long Road**: a separate scene reached through the gate, linking the Hollow to the orchards.
 - **The River Road**: real hills between the orchards and Fernwater. A winding dirt road climbs a ridge past oaks, pines, boulders and cairns; slopes slow you down, running uphill burns stamina, anything steeper than about 45 degrees is a wall, and you can leave the road and wander the whole valley.
+- **The High Road**: from Fernwater's far bank a second road climbs through heather, crags and old drystone walls to the highlands.
+- **Cairnhold Highlands** (Region 4, geometry and measurement, ten lessons): Wren Ashcombe, master surveyor, and Pip, apprenticing again. Units and the hundred-link chain, angles on a protractor, perimeter and area, odd fields and triangles, circles and pi, volume of the cisterns, Pythagoras, coordinates and scale on the lodge maps, similar triangles, and the capstone: your numbers build the Cairnhold Bridge across the gorge. The Surveyors' Lodge is a walk-in interior.
+- **The Cliff Road**: from Cairnhold's far gate, past the bridge, a road winds down the escarpment (keep left of the guard wall) to Cogsworth.
+- **Cogsworth** (Region 5, pre-algebra, ten lessons): a clockwork town built into a cliff, with gear trains turning on the rock face, a water clock in the square, a brass lift down to the ice cellars, the Clockworks and the Bicycle Works (both walk-in). Tamsin Gearwright teaches ratios with gear teeth, rates with the water clock, proportions with clock oil, percent, negative numbers on the lift, integer arithmetic, order of operations as gear chains, first equations (the missing tooth), a Season Fair that re-tests older skills, and the capstone: you gear your own bicycle to climb the hill out of town. The bicycle is the game's first fast travel: `R` (D-pad up on a controller) gets on and off; it rides at about twice walking speed on land, slows hard on slopes, and never counts toward stamina.
+- **The Mountain Road**: through the gate at the top of Cogsworth's hill, a road climbs 300 rods to the snow line past abandoned ore carts and dwarven waymarks, ending at the mine mouth of Emberdeep.
+- **Emberdeep** (Region 6, Algebra 1 and 2, ten lessons): the dwarven forges under the mountain. A lava river runs along the east side (you can't step in it), two furnaces with gauges reading 800-1200, anvils, house-sized hammers, a brass balance scale, the recipe lectern, the bellows, and the forge-grid: a square of the floor tiled as a coordinate grid. Master Durna Ironvein teaches one- and two-step equations as a balance, multi-step equations with like terms, inequalities (the furnace window), graphing lines (slope as chimney pitch, intercepts), systems of equations (two recipes at once), quadratics (factoring, roots, vertex, the formula), polynomials and rational expressions, exponents as bellows doubling, logarithms as counting the doublings, and the Mountain Fair review. Capstone: Tamsin brings the engine; you size its cylinder and time the spark (a system of two cycles), then weld it with Durna. The sixth mark reads "unknown."
 - **Buildings you walk into**: Fernwater's four shops and Quern Mill each load their own interior when you step through the door (bakery with oven, counter and tables; the money-changer's barred counter; the rope and net shops; the mill's stones, hopper and gearing). Shopkeepers talk to you inside.
 - **Ambient life**, all at real scale next to a seven-inch elf: flocks of birds and a lone hawk overhead; deer at the tree line (a buck with antlers), a fox trotting the hills, a badger, rabbits that bolt, pheasants that burst up out of the grass, hedgehogs and field mice in the meadows, squirrels running up and down the oaks, crows on the fences that flap off when you come near, ducks on the river, frogs on the bank that hop in, a heron, dogs in the Hollow and Fernwater that come to say hello, a few butterflies, and synthesized birdsong outdoors (after the first click or key press).
 - **The river**: walk down the bank and you wade in and swim (slowly, no jumping); the beetle waits on the shore. The boardwalk stays walkable above you, and you climb back onto it at the ramps.
@@ -84,7 +91,7 @@ principles live in the project's design documents. The short version:
 
 ## Roadmap
 
-- The Cairnhold Highlands (geometry and measurement) and the regions beyond.
+- Lanternreach (statistics and probability) and Skyhaven (precalculus and calculus).
 - Real 3D models and textures in place of the code-built shapes.
 - Characters backed by a language model so a learner can ask Bramblewick why.
 - Classroom mode (one teacher, a class in a shared village), then an open shared world.
