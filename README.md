@@ -21,6 +21,13 @@ npx serve .
 then visit the address it prints. The game opens on a region map; Thistledown Hollow (ten lessons) and the
 Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playable. Any lesson can be started directly, which is handy for testing.
 
+## Movement feel
+
+- **Momentum.** You take a few steps to get up to speed and a few to stop, so a sharp turn at a run slides a little. The bike is heavier: slower to wind up, longer to stop, wider turns. Water answers slowly.
+- **Slopes push.** Downhill speeds you up and is harder to stop; uphill drags. Standing still on gentle ground holds you, but stand on something steep and you slide. Too steep still blocks you outright.
+- **Currents.** The Fernwater river carries you downstream while you swim; the Lanternreach sea pushes you gently toward the cove. Swim against them or use them.
+- **Jump** stays generous, and carries a little of your run with it. Hit a wall, a tree or a fence and you stop: whatever the world pushes back against is lost.
+
 ## Settings
 
 **Settings** on the map screen (or `P` in play, Select on a controller) opens the settings screen, saved per device:
