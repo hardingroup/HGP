@@ -1627,9 +1627,9 @@
     sc.traverse(m => { if (m.isMesh && m !== outside && m !== floor) { m.castShadow = true; m.receiveShadow = true; } });
     interiors[id] = it; return it;
   }
-  function sceneOf(region) { return region === 'village' ? scene : region === 'road' ? roadScene : region === 'orchards' ? orchScene : region === 'hills' ? hillScene : region === 'fernwater' ? fernScene : region === 'high' ? highScene : region === 'cairnhold' ? cairnScene : region === 'cliff' ? cliffScene : region === 'cogsworth' ? cogScene : region === 'mtn' ? mtnScene : region === 'emberdeep' ? embScene : interior ? interior.scene : scene; }
+  function sceneOf(region) { return region === 'village' ? scene : region === 'road' ? roadScene : region === 'orchards' ? orchScene : region === 'hills' ? hillScene : region === 'fernwater' ? fernScene : region === 'high' ? highScene : region === 'cairnhold' ? cairnScene : region === 'cliff' ? cliffScene : region === 'cogsworth' ? cogScene : region === 'mtn' ? mtnScene : region === 'emberdeep' ? embScene : region === 'sea' ? seaScene : region === 'lantern' ? lantScene : region === 'lift' ? liftScene : region === 'skyhaven' ? skyScene : region === 'flight' ? flightScene : interior ? interior.scene : scene; }
   function curScene() { return where === 'in' ? interior.scene : sceneOf(where); }
-  const REGION_LABEL = { village: 'Thistledown Hollow', road: 'The Long Road', orchards: 'The Mallow Orchards', hills: 'The River Road', fernwater: 'Fernwater Crossing', high: 'The High Road', cairnhold: 'Cairnhold Highlands', cliff: 'The Cliff Road', cogsworth: 'Cogsworth', mtn: 'The Mountain Road', emberdeep: 'Emberdeep' };
+  const REGION_LABEL = { village: 'Thistledown Hollow', road: 'The Long Road', orchards: 'The Mallow Orchards', hills: 'The River Road', fernwater: 'Fernwater Crossing', high: 'The High Road', cairnhold: 'Cairnhold Highlands', cliff: 'The Cliff Road', cogsworth: 'Cogsworth', mtn: 'The Mountain Road', emberdeep: 'Emberdeep', sea: 'The Sea Road', lantern: 'Lanternreach', lift: 'The sky-lift', skyhaven: 'Skyhaven', flight: 'The flight home' };
   function enterInterior(id, then) {
     const it = interiors[id]; if (!it || fading) return;
     fadeTo(it.label, () => {
@@ -2528,7 +2528,8 @@
     const daylight = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), mat('#dfe3e6', { emissive: '#dfe3e6', emissiveIntensity: 0.8 })); daylight.position.set(0, 6, -2); embScene.add(daylight);
     const dl = new THREE.PointLight('#dfe3e6', 0.8, 30); dl.position.set(0, 6, 4); embScene.add(dl);
     const lane = new THREE.Mesh(new THREE.PlaneGeometry(7, EMB_LEN), mat('#ffffff', { map: dirtTex, color: '#6a6058' })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.03, EMB_LEN / 2); embScene.add(lane);
-    const outSign = signBoard('To Lanternreach — not yet built', 7, 1.1, '#1b1b1b', '#e8b64c'); outSign.position.set(6, 3.6, EMB_LEN - 4); outSign.rotation.y = Math.PI; embScene.add(outSign); const op = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 4, 6), ironM); op.position.set(6, 2, EMB_LEN - 4); embScene.add(op);
+    const outSign = signBoard('To Lanternreach \u2014 the Sea Road', 7, 1.1, '#1b1b1b', '#e8b64c'); outSign.position.set(6, 3.6, EMB_LEN - 4); outSign.rotation.y = Math.PI; embScene.add(outSign); const op = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 4, 6), ironM); op.position.set(6, 2, EMB_LEN - 4); embScene.add(op);
+    [-6, 6].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(2.4, 12, 2.4), ironM); gp.position.set(o, 6, EMB_LEN); embScene.add(gp); embSolids.push({ x: o, z: EMB_LEN, r: 1.6 }); }); const arch2 = new THREE.Mesh(new THREE.TorusGeometry(6.4, 1.2, 10, 24, Math.PI), ironM); arch2.position.set(0, 12, EMB_LEN); embScene.add(arch2); const day2 = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), mat('#dfe3e6', { emissive: '#dfe3e6', emissiveIntensity: 0.8 })); day2.position.set(0, 6, EMB_LEN + 2); day2.rotation.y = Math.PI; embScene.add(day2);
     // lamps along the lane so you can see your feet
     for (let z = 15; z < EMB_LEN; z += 30) [-5, 5].forEach(x => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 5, 6), ironM); post.position.set(x, 2.5, z); embScene.add(post); const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(x, 5.2, z); embScene.add(lamp); const l = new THREE.PointLight('#ffc46a', 0.6, 22); l.position.set(x, 5, z); embScene.add(l); });
     embScene.traverse(o => { if (o.isMesh && o !== floor && o !== ceiling) o.castShadow = true; });
@@ -2546,6 +2547,468 @@
     }, () => { hint('Emberdeep. Lava on the right, furnaces on the left. Master Durna is at the anvils ahead.'); if (phase === 'toemb') phase = 'todurna'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(-4, 0, 44); bodyYaw = camYaw = -1.2; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
   }
   function goToMtnFromEmb() { goToMtn(true); }
+
+  // ---------- the Sea Road: out of the back of Emberdeep and down the mountain to the coast ----------
+  const SEA_LEN = 320, SEA_Y = -16;
+  function seaRoadX(z) { return 22 * Math.sin(z / 52 + 2) + 8 * Math.sin(z / 15); }
+  function seaRawH(x, z) {
+    let h = 4 * Math.sin(x / 21) * Math.cos(z / 25) + 2.5 * Math.sin(x / 7 + 1) * Math.sin(z / 10) + 1.2 * Math.sin(x / 4) * Math.cos(z / 5.5);
+    h += 18 * Math.exp(-(Math.pow((x + 90) / 45, 2) + Math.pow((z - 90) / 55, 2)));
+    h += 14 * Math.exp(-(Math.pow((x + 70) / 40, 2) + Math.pow((z - 230) / 50, 2)));
+    h += Math.max(0, -x - 120) * 0.8;
+    h -= Math.max(0, x - 58) * 1.6; // the land falls off the cliff edge into the sea
+    h *= sstep(0, 26, z) * sstep(SEA_LEN, SEA_LEN - 26, z);
+    return h + 46 * (1 - sstep(40, 280, z));
+  }
+  function seaH(x, z) { const d = Math.abs(x - seaRoadX(z)); if (d > 14) return seaRawH(x, z); const k = sstep(4, 14, d); return seaRawH(seaRoadX(z), z) * (1 - k) + seaRawH(x, z) * k; }
+  const seaScene = new THREE.Scene();
+  seaScene.fog = new THREE.Fog('#d9e2ea', 90, 420);
+  const seaSky = new THREE.Mesh(new THREE.SphereGeometry(700, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); seaScene.add(seaSky);
+  seaScene.add(new THREE.HemisphereLight('#f4f8ff', '#4e5a58', 1.0));
+  const seaSun = new THREE.DirectionalLight('#fff6e8', 1.0); seaSun.castShadow = true;
+  Object.assign(seaSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); seaSun.shadow.mapSize.set(4096, 4096); seaSun.shadow.radius = 2;
+  seaScene.add(seaSun); seaScene.add(seaSun.target);
+  const seaSolids = [];
+  const seaTex = canvasTex(256, 256, (gg, w, h) => { gg.fillStyle = '#2f6f9a'; gg.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { gg.strokeStyle = pick(['rgba(255,255,255,.18)', 'rgba(120,190,230,.35)', 'rgba(20,70,110,.3)']); gg.lineWidth = rnd(1, 3); const x = Math.random() * w, y = Math.random() * h; gg.beginPath(); gg.moveTo(x, y); gg.quadraticCurveTo(x + rnd(6, 18), y + rnd(-4, 4), x + rnd(14, 36), y); gg.stroke(); } }, [40, 40]);
+  function seaPlane(sc, x, z, w, d, y) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: seaTex, roughness: 0.35, metalness: 0.1, color: '#8fc4e6' })); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); sc.add(m); return m; }
+  {
+    const W = 340, L = SEA_LEN + 160, SX = 140, SZ = 180;
+    const geo = new THREE.PlaneGeometry(W, L, SX, SZ); geo.rotateX(-Math.PI / 2); geo.translate(-40, 0, SEA_LEN / 2);
+    const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i), h = seaH(x, z); pos.setY(i, h);
+      const slope = Math.hypot(seaH(x + 1.5, z) - seaH(x - 1.5, z), seaH(x, z + 1.5) - seaH(x, z - 1.5)) / 3;
+      if (slope > 0.7) c.set('#6e6a62'); else if (h > 30) c.set(pick(['#8c8577', '#9b958a'])); else if (h < SEA_Y + 2) c.set('#c9b98a'); else c.set(pick(['#5f8a4a', '#6f9452', '#7a9a5a']));
+      c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
+    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); ground.receiveShadow = true; seaScene.add(ground);
+    seaPlane(seaScene, 520, SEA_LEN / 2, 1000, 1400, SEA_Y);
+    const rw = 3.8, verts = [], uvs = [], idx = []; let n = 0;
+    for (let z = -12; z <= SEA_LEN + 12; z += 2) {
+      const cx = seaRoadX(z), h = seaH(cx, z) + 0.22, dx = (seaRoadX(z + 1) - seaRoadX(z - 1)) / 2, len = Math.hypot(dx, 2), nx = 2 / len, nz = -dx / len;
+      [[-rw, 0], [-1.4, 0.3], [1.4, 0.7], [rw, 1]].forEach(([o, u]) => { verts.push(cx + nx * o, h, z + nz * o); uvs.push(u * 2, z / 6); });
+      if (n > 0) for (let k = 0; k < 3; k++) { const a = (n - 1) * 4 + k, b = n * 4 + k; idx.push(a, b, a + 1, a + 1, b, b + 1); }
+      n++;
+    }
+    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); rg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); rg.setIndex(idx); rg.computeVertexNormals();
+    const roadMesh = new THREE.Mesh(rg, mat('#ffffff', { map: dirtTex, side: THREE.DoubleSide, color: '#b3a88f' })); roadMesh.receiveShadow = true; seaScene.add(roadMesh);
+    const gg = new THREE.ConeGeometry(0.22, 1, 3); gg.translate(0, 0.5, 0);
+    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 6000);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
+    for (let i = 0; i < 6000; i++) {
+      pv.set(rnd(-170, 56), 0, rnd(-30, SEA_LEN + 30)); if (Math.abs(pv.x - seaRoadX(pv.z)) < 5) { i--; continue; }
+      pv.y = seaH(pv.x, pv.z) - 0.1; q.setFromEuler(new THREE.Euler(rnd(-0.3, 0.3), rnd(0, 6.3), rnd(-0.3, 0.3))); sv.set(1, rnd(1.2, 3), 1);
+      grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#7a9a5a', '#6a8a4a', '#93a86a'])));
+    }
+    seaScene.add(grass);
+    for (let i = 0; i < 120; i++) {
+      const x = rnd(-170, 56), z = rnd(-20, SEA_LEN + 30); if (Math.abs(x - seaRoadX(z)) < 6) { i--; continue; }
+      const sc = rnd(1, 5), rock = new THREE.Mesh(new THREE.DodecahedronGeometry(sc, 0), mat(pick(['#8c8577', '#9b958a', '#7a7468']), { flatShading: true, roughness: 1 }));
+      rock.position.set(x, seaH(x, z) + sc * 0.25, z); rock.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); rock.scale.y = rnd(0.5, 1.2); rock.castShadow = true; rock.receiveShadow = true; seaScene.add(rock);
+      if (sc > 1.6) seaSolids.push({ x, z, r: sc * 0.9 });
+    }
+    // wind-bent pines, leaning away from the sea
+    const spots = [];
+    for (let i = 0; i < 14; i++) {
+      const x = rnd(-160, 40), z = rnd(20, SEA_LEN - 20); if (Math.abs(x - seaRoadX(z)) < 30 || spots.some(t => Math.hypot(t[0] - x, t[1] - z) < 40)) { i--; continue; }
+      spots.push([x, z]); const K = rnd(8, 13), tr = new THREE.Group(); tr.position.set(x, seaH(x, z) - 1.5, z); tr.rotation.z = 0.18; seaScene.add(tr);
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.8, 7, 10), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5; trunk.castShadow = true; tr.add(trunk);
+      [0, 1, 2].forEach(k => { const cone = new THREE.Mesh(new THREE.ConeGeometry(3.4 - k * 0.9, 4.4, 9), mat(pick(['#3a6d32', '#2f5f2a']), { flatShading: true })); cone.position.set(-0.6 * k, 6.2 + k * 2.6, 0); cone.castShadow = true; tr.add(cone); });
+      tr.scale.setScalar(K); seaSolids.push({ x, z, r: 0.8 * K });
+    }
+    // the mine's back door: a tunnel mouth in the rock, and the gate to Lanternreach
+    { const cx = seaRoadX(0), h = seaH(cx, 0); const face = new THREE.Mesh(new THREE.BoxGeometry(90, 60, 20), mat('#5e5a52', { roughness: 1 })); face.position.set(cx, h + 26, -14); seaScene.add(face);
+      [-6, 6].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(2.4, 12, 2.4), mat('#3a3a3a', { metalness: 0.4 })); gp.position.set(cx + o, h + 6, -3); seaScene.add(gp); seaSolids.push({ x: cx + o, z: -3, r: 1.6 }); });
+      const arch = new THREE.Mesh(new THREE.TorusGeometry(6.4, 1.2, 10, 24, Math.PI), mat('#3a3a3a', { metalness: 0.4 })); arch.position.set(cx, h + 12, -3); seaScene.add(arch);
+      const dark = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), mat('#1a0e08', { emissive: '#6a2a10', emissiveIntensity: 0.5 })); dark.position.set(cx, h + 6, -4); seaScene.add(dark);
+      const sg = signBoard('EMBERDEEP', 8, 1.6, '#1b1b1b', '#ff9a40'); sg.position.set(cx, h + 15, -2); sg.rotation.y = Math.PI; seaScene.add(sg); }
+    { const cx = seaRoadX(SEA_LEN), h = seaH(cx, SEA_LEN); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#e8e2d2')); gp.position.set(cx + o, h + 3.5, SEA_LEN); seaScene.add(gp); seaSolids.push({ x: cx + o, z: SEA_LEN, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#cfc8b6')); lintel.position.set(cx, h + 7.3, SEA_LEN); seaScene.add(lintel); const sg = signBoard('Lanternreach', 6.4, 1.4, '#1f3a5a', '#f6e7c2'); sg.position.set(cx, h + 8.6, SEA_LEN - 0.3); seaScene.add(sg); }
+    const postM = mat('#4b4b4b', { metalness: 0.5 });
+    [[6, 'Emberdeep', Math.PI, '#8a3a2a'], [SEA_LEN - 6, 'Lanternreach', 0, '#1f3a5a']].forEach(([z, label, ry, colr]) => { const x = seaRoadX(z) - 6, h = seaH(x, z); const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 5, 8), postM); post.position.set(x, h + 2.5, z); seaScene.add(post); const sg = signBoard(label, 6, 1.3, colr, '#f6e7c2'); sg.position.set(x, h + 4.2, z + (ry ? -0.3 : 0.3)); sg.rotation.y = ry; seaScene.add(sg); const sg2 = signBoard('The Sea Road', 4.6, 1, '#f2e6c8', '#4a3420'); sg2.position.set(x, h + 2.9, z + (ry ? -0.3 : 0.3)); sg2.rotation.y = ry; seaScene.add(sg2); seaSolids.push({ x, z, r: 0.5 }); });
+    [[-230, 60, 170, 110, 180, '#9a978f'], [-260, 260, 190, 130, 200, '#9a978f'], [-60, -200, 240, 150, 180, '#b9bcc2']].forEach(([ox, oz, rx, h, rz, c]) => mound(seaScene, ox, oz, rx, h, rz, c));
+    // sea stacks off the coast
+    [[150, 80, 9, 24], [190, 200, 12, 30], [130, 290, 7, 18]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.7, r, h, 9), mat('#6e6a62', { flatShading: true, roughness: 1 })); st.position.set(x, SEA_Y + h / 2 - 4, z); seaScene.add(st); });
+  }
+  function goToSea(fromLant) {
+    fadeTo('The Sea Road', () => {
+      moveCompany(fromLant ? lantScene : embScene, seaScene); where = 'sea'; if (riding) setRiding(false);
+      const z = fromLant ? SEA_LEN - 6 : 4, x = seaRoadX(z); player.position.set(x, 0, z); bodyYaw = camYaw = fromLant ? Math.PI : 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(x - 2, seaH(x - 2, z), z);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => hint(fromLant ? 'The Sea Road climbs back to the mountain and the mine.' : 'The Sea Road. Daylight again. It runs down the mountain to the coast; the sea is on your right the whole way.'));
+  }
+  function goToEmbFromSea() {
+    fadeTo('Emberdeep', () => {
+      moveCompany(seaScene, embScene); where = 'emberdeep'; player.position.set(0, 0, EMB_LEN - 5); bodyYaw = camYaw = Math.PI; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(2, 0, EMB_LEN - 3);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => hint('The back of Emberdeep. The ore carts are behind you, the lava on your left now.'));
+  }
+
+  // ---------- Region 7: Lanternreach, a lighthouse town on the sea cliffs, always at dusk ----------
+  const LANT_LEN = 140, ASTPOS = new THREE.Vector3(14, 0, 44), LIGHT = { x: 40, z: 30 }, COVE = { x: 62, z: 112 }, PIER = { z: 118, x0: 70, x1: 118, y: SEA_Y + 1.3 };
+  // the plateau the town sits on; the cove slopes down to the water; everything past the cliff edge falls into the sea
+  function lantH(x, z) {
+    let h = 0.5 * Math.sin(x / 9) * Math.cos(z / 11) + 0.3 * Math.sin(x / 4 + 1) * Math.sin(z / 5);
+    const cove = Math.exp(-(Math.pow((z - COVE.z) / 22, 2))); // the beach: a notch in the cliff
+    const edge = 58 + cove * -14; // the cliff edge comes inland at the cove
+    if (x > edge) { const d = x - edge; h -= Math.min(d * (3.5 - 2.6 * cove), 30); }
+    h -= Math.max(0, -x - 58) * 2.2;
+    return Math.max(h, SEA_Y - 4);
+  }
+  function onPier(x, z) { return Math.abs(z - PIER.z) < 2.4 && x > PIER.x0 - 1 && x < PIER.x1 + 1; }
+  const lantScene = new THREE.Scene();
+  lantScene.fog = new THREE.Fog('#1b2a44', 80, 420); lantScene.background = new THREE.Color('#0f1a30');
+  lantScene.add(new THREE.HemisphereLight('#4a6a9a', '#1a1a22', 0.75));
+  const lantSun = new THREE.DirectionalLight('#9fb8e8', 0.55); lantSun.castShadow = true;
+  Object.assign(lantSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); lantSun.shadow.mapSize.set(4096, 4096); lantSun.shadow.radius = 2;
+  lantScene.add(lantSun); lantScene.add(lantSun.target);
+  const lantSolids = [], lantBoxes = [];
+  let astra = null, beam = null, beamLight = null, buoy = null;
+  {
+    // stars, and a low moon over the sea
+    { const n = 900, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const a = rnd(0, 6.3), e = rnd(0.05, 1.5), r = 640; pos[i * 3] = Math.cos(a) * Math.cos(e) * r; pos[i * 3 + 1] = Math.sin(e) * r; pos[i * 3 + 2] = Math.sin(a) * Math.cos(e) * r; } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const stars = new THREE.Points(g, new THREE.PointsMaterial({ color: '#ffffff', size: 2.2, sizeAttenuation: false, fog: false })); stars.position.set(0, 0, 70); lantScene.add(stars); lantScene.userData.stars = stars;
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(18, 16, 12), new THREE.MeshBasicMaterial({ color: '#f4efd8', fog: false })); moon.position.set(420, 160, 380); lantScene.add(moon); }
+    const geo = new THREE.PlaneGeometry(260, 220, 120, 100); geo.rotateX(-Math.PI / 2); geo.translate(10, 0, LANT_LEN / 2);
+    const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i), h = lantH(x, z); pos.setY(i, h); c.set(h < SEA_Y + 2.5 ? '#c9b98a' : h < -2 ? '#6e6a62' : pick(['#4f7a4a', '#5a8452', '#6a8a5a'])); c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b; }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
+    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); ground.receiveShadow = true; lantScene.add(ground);
+    const sea = seaPlane(lantScene, 560, LANT_LEN / 2, 1100, 1400, SEA_Y); sea.material.color.set('#3a5f86'); lantScene.userData.sea = sea;
+    const lane = new THREE.Mesh(new THREE.PlaneGeometry(7, LANT_LEN), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.05, LANT_LEN / 2); lantScene.add(lane);
+    const covePath = new THREE.Mesh(new THREE.PlaneGeometry(4, 56), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); covePath.rotation.x = -Math.PI / 2; covePath.position.set(28, 0.06, COVE.z); covePath.rotation.z = Math.PI / 2; lantScene.add(covePath);
+    const gg = new THREE.ConeGeometry(0.22, 1, 3); gg.translate(0, 0.5, 0);
+    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 3000);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
+    for (let i = 0; i < 3000; i++) { pv.set(rnd(-56, 56), 0, rnd(2, LANT_LEN - 2)); if (Math.abs(pv.x) < 5 || lantH(pv.x, pv.z) < -1) { i--; continue; } pv.y = lantH(pv.x, pv.z) - 0.1; q.setFromEuler(new THREE.Euler(rnd(-0.3, 0.3), rnd(0, 6.3), rnd(-0.3, 0.3))); sv.set(1, rnd(1, 2.4), 1); grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#5a8452', '#4f7a4a', '#7a9a6a']))); }
+    lantScene.add(grass);
+    const whiteM = mat('#f2efe6', { roughness: 0.8 }), redM = mat('#b8323a'), ironM = mat('#3a3a3a', { metalness: 0.6, roughness: 0.5 }), brassM = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 }), stoneM = mat('#8c8577');
+    // the lighthouse: 40 rods tall, red bands, a lantern room, and the beam that goes round
+    { const g = new THREE.Group(); g.position.set(LIGHT.x, 0, LIGHT.z); lantScene.add(g);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 7.5, 3, 20), stoneM); base.position.y = 1.5; g.add(base);
+      const tower = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 5.2, 34, 20), whiteM); tower.position.y = 20; tower.castShadow = true; g.add(tower);
+      [10, 20, 30].forEach(y => { const band = new THREE.Mesh(new THREE.CylinderGeometry(5.2 - (y / 34) * 1.6 + 0.08, 5.2 - ((y - 3) / 34) * 1.6 + 0.08, 3, 20), redM); band.position.y = y; g.add(band); });
+      const gallery = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 0.6, 20), ironM); gallery.position.y = 37; g.add(gallery);
+      for (let k = 0; k < 16; k++) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.2, 5), ironM); r.position.set(Math.cos(k / 16 * 6.283) * 4.8, 38.3, Math.sin(k / 16 * 6.283) * 4.8); g.add(r); } const rail = new THREE.Mesh(new THREE.TorusGeometry(4.8, 0.08, 6, 32), ironM); rail.rotation.x = Math.PI / 2; rail.position.y = 39.4; g.add(rail);
+      const room = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 5, 12), new THREE.MeshStandardMaterial({ color: '#cfe4f4', transparent: true, opacity: 0.35, roughness: 0.1 })); room.position.y = 40; g.add(room);
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(1.4, 12, 10), mat('#fff2b0', { emissive: '#ffd36a', emissiveIntensity: 2 })); lamp.position.y = 40; g.add(lamp);
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(3.6, 3, 12), redM); cap.position.y = 44; g.add(cap);
+      beam = new THREE.Group(); beam.position.y = 40; g.add(beam);
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(14, 240, 16, 1, true), new THREE.MeshBasicMaterial({ color: '#ffe9a0', transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false, fog: false })); cone.rotation.z = Math.PI / 2; cone.position.x = 120; cone.rotation.y = 0; beam.add(cone);
+      beamLight = new THREE.SpotLight('#ffe9a0', 1.6, 500, 0.12, 0.6, 0.5); beamLight.position.set(0, 0, 0); beamLight.target.position.set(200, -30, 0); beam.add(beamLight); beam.add(beamLight.target);
+      const door = new THREE.Mesh(new THREE.BoxGeometry(2.6, 4.6, 0.3), mat('#3a2a1e')); door.position.set(0, 2.3, 5.3); g.add(door);
+      lantSolids.push({ x: LIGHT.x, z: LIGHT.z, r: 7.4 });
+      const sg = signBoard('Lanternreach Light', 6, 1.1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 7, 7); g.add(sg); }
+    // the observatory: a stone drum, a brass dome, a telescope poking out
+    { const g = new THREE.Group(); g.position.set(-34, 0, 32); lantScene.add(g);
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(7, 7.4, 8, 18), stoneM); drum.position.y = 4; drum.castShadow = true; g.add(drum);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(7, 18, 12, 0, 6.283, 0, 1.6), brassM); dome.position.y = 8; g.add(dome);
+      const slit = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 7.2), mat('#1b2a44')); slit.position.set(0, 10.5, 3.6); slit.rotation.x = 0.9; g.add(slit);
+      const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 9, 10), brassM); scope.position.set(0, 12, 3); scope.rotation.x = -0.9; g.add(scope);
+      const door = new THREE.Mesh(new THREE.BoxGeometry(2.6, 4.6, 0.3), mat('#3a2a1e')); door.position.set(0, 2.3, 7.4); g.add(door);
+      const sg = signBoard('The Observatory', 5.4, 1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 6.4, 7.6); g.add(sg);
+      lantSolids.push({ x: -34, z: 32, r: 8 }); }
+    // the cottages, each with its own inside
+    function lantBuilding(id, x, z, facing, label, W, D, H, color) {
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = facing; lantScene.add(g);
+      const body = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mat(color, { roughness: 0.9 })); body.position.y = H / 2; body.castShadow = true; body.receiveShadow = true; g.add(body);
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.hypot(W, D) / 2 + 0.8, 4.5, 4), mat('#3f4a58')); roof.rotation.y = Math.PI / 4; roof.position.y = H + 2.2; roof.castShadow = true; g.add(roof);
+      const chimney = new THREE.Mesh(new THREE.BoxGeometry(1.4, 4, 1.4), stoneM); chimney.position.set(W / 2 - 2.5, H + 2.5, 0); g.add(chimney);
+      const door = new THREE.Mesh(new THREE.BoxGeometry(3, 5.2, 0.3), mat('#2a3a5a')); door.position.set(0, 2.6, D / 2 + 0.1); g.add(door);
+      [-1, 1].forEach(d => { const w = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), mat('#ffd98a', { emissive: '#ffb347', emissiveIntensity: 0.9 })); w.position.set(d * (W / 4 + 1), 5, D / 2 + 0.02); g.add(w); const l = new THREE.PointLight('#ffc46a', 0.5, 22); l.position.set(d * (W / 4 + 1), 5, D / 2 + 2); g.add(l); });
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(-W / 2 - 1.2, 5.2, D / 2 + 1.2); g.add(lamp);
+      const sign = signBoard(label, 9, 1.4, '#1f3a5a', '#f6e7c2'); sign.position.set(0, H + 0.9, D / 2 + 0.5); g.add(sign);
+      const steps = new THREE.Mesh(new THREE.BoxGeometry(5, 0.5, 2.2), stoneM); steps.position.set(0, 0.25, D / 2 + 1.4); g.add(steps);
+      const doorX = x + Math.sin(facing) * (D / 2), doorZ = z + Math.cos(facing) * (D / 2);
+      const path = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(doorX) - 3.5, 3), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); path.rotation.x = -Math.PI / 2; path.position.set((doorX + (facing > 0 ? -3.5 : 3.5)) / 2, 0.06, doorZ); lantScene.add(path);
+      lantBoxes.push({ id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } });
+      interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
+      return g;
+    }
+    makeRoom('keepers', { w: 16, d: 13, h: 8, wall: '#e6ddc8', trim: '#2a3a5a', label: 'The Keeper’s Cottage', region: 'lantern', hint: 'Oil lamps, a log book open on the table, and the smell of the sea.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+      wall(6, 2, 3, -3, 1, -2, mat('#5a3d22')); solids.push({ x: -3, z: -2, r: 3 }); const book = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 1.8), mat('#efe3c4')); book.position.set(-3, 2.2, -2); sc.add(book);
+      const lb = signBoard('Oil per night: 2, 4, 6, 8 …', 5.6, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(-3, 4.2, -D / 2 + 0.3); sc.add(lb);
+      for (let k = 0; k < 4; k++) { const can = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.3, 10), mat('#3a3a3a', { metalness: 0.6 })); can.position.set(W / 2 - 1.2, 0.65, -4 + k * 2); sc.add(can); }
+      const bed = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 6), mat('#4a5a7a')); bed.position.set(W / 2 - 2, 0.5, 2.5); sc.add(bed); solids.push({ x: W / 2 - 2, z: 2.5, r: 3.2 });
+      const chart = new THREE.Mesh(new THREE.PlaneGeometry(5, 3.4), mat('#1b2a44')); chart.position.set(3, 4.8, -D / 2 + 0.15); sc.add(chart); for (let k = 0; k < 30; k++) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 3), mat('#ffffff', { emissive: '#ffffff' })); st.position.set(3 + rnd(-2.3, 2.3), 4.8 + rnd(-1.5, 1.5), -D / 2 + 0.2); sc.add(st); }
+    } });
+    makeRoom('chandlery', { w: 18, d: 14, h: 8, wall: '#d8d2c0', trim: '#2a3a5a', label: 'Reef & Rope Chandlery', region: 'lantern', hint: 'Rope, lanterns, hooks, and a compass rose painted on the floor.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+      wall(10, 2.2, 2.6, 0, 1.1, -3, mat('#4a3a2a')); solids.push({ x: -3, z: -3, r: 2.4 }, { x: 3, z: -3, r: 2.4 });
+      for (let k = 0; k < 6; k++) { const coil = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.3, 8, 16), mat('#b89a6a')); coil.rotation.x = Math.PI / 2; coil.position.set(-7 + k * 2.6, 0.3, 4); sc.add(coil); }
+      for (let k = 0; k < 5; k++) { const ln = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 1.2, 8), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 0.6 })); ln.position.set(-6 + k * 3, 5.5, -D / 2 + 0.6); sc.add(ln); }
+      const rose = new THREE.Mesh(new THREE.CircleGeometry(2.6, 8), mat('#2a3a5a')); rose.rotation.x = -Math.PI / 2; rose.position.set(4, 0.02, 1); sc.add(rose); const ros2 = new THREE.Mesh(new THREE.CircleGeometry(1.2, 4), mat('#efe3c4')); ros2.rotation.x = -Math.PI / 2; ros2.position.set(4, 0.03, 1); sc.add(ros2);
+      const lb = signBoard('N 0°  E 90°  S 180°  W 270°', 6.4, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(4, 3.8, -D / 2 + 0.3); sc.add(lb);
+    } });
+    makeRoom('tides', { w: 16, d: 12, h: 8, wall: '#dfe6e8', trim: '#2a3a5a', label: 'The Tide Office', region: 'lantern', hint: 'Tide tables on every wall, and a brass gauge that goes up and down all day.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+      wall(7, 2, 2.4, 0, 1, -2.5, mat('#4a3a2a')); solids.push({ x: 0, z: -2.5, r: 3.4 });
+      const lb = signBoard('High 8 · Low 2 · Mid 5 · every 12 h', 7.4, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(0, 4.6, -D / 2 + 0.3); sc.add(lb);
+      const board = new THREE.Mesh(new THREE.PlaneGeometry(8, 3.6), mat('#efe3c4')); board.position.set(0, 2.9, -D / 2 + 0.12); sc.add(board);
+      const pts = []; for (let x = -3.8; x <= 3.8; x += 0.2) pts.push(new THREE.Vector3(x, 2.9 + Math.sin(x * 1.6) * 1.3, -D / 2 + 0.14)); const curve = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: '#1f3a5a' })); sc.add(curve);
+      const gauge = new THREE.Mesh(new THREE.BoxGeometry(0.8, 6, 0.4), mat('#b08a3a', { metalness: 0.6 })); gauge.position.set(W / 2 - 1, 3, 0); sc.add(gauge); const fl = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 0.6), mat('#c8384a')); fl.position.set(W / 2 - 1, 3, 0); fl.userData.tide = true; sc.add(fl); sc.userData.tideFloat = fl;
+    } });
+    lantBuilding('keepers', 22, 60, -Math.PI / 2, 'The Keeper’s Cottage', 16, 13, 8, '#e6ddc8');
+    lantBuilding('chandlery', -24, 70, Math.PI / 2, 'Reef & Rope Chandlery', 18, 14, 8, '#d8d2c0');
+    lantBuilding('tides', -22, 100, Math.PI / 2, 'The Tide Office', 16, 12, 8, '#dfe6e8');
+    // the gate in from the Sea Road, and the far end
+    [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#e8e2d2')); gp.position.set(o, 3.5, 0); lantScene.add(gp); lantSolids.push({ x: o, z: 0, r: 1 }); });
+    const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#cfc8b6')); lintel.position.set(0, 7.3, 0); lantScene.add(lintel);
+    const gsign = signBoard('Lanternreach', 7, 1.6, '#1f3a5a', '#f6e7c2'); gsign.position.set(0, 8.6, 0.2); lantScene.add(gsign);
+    const outSign = signBoard('To Skyhaven \u2014 the sky-lift leaves from the end of the pier', 11, 1.1, '#1f3a5a', '#f6e7c2'); outSign.position.set(6, 3.6, LANT_LEN - 4); outSign.rotation.y = Math.PI; lantScene.add(outSign); const op = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 4, 6), ironM); op.position.set(6, 2, LANT_LEN - 4); lantScene.add(op);
+    // lamps down the lane
+    for (let z = 14; z < LANT_LEN; z += 28) [-5, 5].forEach(x => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 5, 6), ironM); post.position.set(x, 2.5, z); lantScene.add(post); const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(x, 5.2, z); lantScene.add(lamp); const l = new THREE.PointLight('#ffc46a', 0.55, 22); l.position.set(x, 5, z); lantScene.add(l); });
+    // the cliff-top teaching spots: the shadow stake, the tide gauge, the star board
+    { const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 6, 8), mat('#5a3d22')); stake.position.set(24, 3, 34); lantScene.add(stake); const sh = new THREE.Mesh(new THREE.PlaneGeometry(1, 6), mat('#0a1020', { transparent: true, opacity: 0.6 })); sh.rotation.x = -Math.PI / 2; sh.position.set(24, 0.08, 37.2); lantScene.add(sh); const sg = signBoard('The shadow stake: 6 tall', 5, 0.9, '#1f3a5a', '#f6e7c2'); sg.position.set(24, 7, 34); lantScene.add(sg); lantSolids.push({ x: 24, z: 34, r: 0.6 }); }
+    { const g = new THREE.Group(); g.position.set(-10, 0, 46); lantScene.add(g); const board = new THREE.Mesh(new THREE.BoxGeometry(7, 4, 0.3), mat('#1b2a44')); board.position.y = 4; g.add(board); for (let k = 0; k < 40; k++) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.07, 4, 3), mat('#ffffff', { emissive: '#ffffff' })); st.position.set(rnd(-3.2, 3.2), 4 + rnd(-1.7, 1.7), 0.2); g.add(st); } const ring = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.05, 6, 32), mat('#e8b64c', { emissive: '#e8b64c', emissiveIntensity: 0.5 })); ring.position.set(0, 4, 0.22); g.add(ring); const sg = signBoard('The star board: the unit circle', 6.4, 0.9, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 6.6, 0.3); g.add(sg); [-3.6, 3.6].forEach(x => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 6, 6), ironM); p.position.set(x, 3, 0); g.add(p); }); lantSolids.push({ x: -10, z: 46, r: 3.8 }); }
+    // the cove: a beach, a pier, three boats, a tide gauge on the pier, and a bell buoy out in the water
+    { const pier = new THREE.Mesh(new THREE.BoxGeometry(PIER.x1 - PIER.x0, 0.6, 4.4), mat('#ffffff', { map: plankTex })); pier.position.set((PIER.x0 + PIER.x1) / 2, PIER.y - 0.3, PIER.z); pier.castShadow = true; lantScene.add(pier);
+      for (let x = PIER.x0 + 2; x < PIER.x1; x += 8) [-1.9, 1.9].forEach(o => { const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 10, 8), mat('#4a3a2a')); pl.position.set(x, PIER.y - 5, PIER.z + o); lantScene.add(pl); const rl = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 5), mat('#4a3a2a')); rl.position.set(x, PIER.y + 0.6, PIER.z + o); lantScene.add(rl); });
+      const ramp = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 4.4), mat('#ffffff', { map: plankTex })); ramp.position.set(PIER.x0 - 6, PIER.y - 0.1, PIER.z); lantScene.add(ramp);
+      const gauge = new THREE.Mesh(new THREE.BoxGeometry(0.9, 9, 0.4), mat('#efe3c4')); gauge.position.set(PIER.x1 - 3, PIER.y + 3.5, PIER.z + 2.6); lantScene.add(gauge); [[2, 'Low 2'], [5, 'Mid 5'], [8, 'High 8']].forEach(([v, lb]) => { const s = signBoard(lb, 2.2, 0.6, '#efe3c4', '#1b1b1b'); s.position.set(PIER.x1 - 1.6, PIER.y - 1 + v, PIER.z + 2.6); lantScene.add(s); }); const tsg = signBoard('The tide gauge', 4, 0.9, '#1f3a5a', '#f6e7c2'); tsg.position.set(PIER.x1 - 3, PIER.y + 8.6, PIER.z + 2.6); lantScene.add(tsg);
+      lantSolids.push({ x: PIER.x1 - 3, z: PIER.z + 2.6, r: 0.7 });
+      function boat(x, z, ry, color, sail) { const g = new THREE.Group(); g.position.set(x, SEA_Y + 0.3, z); g.rotation.y = ry; lantScene.add(g); const hull = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 0.9, 7, 10, 1, false, 0, Math.PI), mat(color)); hull.rotation.z = Math.PI / 2; hull.rotation.y = Math.PI / 2; hull.scale.set(1, 1, 1); g.add(hull); const deck = new THREE.Mesh(new THREE.BoxGeometry(7, 0.3, 3.4), mat('#8a6a3a')); deck.position.y = 0.6; g.add(deck); if (sail) { const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 9, 8), mat('#5a3d22')); mast.position.y = 5; g.add(mast); const sl = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 6.5), mat('#efe3c4', { side: THREE.DoubleSide })); sl.position.set(1.2, 5.4, 0); sl.rotation.y = 0.3; g.add(sl); } g.userData.bob = rnd(0, 6); return g; }
+      lantScene.userData.boats = [boat(86, PIER.z + 6, 0, '#2a3a5a', true), boat(100, PIER.z - 6, 0.2, '#7a2e2e', false), boat(112, PIER.z + 6.5, -0.1, '#3f6f4a', true)];
+      buoy = new THREE.Group(); buoy.position.set(150, SEA_Y, 86); lantScene.add(buoy); const bb = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.2, 1.8, 12), redM); bb.position.y = 0.6; buoy.add(bb); const frame = new THREE.Mesh(new THREE.ConeGeometry(1.4, 4, 4, 1, true), new THREE.MeshStandardMaterial({ color: '#3a3a3a', wireframe: true })); frame.position.y = 3.5; buoy.add(frame); const bell = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.9, 10), brassM); bell.position.y = 3.2; buoy.add(bell); const bl = new THREE.PointLight('#ff4040', 0.9, 60); bl.position.y = 5.6; buoy.add(bl); const blm = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), mat('#ff4040', { emissive: '#ff2020', emissiveIntensity: 2 })); blm.position.y = 5.6; buoy.add(blm); buoy.userData.light = bl;
+      // the Pillar Rocks far out: where the sky-lifts anchor, one day
+      [[300, 40, 12, 60], [330, 70, 10, 48], [280, 110, 14, 70]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r, h, 9), mat('#4e4a44', { flatShading: true, roughness: 1 })); st.position.set(x, SEA_Y + h / 2 - 6, z); lantScene.add(st); const top = new THREE.PointLight('#8fd0ff', 1.2, 90); top.position.set(x, SEA_Y + h - 4, z); lantScene.add(top); });
+      { const st = new THREE.Mesh(new THREE.BoxGeometry(2, 16, 2), ironM); st.position.set(PIER.x1 - 1, PIER.y + 8, PIER.z - 3); lantScene.add(st); const st2 = st.clone(); st2.position.z = PIER.z + 3; lantScene.add(st2); const arm = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 8), ironM); arm.position.set(PIER.x1 - 1, PIER.y + 16, PIER.z); lantScene.add(arm); const lsg = signBoard('The sky-lift', 4.4, 1, '#1f3a5a', '#f6e7c2'); lsg.position.set(PIER.x1 - 1, PIER.y + 12, PIER.z); lsg.rotation.y = -Math.PI / 2; lantScene.add(lsg); lantSolids.push({ x: PIER.x1 - 1, z: PIER.z - 3, r: 1.4 }, { x: PIER.x1 - 1, z: PIER.z + 3, r: 1.4 }); const cab = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 400, 5), ironM); cab.position.set(PIER.x1 + 150, PIER.y + 16 + 130, PIER.z); cab.rotation.z = -1.0; lantScene.add(cab); }
+      const psign = signBoard('The Pillar Rocks \u2192', 4.6, 0.9, '#1f3a5a', '#f6e7c2'); psign.position.set(PIER.x1 - 1, PIER.y + 2.6, PIER.z - 2.6); psign.rotation.y = -Math.PI / 2; lantScene.add(psign);
+      // a few sea stacks and a reef
+      [[120, 20, 8, 22], [170, 160, 9, 26]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.7, r, h, 9), mat('#6e6a62', { flatShading: true, roughness: 1 })); st.position.set(x, SEA_Y + h / 2 - 5, z); lantScene.add(st); }); }
+    [[-230, 60, 200, 110, 180, '#303a4a'], [-260, 260, 220, 130, 200, '#303a4a']].forEach(([ox, oz, rx, h, rz, c]) => mound(lantScene, ox, oz, rx, h, rz, c));
+    lantScene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.isPoints && o !== ground) o.castShadow = true; });
+  }
+  // Astra Vell: tall, pale, a dark blue coat with a hood pushed back, a brass sextant on a strap
+  astra = makeElfNPC({ coat: '#1f3a5a', skin: '#e8d8c8', hair: '#d8d4c8', hat: 'hood', tall: 6.4, wide: 1.1 }); astra.position.copy(ASTPOS); astra.rotation.y = 2.4; lantScene.add(astra); lantSolids.push({ x: ASTPOS.x, z: ASTPOS.z, r: 1.3 });
+  { const sext = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 6, 16, Math.PI / 3), mat('#b08a3a', { metalness: 0.6 })); sext.position.set(0.9, 3.2, 0.8); sext.rotation.y = 0.6; astra.add(sext); const strap = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.6, 0.1), mat('#5a3d22')); strap.position.set(0.5, 3.6, 0.9); strap.rotation.z = 0.35; astra.add(strap); }
+  function goToLantern() {
+    fadeTo('Lanternreach', () => {
+      moveCompany(where === 'sea' ? seaScene : curScene(), lantScene); where = 'lantern'; if (riding) setRiding(false); player.position.set(0, 0, 4); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 1.5);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => { hint('Lanternreach, at dusk. The lighthouse is on your right; Astra Vell is at its foot, looking up.'); if (phase === 'tolant') phase = 'toastra'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(10, 0, 40); bodyYaw = camYaw = 0.6; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
+  }
+  function goToSeaFromLant() { goToSea(true); }
+
+  // ---------- the sky-lift: from the end of Lanternreach's pier, out over the Pillar Rocks and up to Skyhaven ----------
+  const LIFT_T = 22, LIFT_TOP = new THREE.Vector3(230, 300, 0);
+  const liftScene = new THREE.Scene();
+  liftScene.fog = new THREE.Fog('#1b2a44', 120, 700); liftScene.background = new THREE.Color('#0f1a30');
+  liftScene.add(new THREE.HemisphereLight('#4a6a9a', '#1a1a22', 0.8));
+  const liftSun = new THREE.DirectionalLight('#9fb8e8', 0.6); liftSun.castShadow = true; Object.assign(liftSun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 900 }); liftSun.shadow.mapSize.set(2048, 2048); liftScene.add(liftSun); liftScene.add(liftSun.target);
+  const gondola = new THREE.Group(); liftScene.add(gondola);
+  let liftT = 0, liftDir = 1;
+  {
+    { const n = 900, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const a = rnd(0, 6.3), e = rnd(-0.2, 1.5), r = 680; pos[i * 3] = Math.cos(a) * Math.cos(e) * r; pos[i * 3 + 1] = Math.sin(e) * r; pos[i * 3 + 2] = Math.sin(a) * Math.cos(e) * r; } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const stars = new THREE.Points(g, new THREE.PointsMaterial({ color: '#ffffff', size: 2.2, sizeAttenuation: false, fog: false })); liftScene.add(stars); liftScene.userData.stars = stars;
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(18, 16, 12), new THREE.MeshBasicMaterial({ color: '#f4efd8', fog: false })); moon.position.set(420, 200, 380); liftScene.add(moon); }
+    const sea = seaPlane(liftScene, 200, 0, 1600, 1600, SEA_Y); sea.material.color.set('#3a5f86'); liftScene.userData.sea = sea;
+    // the pier end, the Pillar Rocks with the upper pylon, and the cable
+    const pierEnd = new THREE.Mesh(new THREE.BoxGeometry(24, 0.6, 4.4), mat('#ffffff', { map: plankTex })); pierEnd.position.set(-8, PIER.y - 0.3, 0); liftScene.add(pierEnd);
+    const pylon = (x, z, h) => { const p = new THREE.Mesh(new THREE.BoxGeometry(3, h, 3), mat('#3a3a3a', { metalness: 0.5 })); p.position.set(x, SEA_Y + h / 2, z); liftScene.add(p); const arm = new THREE.Mesh(new THREE.BoxGeometry(8, 1, 1), mat('#3a3a3a', { metalness: 0.5 })); arm.position.set(x, SEA_Y + h, z); liftScene.add(arm); return SEA_Y + h; };
+    const y0 = pylon(0, 3, 24);
+    [[300, 40, 12, 60], [330, 70, 10, 48], [280, 110, 14, 70]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r, h, 9), mat('#4e4a44', { flatShading: true, roughness: 1 })); st.position.set(x - 70, SEA_Y + h / 2 - 6, z - 40); liftScene.add(st); const top = new THREE.PointLight('#8fd0ff', 1.4, 90); top.position.set(x - 70, SEA_Y + h - 4, z - 40); liftScene.add(top); });
+    const y1 = pylon(230, 3, 80);
+    const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1, 6), mat('#2a2a2a', { metalness: 0.6 })); const a = new THREE.Vector3(0, y0 + 0.5, 3), b = LIFT_TOP.clone().add(new THREE.Vector3(0, 6, 3)); const len = a.distanceTo(b); cable.scale.y = len; cable.position.copy(a).lerp(b, 0.5); cable.lookAt(b); cable.rotateX(Math.PI / 2); liftScene.add(cable);
+    const cable2 = cable.clone(); cable2.position.z += 1.4; liftScene.add(cable2);
+    // the gondola: a brass-ribbed basket hung from a wheel on the cable
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.3, 8, 20), mat('#b08a3a', { metalness: 0.6 })); wheel.position.set(0, 5.5, 3.7); gondola.add(wheel);
+    const hanger = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 0.5), mat('#3a3a3a', { metalness: 0.5 })); hanger.position.set(0, 2.5, 3.7); gondola.add(hanger);
+    const floor = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 2.6, 0.5, 14), mat('#ffffff', { map: plankTex })); floor.position.y = -0.25; gondola.add(floor);
+    for (let k = 0; k < 14; k++) { const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3, 5), mat('#b08a3a', { metalness: 0.6 })); rib.position.set(Math.cos(k / 14 * 6.283) * 3.1, 1.5, Math.sin(k / 14 * 6.283) * 3.1); gondola.add(rib); }
+    const rail = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.12, 6, 28), mat('#b08a3a', { metalness: 0.6 })); rail.rotation.x = Math.PI / 2; rail.position.y = 3; gondola.add(rail);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(3.6, 1.6, 14), mat('#1f3a5a')); roof.position.y = 5.6; gondola.add(roof);
+    const lamp = new THREE.PointLight('#ffc46a', 0.9, 20); lamp.position.y = 4.5; gondola.add(lamp);
+    gondola.position.set(0, y0 - 6, 0);
+    // clouds you rise through
+    const cloudM = new THREE.MeshStandardMaterial({ color: '#dfe6ee', transparent: true, opacity: 0.85, roughness: 1 });
+    for (let i = 0; i < 40; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(rnd(10, 26), 10, 7), cloudM); c.scale.y = 0.35; c.position.set(rnd(-200, 400), rnd(120, 230), rnd(-200, 200)); liftScene.add(c); }
+    gondola.userData.y0 = y0 - 6;
+  }
+  function liftPos(t) { const k = sstep(0, 1, t), y0 = gondola.userData.y0; return new THREE.Vector3(LIFT_TOP.x * k, y0 + (LIFT_TOP.y - y0) * (k * k * 0.6 + k * 0.4), 0); }
+  function goToLift(down) {
+    fadeTo(down ? 'The sky-lift, down' : 'The sky-lift', () => {
+      moveCompany(down ? skyScene : lantScene, liftScene); where = 'lift'; if (riding) setRiding(false); liftDir = down ? -1 : 1; liftT = down ? 1 : 0;
+      const gp = liftPos(liftT); gondola.position.copy(gp); player.position.set(gp.x, gp.y, gp.z); bodyYaw = camYaw = down ? -Math.PI / 2 : Math.PI / 2; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(gp.x - 1.5, gp.y, gp.z + 1);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => hint(down ? 'The gondola drops away from the islands. The sea comes up slowly.' : 'The gondola lifts off the pier. Hold the rail. It climbs over the Pillar Rocks and up through the cloud.'));
+  }
+  function liftTick(dt) {
+    liftT = clamp(liftT + liftDir * dt / LIFT_T, 0, 1); const gp = liftPos(liftT); gondola.position.copy(gp); gondola.rotation.z = Math.sin(liftT * 9) * 0.02;
+    if (beetle) { beetle.position.set(gp.x - 1.5, gp.y, gp.z + 1); }
+    if (liftScene.userData.stars) liftScene.userData.stars.position.copy(gp);
+    if (!fading) { if (liftDir > 0 && liftT >= 1) goToSky(); else if (liftDir < 0 && liftT <= 0) goToLantFromLift(); }
+  }
+  function goToLantFromLift() {
+    fadeTo('Lanternreach', () => {
+      moveCompany(liftScene, lantScene); where = 'lantern'; player.position.set(PIER.x1 - 6, 0, PIER.z); bodyYaw = camYaw = -Math.PI / 2; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(PIER.x1 - 8, PIER.y, PIER.z + 1);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => hint('The end of the pier. Lanternreach is up the cove path.'));
+  }
+
+  // ---------- Region 8: Skyhaven, the glider city on the floating islands ----------
+  const ISLANDS = [{ x: 0, z: 40, r: 42 }, { x: 78, z: 96, r: 30 }, { x: -66, z: 104, r: 26 }];
+  const BRIDGES = [[0, 40, 78, 96], [0, 40, -66, 104]];
+  const ILSPOS = new THREE.Vector3(12, 0, 46);
+  const skyScene = new THREE.Scene();
+  skyScene.fog = new THREE.Fog('#cfe0f2', 160, 900); skyScene.background = new THREE.Color('#9fc4ea');
+  skyScene.add(new THREE.HemisphereLight('#ffffff', '#6f8fb0', 1.0));
+  const skySun = new THREE.DirectionalLight('#fff8ec', 1.1); skySun.castShadow = true; Object.assign(skySun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); skySun.shadow.mapSize.set(4096, 4096); skySun.shadow.radius = 2; skyScene.add(skySun); skyScene.add(skySun.target);
+  const skySolids = [], skyBoxes = [], spinnersSky = [];
+  let ilsa = null, fenSky = null, pipSky = null, glider = null, windFan = null;
+  function onIsland(x, z) { return ISLANDS.some(i => Math.hypot(x - i.x, z - i.z) < i.r - 1.2); }
+  function onBridge(x, z) { return BRIDGES.some(([ax, az, bx, bz]) => { const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), t = ((x - ax) * dx + (z - az) * dz) / (L * L); if (t < 0 || t > 1) return false; const px = ax + dx * t, pz = az + dz * t; return Math.hypot(x - px, z - pz) < 2.3; }); }
+  function skyH(x, z) { if (onIsland(x, z)) return 0; const b = BRIDGES.find(([ax, az, bx, bz]) => { const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), t = ((x - ax) * dx + (z - az) * dz) / (L * L); return t >= -0.05 && t <= 1.05 && Math.hypot(x - (ax + dx * t), z - (az + dz * t)) < 3; }); if (b) { const [ax, az, bx, bz] = b, dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), t = clamp(((x - ax) * dx + (z - az) * dz) / (L * L), 0, 1); return -Math.sin(t * Math.PI) * 2.2; } return 0; }
+  {
+    const skyTexHi = canvasTex(512, 256, (gg, w, h) => { const gr = gg.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#4f8fd8'); gr.addColorStop(0.55, '#a9cdf0'); gr.addColorStop(1, '#e8f0f8'); gg.fillStyle = gr; gg.fillRect(0, 0, w, h); }, [1, 1]);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(800, 24, 16), new THREE.MeshBasicMaterial({ map: skyTexHi, side: THREE.BackSide, fog: false })); dome.position.set(0, -200, 60); skyScene.add(dome); skyScene.userData.dome = dome;
+    const rockM = mat('#6e6a62', { flatShading: true, roughness: 1 }), stoneM = mat('#9b958a'), woodM = mat('#5a3d22'), brassM = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 }), canvasM = mat('#efe3c4', { side: THREE.DoubleSide }), ironM = mat('#3a3a3a', { metalness: 0.6, roughness: 0.5 });
+    ISLANDS.forEach((isl, k) => {
+      const geo = new THREE.CircleGeometry(isl.r, 40); geo.rotateX(-Math.PI / 2); const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
+      for (let i = 0; i < pos.count; i++) { c.set(pick(['#6f9a52', '#7aa45a', '#8aae62'])); c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b; }
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const top = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); top.position.set(isl.x, 0, isl.z); top.receiveShadow = true; skyScene.add(top);
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(isl.r, isl.r * 0.9, 4, 40, 1, true), stoneM); rim.position.set(isl.x, -2, isl.z); skyScene.add(rim);
+      const under = new THREE.Mesh(new THREE.ConeGeometry(isl.r * 0.92, isl.r * 1.6, 14), rockM); under.rotation.x = Math.PI; under.position.set(isl.x, -4 - isl.r * 0.8, isl.z); skyScene.add(under);
+      for (let i = 0; i < 6; i++) { const root = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.5, rnd(14, 30), 6), woodM); const a = rnd(0, 6.3); root.position.set(isl.x + Math.cos(a) * isl.r * 0.6, -12 - rnd(0, 10), isl.z + Math.sin(a) * isl.r * 0.6); root.rotation.set(rnd(-0.3, 0.3), 0, rnd(-0.3, 0.3)); skyScene.add(root); }
+      // a fence of rope posts round the edge, with gaps at the bridges and the lift
+      for (let a = 0; a < 6.283; a += 0.22) { const px = isl.x + Math.cos(a) * (isl.r - 1), pz = isl.z + Math.sin(a) * (isl.r - 1); if (onBridge(px, pz) || (k === 0 && pz < isl.z - isl.r + 6 && Math.abs(px) < 7)) continue; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.6, 5), woodM); p.position.set(px, 0.8, pz); skyScene.add(p); }
+      const rope = new THREE.Mesh(new THREE.TorusGeometry(isl.r - 1, 0.06, 4, 60), mat('#b89a6a')); rope.rotation.x = Math.PI / 2; rope.position.set(isl.x, 1.4, isl.z); skyScene.add(rope);
+    });
+    // rope bridges: planks that sag between the islands
+    BRIDGES.forEach(([ax, az, bx, bz]) => { const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), ang = Math.atan2(dx, dz); const a0 = ISLANDS[0].r - 2, b0 = (bx > 0 ? ISLANDS[1] : ISLANDS[2]).r - 2;
+      for (let d = a0; d < L - b0; d += 1.6) { const t = d / L; const pl = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.18, 1.3), mat('#ffffff', { map: plankTex })); pl.position.set(ax + dx * t, -Math.sin(t * Math.PI) * 2.2 - 0.1, az + dz * t); pl.rotation.y = ang; pl.rotation.x = -Math.cos(t * Math.PI) * 0.09; pl.castShadow = true; skyScene.add(pl); }
+      [-1.9, 1.9].forEach(o => { const pts = []; for (let d = a0; d <= L - b0; d += 2) { const t = d / L; pts.push(new THREE.Vector3(ax + dx * t + Math.cos(ang) * o, -Math.sin(t * Math.PI) * 2.2 + 1.4, az + dz * t - Math.sin(ang) * o)); } const curve = new THREE.CatmullRomCurve3(pts); const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.07, 5), mat('#b89a6a')); skyScene.add(tube); for (let d = a0; d <= L - b0; d += 6) { const t = d / L; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 4), woodM); p.position.set(ax + dx * t + Math.cos(ang) * o, -Math.sin(t * Math.PI) * 2.2 + 0.7, az + dz * t - Math.sin(ang) * o); skyScene.add(p); } });
+    });
+    // the upper lift station, at the near edge of the main island
+    { const st = new THREE.Mesh(new THREE.BoxGeometry(3, 16, 3), ironM); st.position.set(-6, 8, 0); skyScene.add(st); const arm = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1), ironM); arm.position.set(0, 16, 0); skyScene.add(arm); const st2 = st.clone(); st2.position.x = 6; skyScene.add(st2); skySolids.push({ x: -6, z: 0, r: 2 }, { x: 6, z: 0, r: 2 });
+      const sg = signBoard('The sky-lift — down to Lanternreach', 8, 1.1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 10, 1.6); skyScene.add(sg);
+      const sg2 = signBoard('SKYHAVEN', 8, 1.8, '#f6e7c2', '#1f3a5a'); sg2.position.set(0, 12.6, 1.6); skyScene.add(sg2);
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(12, 0.3, 8), mat('#ffffff', { map: plankTex })); deck.position.set(0, 0.1, 2); skyScene.add(deck); }
+    const lane = new THREE.Mesh(new THREE.PlaneGeometry(6, 76), mat('#ffffff', { map: dirtTex, color: '#b9b2a4' })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.04, 42); skyScene.add(lane);
+    // buildings with insides
+    function skyBuilding(id, x, z, facing, label, W, D, H, color) {
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = facing; skyScene.add(g);
+      const body = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mat(color, { roughness: 0.9 })); body.position.y = H / 2; body.castShadow = true; body.receiveShadow = true; g.add(body);
+      const roof = new THREE.Mesh(new THREE.CylinderGeometry(D / 2 + 1, D / 2 + 1, W + 2, 12, 1, false, 0, Math.PI), canvasM); roof.rotation.z = Math.PI / 2; roof.position.y = H; roof.scale.set(1, 0.42, 1); g.add(roof);
+      for (let k = 0; k < 5; k++) { const rib = new THREE.Mesh(new THREE.TorusGeometry(D / 2 + 1.1, 0.12, 5, 16, Math.PI), woodM); rib.position.set(-W / 2 + k * (W / 4), H, 0); rib.rotation.y = Math.PI / 2; rib.scale.set(1, 0.42, 1); g.add(rib); }
+      const door = new THREE.Mesh(new THREE.BoxGeometry(3.4, 5.6, 0.3), woodM); door.position.set(0, 2.8, D / 2 + 0.1); g.add(door);
+      [-1, 1].forEach(d => { const w = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), mat('#cfe4f4', { emissive: '#9fc4ea', emissiveIntensity: 0.3 })); w.position.set(d * (W / 4 + 1), 5.2, D / 2 + 0.02); g.add(w); });
+      const sign = signBoard(label, 10, 1.4, '#1f3a5a', '#f6e7c2'); sign.position.set(0, H + 1.2, D / 2 + 0.5); g.add(sign);
+      const doorX = x + Math.sin(facing) * (D / 2), doorZ = z + Math.cos(facing) * (D / 2);
+      skyBoxes.push({ id, x, z, hw: Math.abs(Math.cos(facing)) > 0.5 ? W / 2 + 0.3 : D / 2 + 0.3, hd: Math.abs(Math.cos(facing)) > 0.5 ? D / 2 + 0.3 : W / 2 + 0.3, door: { x: doorX, z: doorZ } });
+      interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
+      return g;
+    }
+    makeRoom('guild', { w: 22, d: 16, h: 10, wall: '#e9e2d2', trim: '#1f3a5a', label: 'The Glider Guild', region: 'skyhaven', hint: 'Wings hang from the rafters. Every one of them has flown.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+      for (let k = 0; k < 4; k++) { const wing = new THREE.Mesh(new THREE.BoxGeometry(9, 0.15, 1.6), mat(pick(['#efe3c4', '#c8384a', '#9fc8e8']), { side: THREE.DoubleSide })); wing.position.set(-6 + k * 4, H - 2 - (k % 2), -2 + k * 1.2); wing.rotation.z = 0.15; sc.add(wing); }
+      wall(10, 2.2, 3, 0, 1.1, -3, mat('#4a3a2a')); solids.push({ x: -3, z: -3, r: 2.4 }, { x: 3, z: -3, r: 2.4 });
+      const board = new THREE.Mesh(new THREE.PlaneGeometry(8, 4), mat('#1b2a44')); board.position.set(0, 5, -D / 2 + 0.15); sc.add(board); const pts = []; for (let x = -3.8; x <= 3.8; x += 0.2) pts.push(new THREE.Vector3(x, 5 + 1.2 - x * x * 0.12, -D / 2 + 0.18)); sc.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: '#e8b64c' }))); const tl = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-3.5, 5 + 1.2 - 2 * 2 * 0.12 + 0.48 * 1.5, -D / 2 + 0.18), new THREE.Vector3(0.5, 5 + 1.2 - 2 * 2 * 0.12 - 0.48 * 2.5, -D / 2 + 0.18)]), new THREE.LineBasicMaterial({ color: '#c8384a' })); sc.add(tl);
+      const lb = signBoard('The tangent: the slope at one instant', 7.4, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(0, 7.6, -D / 2 + 0.3); sc.add(lb);
+      const bw = new THREE.Mesh(new THREE.BoxGeometry(5, 0.3, 1.2), woodM); bw.position.set(6, 1.8, 3); sc.add(bw); solids.push({ x: 6, z: 3, r: 2.6 }); const half = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.12, 1.3), mat('#efe3c4', { side: THREE.DoubleSide })); half.position.set(6, 2.1, 3); half.rotation.z = -0.4; sc.add(half); const lb2 = signBoard('The broken wing', 4, 0.8, '#efe3c4', '#1b1b1b'); lb2.position.set(6, 4.2, 3); sc.add(lb2);
+    } });
+    makeRoom('balloonworks', { w: 18, d: 14, h: 11, wall: '#d9e4ec', trim: '#1f3a5a', label: 'The Balloon Works', region: 'skyhaven', hint: 'Half-sewn envelopes and a thousand feet of cable.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+      const env = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 12), mat('#c8384a', { side: THREE.DoubleSide })); env.scale.y = 1.3; env.position.set(-4, 5.5, -2); sc.add(env); solids.push({ x: -4, z: -2, r: 3.4 });
+      for (let k = 0; k < 5; k++) { const coil = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.3, 8, 16), mat('#3a3a3a', { metalness: 0.5 })); coil.rotation.x = Math.PI / 2; coil.position.set(2 + k * 1.6, 0.3, 4); sc.add(coil); }
+      const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 4, 14), mat('#9a9a9a', { metalness: 0.6 })); tank.rotation.z = Math.PI / 2; tank.position.set(5, 1.3, -3); sc.add(tank); solids.push({ x: 5, z: -3, r: 2.4 }); const lb = signBoard('A tank is a curve, spun round', 6, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(5, 3.4, -D / 2 + 0.3); sc.add(lb);
+    } });
+    makeRoom('enginehouse', { w: 16, d: 13, h: 9, wall: '#d8d2c0', trim: '#2a2420', label: 'The Engine House', region: 'skyhaven', hint: 'Your engine from Emberdeep, on a bench, with a timing table chalked beside it.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+      wall(8, 2, 3, 0, 1, -2.5, mat('#4a3a2a')); solids.push({ x: 0, z: -2.5, r: 3.6 }); const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 2.5, 12), mat('#3a3a3a', { metalness: 0.6 })); cyl.position.set(-1.5, 3.2, -2.5); sc.add(cyl); const fly = makeGear(1.3, 14, '#b08a3a'); fly.position.set(1.5, 3.3, -2.5); fly.userData.spin = 2; sc.add(fly); spinners.push(fly);
+      const lb = signBoard('Timing: 1 + x + x²/2 + x³/6 …', 6.6, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(0, 5, -D / 2 + 0.3); sc.add(lb);
+      for (let k = 0; k < 4; k++) { const can = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.2, 10), mat('#8a3a2a')); can.position.set(W / 2 - 1.2, 0.6, -3 + k * 2); sc.add(can); }
+    } });
+    skyBuilding('guild', -24, 50, Math.PI / 2, 'The Glider Guild', 22, 16, 10, '#e9e2d2');
+    skyBuilding('balloonworks', 84, 86, -Math.PI / 2, 'The Balloon Works', 18, 14, 11, '#d9e4ec');
+    skyBuilding('enginehouse', -70, 94, Math.PI / 2, 'The Engine House', 16, 13, 9, '#d8d2c0');
+    // the wind tunnel: a great fan in a drum, and the lift curve chalked on its side
+    { const g = new THREE.Group(); g.position.set(22, 0, 70); g.rotation.y = -0.6; skyScene.add(g); const drum = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 14, 18, 1, true), mat('#9a9a9a', { metalness: 0.5, side: THREE.DoubleSide })); drum.rotation.z = Math.PI / 2; drum.position.y = 4.5; g.add(drum); windFan = new THREE.Group(); windFan.position.set(-7, 4.5, 0); g.add(windFan); for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.4, 0.8), brassM); bl.position.y = 1.8; const piv = new THREE.Group(); piv.rotation.x = k / 6 * 6.283; piv.add(bl); windFan.add(piv); } windFan.rotation.y = Math.PI / 2; const legs = new THREE.Mesh(new THREE.BoxGeometry(12, 0.6, 5), woodM); legs.position.y = 0.3; g.add(legs); skySolids.push({ x: 22, z: 70, r: 7.6 }); const sg = signBoard('The wind tunnel', 5, 1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 10, 0); g.add(sg); }
+    // the launch rail, running off the edge of the main island into open air
+    { const rail = new THREE.Mesh(new THREE.BoxGeometry(40, 0.6, 3), ironM); rail.position.set(20, 0.5, 20); rail.rotation.y = 0.5; skyScene.add(rail); for (let k = 0; k < 6; k++) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.6, 3, 0.6), ironM); leg.position.set(20 + Math.cos(0.5) * (k * 7 - 17), 1.5, 20 - Math.sin(0.5) * (k * 7 - 17)); skyScene.add(leg); } const sg = signBoard('The launch rail', 5, 1, '#1f3a5a', '#f6e7c2'); sg.position.set(8, 4.4, 26); skyScene.add(sg);
+      glider = new THREE.Group(); glider.position.set(10, 1.1, 25); glider.rotation.y = 0.5; skyScene.add(glider);
+      const fus = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.25, 9, 10), mat('#efe3c4')); fus.rotation.x = Math.PI / 2; fus.position.y = 1; glider.add(fus);
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(16, 0.14, 2.2), mat('#c8384a', { side: THREE.DoubleSide })); wing.position.set(0, 1.5, 0.5); glider.add(wing);
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(5, 0.12, 1.4), mat('#c8384a')); tail.position.set(0, 1.3, -4); glider.add(tail); const fin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2, 1.6), mat('#c8384a')); fin.position.set(0, 2.2, -4); glider.add(fin);
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.6, 1.4), woodM); seat.position.set(0, 0.9, 1.2); glider.add(seat);
+      const prop = new THREE.Group(); prop.position.set(0, 1, 4.8); glider.add(prop); [0, 1].forEach(k => { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.4, 0.12), woodM); bl.rotation.z = k * Math.PI / 2; prop.add(bl); }); glider.userData.prop = prop; glider.userData.engine = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1, 1.2), ironM); glider.userData.engine.position.set(0, 1, 3.8); glider.userData.engine.visible = false; glider.add(glider.userData.engine); prop.visible = false;
+      glider.traverse(o => { if (o.isMesh) o.castShadow = true; }); skySolids.push({ x: 10, z: 25, r: 4 }); }
+    // balloon docks on the east island
+    for (let k = 0; k < 3; k++) { const x = 70 + k * 10, z = 110 + (k % 2) * 6; const post = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5, 8), woodM); post.position.set(x, 2.5, z); skyScene.add(post); const bal = new THREE.Mesh(new THREE.SphereGeometry(5, 16, 12), mat(pick(['#c8384a', '#e8b64c', '#3f6f4a']))); bal.scale.y = 1.25; bal.position.set(x, 24 + k * 3, z); bal.userData.bob = rnd(0, 6); skyScene.add(bal); spinnersSky.push(bal); const bk = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1, 1.4, 10), woodM); bk.position.set(x, 16 + k * 3, z); skyScene.add(bk); const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 11 + k * 3, 4), mat('#b89a6a')); rope.position.set(x, 10 + (k * 3) / 2, z); skyScene.add(rope); skySolids.push({ x, z, r: 0.6 }); }
+    // flags and wind socks
+    [[30, 50], [-20, 20], [60, 80]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 9, 6), woodM); p.position.set(x, 4.5, z); skyScene.add(p); const sock = new THREE.Mesh(new THREE.ConeGeometry(0.7, 3.4, 8, 1, true), mat('#e8732a', { side: THREE.DoubleSide })); sock.rotation.z = -Math.PI / 2; sock.position.set(x + 1.8, 8.6, z); sock.userData.sock = true; skyScene.add(sock); spinnersSky.push(sock); skySolids.push({ x, z, r: 0.5 }); });
+    // clouds around and below; the whole world below, small
+    const cloudM = new THREE.MeshStandardMaterial({ color: '#f4f7fb', roughness: 1 });
+    for (let i = 0; i < 50; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(rnd(12, 30), 10, 7), cloudM); c.scale.y = 0.35; c.position.set(rnd(-400, 400), rnd(-110, -40), rnd(-300, 400)); skyScene.add(c); }
+    { const far = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400), mat('#6f8f5a', { roughness: 1 })); far.rotation.x = -Math.PI / 2; far.position.set(0, -300, 60); skyScene.add(far); const sea = new THREE.Mesh(new THREE.PlaneGeometry(1200, 2400), mat('#3a5f86', { roughness: 0.4 })); sea.rotation.x = -Math.PI / 2; sea.position.set(900, -299, 60); skyScene.add(sea);
+      [[-300, -200, '#6f8a4a'], [-150, 200, '#8c8577'], [200, 500, '#9a978f'], [-500, 400, '#5f8a4a']].forEach(([x, z, c]) => mound(skyScene, x, z - 240, 180, 90, 200, c)); }
+    skyScene.traverse(o => { if (o.isMesh && !o.isPoints && o.geometry.type !== 'CircleGeometry') o.castShadow = true; });
+  }
+  // Professor Ilsabet Quill: goggles, a flying coat, a scarf; Fen and Pip, grown, at the engine house
+  ilsa = makeElfNPC({ coat: '#4a3a5a', skin: '#d8b89a', hair: '#2a2a2a', hat: 'cap', capColor: '#5a3d22', tall: 6.2, wide: 1.2 }); ilsa.position.copy(ILSPOS); ilsa.rotation.y = 2.6; skyScene.add(ilsa); skySolids.push({ x: ILSPOS.x, z: ILSPOS.z, r: 1.3 });
+  { const gog = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.12, 6, 16), mat('#b08a3a', { metalness: 0.6 })); gog.position.set(0, 0.7, 0.4); gog.rotation.x = 0.5; ilsa.userData.head.add(gog); const scarf = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3, 0.2), mat('#c8384a')); scarf.position.set(-0.9, 4.6, -0.9); scarf.rotation.x = 0.5; ilsa.add(scarf); ilsa.userData.scarf = scarf; }
+  fenSky = makeElfNPC({ coat: '#2e6b3a', skin: '#c9956a', hair: '#8a5a2a', hat: 'point', capColor: '#2e6b3a', tall: 6, wide: 1.3 }); fenSky.position.set(-62, 0, 112); fenSky.rotation.y = 2.6; skyScene.add(fenSky); skySolids.push({ x: -62, z: 112, r: 1.3 });
+  pipSky = makeElfNPC({ coat: '#8a4a2a', skin: '#b98a63', hair: '#1b1b1b', hat: 'none', tall: 5.8, wide: 1.2 }); pipSky.position.set(-56, 0, 108); pipSky.rotation.y = 2.2; skyScene.add(pipSky); skySolids.push({ x: -56, z: 108, r: 1.3 });
+  function goToSky() {
+    fadeTo('Skyhaven', () => {
+      moveCompany(where === 'lift' ? liftScene : curScene(), skyScene); where = 'skyhaven'; if (riding) setRiding(false); player.position.set(0, 0, 6); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 3);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => { hint('Skyhaven. Islands in the air, roped together. Professor Quill is by the launch rail, ahead on the right.'); if (phase === 'tosky') phase = 'toilsa'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(8, 0, 42); bodyYaw = camYaw = 0.6; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
+  }
+  function goToLiftDown() { goToLift(true); }
+
+  // ---------- the flight home: over the whole Long Road, small, to Thistledown Hollow ----------
+  const FLIGHT_T = 46;
+  const flightScene = new THREE.Scene();
+  flightScene.fog = new THREE.Fog('#cfe0f2', 200, 1400); flightScene.background = new THREE.Color('#9fc4ea');
+  flightScene.add(new THREE.HemisphereLight('#ffffff', '#6f8fb0', 1.1));
+  const flightSun = new THREE.DirectionalLight('#fff8ec', 1.0); flightSun.castShadow = true; Object.assign(flightSun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 900 }); flightSun.shadow.mapSize.set(2048, 2048); flightScene.add(flightSun); flightScene.add(flightSun.target);
+  const flier = new THREE.Group(); flightScene.add(flier);
+  let flightT = 0, flightGlide = 12;
+  {
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), mat('#6f8f5a', { roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.set(0, 0, 0); flightScene.add(ground);
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(1600, 3000), mat('#3a5f86', { roughness: 0.4 })); sea.rotation.x = -Math.PI / 2; sea.position.set(-1000, 0.5, 0); flightScene.add(sea);
+    // the whole road, laid out small beneath you: each region a landmark
+    const stops = [[0, 0, 'Skyhaven'], [-120, -160, 'Lanternreach'], [-40, -340, 'Emberdeep'], [120, -500, 'Cogsworth'], [60, -700, 'Cairnhold'], [-80, -880, 'Fernwater'], [-20, -1060, 'The Orchards'], [40, -1240, 'Thistledown Hollow']];
+    flightScene.userData.stops = stops;
+    stops.forEach(([x, z, name], k) => { if (k === 0) return; const sg = signBoard(name, 40, 9, '#f6e7c2', '#1f3a5a'); sg.position.set(x, 22, z); flightScene.add(sg); const disc = new THREE.Mesh(new THREE.CircleGeometry(40, 24), mat(k === 7 ? '#8aae62' : '#b9b2a4')); disc.rotation.x = -Math.PI / 2; disc.position.set(x, 1, z); flightScene.add(disc);
+      if (name === 'Lanternreach') { const lh = new THREE.Mesh(new THREE.CylinderGeometry(3, 4, 30, 12), mat('#f2efe6')); lh.position.set(x, 15, z); flightScene.add(lh); const lamp = new THREE.PointLight('#ffe9a0', 2, 200); lamp.position.set(x, 32, z); flightScene.add(lamp); }
+      if (name === 'Emberdeep') mound(flightScene, x, z, 70, 60, 70, '#8c8577');
+      if (name === 'Cogsworth') { const g = makeGear(14, 20, '#b08a3a'); g.position.set(x, 10, z); g.rotation.x = Math.PI / 2; g.userData.spin = 0.4; flightScene.add(g); spinners.push(g); }
+      if (name === 'Cairnhold') for (let i = 0; i < 5; i++) { const st = new THREE.Mesh(new THREE.BoxGeometry(5, 6 + i * 2, 5), mat('#9b958a')); st.position.set(x - 20 + i * 10, 3 + i, z + 10); flightScene.add(st); }
+      if (name === 'Fernwater') { const r = new THREE.Mesh(new THREE.PlaneGeometry(400, 20), mat('#6f9fd0')); r.rotation.x = -Math.PI / 2; r.position.set(x, 1.2, z); flightScene.add(r); }
+      if (name === 'The Orchards') for (let i = 0; i < 12; i++) { const tr = new THREE.Mesh(new THREE.SphereGeometry(5, 8, 6), mat('#3f7a3a')); tr.position.set(x - 25 + (i % 4) * 16, 6, z - 16 + Math.floor(i / 4) * 16); flightScene.add(tr); }
+      if (name === 'Thistledown Hollow') { for (let i = 0; i < 6; i++) { const h = new THREE.Mesh(new THREE.ConeGeometry(5, 8, 6), mat(pick(['#c8384a', '#e8b64c', '#9fc8e8']))); h.position.set(x - 24 + i * 10, 4, z + 12); flightScene.add(h); } const oak = new THREE.Mesh(new THREE.SphereGeometry(14, 10, 8), mat('#2e6b3a')); oak.position.set(x, 18, z - 10); flightScene.add(oak); } });
+    // the road between them, as a ribbon
+    const pts = stops.map(([x, z]) => new THREE.Vector3(x, 1.5, z)); const curve = new THREE.CatmullRomCurve3(pts); const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 120, 4, 5), mat('#b9b2a4')); flightScene.add(tube); flightScene.userData.curve = curve;
+    const cloudM = new THREE.MeshStandardMaterial({ color: '#f4f7fb', roughness: 1 }); for (let i = 0; i < 60; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(rnd(10, 28), 10, 7), cloudM); c.scale.y = 0.35; c.position.set(rnd(-500, 500), rnd(60, 170), rnd(-1400, 100)); flightScene.add(c); }
+    [[-500, -400, '#8c8577'], [500, -300, '#6f8a4a'], [400, -1000, '#5f8a4a'], [-600, -1100, '#9a978f']].forEach(([x, z, c]) => mound(flightScene, x, z, 220, 110, 240, c));
+    // the motor-glider you ride, built from the one on the rail
+    const fus = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.25, 9, 10), mat('#efe3c4')); fus.rotation.x = Math.PI / 2; fus.position.y = 1; flier.add(fus);
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(16, 0.14, 2.2), mat('#c8384a', { side: THREE.DoubleSide })); wing.position.set(0, 1.5, 0.5); flier.add(wing);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(5, 0.12, 1.4), mat('#c8384a')); tail.position.set(0, 1.3, -4); flier.add(tail); const fin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2, 1.6), mat('#c8384a')); fin.position.set(0, 2.2, -4); flier.add(fin);
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.6, 1.4), mat('#5a3d22')); seat.position.set(0, 0.9, 1.2); flier.add(seat);
+    const eng = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1, 1.2), mat('#3a3a3a', { metalness: 0.6 })); eng.position.set(0, 1, 3.8); flier.add(eng);
+    const prop = new THREE.Group(); prop.position.set(0, 1, 4.8); flier.add(prop); [0, 1].forEach(k => { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.4, 0.12), mat('#5a3d22')); bl.rotation.z = k * Math.PI / 2; prop.add(bl); }); flier.userData.prop = prop;
+    flier.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  }
+  function flightPos(t) { const c = flightScene.userData.curve; const p = c.getPointAt(clamp(t, 0, 1)); const h = 130 * (1 - t) + 6 + Math.sin(t * 14) * 4 * (1 - t); return new THREE.Vector3(p.x, h, p.z); }
+  function startFlight() {
+    fadeTo('The flight home', () => {
+      moveCompany(curScene(), flightScene); where = 'flight'; flightT = 0; if (riding) setRiding(false);
+      const fp = flightPos(0); flier.position.copy(fp); player.position.set(fp.x, fp.y + 1.2, fp.z); bodyYaw = camYaw = Math.PI; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(fp.x + 1.6, fp.y + 1.2, fp.z - 1);
+      sitting = false; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => hint('Off the rail. The engine catches. The whole Long Road is under your wing: look down, and look around.'));
+  }
+  function flightTick(dt, t) {
+    flightT = Math.min(1, flightT + dt / FLIGHT_T); const fp = flightPos(flightT), ahead = flightPos(Math.min(1, flightT + 0.01));
+    flier.position.copy(fp); flier.lookAt(ahead); flier.rotation.z = Math.sin(t * 0.7) * 0.06; if (flier.userData.prop) flier.userData.prop.rotation.z += dt * 30;
+    player.position.set(fp.x, fp.y + 1.2, fp.z); if (beetle) beetle.position.set(fp.x + 1.6, fp.y + 1.2, fp.z - 1);
+    bodyYaw = Math.atan2(ahead.x - fp.x, ahead.z - fp.z); player.rotation.y = bodyYaw; camYaw += wrap(bodyYaw - camYaw) * Math.min(1, dt * 0.8);
+    const stops = flightScene.userData.stops, k = Math.min(7, Math.floor(flightT * 7.4)); if (k !== flightScene.userData.lastStop) { flightScene.userData.lastStop = k; if (k > 0 && k < 7) flash('Below you: ' + stops[k][2]); }
+    if (flightT >= 1 && !fading) landHome();
+  }
+  window.__startFlight = startFlight;
+  function landHome() {
+    fadeTo('Thistledown Hollow', () => {
+      moveCompany(flightScene, scene); where = 'village'; player.position.set(0, 0, 60); bodyYaw = camYaw = Math.PI; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(2, 0, 62);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => { hint('Home. The Hollow, and the Old Oak, and the whole road behind you.'); setTimeout(finishRoad, 1200); });
+  }
 
   // ---------- beyond the gates: a backdrop of the land you are walking toward ----------
   function mound(sc, x, z, rx, h, rz, color) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(color, { roughness: 1 })); m.scale.set(rx, h, rz); m.position.set(x, -0.5, z); m.receiveShadow = true; sc.add(m); return m; }
@@ -2608,6 +3071,7 @@
   addFlock(hillScene, roadX(150), 150, 80, 60, 6, hillH);
   addFlock(hillScene, roadX(470), 470, 70, 58, 4, hillH);
   addFlock(fernScene, 0, 70, 55, 40, 6, () => 0);
+  addFlock(lantScene, 70, 80, 80, 26, 7, () => 0); addFlock(seaScene, 90, 180, 90, 20, 5, () => SEA_Y);
   // rabbits: real scale next to a seven-inch elf, so about as long as you are tall
   function makeRabbit() {
     const g = new THREE.Group(); const fur = mat(pick(['#9a8468', '#7d6a52', '#b4a28a']), { roughness: 1 });
@@ -2693,7 +3157,7 @@
   function makeFrog() { const g = new THREE.Group(), m = mat('#5f9a3a'); blob(g, sph(0.7), m, 0, 0.5, 0, 1, 0.7, 1.2); [-1, 1].forEach(d => { blob(g, sph(0.22), mat('#f4c53a'), d * 0.35, 0.95, 0.4); blob(g, sph(0.1), mat('#1b1b1b'), d * 0.35, 1.0, 0.55); blob(g, sph(0.3), m, d * 0.7, 0.3, -0.5, 1.6, 0.6, 0.8); }); return g; }
   function makeDog() { const g = new THREE.Group(); g.scale.setScalar(0.66); const m = mat(pick(['#c9a06a', '#3a2a1e', '#e6dcc2'])); blob(g, sph(2.2), m, 0, 5.4, 0, 1, 0.9, 2.2); blob(g, new THREE.CylinderGeometry(1.1, 1.5, 3.2, 8), m, 0, 6.5, 3.6).rotation.x = 0.75; const head = blob(g, sph(1.5), m, 0, 7.2, 5, 1, 0.9, 1.3); blob(g, sph(0.9), m, 0, 6.6, 6.8, 0.8, 0.7, 1.3); blob(g, sph(0.3), mat('#1b1b1b'), 0, 6.8, 7.9); [-1, 1].forEach(d => { blob(g, sph(0.2), mat('#1b1b1b'), d * 0.6, 7.6, 6.1); blob(g, sph(0.6), m, d * 1.4, 7.6, 4.6, 0.6, 1.4, 0.8).rotation.z = -d * 0.5; }); const tail = blob(g, new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5), m, 0, 6.6, -5.2); tail.rotation.x = -1.1; g.userData.tail = tail; g.userData.legs = legSet(g, m, [[-1.2, 3], [1.2, 3], [-1.2, -3], [1.2, -3]], 4.2, 0.4); return g; }
   function makeCrow() { const b = makeBird(true); b.scale.setScalar(2.4); return b; }
-  function solidsFor(key) { return key === 'hills' ? hillSolids : key === 'orchards' ? orchSolids : key === 'fernwater' ? fernSolids : solids; }
+  function solidsFor(key) { return key === 'hills' ? hillSolids : key === 'orchards' ? orchSolids : key === 'fernwater' ? fernSolids : key === 'lantern' ? lantSolids : key === 'skyhaven' ? skySolids : solids; }
   function clearOf(key, x, z, pad) { return !solidsFor(key).some(s => Math.hypot(s.x - x, s.z - z) < s.r + pad); }
   // push a point out of any solid it overlaps; returns how far it had to move
   function pushClear(key, o, pad) { let moved = 0; solidsFor(key).forEach(s => { const dx = o.position.x - s.x, dz = o.position.z - s.z, d = Math.hypot(dx, dz), min = s.r + pad; if (d < min) { const k = d > 0.001 ? min / d : 1; o.position.x = s.x + (d > 0.001 ? dx * k : min); o.position.z = s.z + (d > 0.001 ? dz * k : 0); moved += min - d; } }); return moved; }
@@ -2718,7 +3182,7 @@
   for (let i = 0; i < 3; i++) { const x = (i % 2 ? 1 : -1) * rnd(14, 44), z = rnd(62, 94); const du = makeDuck(); du.position.set(x, -0.3, z); fernScene.add(du); wanderer(du, { sceneKey: 'fernwater', speed: 2.2, fleeSpeed: 6, flee: 7, radius: 25, ground: () => -0.3, bob: 0, gait: 0, ok: (nx, nz) => nz > 61 && nz < 95 && Math.abs(nx) > 8 && Math.abs(nx) < 60 }); }
   for (let i = 0; i < 2; i++) { const x = (i % 2 ? 1 : -1) * rnd(10, 30), z = i < 1 ? 55.8 : 100.2; const fr = makeFrog(); fr.position.set(x, 0.9, z); fr.rotation.y = i < 2 ? 0 : Math.PI; fernScene.add(fr); critters.push({ obj: fr, kind: 'frog', sceneKey: 'fernwater', home: fr.position.clone(), state: 'sit', timer: 0 }); }
   // dogs: one in the Hollow, one in Fernwater; they come and say hello
-  [[scene, 6, 40, 'village', (nx, nz) => inFence(nx, nz, 3) && Math.hypot(nx, nz) > 14], [fernScene, 0, 24, 'fernwater', (nx, nz) => Math.abs(nx) < 14 && nz > 3 && nz < 50]].forEach(([sc, x, z, key, okf]) => { const dg = makeDog(); dg.position.set(x, 0, z); sc.add(dg); wanderer(dg, { sceneKey: key, kind: 'dog', speed: 6, fleeSpeed: 11, flee: 0, radius: 30, ground: () => 0, bob: 0.25, gait: 10, ok: okf }); });
+  [[scene, 6, 40, 'village', (nx, nz) => inFence(nx, nz, 3) && Math.hypot(nx, nz) > 14], [fernScene, 0, 24, 'fernwater', (nx, nz) => Math.abs(nx) < 14 && nz > 3 && nz < 50], [lantScene, -8, 80, 'lantern', (nx, nz) => Math.abs(nx) < 16 && nz > 4 && nz < 130]].forEach(([sc, x, z, key, okf]) => { const dg = makeDog(); dg.position.set(x, 0, z); sc.add(dg); wanderer(dg, { sceneKey: key, kind: 'dog', speed: 6, fleeSpeed: 11, flee: 0, radius: 30, ground: () => 0, bob: 0.25, gait: 10, ok: okf }); });
   // crows on the fences and gate posts; a hawk alone over the hills and the orchards
   [[scene, 14, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 0, 'fernwater'], [orchScene, 30, 0, 110, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(); cr.position.set(x, y + 2.6, z); cr.rotation.y = rnd(0, 6.3); sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.6, z), state: 'perch', t: 0, a: 0 }); });
   addFlock(hillScene, roadX(330), 330, 120, 95, 1, hillH); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
@@ -2886,7 +3350,7 @@
     let val = '';
     const show = () => { entry.textContent = val || '_'; const b = visual.querySelector('.blank'); if (b) b.textContent = val || ' '; };
     const dec = !Number.isInteger(answer), neg = answer < 0;
-    const press = k => { if (k === '\u232b') val = val.slice(0, -1); else if (k === '\u2212') { if (!neg) return; val = val.startsWith('-') ? val.slice(1) : '-' + val; } else if (k === '.' && (val.includes('.') || !dec)) return; else if (val.replace('-', '').length < (dec ? 5 : 3)) val += k; show(); };
+    const press = k => { if (k === '\u232b') val = val.slice(0, -1); else if (k === '\u2212') { if (!neg) return; val = val.startsWith('-') ? val.slice(1) : '-' + val; } else if (k === '.' && (val.includes('.') || !dec)) return; else if (val.replace('-', '').length < (dec ? 5 : Math.max(3, String(Math.round(Math.abs(answer))).length + 1))) val += k; show(); };
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'].concat(dec ? ['.'] : []).concat(neg ? ['\u2212'] : []).forEach(k => { const b = document.createElement('button'); b.textContent = k; b.onclick = () => press(k); rows.appendChild(b); });
     const del = document.createElement('button'); del.textContent = '⌫'; del.setAttribute('aria-label', 'Delete'); del.onclick = () => press('⌫'); rows.appendChild(del);
     pad.append(entry, rows); visual.appendChild(pad);
@@ -4321,7 +4785,7 @@
   }
 
   // ---------- Region 3, Lessons 1 to 5: half a rope, the baker's cakes, adding slices, the money-changer, decimals on the dock ----------
-  let nearOri = false, nearMaud = false, nearWren = false, nearTam = false, nearDur = false;
+  let nearOri = false, nearMaud = false, nearWren = false, nearTam = false, nearDur = false, nearAst = false, nearIls = false;
   function pieSvg(n, shaded, color = 'var(--gold)', size = 120, labels = true) {
     const r = size / 2 - 4, cx = size / 2, cy = size / 2; let out = `<svg viewBox="0 0 ${size} ${size}" width="${size}" style="display:inline-block;vertical-align:middle;margin:0 6px">`;
     for (let k = 0; k < n; k++) {
@@ -5121,8 +5585,395 @@
       { who: TAM, say: ['63. That’s the breath it takes. Now the timing. The piston reaches the top every <b>3</b> ticks. The spark can fire every <b>4</b> ticks. They must meet, or the engine coughs.', 'Two recipes, both true at once: a tick that is 3 × something and also 4 × something. The first crossing.'] },
       { num: ['Piston every 3 ticks, spark every 4. At which tick do they first line up?', 12, exprSvg('3, 6, 9, 12 … and 4, 8, 12 …'), ['Multiples of 3: 3, 6, 9, 12', 'Multiples of 4: 4, 8, 12', 'First shared: ' + G(12)]] },
       { who: TAM, say: ['Tick 12. Set the spark there and it runs. Durna, she’s ready.'] },
-      { say: ['Then weld it. Mask down. The seam is a line; keep the bead even and the two halves become one piece. There. It’ll never come apart.', 'Your mark. The sixth symbol. It reads <b>“unknown”</b>: the x you hunt for and always find. You own a forge tool set and a welding mask now, and that engine is yours and Tamsin’s.', 'Past the ore carts the tunnel runs out toward Lanternreach, where they count what cannot be seen. Not built yet. Soon.'] }
+      { say: ['Then weld it. Mask down. The seam is a line; keep the bead even and the two halves become one piece. There. It’ll never come apart.', 'Your mark. The sixth symbol. It reads <b>“unknown”</b>: the x you hunt for and always find. You own a forge tool set and a welding mask now, and that engine is yours and Tamsin’s.', 'Past the ore carts the tunnel runs out onto the Sea Road, and down to Lanternreach, where Astra Vell keeps the light and measures what she cannot reach.'] }
     ], DUR, () => rewardEmb(10, 'A welding mask and an engine', 'Emberdeep is done. Equations, inequalities, lines, systems, quadratics, polynomials, exponents and logs, and an engine timed by ' + G('your own algebra') + '. The sixth mark reads “unknown.”', null));
+  }
+
+  // ---------- Lanternreach lessons: right-triangle trig, the unit circle, waves, vectors, function families, inverses, series, limits ----------
+  const AST = 'Astra Vell';
+  // a right triangle with the angle at the left, labelled sides
+  function trigSvg(adj, opp, hyp, ang, note) { const s = `<polygon points="30,150 270,150 270,30" fill="rgba(232,182,76,.15)" stroke="${SV.ink}" stroke-width="2"/><rect x="255" y="135" width="15" height="15" fill="none" stroke="${SV.ink}"/><path d="M70,150 A40,40 0 0 0 63,128" fill="none" stroke="${SV.gold}" stroke-width="2"/><text x="78" y="140" font-size="13" fill="${SV.gold}" font-weight="700">${ang || 'θ'}</text><text x="150" y="172" text-anchor="middle" font-size="14" fill="${SV.ink}">${adj}</text><text x="292" y="95" text-anchor="middle" font-size="14" fill="${SV.ink}">${opp}</text><text x="135" y="80" text-anchor="middle" font-size="14" fill="${SV.ink}" transform="rotate(-27 135 80)">${hyp}</text>` + (note ? `<text x="160" y="196" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>` : ''); return svgWrap(320, 205, s); }
+  // the unit circle with a point at an angle (degrees)
+  function unitSvg(deg, note) { const r = 80, cx = 160, cy = 110, a = deg * Math.PI / 180, px = cx + Math.cos(a) * r, py = cy - Math.sin(a) * r; let s = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${SV.ink}" stroke-width="2"/><line x1="${cx - r - 15}" y1="${cy}" x2="${cx + r + 15}" y2="${cy}" stroke="${SV.faint}"/><line x1="${cx}" y1="${cy - r - 15}" x2="${cx}" y2="${cy + r + 15}" stroke="${SV.faint}"/>`; [[0, '0°'], [90, '90°'], [180, '180°'], [270, '270°']].forEach(([d, l]) => { const b = d * Math.PI / 180; s += `<text x="${cx + Math.cos(b) * (r + 22)}" y="${cy - Math.sin(b) * (r + 22) + 4}" text-anchor="middle" font-size="11" fill="${SV.ink}">${l}</text>`; }); s += `<path d="M${cx + 24},${cy} A24,24 0 ${deg > 180 ? 1 : 0} 0 ${cx + Math.cos(a) * 24},${cy - Math.sin(a) * 24}" fill="none" stroke="${SV.gold}" stroke-width="2"/><line x1="${cx}" y1="${cy}" x2="${px}" y2="${py}" stroke="${SV.gold}" stroke-width="3"/><circle cx="${px}" cy="${py}" r="5" fill="#c8384a" stroke="#1b1b1b"/>`; if (note) s += `<text x="160" y="228" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(320, 238, s); }
+  // a sine wave: amplitude A around a middle M, period P (in hours), over 24 hours
+  function waveSvg(A, M, P, note) { const X = h => 30 + h / 24 * 270, Y = v => 150 - v * 12; let s = `<line x1="30" y1="150" x2="300" y2="150" stroke="${SV.ink}"/><line x1="30" y1="${Y(10)}" x2="30" y2="150" stroke="${SV.ink}"/>`; for (let h = 0; h <= 24; h += 6) s += `<text x="${X(h)}" y="166" text-anchor="middle" font-size="10" fill="${SV.ink}">${h}h</text>`; [M - A, M, M + A].forEach(v => s += `<line x1="30" y1="${Y(v)}" x2="300" y2="${Y(v)}" stroke="${SV.faint}" stroke-dasharray="3 3"/><text x="22" y="${Y(v) + 4}" text-anchor="end" font-size="10" fill="${SV.ink}">${v}</text>`); const pts = []; for (let h = 0; h <= 24; h += 0.25) pts.push(`${X(h)},${Y(M + A * Math.sin(h / P * 2 * Math.PI))}`); s += `<polyline points="${pts.join(' ')}" fill="none" stroke="${SV.gold}" stroke-width="3"/>`; if (note) s += `<text x="160" y="186" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(320, 195, s); }
+  // vectors tip to tail on a small grid
+  function vecSvg(vs, note) { const X = x => 40 + x * 22, Y = y => 170 - y * 22; let s = ''; for (let k = 0; k <= 10; k++) s += `<line x1="${X(k)}" y1="${Y(0)}" x2="${X(k)}" y2="${Y(7)}" stroke="${SV.faint}"/>`; for (let k = 0; k <= 7; k++) s += `<line x1="${X(0)}" y1="${Y(k)}" x2="${X(10)}" y2="${Y(k)}" stroke="${SV.faint}"/>`; let x = 0, y = 0; vs.forEach(([dx, dy, col, label]) => { const x2 = x + dx, y2 = y + dy; s += `<line x1="${X(x)}" y1="${Y(y)}" x2="${X(x2)}" y2="${Y(y2)}" stroke="${col}" stroke-width="3"/><circle cx="${X(x2)}" cy="${Y(y2)}" r="4" fill="${col}"/>`; if (label) s += `<text x="${X((x + x2) / 2) + 6}" y="${Y((y + y2) / 2) - 6}" font-size="12" fill="${col}" font-weight="700">${label}</text>`; x = x2; y = y2; }); if (note) s += `<text x="160" y="200" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(320, 210, s); }
+  // bars for a sequence, with the running total
+  function seqSvg(terms, note) { const max = Math.max(...terms); let s = ''; terms.forEach((v, k) => { const hgt = 110 * v / max; s += `<rect x="${30 + k * 36}" y="${140 - hgt}" width="26" height="${hgt}" fill="${SV.gold}" stroke="#3a2a18"/><text x="${43 + k * 36}" y="${134 - hgt}" text-anchor="middle" font-size="11" fill="var(--ink)">${v}</text><text x="${43 + k * 36}" y="156" text-anchor="middle" font-size="10" fill="${SV.ink}">${k + 1}</text>`; }); if (note) s += `<text x="160" y="180" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(Math.max(320, 50 + terms.length * 36), 190, s); }
+  // the ship that halves its distance every hour
+  function limitSvg(steps, note) { let s = `<line x1="20" y1="100" x2="300" y2="100" stroke="${SV.ink}" stroke-width="2"/><rect x="290" y="70" width="12" height="30" fill="#5a3d22"/><text x="296" y="62" text-anchor="middle" font-size="10" fill="${SV.ink}">pier</text>`; let d = 1; for (let k = 0; k < steps; k++) { const x = 290 - d * 260; s += `<polygon points="${x - 8},100 ${x + 8},100 ${x + 4},88 ${x - 4},88" fill="${k === steps - 1 ? '#c8384a' : SV.gold}"/><text x="${x}" y="118" text-anchor="middle" font-size="9" fill="${SV.ink}">${k}h</text>`; d /= 2; } if (note) s += `<text x="160" y="142" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(320, 150, s); }
+  function rewardLant(n, item, text, next) {
+    markDone('lant-' + n);
+    phase = 'doneL' + n; $('tasks').innerHTML = '';
+    showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
+    visual.innerHTML = `<div class="reward"><h2>Lanternreach, Lesson ${n} complete</h2>
+      <div class="items"><div>${ICON.coin}<span>${coins} acorn coins saved</span></div><div><svg viewBox="0 0 64 64"><rect x="26" y="18" width="12" height="36" fill="#e8b64c"/><rect x="22" y="10" width="20" height="8" fill="#e8b64c"/><path d="M42 12 L62 4 L62 20 Z" fill="#e8b64c" opacity=".6"/><rect x="18" y="54" width="28" height="6" fill="#e8b64c"/></svg><span>${item}</span></div></div>
+      <p style="margin:0;color:var(--ink-soft)">${text}</p></div>`;
+    if (next) { const go = document.createElement('button'); go.className = 'btn primary'; go.textContent = 'Keep going'; go.onclick = () => { showDialog(false); next(); }; actions.append(go); }
+    const walk = document.createElement('button'); walk.className = next ? 'btn' : 'btn primary'; walk.textContent = 'Walk around'; walk.onclick = () => { showDialog(false); hint(''); };
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Back to the map'; b.onclick = () => { location.hash = ''; location.reload(); };
+    actions.append(walk, b); actions.querySelector('button').focus({ preventScroll: true });
+  }
+  // Lesson 1: the cliff and the shadow (sine, cosine, tangent as ratios)
+  function reachAstra() {
+    if (['toastra', 'tolant'].includes(phase)) {
+      phase = 'l1';
+      runScript([
+        { say: ['Good evening. Mind the edge; it’s a long way down and the tide is out. I’m <b>Astra</b>. I keep the light, and I keep the sky.', 'Durna sent word. Equations, lines, curves. Good. Tonight we measure things we can’t reach. The cliff, the stars, the sea. All with triangles.', 'See the shadow stake? It’s 6 tall. The moon throws its shadow 6 long. The light comes in at <b>45°</b>, and at 45° the two short sides of a right triangle are <b>equal</b>.'] },
+        { num: ['The cliff’s shadow is 30 long, at the same 45°. How tall is the cliff?', 30, trigSvg('30 (shadow)', '?', '', '45°'), ['At 45°, opposite = adjacent', 'Height = ' + G(30)]] },
+        { say: ['30. Same angle, same shape, bigger triangle. That’s the whole trick: every right triangle with a given angle has the <i>same ratios</i> between its sides, however big it is.', 'The three ratios have names. For the angle θ: <b>sine</b> is opposite ÷ hypotenuse. <b>Cosine</b> is adjacent ÷ hypotenuse. <b>Tangent</b> is opposite ÷ adjacent. SOH, CAH, TOA.', 'A mooring rope runs 5 from the pier top down to the water: that’s the hypotenuse. It drops 3 and reaches out 4.'] },
+        { num: ['Opposite 3, hypotenuse 5. What is sin θ, as a decimal?', 0.6, trigSvg('4', '3', '5'), ['sin = opposite ÷ hypotenuse = 3 ÷ 5 = ' + G('0.6')]] },
+        { num: ['Same rope. What is cos θ?', 0.8, trigSvg('4', '3', '5'), ['cos = adjacent ÷ hypotenuse = 4 ÷ 5 = ' + G('0.8')]] },
+        { choice: ['And tan θ is which ratio?', ['3 ÷ 5', '4 ÷ 5', '3 ÷ 4'], '3 ÷ 4', expl(trigSvg('4', '3', '5', 'θ', 'tan = 3 ÷ 4 = 0.75'), 'Tangent is opposite over adjacent: 3 ÷ 4 = 0.75. It’s the slope of the rope, the same slope you met in Emberdeep.')] },
+        { say: ['3 ÷ 4. Tangent is slope. Rise over run, with a new name.', 'Now the one that matters. I stand <b>100</b> back from the cliff foot, on the beach, and I measure the angle to the top: <b>30°</b>. tan 30° is about <b>0.577</b>. Height = 100 × tan 30°.'] },
+        { num: ['Height = 100 × 0.577. To the nearest whole number?', 58, trigSvg('100', '?', '', '30°'), ['100 × 0.577 = 57.7', 'About ' + G(58)]] },
+        { say: ['58. You measured a cliff without climbing it. A sailor does the same to a lighthouse from the deck and knows how far off the rocks are. That’s why there are tables of sines and cosines in every chart room on this coast.'] }
+      ], AST, () => rewardLant(1, 'A brass sextant', 'Right-triangle trig: ' + G('sine, cosine and tangent are ratios of sides') + ', the same for every triangle with that angle. SOH CAH TOA.', startL2));
+    }
+  }
+  // Lesson 2: the beam goes round (angles, degrees and radians, the unit circle)
+  function startL2() {
+    phase = 'l2';
+    runScript([
+      { say: ['Look up. The beam goes round once every 12 seconds, all night, every night. One full turn is <b>360°</b>. Sailors use degrees. The sky uses something older.', 'A <b>radian</b> is the angle you get when you walk one radius along the rim of a circle. A full turn is <b>2π</b> radians, about 6.28, because the rim is 2π radii long.'] },
+      { num: ['Half a turn is π radians. How many degrees is that?', 180, unitSvg(180, 'π rad'), ['A full turn is 360°, so half is ' + G(180) + '°']] },
+      { num: ['A quarter turn, π/2 radians, in degrees?', 90, unitSvg(90, 'π/2 rad'), ['360 ÷ 4 = ' + G(90) + '°']] },
+      { say: ['90. To go from degrees to radians, multiply by π and divide by 180. Back the other way, multiply by 180 and divide by π.', 'The beam turns 30° every second.'] },
+      { num: ['At 30° per second, how many seconds for one full turn?', 12, unitSvg(30, '30° per second'), ['360 ÷ 30 = ' + G(12) + ' seconds']] },
+      { choice: ['2π/3 radians is how many degrees?', ['60°', '120°', '240°'], '120°', expl(unitSvg(120, '2π/3 = 120°'), '2π is 360°, so 2π/3 is 360 ÷ 3 = 120°. A third of a turn.')] },
+      { say: ['120°. Now the star board. A circle of radius <b>1</b>, centred on the axes: the <b>unit circle</b>. Any angle gives a point on its rim, and that point is <b>(cos θ, sin θ)</b>. Cosine is how far across, sine is how far up.', 'At 0° the point is straight across: (1, 0). So cos 0° = 1 and sin 0° = 0.'] },
+      { choice: ['At 90° the point is straight up. Which is it?', ['(1, 0)', '(0, 1)', '(1, 1)'], '(0, 1)', expl(unitSvg(90, '(cos 90°, sin 90°) = (0, 1)'), 'Straight up: no distance across, one unit up. So cos 90° = 0 and sin 90° = 1.')] },
+      { num: ['What is cos 0°?', 1, unitSvg(0, '(1, 0)'), ['At 0° the point is (1, 0): cos 0° = ' + G(1)]] },
+      { say: ['1. Every sine and cosine in the world is just a point on that circle. Past 90° the cosine goes negative, past 180° the sine does too. The beam sweeps through all four quarters, every 12 seconds, and so do they.'] }
+    ], AST, () => rewardLant(2, 'A chart of the beam', 'Angles: ' + G('360° is 2π radians') + ', and the unit circle turns any angle into a point (cos θ, sin θ).', startL3));
+  }
+  // Lesson 3: tides (sine and cosine as waves: amplitude, midline, period)
+  function startL3() {
+    phase = 'l3';
+    runScript([
+      { say: ['The tide gauge on the pier. Watch it long enough and you see the sine curve walk out of the circle and lie down flat.', 'Height = 3 × sin(…) + 5. The <b>5</b> is the middle line. The <b>3</b> is the <b>amplitude</b>, how far it swings above and below.'] },
+      { num: ['Middle 5, amplitude 3. What is the height at high tide?', 8, waveSvg(3, 5, 12, '3 sin(…) + 5'), ['5 + 3 = ' + G(8)]] },
+      { num: ['And at low tide?', 2, waveSvg(3, 5, 12), ['5 − 3 = ' + G(2)]] },
+      { say: ['8 and 2. The <b>period</b> is how long one full wave takes. Here, high tide to high tide is <b>12 hours</b>.', 'If high tide is at noon, the water falls for half a period and then rises.'] },
+      { num: ['High tide at noon, period 12 hours. How many hours until the next low tide?', 6, waveSvg(3, 5, 12, 'high → low is half a period'), ['Half of 12 = ' + G(6) + ' hours']] },
+      { num: ['The gauge reads y = 2 sin(x). What is its amplitude?', 2, waveSvg(2, 0, 12, 'y = 2 sin(x)'), ['The number in front: ' + G(2)]] },
+      { choice: ['Which change makes the wave <i>faster</i>, more waves in the same time?', ['Bigger amplitude', 'Shorter period', 'Higher midline'], 'Shorter period', expl(waveSvg(3, 5, 6, 'period 6: twice as many waves'), 'Period is the length of one wave. Shorten it and more waves fit into 24 hours. Amplitude only changes how tall they are; the midline only lifts them.')] },
+      { say: ['Shorter period. Three numbers describe any wave: midline, amplitude, period. Tides, sound, the swing of a lamp, the beam’s brightness as it sweeps past you. All the same curve wearing different clothes.'] }
+    ], AST, () => rewardLant(3, 'A tide table', 'Waves: ' + G('midline, amplitude, period') + '. y = A sin(…) + M swings A above and below M, once every period.', startL4));
+  }
+  // Lesson 4: currents (vectors)
+  function startL4() {
+    phase = 'l4';
+    runScript([
+      { say: ['The boats. A boat points one way; the current pushes another; where the boat <i>goes</i> is the sum of the two. A quantity with a size and a direction is a <b>vector</b>, and you add them <b>tip to tail</b>.', 'The ferry rows east at 4. The tide runs north at 3. Row it on the grid: 4 across, then 3 up.'] },
+      { num: ['East 4 and north 3, tip to tail. How fast does the boat actually move?', 5, vecSvg([[4, 0, '#9fc8e8', 'boat 4'], [0, 3, '#c8384a', 'tide 3']], 'the real path is the long side'), ['A 3-4-5 triangle', 'Speed = ' + G(5)]] },
+      { say: ['5, and it’s heading north-east-ish, not east. The sum vector is the long side of the triangle. Pythagoras again.', 'Vectors are easiest as pairs: (across, up). Adding them, you add across with across and up with up. Boat (5, 2) plus current (−2, 1).'] },
+      { num: ['(5, 2) + (−2, 1). What is the across part of the sum?', 3, vecSvg([[5, 2, '#9fc8e8', '(5, 2)'], [-2, 1, '#c8384a', '(−2, 1)']]), ['5 + (−2) = ' + G(3), 'The sum is (3, 3)']] },
+      { num: ['A current of (6, 8). How strong is it, its length?', 10, vecSvg([[6, 8, SV.gold, '(6, 8)']]), ['√(6² + 8²) = √(36 + 64) = √100 = ' + G(10)]] },
+      { choice: ['The current is (0, 3), pushing you north. To hold still, you must row…', ['(3, 0)', '(0, −3)', '(0, 3)'], '(0, −3)', expl(vecSvg([[0, 3, '#c8384a', 'current'], [0, -3, '#9fc8e8', 'you']], 'sum: (0, 0)'), 'Row exactly against it: (0, 3) + (0, −3) = (0, 0). Equal size, opposite direction, and you stay put.')] },
+      { say: ['(0, −3). Every sailor on this coast rows a little into the current without thinking about it. Now you know what their arms are calculating.'] }
+    ], AST, () => rewardLant(4, 'A hand-bearing compass', 'Vectors: ' + G('size and direction') + ', added tip to tail, or across-with-across and up-with-up. The length is Pythagoras.', startL5));
+  }
+  // Lesson 5: families of curves (functions and their transformations)
+  function startL5() {
+    phase = 'l5';
+    runScript([
+      { say: ['A <b>function</b> is a machine: a number goes in, one number comes out. Each family has its own shape. Lines are straight. Squares make bowls. Doublings climb. Sines wave.', 'The bowl y = x² sits with its bottom at zero. Add 3 to the whole thing, y = x² + 3, and the bowl <b>lifts</b>.'] },
+      { num: ['y = x² + 3. What is y when x = 0?', 3, graphSvg([[x => x * x, 0, '#9fc8e8', 'x²'], [x => x * x + 3, 0, SV.gold, 'x² + 3']]), ['0² + 3 = ' + G(3), 'The bottom of the bowl moved up to 3']] },
+      { say: ['3. Add outside the machine and it slides up. Change <i>inside</i> it and it slides sideways, the opposite way from what you’d guess: y = (x − 2)² has its bottom at x = <b>2</b>.'] },
+      { num: ['y = (x − 2)². Where is the bottom of the bowl, which x?', 2, graphSvg([[x => (x - 2) * (x - 2), 0, SV.gold, '(x − 2)²']], [[2, 0, '#c8384a', '']]), ['(x − 2)² is smallest when x − 2 = 0', 'x = ' + G(2)]] },
+      { choice: ['Which of these is the exponential, the one that climbs faster and faster?', ['y = 2x', 'y = x²', 'y = 2ˣ'], 'y = 2ˣ', expl(graphSvg([[2, 0, '#9fc8e8', '2x'], [x => x * x, 0, '#c8384a', 'x²'], [x => Math.pow(2, x), 0, SV.gold, '2ˣ']]), 'The x is in the exponent: 2ˣ doubles every step. 2x is a line; x² is a bowl.')] },
+      { num: ['y = 2ˣ. What is y when x = 3?', 8, graphSvg([[x => Math.pow(2, x), 0, SV.gold, '2ˣ']], [[3, 8, '#c8384a', '']]), ['2³ = ' + G(8)]] },
+      { choice: ['y = −x². What does the minus do to the bowl?', ['Lifts it', 'Flips it upside down', 'Narrows it'], 'Flips it upside down', expl(graphSvg([[x => x * x, 0, '#9fc8e8', 'x²'], [x => -x * x, 0, SV.gold, '−x²']]), 'A minus in front turns every output negative, so the bowl hangs down from the origin instead of sitting on it.')] },
+      { say: ['Flipped. Lift with +, slide with (x − h), flip with −, and stretch with a number in front. Four moves, and you can take any family and park it where you want it.'] }
+    ], AST, () => rewardLant(5, 'A sheaf of curves', 'Functions: ' + G('machines with a shape') + '. +k lifts, (x − h) slides, a minus flips, a number in front stretches.', startL6));
+  }
+  // Lesson 6: undoing (inverse functions)
+  function startL6() {
+    phase = 'l6';
+    runScript([
+      { say: ['Every machine with a map back out of it has an <b>inverse</b>: a second machine that undoes the first. Add 5 is undone by take 5. Double is undone by halve.', 'f(x) = x + 5. Its inverse takes the answer and gives back the question.'] },
+      { num: ['f(x) = x + 5. The inverse of 12 is… what x makes f(x) = 12?', 7, exprSvg('x + 5 = 12'), ['12 − 5 = ' + G(7)]] },
+      { say: ['7. Two steps undo in reverse order, as Durna taught you. y = 2x + 3: it doubled, then added 3. The inverse takes 3 off, then halves.'] },
+      { num: ['y = 2x + 3 gave 11. Undo it. What was x?', 4, exprSvg('(11 − 3) ÷ 2'), ['11 − 3 = 8', '8 ÷ 2 = ' + G(4)]] },
+      { num: ['Squaring gave 81. The inverse, the square root, gives…?', 9, exprSvg('√81'), ['9 × 9 = 81, so ' + G(9)]] },
+      { say: ['9. And the triangles have inverses too. Lesson one you went from angle to height. Tonight, from height back to angle. sin θ = 0.5. The inverse sine, written sin⁻¹ or arcsin, asks: <i>which angle</i> has that sine?'] },
+      { choice: ['sin θ = 0.5. What is θ?', ['30°', '45°', '60°'], '30°', expl(unitSvg(30, 'sin 30° = 0.5'), 'On the unit circle, the point at 30° is half a unit up. So arcsin 0.5 = 30°. That is how a sailor turns a measured height into a bearing.')] },
+      { say: ['30°. On the grid, an inverse is the same curve <b>reflected</b> across the diagonal line y = x: inputs and outputs trade places. Height to angle, angle to height. Both directions, one triangle.'] }
+    ], AST, () => rewardLant(6, 'The back of the chart', 'Inverses: ' + G('a machine that undoes another') + '. Undo the steps in reverse; arcsin takes a ratio back to its angle.', startL7));
+  }
+  // Lesson 7: the keeper's log (arithmetic and geometric sequences and series)
+  function startL7() {
+    phase = 'l7';
+    runScript([
+      { say: ['The log. Every night I write the oil the lamp burned. Winter nights grow: 3, 7, 11, 15… Each night 4 more than the last. A list with a rule is a <b>sequence</b>; this one adds the same amount each step, so it’s <b>arithmetic</b>.', 'The n-th term is first + (n − 1) × step. The 10th night: 3 + 9 × 4.'] },
+      { num: ['3, 7, 11, 15… What is the 10th term?', 39, seqSvg([3, 7, 11, 15, 19, 23, 27, 31, 35, 39]), ['3 + (10 − 1) × 4 = 3 + 36 = ' + G(39)]] },
+      { say: ['39. Now the season’s total, the sum of the list: a <b>series</b>. Add the first and last, multiply by how many, halve it. 1 + 2 + … + 10: first 1, last 10, ten terms.'] },
+      { num: ['1 + 2 + 3 + … + 10 = ?', 55, seqSvg([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], '(first + last) × count ÷ 2'), ['(1 + 10) × 10 ÷ 2 = ' + G(55)]] },
+      { num: ['2 + 4 + 6 + … + 20. Ten terms. Sum?', 110, seqSvg([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]), ['(2 + 20) × 10 ÷ 2 = ' + G(110)]] },
+      { say: ['110. The other kind <i>multiplies</i> each step: 1, 2, 4, 8, 16. <b>Geometric</b>. The bellows, again. Its sums have a shortcut too: for doublings, the sum of the first n terms is one less than the next term.'] },
+      { num: ['1 + 2 + 4 + 8 + 16 = ?', 31, seqSvg([1, 2, 4, 8, 16], 'one less than the next term, 32'), ['Add them: 31', 'Or: the next term is 32, so ' + G(31)]] },
+      { say: ['31. Arithmetic adds, geometric multiplies, and a series is a sequence summed. The log for a whole winter is one line of arithmetic, if you know the trick.'] }
+    ], AST, () => rewardLant(7, 'The keeper’s log', 'Sequences: ' + G('arithmetic adds a step, geometric multiplies') + '. A series is the sum; pair first with last to add an arithmetic one fast.', startL8));
+  }
+  // Lesson 8: closer and closer (limits, by feel)
+  function startL8() {
+    phase = 'l8';
+    runScript([
+      { say: ['The last idea is the strangest, and you’ll need it in Skyhaven. A ship is 1 mile from the pier. Every hour, it covers <b>half</b> the distance that is left. Half a mile, then a quarter, then an eighth…', 'Does it ever arrive?'] },
+      { choice: ['The ship halves the gap every hour. Does it reach the pier?', ['Yes, in 2 hours', 'Never, but it gets closer than any gap you name', 'It stops halfway'], 'Never, but it gets closer than any gap you name', expl(limitSvg(6, 'the gap: 1, ½, ¼, ⅛, …'), 'There is always a little gap left, but it shrinks below any amount you care to name. The pier is the <b>limit</b>: the place the ship is heading, even if it never sets foot on it.')] },
+      { say: ['That’s a <b>limit</b>. Not where something is; where it’s going. Add up the distances it covers: ½ + ¼ + ⅛ + … forever.'] },
+      { num: ['½ + ¼ + ⅛ + 1⁄16 + … on forever. What does the sum close in on?', 1, limitSvg(8, 'the distances add up to the whole mile'), ['½ + ¼ = ¾, + ⅛ = ⅞, + 1⁄16 = 15⁄16…', 'It closes in on ' + G(1)]] },
+      { say: ['1. Infinitely many pieces, a finite whole mile. The Greeks lost sleep over that one.', 'Another. The sequence 1, ½, ⅓, ¼, ⅕… : 1 ÷ n, for bigger and bigger n.'] },
+      { num: ['1 ÷ n as n grows without end. What does it close in on?', 0, seqSvg([10, 5, 3.3, 2.5, 2, 1.7, 1.4, 1.3, 1.1, 1], '10 ÷ n, shrinking toward…'), ['1 ÷ 1000 is 0.001, 1 ÷ a million is 0.000001', 'It heads for ' + G(0) + ' and never quite lands']] },
+      { say: ['0. Now the sneaky one. (x² − 1) ÷ (x − 1). At x = 1 exactly, it’s 0 ÷ 0: nonsense. But <i>near</i> 1, it factors to (x − 1)(x + 1) ÷ (x − 1) = x + 1, which is perfectly well behaved.'] },
+      { num: ['(x² − 1) ÷ (x − 1), as x slides toward 1. What value does it close in on?', 2, graphSvg([[x => x + 1, 0, SV.gold, 'x + 1']], [[1, 2, '#c8384a', 'the hole']]), ['It equals x + 1 everywhere except at the hole', 'x + 1 → 1 + 1 = ' + G(2)]] },
+      { say: ['2. There’s a hole in the curve at x = 1 and the limit sails straight through it. In Skyhaven they build a whole calculus on that: what a thing closes in on, one hair from where you can’t look.'] }
+    ], AST, () => rewardLant(8, 'The horizon glass', 'Limits: ' + G('where a thing is heading') + ', not where it is. ½ + ¼ + ⅛ + … closes in on 1; a hole in a curve doesn’t stop the limit.', startL9));
+  }
+  // Lesson 9: the Lanternreach Regatta (algebra under sail, review of Emberdeep)
+  function startL9() {
+    phase = 'l9';
+    runScript([
+      { say: ['Regatta night. The boats race round the bell buoy and back, and the crews sit the Keeper’s Sheet before they sail. Algebra, under canvas. Sit it.'] },
+      { num: ['The mainsail is a triangle, base 6, height 4. Area?', 12, triSvg(6, 4, {}), ['½ × 6 × 4 = ' + G(12)]] },
+      { num: ['3x + 4 = 19. x?', 5, scaleSvg('3x + 4', '19'), ['3x = 15', 'x = ' + G(5)]] },
+      { num: ['The slipway rises 2 over a run of 8. Slope, as a decimal?', 0.25, graphSvg([[0.25, 0, SV.gold, 'slope ¼']], [[8, 2, '#c8384a', '']]), ['2 ÷ 8 = ' + G('0.25')]] },
+      { num: ['Two crews: x + y = 9 and x − y = 1. x?', 5, scaleSvg('x + y', '9', 0, 'and x − y = 1'), ['Add them: 2x = 10', 'x = ' + G(5)]] },
+      { num: ['The wind doubles every hour for 4 hours. 2⁴ = ?', 16, doubleSvg(1, 4), ['2, 4, 8, ' + G(16)]] },
+      { num: ['x² − 9 = 0. The positive root?', 3, exprSvg('(x − 3)(x + 3) = 0'), ['x = ' + G(3) + ' or x = −3']] },
+      { num: ['log₂ 32 = ?', 5, doubleSvg(1, 5), ['2⁵ = 32, so ' + G(5)]] },
+      { say: ['Clean sheet. The crews are jealous. Tomorrow night you sail yourself, and not for a ribbon.'] }
+    ], AST, () => rewardLant(9, 'A regatta ribbon', 'The Keeper’s Sheet: ' + G('Emberdeep’s algebra') + ', still sharp. Tomorrow you navigate for real.', startL10));
+  }
+  // Lesson 10: by the stars to the Pillar Rocks (the capstone)
+  function startL10() {
+    phase = 'l10';
+    runScript([
+      { say: ['Tonight you take the small boat to the Pillar Rocks, where the sky-lifts anchor. No moon until late. You navigate by the stars and by what you’ve learned, and bad trig puts you on the rocks. I’ll be in the lantern room.', 'First, know where you are. The pole star sits as many degrees above the horizon as you are north of the equator. My sextant reads it at <b>40°</b>.'] },
+      { num: ['The pole star is 40° above the horizon. What is your latitude, in degrees north?', 40, unitSvg(40, 'altitude of the pole star = latitude'), ['Same number: ' + G(40) + '° north']] },
+      { say: ['40° north. Now the course. The chart puts the Pillar Rocks 30 east and 40 north of the pier. A right triangle, and you know its two short sides.'] },
+      { num: ['30 east, 40 north. How far is it to the Rocks, straight across?', 50, trigSvg('30 east', '40 north', '?'), ['30² + 40² = 900 + 1600 = 2500', '√2500 = ' + G(50)]] },
+      { num: ['Your heading: tan θ = north ÷ east = 40 ÷ 30. As a decimal, to two places?', 1.33, trigSvg('30', '40', '50', 'θ'), ['40 ÷ 30 = ' + G('1.33'), 'arctan 1.33 ≈ 53°: steer 53° north of east']] },
+      { say: ['tan θ about 1.33, so θ is about 53° north of east. That’s a bearing of 37° on the compass, since bearings run from north. Either way: a bit more north than east.', 'Now the current. It runs due west at <b>5</b>. You row at <b>12</b> straight along your course. Tip to tail.'] },
+      { num: ['Rowing 12 one way, current 5 at right angles. How fast do you actually move?', 13, vecSvg([[0, 6, '#9fc8e8', 'row 12'], [-2.5, 0, '#c8384a', 'current 5']], 'a 5-12-13 triangle'), ['√(12² + 5²) = √(144 + 25) = √169 = ' + G(13)]] },
+      { say: ['13, and pushed west of your line, so you steer a touch east of it to make good the course. That correction is the whole of seamanship.'] },
+      { num: ['The Rocks are 65 away by the water you’ll actually cover, at 13 an hour. How many hours?', 5, exprSvg('65 ÷ 13'), ['65 ÷ 13 = ' + G(5) + ' hours']] },
+      { say: ['Five hours. The tide gauge says high water in six; you’ll land before it turns. Go.'] },
+      { do: () => { if (beamLight) beamLight.intensity = 3; } },
+      { say: ['… The light finds you at the Rocks at the fifth hour. You landed on the pebbles, not the stones. Good.', 'Your mark. The seventh symbol: <b>“change.”</b> How a thing moves, how fast the tide turns, where the ship is heading. Skyhaven is built on it. The sky-lift runs from the end of the pier, over these Rocks, up to the islands. It’s running tonight.', 'Navigator and keeper. You may light the lamp tonight.'] }
+    ], AST, () => rewardLant(10, 'The keeper’s key', 'Lanternreach is done. You found a cliff’s height from a shadow, a course from a chart, and a landing from a current, by ' + G('the stars and your own trigonometry') + '. The seventh mark reads “change.”', null));
+  }
+
+  // ---------- Skyhaven lessons: limits, derivatives, integrals, series, differential equations ----------
+  const ILS = 'Professor Ilsabet Quill';
+  // a curve with rectangles under it (a Riemann sum)
+  function riemannSvg(heights, w, note) { const n = heights.length, max = Math.max(...heights), X = k => 30 + k * (260 / n), Y = v => 150 - v / max * 110; let s = `<line x1="30" y1="150" x2="290" y2="150" stroke="${SV.ink}" stroke-width="2"/><line x1="30" y1="30" x2="30" y2="150" stroke="${SV.ink}"/>`; heights.forEach((h, k) => { s += `<rect x="${X(k)}" y="${Y(h)}" width="${260 / n - 1}" height="${150 - Y(h)}" fill="rgba(232,182,76,.45)" stroke="${SV.gold}"/><text x="${X(k) + 130 / n}" y="${Y(h) - 4}" text-anchor="middle" font-size="10" fill="var(--ink)">${h}</text><text x="${X(k) + 130 / n}" y="164" text-anchor="middle" font-size="9" fill="${SV.ink}">${w ? w * (k + 1) : k + 1}</text>`; }); if (note) s += `<text x="160" y="186" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(320, 195, s); }
+  // a curve with a secant or tangent drawn on it
+  function tangentSvg(f, x0, x1, note) { const lines = [[f, 0, SV.gold, '']]; const dots = [[x0, f(x0), '#c8384a', '']]; if (x1 !== undefined && x1 !== x0) { const m = (f(x1) - f(x0)) / (x1 - x0), b = f(x0) - m * x0; lines.push([m, b, '#9fc8e8', '']); dots.push([x1, f(x1), '#9fc8e8', '']); } else { const h = 0.001, m = (f(x0 + h) - f(x0 - h)) / (2 * h), b = f(x0) - m * x0; lines.push([m, b, '#c8384a', '']); } return graphSvg(lines, dots, note); }
+  // a shape spun round the axis
+  function spinSvg(f, a, b, note) { const X = x => 40 + (x - a) / (b - a) * 200, Y = v => 110 - v * 14; let s = `<line x1="30" y1="110" x2="260" y2="110" stroke="${SV.ink}" stroke-width="2" stroke-dasharray="4 3"/>`; const top = [], bot = []; for (let x = a; x <= b; x += (b - a) / 30) { top.push(`${X(x)},${Y(f(x))}`); bot.push(`${X(x)},${Y(-f(x))}`); } s += `<polygon points="${top.join(' ')} ${bot.reverse().join(' ')}" fill="rgba(159,200,232,.35)" stroke="${SV.ink}"/><polyline points="${top.join(' ')}" fill="none" stroke="${SV.gold}" stroke-width="3"/>`; [a, b].forEach(x => s += `<ellipse cx="${X(x)}" cy="110" rx="6" ry="${f(x) * 14}" fill="none" stroke="${SV.ink}"/>`); s += `<text x="${X(a)}" y="206" text-anchor="middle" font-size="11" fill="${SV.ink}">${a}</text><text x="${X(b)}" y="206" text-anchor="middle" font-size="11" fill="${SV.ink}">${b}</text>`; if (note) s += `<text x="160" y="226" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(320, 235, s); }
+  function rewardSky(n, item, text, next) {
+    markDone('sky-' + n);
+    phase = 'doneS' + n; $('tasks').innerHTML = '';
+    showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
+    visual.innerHTML = `<div class="reward"><h2>Skyhaven, Lesson ${n} complete</h2>
+      <div class="items"><div>${ICON.coin}<span>${coins} acorn coins saved</span></div><div><svg viewBox="0 0 64 64"><path d="M4 34 L32 26 L60 34 L32 30 Z" fill="#e8b64c"/><rect x="30" y="20" width="4" height="22" fill="#e8b64c"/><path d="M26 44 L38 44 L32 54 Z" fill="#e8b64c"/></svg><span>${item}</span></div></div>
+      <p style="margin:0;color:var(--ink-soft)">${text}</p></div>`;
+    if (next) { const go = document.createElement('button'); go.className = 'btn primary'; go.textContent = n === 12 ? 'Launch' : 'Keep going'; go.onclick = () => { showDialog(false); next(); }; actions.append(go); }
+    const walk = document.createElement('button'); walk.className = next ? 'btn' : 'btn primary'; walk.textContent = 'Walk around'; walk.onclick = () => { showDialog(false); hint(''); };
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Back to the map'; b.onclick = () => { location.hash = ''; location.reload(); };
+    actions.append(walk, b); actions.querySelector('button').focus({ preventScroll: true });
+  }
+  // Lesson 1: the instant (limits, properly)
+  function reachIlsa() {
+    if (['toilsa', 'tosky'].includes(phase)) {
+      phase = 's1';
+      runScript([
+        { say: ['Don’t look down yet. Look at the rail. I’m <b>Quill</b>. Professor, if you must. Astra wrote that you can find a limit by feel. Up here we find them on purpose.', 'A glider leaves the rail and covers 120 rods in 8 seconds. Its <b>average</b> speed is distance over time. Easy.'] },
+        { num: ['120 rods in 8 seconds. Average speed, in rods per second?', 15, exprSvg('120 ÷ 8'), ['120 ÷ 8 = ' + G(15)]] },
+        { say: ['15. But the glider isn’t going 15 the whole way. It starts slow and speeds up. What is its speed at <i>one instant</i>, say exactly 2 seconds in? Distance over time, with no time? That’s 0 ÷ 0.', 'Here’s the trick. The flight log says position s = t². Take the average speed from t = 2 to t = 3: (9 − 4) ÷ 1.'] },
+        { num: ['s = t². Average speed from t = 2 to t = 3?', 5, tangentSvg(x => x * x, 2, 3, 'the secant from 2 to 3'), ['s(3) − s(2) = 9 − 4 = 5', 'over 1 second: ' + G(5)]] },
+        { say: ['5. That’s the slope of the straight line from the point at 2 to the point at 3: a <b>secant</b>. Now shrink the gap. From 2 to 2.1: s(2.1) = 4.41.'] },
+        { num: ['From t = 2 to t = 2.1: (4.41 − 4) ÷ 0.1 = ?', 4.1, tangentSvg(x => x * x, 2, 2.1, 'the secant from 2 to 2.1'), ['0.41 ÷ 0.1 = ' + G('4.1')]] },
+        { say: ['4.1. From 2 to 2.01 it would be 4.01. From 2 to 2.001, 4.001. The gap closes and the answer closes in on a number. That number <i>is</i> the speed at the instant. The limit.'] },
+        { num: ['As the gap shrinks to nothing, the speed at t = 2 closes in on…?', 4, tangentSvg(x => x * x, 2, undefined, 'the tangent at t = 2'), ['5, 4.1, 4.01, 4.001 …', 'The limit is ' + G(4)]] },
+        { say: ['4. You just took a derivative without knowing the word. The secant became a <b>tangent</b>: a line that touches the curve at one point and has exactly its slope there. Everything in this city is built on that move.'] }
+      ], ILS, () => rewardSky(1, 'A flight log', 'The instant: ' + G('average speed over a shrinking gap') + ' closes in on the speed at one moment. Secant becomes tangent. That’s a limit.', startS2));
+    }
+  }
+  // Lesson 2: the slope of the glide (the derivative, the power rule)
+  function startS2() {
+    phase = 's2';
+    runScript([
+      { say: ['The slope of the tangent has a name: the <b>derivative</b>. Write it f′(x), or dy/dx. It tells you how fast y changes as x changes, at every x.', 'And there’s a rule that skips the whole limit dance for powers. <b>Power rule</b>: the derivative of xⁿ is n·xⁿ⁻¹. Bring the power down in front, knock it down by one.', 'So t² becomes 2t. At t = 2, that’s 4. Yesterday’s answer, in one line.'] },
+      { num: ['The derivative of x³ is 3x². What is it at x = 2?', 12, exprSvg('3 × 2²'), ['3 × 4 = ' + G(12)]] },
+      { num: ['The derivative of x² at x = 3?', 6, tangentSvg(x => x * x, 3, undefined, 'slope 6 at x = 3'), ['2x at x = 3 = ' + G(6)]] },
+      { num: ['The derivative of 5x?', 5, exprSvg('5x = 5x¹ → 5 × 1 × x⁰'), ['A line’s slope is just its number: ' + G(5)]] },
+      { num: ['The derivative of the constant 7?', 0, exprSvg('y = 7, flat'), ['A flat line has slope ' + G(0)]] },
+      { choice: ['The derivative of x⁴?', ['4x³', 'x³', '4x⁴'], '4x³', expl(exprSvg('x⁴ → 4·x³'), 'Power down in front, power knocked down by one: 4x³.')] },
+      { say: ['4x³. The derivative of a sum is the sum of the derivatives, and a constant multiplier just rides along: 3x² + 5x − 7 becomes 6x + 5. You can take the slope of any flight log I hand you.'] }
+    ], ILS, () => rewardSky(2, 'A slope rule', 'The derivative: ' + G('the slope at every point') + '. Power rule: xⁿ → n·xⁿ⁻¹. Constants vanish; sums split.', startS3));
+  }
+  // Lesson 3: rules of the air (product, quotient, chain rule)
+  function startS3() {
+    phase = 's3';
+    runScript([
+      { say: ['Real logs aren’t single powers. The wing’s lift depends on speed, and speed depends on time. Chains of machines. Three rules.', '<b>Product</b>: (f·g)′ = f′g + fg′. Each one’s derivative times the other, added. Try x · x². You know the answer is x³ → 3x². The rule: 1·x² + x·2x = 3x².'] },
+      { num: ['(x · x²)′ = 1·x² + x·2x = 3x². What is it at x = 1?', 3, exprSvg('1·1 + 1·2 = 3'), ['3 × 1² = ' + G(3)]] },
+      { say: ['3. <b>Chain</b>: for a machine inside a machine, take the outside derivative, leave the inside alone, then multiply by the inside’s derivative.', '(2x + 1)². Outside is squaring: 2·(inside). Inside is 2x + 1, derivative 2. So 2(2x + 1) · 2 = 4(2x + 1).'] },
+      { num: ['((2x + 1)²)′ = 4(2x + 1). At x = 1?', 12, exprSvg('4 × (2 + 1)'), ['4 × 3 = ' + G(12)]] },
+      { choice: ['The derivative of sin(3x)?', ['cos(3x)', '3 cos(3x)', '3 sin(3x)'], '3 cos(3x)', expl(exprSvg('cos(3x) · 3'), 'Outside: sin → cos, inside left alone: cos(3x). Times the inside’s derivative, 3. The chain rule’s tax.')] },
+      { say: ['3 cos(3x). And <b>quotient</b>: (f/g)′ = (f′g − fg′) ÷ g². Low d-high minus high d-low, over low squared. Ugly, memorable, true.', 'Lift goes with speed squared, and speed climbs as 3t. Lift = (3t)². Chain rule: 2(3t)·3 = 18t. At t = 2 the lift is growing at…'] },
+      { num: ['Lift = (3t)², so lift′ = 18t. How fast is lift growing at t = 2?', 36, exprSvg('18 × 2'), ['18 × 2 = ' + G(36)]] },
+      { say: ['36 per second. Product, chain, quotient. With the power rule, those four take apart any function a glider will ever meet.'] }
+    ], ILS, () => rewardSky(3, 'The three rules', 'Product, quotient and ' + G('chain') + ': outside derivative, inside untouched, times the inside’s derivative.', startS4));
+  }
+  // Lesson 4: steepest and gentlest (maxima and minima)
+  function startS4() {
+    phase = 's4';
+    runScript([
+      { say: ['Why take slopes? Because at the <b>top</b> of a curve the slope is zero. Flat. So set the derivative to zero, and you’ve found the best of something.', 'A glide’s height is h = −x² + 6x. Derivative: −2x + 6. Zero when…'] },
+      { num: ['−2x + 6 = 0. Which x is the top of the arc?', 3, tangentSvg(x => -x * x + 6 * x, 3, undefined, 'flat at the top'), ['2x = 6', 'x = ' + G(3)]] },
+      { num: ['At x = 3, h = −9 + 18. The highest point?', 9, exprSvg('−3² + 6 × 3'), ['−9 + 18 = ' + G(9)]] },
+      { say: ['9. Now the one that matters to a pilot. How far a wing glides depends on its angle, a. From the tunnel: distance d = 40a − 2a². Too flat, you drop; too steep, you stall.'] },
+      { num: ['d = 40a − 2a². Its derivative is 40 − 4a. The best angle a?', 10, tangentSvg(x => (40 * x - 2 * x * x) / 40, 10 / 2, undefined, '(scaled down to fit)'), ['40 − 4a = 0', 'a = ' + G(10)]] },
+      { num: ['At a = 10, the glide distance d = 400 − 200 = ?', 200, exprSvg('40 × 10 − 2 × 100'), ['400 − 200 = ' + G(200)]] },
+      { choice: ['How do you know a flat spot is a top and not a bottom?', ['The second derivative is negative there', 'The first derivative is positive', 'The function is zero'], 'The second derivative is negative there', expl(exprSvg('d″ = −4 < 0: a hilltop'), 'The second derivative is the slope of the slope. Negative means the slope is falling through zero: a hilltop. Positive means a valley.')] },
+      { say: ['Second derivative negative: a top. Every wing on this island has its angle set that way. Derivative, zero, check the curve. Three steps and a thousand feet of glide.'] }
+    ], ILS, () => rewardSky(4, 'The best angle', 'Maxima and minima: ' + G('set the derivative to zero') + '. The second derivative says top (negative) or bottom (positive).', startS5));
+  }
+  // Lesson 5: everything moves at once (related rates)
+  function startS5() {
+    phase = 's5';
+    runScript([
+      { say: ['Two things changing together, linked by a formula. Differentiate the whole formula with respect to <i>time</i>, chain rule on every piece, and the rates fall out.', 'A puddle spreads on the deck: area A = πr². The radius grows at 2 per second. Chain rule: dA/dt = 2πr · dr/dt.'] },
+      { num: ['At r = 5, dr/dt = 2: dA/dt = 2π × 5 × 2. How many π?', 20, exprSvg('2π · 5 · 2 = 20π'), ['2 × 5 × 2 = ' + G(20) + 'π per second']] },
+      { say: ['20π. Now the balloon. It rises straight up, tethered 40 out from a winch. The rope length z, height y, ground 40: 40² + y² = z². The balloon climbs at 3 per second. How fast is rope paying out?', 'Differentiate: 2y·dy/dt = 2z·dz/dt, so dz/dt = (y ÷ z) · dy/dt. At y = 30, z is 50.'] },
+      { num: ['dz/dt = (30 ÷ 50) × 3. The rope pays out at…?', 1.8, trigSvg('40', '30 ↑ at 3', '50'), ['0.6 × 3 = ' + G('1.8') + ' per second']] },
+      { say: ['1.8. The balloon climbs at 3 but the rope only lengthens at 1.8, because it’s mostly sideways down there. Later, when the balloon is high, the ratio heads to 1 and rope and balloon move together.', 'One more. A square sail’s side grows at 1 per second. Area = s². dA/dt = 2s · ds/dt.'] },
+      { num: ['Side 6, growing at 1 per second. How fast is the area growing?', 12, exprSvg('2 · 6 · 1'), ['2 × 6 × 1 = ' + G(12) + ' per second']] },
+      { say: ['12. Write the formula that ties them, differentiate everything with respect to t, fill in what you know. That’s every related-rates problem there is.'] }
+    ], ILS, () => rewardSky(5, 'The winch', 'Related rates: ' + G('differentiate the link with respect to time') + ', chain rule on each piece, and fill in the moment.', startS6));
+  }
+  // Lesson 6: adding up the lift (integrals as area, Riemann sums)
+  function startS6() {
+    phase = 's6';
+    runScript([
+      { say: ['The other half. Derivatives take apart; <b>integrals</b> add up. The wind tunnel logs lift every second. Total lift over a run is the <b>area under the curve</b>.', 'Steady lift of 4, for 5 seconds. A rectangle.'] },
+      { num: ['Lift 4 for 5 seconds. Total?', 20, riemannSvg([4, 4, 4, 4, 4], 1, 'area 4 × 5'), ['4 × 5 = ' + G(20)]] },
+      { num: ['Lift climbs steadily, y = x, from 0 to 4. The area under it, a triangle?', 8, riemannSvg([0.5, 1.5, 2.5, 3.5], 1, 'a triangle: ½ × 4 × 4'), ['½ × base × height = ½ × 4 × 4 = ' + G(8)]] },
+      { say: ['8. Most curves aren’t rectangles or triangles. So chop the time into strips, call each strip a rectangle, add them. A <b>Riemann sum</b>. Tunnel readings, one per second: 2, 3, 5, 4.'] },
+      { num: ['Readings 2, 3, 5, 4, each held for one second. Total lift?', 14, riemannSvg([2, 3, 5, 4], 1), ['2 + 3 + 5 + 4 = ' + G(14)]] },
+      { choice: ['The strips are a rough guess. How do you make the sum closer to the true area?', ['More, thinner strips', 'Fewer, wider strips', 'Taller strips'], 'More, thinner strips', expl(riemannSvg([1.2, 2.1, 2.9, 3.6, 4.2, 4.6, 4.9, 5, 4.9, 4.6, 4.1, 3.5], 0.33, 'thinner strips hug the curve'), 'Thinner strips leave less gap between the rectangles and the curve. In the limit, infinitely many infinitely thin strips, the sum <i>is</i> the area. That limit is the integral, written ∫.')] },
+      { say: ['More, thinner strips, forever. ∫ is a stretched S for “sum.” ∫₀⁴ x dx means: add up x, in strips, from 0 to 4. And you already know it’s 8.'] }
+    ], ILS, () => rewardSky(6, 'A tunnel log', 'Integrals: ' + G('area under the curve') + ', built from strips. ∫ is the limit of a Riemann sum.', startS7));
+  }
+  // Lesson 7: the two halves of the theorem (the fundamental theorem)
+  function startS7() {
+    phase = 's7';
+    runScript([
+      { say: ['Here is the most useful sentence in this city. <b>Integrating undoes differentiating.</b> The area under f from a to b is F(b) − F(a), where F is anything whose derivative is f. No strips.', 'An <b>antiderivative</b> runs the power rule backwards: power up by one, divide by the new power. 2x came from x². So ∫₀³ 2x dx = 3² − 0².'] },
+      { num: ['∫₀³ 2x dx = 3² − 0² = ?', 9, riemannSvg([1, 3, 5], 1, 'the triangle under 2x'), ['x² from 0 to 3: 9 − 0 = ' + G(9)]] },
+      { choice: ['An antiderivative of 4x³?', ['x⁴', '12x²', '4x⁴'], 'x⁴', expl(exprSvg('x⁴ → 4x³, so backwards: x⁴'), 'Power up to 4, divide by 4: 4x⁴ ÷ 4 = x⁴. Check it: the derivative of x⁴ is 4x³.')] },
+      { say: ['x⁴. Now the half pilots use. Speed is the derivative of distance. So distance is the <i>integral</i> of speed. A glider’s speed is v = 3t². Distance from t = 0 to 2 is ∫₀² 3t² dt, and 3t² came from t³.'] },
+      { num: ['∫₀² 3t² dt = 2³ − 0³ = ?', 8, exprSvg('t³ from 0 to 2'), ['8 − 0 = ' + G(8)]] },
+      { num: ['∫₁⁴ 1 dx. The area of a strip of height 1 from 1 to 4?', 3, riemannSvg([1, 1, 1], 1), ['x from 1 to 4: 4 − 1 = ' + G(3)]] },
+      { say: ['3. Speed to distance, integrate. Distance to speed, differentiate. Two halves of one theorem, and the whole flight log reads both ways.'] }
+    ], ILS, () => rewardSky(7, 'The theorem, both halves', 'The fundamental theorem: ' + G('∫ₐᵇ f = F(b) − F(a)') + '. Integrating undoes differentiating; distance is the integral of speed.', startS8));
+  }
+  // Lesson 8: harder sums (substitution, parts, partial fractions)
+  function startS8() {
+    phase = 's8';
+    runScript([
+      { say: ['Some integrals won’t come apart with the power rule alone. Three tools.', '<b>Substitution</b> is the chain rule backwards. ∫ 2x(x² + 1)³ dx: let u = x² + 1, and du is 2x dx, exactly what’s sitting there. It becomes ∫ u³ du = u⁴ ÷ 4.'] },
+      { num: ['∫₀¹ 2x(x² + 1)³ dx = (x² + 1)⁴ ÷ 4 from 0 to 1 = (16 − 1) ÷ 4 = ?', 3.75, exprSvg('u = x² + 1'), ['At 1: 2⁴ ÷ 4 = 4', 'At 0: 1⁴ ÷ 4 = 0.25', '4 − 0.25 = ' + G('3.75')]] },
+      { say: ['3.75. <b>Parts</b> is the product rule backwards: ∫ u dv = uv − ∫ v du. Fuel burn times time, that sort of thing.'] },
+      { choice: ['By parts, ∫ x eˣ dx = ?', ['x eˣ − eˣ + C', 'x² eˣ ÷ 2 + C', 'eˣ + C'], 'x eˣ − eˣ + C', expl(exprSvg('u = x, dv = eˣ dx'), 'u = x, dv = eˣ dx, so du = dx and v = eˣ. uv − ∫ v du = x eˣ − ∫ eˣ dx = x eˣ − eˣ + C. Check by differentiating: eˣ + x eˣ − eˣ = x eˣ.')] },
+      { say: ['And <b>partial fractions</b> split a nasty fraction into easy ones. Drag over speed sometimes looks like 1 ÷ (x(x + 1)).'] },
+      { choice: ['1 ÷ (x(x + 1)) splits into…?', ['1/x − 1/(x + 1)', '1/x + 1/(x + 1)', '2/(2x + 1)'], '1/x − 1/(x + 1)', expl(exprSvg('1/x − 1/(x+1) = (x+1−x) ÷ (x(x+1))'), 'Put them back over the common bottom: (x + 1) − x = 1. So the split is right, and each piece integrates to a log.')] },
+      { num: ['Plain one to finish: ∫₀² (2x + 3) dx = (x² + 3x) from 0 to 2 = ?', 10, riemannSvg([3.5, 5.5, 7.5, 9.5], 0.5), ['4 + 6 = ' + G(10)]] },
+      { say: ['10. Substitution for chains, parts for products, partial fractions for quotients. The three derivative rules, each run in reverse.'] }
+    ], ILS, () => rewardSky(8, 'Three more tools', 'Techniques: ' + G('substitution, parts, partial fractions') + ', the chain, product and quotient rules run backwards.', startS9));
+  }
+  // Lesson 9: shapes in the air (volumes of revolution, arc length)
+  function startS9() {
+    phase = 's9';
+    runScript([
+      { say: ['A balloon envelope, a fuel tank: a curve spun round an axis. Slice it into thin discs. Each disc is a circle of radius f(x), area π f(x)². Add the discs: <b>V = ∫ π f(x)² dx</b>.', 'Spin the flat line y = 2 from 0 to 5. Every disc has radius 2.'] },
+      { num: ['V = ∫₀⁵ π · 2² dx = π · 4 · 5. How many π?', 20, spinSvg(x => 2, 0, 5, 'a tank: 20π'), ['4 × 5 = ' + G(20) + 'π, a cylinder, as it should be']] },
+      { num: ['Spin y = x from 0 to 3: V = π ∫₀³ x² dx = π · (3³ ÷ 3). How many π?', 9, spinSvg(x => x, 0, 3, 'a nose cone: 9π'), ['x³ ÷ 3 from 0 to 3 = 27 ÷ 3 = ' + G(9) + 'π']] },
+      { say: ['9π, and that’s a cone, and the cone formula ⅓πr²h gives ⅓ · π · 9 · 3 = 9π too. The calculus agrees with the geometry. It always does; it just reaches further.', 'Arc length is the same idea sideways: chop a cable into tiny straight bits, each one Pythagoras, add them. A straight cable is the easy case.'] },
+      { num: ['A cable runs straight from (0, 0) to (3, 4). Its length?', 5, triSvg(3, 4, { right: true }), ['√(3² + 4²) = ' + G(5)]] },
+      { choice: ['The disc method adds up…', ['π f(x)² dx, thin discs', 'f(x) dx, thin strips', '2π x dx, thin rings'], 'π f(x)² dx, thin discs', expl(spinSvg(x => 1 + Math.sin(x) * 0.6, 0, 3), 'Each slice is a disc of radius f(x), so its volume is π f(x)² times its thickness dx. Sum them with ∫.')] },
+      { say: ['Discs. Every envelope in the Balloon Works was sized that way, from a curve on a sheet of paper, before a stitch was sewn.'] }
+    ], ILS, () => rewardSky(9, 'A sized envelope', 'Volumes of revolution: ' + G('V = ∫ π f(x)² dx') + ', thin discs added up. Arc length is Pythagoras, chopped fine.', startS10));
+  }
+  // Lesson 10: engines in series (series, convergence, Taylor series)
+  function startS10() {
+    phase = 's10';
+    runScript([
+      { say: ['Astra showed you a sum that goes on forever and still lands: ½ + ¼ + ⅛ … = 1. A <b>geometric</b> series with ratio r sums to first ÷ (1 − r), if r is less than 1.'] },
+      { num: ['1 + ½ + ¼ + ⅛ + … First term 1, ratio ½. The sum?', 2, seqSvg([1, 0.5, 0.25, 0.125, 0.06], '1 ÷ (1 − ½)'), ['1 ÷ (1 − ½) = 1 ÷ ½ = ' + G(2)]] },
+      { choice: ['1 + ½ + ⅓ + ¼ + ⅕ + … the harmonic series. Does it settle on a number?', ['Yes, about 2', 'No, it grows without end', 'Yes, exactly 3'], 'No, it grows without end', expl(seqSvg([1, 0.5, 0.33, 0.25, 0.2, 0.17, 0.14], 'the terms shrink, but too slowly'), 'The terms go to zero, but not fast enough. Group them: ⅓ + ¼ > ½, ⅕ + … + ⅛ > ½, and so on, forever. Shrinking terms are necessary for a sum to settle, never sufficient.')] },
+      { say: ['It grows. The tests, ratio test, comparison test, all ask one thing: do the terms shrink <i>fast enough</i>?', 'Now the engine’s timing table. Any smooth function can be written as a series of powers: a <b>Taylor series</b>. For eˣ it is 1 + x + x²/2 + x³/6 + x⁴/24 …, each term divided by the next factorial.'] },
+      { num: ['eˣ ≈ 1 + x + x²/2. At x = 1, to two decimals?', 2.5, exprSvg('1 + 1 + ½'), ['1 + 1 + 0.5 = ' + G('2.5'), 'e is 2.718…; three terms get you close']] },
+      { num: ['Add the next term, x³/6. 1 + 1 + ½ + ⅙, to two decimals?', 2.67, exprSvg('1 + 1 + 0.5 + 0.1667'), ['2.5 + 0.1667 = 2.6667 ≈ ' + G('2.67')]] },
+      { say: ['2.67, and the next term takes it to 2.71. Each term is a finer tooth on the timing gear. The engine in Tamsin’s house is tuned from a table of exactly those numbers: sines, exponentials, all as polynomials, as many terms as the brass can hold.'] }
+    ], ILS, () => rewardSky(10, 'The timing table', 'Series: ' + G('a geometric series sums to first ÷ (1 − r)') + '; the harmonic series doesn’t settle; a Taylor series writes any smooth function as powers.', startS11));
+  }
+  // Lesson 11: how things change (first differential equations)
+  function startS11() {
+    phase = 's11';
+    runScript([
+      { say: ['A <b>differential equation</b> is a rule about a rate: “the thing changes <i>this</i> fast.” Solve it and you get the thing itself.', 'The simplest: a glider sinks at a steady 6 per second. dh/dt = −6, and it starts at h = 300. Integrate: h = 300 − 6t.'] },
+      { num: ['h = 300 − 6t. When does it reach the ground, h = 0?', 50, exprSvg('300 − 6t = 0'), ['6t = 300', 't = ' + G(50) + ' seconds']] },
+      { say: ['50 seconds. Now the interesting kind, where the rate depends on the thing itself. A hot engine cools at a rate proportional to how much hotter it is than the air: dT/dt = −k(T − 20).'] },
+      { num: ['dT/dt = −k(T − 20). As time goes on, what temperature does the engine settle toward?', 20, exprSvg('rate → 0 when T = 20'), ['The rate is zero when T − 20 = 0', 'It settles at ' + G(20)]] },
+      { choice: ['dy/dt = −½ y. Which y satisfies it?', ['y = y₀ e^(−t/2)', 'y = y₀ − t/2', 'y = y₀ t²'], 'y = y₀ e^(−t/2)', expl(exprSvg('(e^(−t/2))′ = −½ e^(−t/2)'), 'A thing that shrinks in proportion to itself is exponential decay. Differentiate y₀ e^(−t/2) and you get −½ times itself. Lines and squares don’t.')] },
+      { say: ['Exponential decay. Rate proportional to the amount: that one equation runs cooling, fading sound, draining tanks, and a dozen other things on this island.', 'Last: dy/dx = 2x, with y(0) = 1. Integrate: y = x² + C. The start sets C.'] },
+      { num: ['y = x² + C and y(0) = 1, so C = 1. What is y at x = 3?', 10, graphSvg([[x => x * x + 1, 0, SV.gold, 'x² + 1']], [[0, 1, '#c8384a', ''], [3, 10, '#c8384a', '']]), ['9 + 1 = ' + G(10)]] },
+      { say: ['10. A rule about change, a starting point, and the whole future unrolls from them. That’s the last idea on the Long Road. Tomorrow the Guild Fair, and then you build.'] }
+    ], ILS, () => rewardSky(11, 'A cooling curve', 'Differential equations: ' + G('a rule about a rate') + ', plus a start. Integrate to get the thing; rate-proportional-to-amount means exponential.', startS12));
+  }
+  // Lesson 12: the Guild Fair, then build the motor-glider
+  function startS12() {
+    phase = 's12';
+    runScript([
+      { say: ['The Guild Fair. Every teacher on the road has sent one problem by messenger bird. Seven birds, seven slips. Then you build.'] },
+      { num: ['From Bramblewick, in the Hollow: “7 acorns and 8 acorns.”', 15, exprSvg('7 + 8'), ['7 + 8 = ' + G(15)]] },
+      { num: ['From Ori, in the Orchards: “6 rows of 7 trees.”', 42, rectSvg(7, 6), ['6 × 7 = ' + G(42)]] },
+      { num: ['From Maudie, in Fernwater: “three-quarters of 20 loaves.”', 15, exprSvg('¾ × 20'), ['20 ÷ 4 = 5, × 3 = ' + G(15)]] },
+      { num: ['From Wren, in Cairnhold: “a ladder 5 out and 12 up.”', 13, triSvg(5, 12, { right: true }), ['√(25 + 144) = √169 = ' + G(13)]] },
+      { num: ['From Tamsin, in Cogsworth: “15% of 200 teeth.”', 30, percentSvg(200, 15), ['10% is 20, 5% is 10: ' + G(30)]] },
+      { num: ['From Durna, in Emberdeep: “2x − 3 = 11.”', 7, scaleSvg('2x − 3', '11'), ['2x = 14', 'x = ' + G(7)]] },
+      { num: ['From Astra, in Lanternreach: “sin 90°.”', 1, unitSvg(90, 'straight up: (0, 1)'), ['sin 90° = ' + G(1)]] },
+      { say: ['Seven for seven. Then build. Fen! Pip! Bring the wing and the engine.'] },
+      { do: () => { if (fenSky) { fenSky.position.set(4, 0, 38); fenSky.lookAt(player.position.x, 0, player.position.z); } if (pipSky) { pipSky.position.set(18, 0, 38); pipSky.lookAt(player.position.x, 0, player.position.z); } } },
+      { who: 'Fen', say: ['It’s been a while. You were seven inches tall and I was counting your acorns. Here’s the wing. Span 8, chord 1.5. Area first: a wing’s lift goes with its area.'] },
+      { num: ['Wing span 8, chord 1.5. Wing area?', 12, rectSvg(8, 1.5), ['8 × 1.5 = ' + G(12)]] },
+      { who: 'Pip', say: ['And the tunnel numbers: at the best angle the wing makes 24 of lift for 2 of drag. Lift over drag is the <b>glide ratio</b>: how far forward for each unit of height you lose.'] },
+      { num: ['Lift 24, drag 2. Glide ratio?', 12, exprSvg('24 ÷ 2'), ['24 ÷ 2 = ' + G(12) + ' forward for every 1 down']] },
+      { do: () => { flightGlide = 12; } },
+      { say: ['12 to 1. From the launch rail, 300 up, a pure glide carries you 300 × 12.'] },
+      { num: ['300 high, glide ratio 12. How far can you glide, engine off?', 3600, exprSvg('300 × 12'), ['300 × 12 = ' + G(3600)]] },
+      { say: ['3600. Thistledown Hollow is 9000 away. So the engine does the rest. Durna’s engine, timed by Tamsin, on your numbers: under power you cover 90 a minute without losing height.'] },
+      { num: ['9000 − 3600 = 5400 left for the engine, at 90 a minute. How many minutes of engine?', 60, exprSvg('5400 ÷ 90'), ['5400 ÷ 90 = ' + G(60) + ' minutes']] },
+      { say: ['An hour of engine and an hour of glide. The tank holds ninety minutes. It flies.', 'Now the mark, before you go, because you won’t come back up here for a while. The last symbol is <b>home</b>. And the whole line, read together, is the Guild’s oldest mark:', '<b>One, many, part, shape, balance, unknown, change — and home.</b>', 'The broken wing in the hall was a founder’s. She flew out to map the Long Road and never came back. You walked it the other way, all of it, and now you fly it home. Fen and Pip will see you there. Strap in.'] },
+      { do: () => { if (glider) { glider.userData.engine.visible = true; glider.userData.prop.visible = true; } } }
+    ], ILS, () => rewardSky(12, 'A motor-glider, yours', 'The Guild Fair, seven for seven, and a motor-glider sized by ' + G('your own numbers') + ': wing area 12, glide ratio 12, an hour of engine. The eighth mark reads “home.”', startFlight));
+  }
+  // the end of the road
+  function finishRoad() {
+    markDone('sky-home');
+    showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
+    visual.innerHTML = `<div class="reward"><h2>The Long Road</h2>
+      <div class="items"><div>${ICON.coin}<span>${coins} acorn coins saved</span></div><div><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="#e8b64c" stroke-width="4"/><path d="M20 34 L30 44 L46 22" fill="none" stroke="#e8b64c" stroke-width="5" stroke-linecap="round"/></svg><span>Eight marks</span></div></div>
+      <p style="margin:0;color:var(--ink-soft)">${G('One, many, part, shape, balance, unknown, change — and home.')} You walked the whole road, Thistledown Hollow to Skyhaven, and flew it back. Every region is still open: walk anywhere, re-sit any lesson from the map, and the lifts and roads will take you.</p></div>`;
+    const walk = document.createElement('button'); walk.className = 'btn primary'; walk.textContent = 'Walk around the Hollow'; walk.onclick = () => { showDialog(false); hint(''); };
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Back to the map'; b.onclick = () => { location.hash = ''; location.reload(); };
+    actions.append(walk, b); actions.querySelector('button').focus({ preventScroll: true });
   }
 
   // ---------- input ----------
@@ -5248,7 +6099,7 @@
   canvas.addEventListener('pointercancel', () => { down = null; dragged = false; });
 
   // ---------- movement and collisions ----------
-  function inRiver(x, z) { return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2; }
+  function inRiver(x, z) { if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2; }
   function groundAt(x, z) {
     if (where === 'in') return 0;
     if (where === 'hills') return hillH(x, z);
@@ -5256,6 +6107,11 @@
     if (where === 'cliff') return cliffH(x, z);
     if (where === 'cogsworth') return cogH(x, z);
     if (where === 'mtn') return mtnH(x, z);
+    if (where === 'sea') return seaH(x, z);
+    if (where === 'lantern') return onPier(x, z) ? PIER.y : inRiver(x, z) ? SEA_Y - 1.45 : lantH(x, z);
+    if (where === 'lift') return gondola.position.y;
+    if (where === 'flight') return flier.position.y + 0.9;
+    if (where === 'skyhaven') return skyH(x, z);
     if (where !== 'fernwater') return 0;
     if (inRiver(x, z)) return -1.45;
     if (Math.abs(x) > 5.2) return 0;
@@ -5352,8 +6208,40 @@
     }
     if (where === 'emberdeep') {
       embSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      p.x = clamp(p.x, -66, LAVA_X - 1.8); p.z = Math.min(p.z, 122);
+      p.x = clamp(p.x, -66, LAVA_X - 1.8);
       if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToMtnFromEmb(); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
+      if (p.z > EMB_LEN - 1.2 && Math.abs(p.x) < 4.5 && !fading) goToSea(false); else p.z = Math.min(p.z, Math.abs(p.x) < 4.5 ? EMB_LEN + 1 : 122);
+    }
+    if (where === 'sea') {
+      seaSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
+      p.x = clamp(p.x, -170, 56);
+      const dh = seaH(p.x, p.z) - seaH(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
+      if (run > 0.001 && dh / run > 1.0) { p.x = prev.x; p.z = prev.z; }
+      const nearRoad = Math.abs(p.x - seaRoadX(clamp(p.z, 0, SEA_LEN))) < 4.5;
+      if (p.z < 1.2 && nearRoad && !fading) goToEmbFromSea(); else p.z = Math.max(p.z, nearRoad ? -1 : 0.8);
+      if (p.z > SEA_LEN - 1 && nearRoad && !fading) goToLantern(); else p.z = Math.min(p.z, nearRoad ? SEA_LEN + 1 : SEA_LEN - 0.8);
+    }
+    if (where === 'lantern') {
+      lantSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
+      p.x = clamp(p.x, -56, 230); p.z = clamp(p.z, -1, LANT_LEN + 60);
+      const dh = groundAt(p.x, p.z) - groundAt(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
+      if (run > 0.001 && dh / run > 1.0 && !onPier(p.x, p.z)) { p.x = prev.x; p.z = prev.z; }
+      // from the water you climb onto the pier only at the ramp
+      if (inRiver(prev.x, prev.z) && onPier(p.x, p.z) && p.x > PIER.x0 + 2) { p.x = prev.x; p.z = prev.z; }
+      if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToSeaFromLant(); else if (p.z < 0.8 && Math.abs(p.x) >= 4.5) p.z = 0.8;
+      if (p.z > LANT_LEN - 0.8 && Math.abs(p.x) < 56) p.z = LANT_LEN - 0.8;
+      if (onPier(p.x, p.z) && p.x > PIER.x1 - 2.5 && !fading) goToLift(false);
+      lantBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
+    }
+    if (where === 'lift') {
+      const dx = p.x - gondola.position.x, dz = p.z - gondola.position.z, d = Math.hypot(dx, dz); if (d > 2.2) { p.x = gondola.position.x + dx / d * 2.2; p.z = gondola.position.z + dz / d * 2.2; }
+    }
+    if (where === 'flight') { p.x = flier.position.x; p.z = flier.position.z; }
+    if (where === 'skyhaven') {
+      skySolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
+      if (!onIsland(p.x, p.z) && !onBridge(p.x, p.z) && !(p.z < 4 && Math.abs(p.x) < 6)) { if (onIsland(p.x, prev.z) || onBridge(p.x, prev.z)) p.z = prev.z; else if (onIsland(prev.x, p.z) || onBridge(prev.x, p.z)) p.x = prev.x; else { p.x = prev.x; p.z = prev.z; } }
+      if (p.z < 0.5 && Math.abs(p.x) < 3 && !fading) goToLiftDown(); else if (p.z < -1) p.z = -1;
+      skyBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
     }
     if (where === 'in') {
       const it = interior; it.solids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
@@ -5416,14 +6304,14 @@
   try { Object.assign(gfx, JSON.parse(localStorage.getItem(GFX_KEY) || '{}')); } catch (e) {}
   function gpuName() { try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : ''; } catch (e) { return ''; } }
   function autoQuality() { const n = gpuName(); if (/SwiftShader|llvmpipe|Mali|Adreno|PowerVR/i.test(n)) return 'low'; if (/Intel|Iris|UHD|HD Graphics|Apple/i.test(n)) return 'medium'; return n ? 'high' : 'medium'; }
-  const ALL_SCENES = () => [scene, roadScene, orchScene, hillScene, fernScene, highScene, cairnScene, cliffScene, cogScene, mtnScene, embScene].concat(Object.values(interiors).map(i => i.scene));
+  const ALL_SCENES = () => [scene, roadScene, orchScene, hillScene, fernScene, highScene, cairnScene, cliffScene, cogScene, mtnScene, embScene, seaScene, lantScene, liftScene, skyScene, flightScene].concat(Object.values(interiors).map(i => i.scene));
   ALL_SCENES().forEach(sc => { if (sc.fog) sc.userData.fog0 = [sc.fog.near, sc.fog.far]; sc.traverse(o => { if (o.isInstancedMesh) o.userData.total = o.count; }); });
   const farThings = []; hillScene.children.forEach(o => { if ((o.isGroup && o.userData.trunkR) || (o.isMesh && o.geometry && o.geometry.type === 'DodecahedronGeometry')) farThings.push(o); });
   function applyGfx() {
     const q = gfx.quality === 'auto' ? autoQuality() : gfx.quality, d = gfx.distance;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, q === 'low' ? 1 : q === 'medium' ? 1.5 : 2));
     renderer.shadowMap.enabled = q !== 'low'; const shadowSize = q === 'high' ? 4096 : 2048;
-    [sun, roadSun, orchSun, hillSun, fernSun, highSun, cairnSun, cliffSun, cogSun, mtnSun, embSun].forEach(l => { if (l.shadow.mapSize.x !== shadowSize) { l.shadow.mapSize.set(shadowSize, shadowSize); if (l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null; } } });
+    [sun, roadSun, orchSun, hillSun, fernSun, highSun, cairnSun, cliffSun, cogSun, mtnSun, embSun, seaSun, lantSun, liftSun, skySun, flightSun].forEach(l => { if (l.shadow.mapSize.x !== shadowSize) { l.shadow.mapSize.set(shadowSize, shadowSize); if (l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null; } } });
     Object.values(interiors).forEach(it => it.scene.traverse(o => { if (o.isPointLight) o.castShadow = q === 'high'; }));
     const grassK = q === 'low' ? 0.35 : q === 'medium' ? 0.7 : 1;
     const distK = d === 'near' ? 0.55 : d === 'far' ? 1.6 : 1;
@@ -5508,7 +6396,7 @@
       const base = view === 'front' ? bodyYaw : camYaw;
       const dir = base + Math.atan2(mx, mz);
       fwd.set(Math.sin(dir), 0, Math.cos(dir));
-      const grade = where === 'hills' ? (hillH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - hillH(player.position.x, player.position.z)) / 1.5 : where === 'high' ? (highH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - highH(player.position.x, player.position.z)) / 1.5 : where === 'cliff' ? (cliffH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cliffH(player.position.x, player.position.z)) / 1.5 : where === 'cogsworth' ? (cogH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cogH(player.position.x, player.position.z)) / 1.5 : where === 'mtn' ? (mtnH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - mtnH(player.position.x, player.position.z)) / 1.5 : 0;
+      const grade = where === 'hills' ? (hillH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - hillH(player.position.x, player.position.z)) / 1.5 : where === 'high' ? (highH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - highH(player.position.x, player.position.z)) / 1.5 : where === 'cliff' ? (cliffH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cliffH(player.position.x, player.position.z)) / 1.5 : where === 'cogsworth' ? (cogH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cogH(player.position.x, player.position.z)) / 1.5 : where === 'mtn' ? (mtnH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - mtnH(player.position.x, player.position.z)) / 1.5 : where === 'sea' ? (seaH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - seaH(player.position.x, player.position.z)) / 1.5 : where === 'lantern' ? (groundAt(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - groundAt(player.position.x, player.position.z)) / 1.5 : 0;
       const slopeK = grade > 0 ? 1 / (1 + grade * 2.2) : Math.min(1.25, 1 - grade * 0.4);
       if (grade > 0.25 && running) stamina = Math.max(0, stamina - dt * 20 * grade);
       const swimming = inRiver(player.position.x, player.position.z);
@@ -5547,8 +6435,8 @@
     const k = 1 - Math.pow(0.002, dt);
     camPos.lerp(cp, k); camLook.lerp(cl, k);
     camera.position.copy(camPos); camera.lookAt(camLook);
-    if (where === 'hills') hillSky.position.set(player.position.x, 0, player.position.z); if (where === 'high') highSky.position.set(player.position.x, 0, player.position.z); if (where === 'cliff') cliffSky.position.set(player.position.x, 0, player.position.z); if (where === 'mtn') mtnSky.position.set(player.position.x, 0, player.position.z);
-    if (where !== 'in') { const sunNow = where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : where === 'hills' ? hillSun : where === 'high' ? highSun : where === 'cairnhold' ? cairnSun : where === 'cliff' ? cliffSun : where === 'cogsworth' ? cogSun : where === 'mtn' ? mtnSun : where === 'emberdeep' ? embSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-170, 330, 160)); }
+    if (where === 'hills') hillSky.position.set(player.position.x, 0, player.position.z); if (where === 'high') highSky.position.set(player.position.x, 0, player.position.z); if (where === 'cliff') cliffSky.position.set(player.position.x, 0, player.position.z); if (where === 'mtn') mtnSky.position.set(player.position.x, 0, player.position.z); if (where === 'sea') seaSky.position.set(player.position.x, 0, player.position.z); if (where === 'lantern' && lantScene.userData.stars) lantScene.userData.stars.position.set(player.position.x, 0, player.position.z); if (where === 'skyhaven') skyScene.userData.dome.position.set(player.position.x, -200, player.position.z);
+    if (where !== 'in') { const sunNow = where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : where === 'hills' ? hillSun : where === 'high' ? highSun : where === 'cairnhold' ? cairnSun : where === 'cliff' ? cliffSun : where === 'cogsworth' ? cogSun : where === 'mtn' ? mtnSun : where === 'emberdeep' ? embSun : where === 'sea' ? seaSun : where === 'lantern' ? lantSun : where === 'lift' ? liftSun : where === 'skyhaven' ? skySun : where === 'flight' ? flightSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-170, 330, 160)); }
 
     // Bramblewick watches you
     if (!reduce) { bw.position.y = Math.sin(t * 1.6) * 0.06; head.rotation.z = Math.sin(t * 0.9) * 0.05; }
@@ -5640,11 +6528,33 @@
       if (tam2 && tam2.visible) tam2.lookAt(player.position.x, 0, player.position.z);
       const ud = embScene.userData; if (ud.lava) ud.lava.material.emissiveIntensity = 1.3 + Math.sin(t * 0.8) * 0.3; if (ud.bellows) ud.bellows.scale.y = 1 + Math.abs(Math.sin(t * 1.5)) * 0.25; if (ud.scale) ud.scale.userData.beam.rotation.z = Math.sin(t * 0.5) * 0.08; embLights.forEach((l, k) => l.intensity = 1.2 + Math.sin(t * 2 + k) * 0.3);
     }
+    if (where === 'lantern') {
+      const dA = Math.hypot(player.position.x - ASTPOS.x, player.position.z - ASTPOS.z);
+      if (dA < 30) astra.lookAt(player.position.x, 0, player.position.z); else if (!reduce) astra.rotation.y = 2.4 + Math.sin(t * 0.3) * 0.3;
+      if (!reduce) { astra.userData.arms[0].rotation.x = -0.4 + Math.sin(t * 0.9) * 0.15; astra.userData.head.rotation.x = dA < 30 ? 0 : -0.5 + Math.sin(t * 0.5) * 0.1; }
+      if (dA < 7.5 && !nearAst && !talking() && ['toastra', 'tolant'].includes(phase)) { nearAst = true; reachAstra(); }
+      if (dA > 10.5) nearAst = false;
+      if (beam) beam.rotation.y = -t * (Math.PI * 2 / 12);
+      const ud = lantScene.userData; (ud.boats || []).forEach(b => { b.position.y = SEA_Y + 0.3 + Math.sin(t * 0.8 + b.userData.bob) * 0.25; b.rotation.z = Math.sin(t * 0.6 + b.userData.bob) * 0.04; });
+      if (buoy) { buoy.position.y = SEA_Y + Math.sin(t * 0.7) * 0.4; buoy.rotation.z = Math.sin(t * 0.5) * 0.08; buoy.userData.light.intensity = (Math.floor(t * 0.5) % 2 ? 1.2 : 0.1); }
+      if (ud.sea) ud.sea.material.map.offset.set(t * 0.004, t * 0.002);
+    }
+    if (where === 'lift') liftTick(dt);
+    if (where === 'flight') flightTick(dt, t);
+    if (where === 'skyhaven') {
+      const dI = Math.hypot(player.position.x - ILSPOS.x, player.position.z - ILSPOS.z);
+      if (dI < 30) ilsa.lookAt(player.position.x, 0, player.position.z); if (!reduce) { ilsa.userData.scarf.rotation.x = 0.5 + Math.sin(t * 3) * 0.3; ilsa.userData.arms[0].rotation.x = -0.3 + Math.sin(t * 1.1) * 0.2; }
+      if (dI < 7.5 && !nearIls && !talking() && ['toilsa', 'tosky'].includes(phase)) { nearIls = true; reachIlsa(); }
+      if (dI > 10.5) nearIls = false;
+      if (windFan) windFan.rotation.x += dt * 6; spinnersSky.forEach(o => { if (o.userData.sock) o.rotation.y = Math.sin(t * 0.7) * 0.4; else o.position.y += Math.sin(t * 0.6 + o.userData.bob) * dt * 0.4; });
+      if (glider && glider.userData.prop.visible) glider.userData.prop.rotation.z += dt * 12;
+    }
+    if (where === 'in' && interior.id === 'tides' && interior.scene.userData.tideFloat) interior.scene.userData.tideFloat.position.y = 3 + Math.sin(t * 0.5) * 2.4;
     if (where === 'in' && interior.id === 'mill') { const u = interior.scene.userData; u.runner.rotation.y += dt * wheelSpeed * 1.5; u.shaft.rotation.y += dt * wheelSpeed * 1.5; u.gear.rotation.y += dt * wheelSpeed * 1.5; u.axle.rotation.x += dt * wheelSpeed; }
     if (gameStarted && !mapOpen && keysShown < 99) { keysShown += dt; if (keysShown > 9) { keysEl.classList.add('gone'); keysShown = 99; } }
     ambientTick(dt, t); songTick(dt); cullTimer += dt; if (cullTimer > 0.5) { cullTimer = 0; cullFar(); }
     // your beetle trots along behind you
-    if (beetle && inRiver(beetle.position.x, beetle.position.z)) { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; }
+    if (beetle && inRiver(beetle.position.x, beetle.position.z)) { if (where === 'lantern') { beetle.position.set(40, lantH(40, COVE.z), COVE.z); } else { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; } }
     if (beetle && beetle.userData.follow && !inRiver(player.position.x, player.position.z)) {
       const dxb = player.position.x - beetle.position.x, dzb = player.position.z - beetle.position.z, db = Math.hypot(dxb, dzb);
       if (db > 40 || (where === 'fernwater' && (player.position.z > 97.6) !== (beetle.position.z > 97.6) && Math.abs(player.position.x) > 5.2)) { beetle.position.set(player.position.x + 2, 0, player.position.z + 2); }
@@ -5703,8 +6613,8 @@
     { name: 'Cairnhold Highlands', math: 'Geometry and measurement', lessons: [['Lesson 1: The chain and the stick', 'cairn-1'], ['Lesson 2: Corners', 'cairn-2'], ['Lesson 3: Around and inside', 'cairn-3'], ['Lesson 4: Odd fields', 'cairn-4'], ['Lesson 5: Round things', 'cairn-5'], ['Lesson 6: Filling a cistern', 'cairn-6'], ['Lesson 7: The leaning ladder', 'cairn-7'], ['Lesson 8: The lodge maps', 'cairn-8'], ['Lesson 9: Same shape, different size', 'cairn-9'], ['Lesson 10: The Cairnhold Bridge', 'cairn-10']] },
     { name: 'Cogsworth', math: 'Ratios, rates, percent, negative numbers', lessons: [['Lesson 1: Gear teeth', 'cog-1'], ['Lesson 2: How fast', 'cog-2'], ['Lesson 3: Scaling the recipe', 'cog-3'], ['Lesson 4: Percent, properly', 'cog-4'], ['Lesson 5: Below ground', 'cog-5'], ['Lesson 6: Adding and taking away cold', 'cog-6'], ['Lesson 7: Which first', 'cog-7'], ['Lesson 8: The missing tooth', 'cog-8'], ['Lesson 9: The Clock Race', 'cog-9'], ['Lesson 10: Your bicycle', 'cog-10']] },
     { name: 'Emberdeep', math: 'Algebra 1 and 2', lessons: [['Lesson 1: The balance', 'ember-1'], ['Lesson 2: Mystery ore', 'ember-2'], ['Lesson 3: Enough or not', 'ember-3'], ['Lesson 4: The forge-grid', 'ember-4'], ['Lesson 5: Two recipes at once', 'ember-5'], ['Lesson 6: Casting curves', 'ember-6'], ['Lesson 7: Longer recipes', 'ember-7'], ['Lesson 8: Doubling heat', 'ember-8'], ['Lesson 9: Counting the doublings', 'ember-9'], ['Lesson 10: The Mountain Fair', 'ember-10']] },
-    { name: 'Lanternreach', math: 'Trigonometry, functions, pre-calculus' },
-    { name: 'Skyhaven', math: 'Calculus 1 and 2' }
+    { name: 'Lanternreach', math: 'Trigonometry, functions, pre-calculus', lessons: [['Lesson 1: The cliff and the shadow', 'lant-1'], ['Lesson 2: The beam goes round', 'lant-2'], ['Lesson 3: Tides', 'lant-3'], ['Lesson 4: Currents', 'lant-4'], ['Lesson 5: Families of curves', 'lant-5'], ['Lesson 6: Undoing', 'lant-6'], ['Lesson 7: The keeper\u2019s log', 'lant-7'], ['Lesson 8: Closer and closer', 'lant-8'], ['Lesson 9: The Regatta', 'lant-9'], ['Lesson 10: By the stars', 'lant-10']] },
+    { name: 'Skyhaven', math: 'Calculus 1 and 2', lessons: [['Lesson 1: The instant', 'sky-1'], ['Lesson 2: The slope of the glide', 'sky-2'], ['Lesson 3: Rules of the air', 'sky-3'], ['Lesson 4: Steepest and gentlest', 'sky-4'], ['Lesson 5: Everything moves at once', 'sky-5'], ['Lesson 6: Adding up the lift', 'sky-6'], ['Lesson 7: The two halves', 'sky-7'], ['Lesson 8: Harder sums', 'sky-8'], ['Lesson 9: Shapes in the air', 'sky-9'], ['Lesson 10: Engines in series', 'sky-10'], ['Lesson 11: How things change', 'sky-11'], ['Lesson 12: The Guild Fair and the flight home', 'sky-12']] }
   ];
   const startEl = $('start'), mapSvgEl = $('mapsvg'), mapPanel = $('mappanel'), mapClose = $('mapclose');
   // where each region sits on the parchment, and a glyph for it
@@ -5738,6 +6648,26 @@
       const spot = (x, z, r, fill, label) => `<circle cx="${X(x)}" cy="${Z(z)}" r="${r}" fill="${fill}" stroke="#3a2a18" stroke-width="1"/><text x="${X(x)}" y="${Z(z) + r + 9}" text-anchor="middle" font-size="8" fill="#3a2a18">${label}</text>`;
       out.push(spot(0, 0, 11, '#8a6438', 'Shop'), spot(NURS.x, NURS.z, 8, '#6f9a3a', 'Nursery'), spot(WOOD.x, WOOD.z, 8, '#c9a06a', 'Woodshop'), spot(FEN.x, FEN.z, 5, '#c8384a', 'Stall'), spot(BUSH.x, BUSH.z, 5, '#2c5527', 'Bush'), spot(OAK.x, OAK.z, 10, '#3e6b2b', 'Old Oak'));
       out.push(`<rect x="${X(-5)}" y="${Z(102)}" width="${X(5) - X(-5)}" height="4" fill="#6b4a2b"/><text x="${X(0)}" y="${Z(104) + 12}" text-anchor="middle" font-size="8" fill="#3a2a18">Gate</text>`);
+      return { svg: out.join(''), X, Z };
+    },
+    skyhaven(w, h) {
+      const X = x => (x + 100) / 220 * w, Z = z => (z + 10) / 150 * h, out = [];
+      out.push(`<rect x="0" y="0" width="${w}" height="${h}" fill="#9fc4ea"/>`);
+      ISLANDS.forEach(i => out.push(`<ellipse cx="${X(i.x)}" cy="${Z(i.z)}" rx="${i.r / 220 * w}" ry="${i.r / 150 * h}" fill="#6f9a52" stroke="#9b958a" stroke-width="2"/>`));
+      BRIDGES.forEach(([ax, az, bx, bz]) => out.push(`<line x1="${X(ax)}" y1="${Z(az)}" x2="${X(bx)}" y2="${Z(bz)}" stroke="#b89a6a" stroke-width="3" stroke-dasharray="4 3"/>`));
+      const spot = (x, z, r, fill, label) => `<circle cx="${X(x)}" cy="${Z(z)}" r="${r}" fill="${fill}" stroke="#1f3a5a" stroke-width="1"/><text x="${X(x)}" y="${Z(z) + r + 9}" text-anchor="middle" font-size="8" fill="#1f3a5a">${label}</text>`;
+      out.push(spot(-24, 50, 5, '#e9e2d2', 'Guild'), spot(84, 86, 5, '#d9e4ec', 'Balloons'), spot(-70, 94, 5, '#d8d2c0', 'Engine house'), spot(ILSPOS.x, ILSPOS.z, 3.5, '#4a3a5a', 'Quill'), spot(22, 70, 4, '#9a9a9a', 'Wind tunnel'), spot(10, 25, 3, '#c8384a', 'Launch rail'), spot(0, 0, 3, '#3a3a3a', 'Lift'));
+      return { svg: out.join(''), X, Z };
+    },
+    lantern(w, h) {
+      const X = x => (x + 60) / 200 * w, Z = z => (z + 6) / 152 * h, out = [];
+      out.push(`<rect x="${X(-60)}" y="${Z(-6)}" width="${X(140) - X(-60)}" height="${Z(146) - Z(-6)}" fill="#1f3a5a"/><text x="${X(110)}" y="${Z(40)}" text-anchor="middle" font-size="9" fill="#9fc8e8">The sea</text>`);
+      out.push(`<path d="M${X(58)},${Z(-6)} L${X(58)},${Z(90)} Q${X(44)},${Z(112)} ${X(58)},${Z(134)} L${X(58)},${Z(146)} L${X(-60)},${Z(146)} L${X(-60)},${Z(-6)} Z" fill="#4f7a4a"/>`);
+      out.push(`<line x1="${X(0)}" y1="${Z(0)}" x2="${X(0)}" y2="${Z(138)}" stroke="#8a8478" stroke-width="5" stroke-linecap="round"/><line x1="${X(4)}" y1="${Z(COVE.z)}" x2="${X(58)}" y2="${Z(COVE.z)}" stroke="#8a8478" stroke-width="3"/>`);
+      out.push(`<rect x="${X(PIER.x0)}" y="${Z(PIER.z) - 2}" width="${X(PIER.x1) - X(PIER.x0)}" height="4" fill="#b89a6a"/>`);
+      const spot = (x, z, r, fill, label) => `<circle cx="${X(x)}" cy="${Z(z)}" r="${r}" fill="${fill}" stroke="#f6e7c2" stroke-width="1"/><text x="${X(x)}" y="${Z(z) + r + 9}" text-anchor="middle" font-size="8" fill="#f6e7c2">${label}</text>`;
+      out.push(spot(LIGHT.x, LIGHT.z, 6, '#f2efe6', 'The Light'), spot(-34, 32, 5, '#b08a3a', 'Observatory'), spot(ASTPOS.x, ASTPOS.z, 3.5, '#9fb8e8', 'Astra'), spot(22, 60, 4, '#e6ddc8', 'Keeper\u2019s'), spot(-24, 70, 4, '#d8d2c0', 'Chandlery'), spot(-22, 100, 4, '#dfe6e8', 'Tide Office'), spot(150, 86, 2.5, '#b8323a', 'Bell buoy'));
+      out.push(`<rect x="${X(-5)}" y="${Z(0) - 2}" width="${X(5) - X(-5)}" height="4" fill="#cfc8b6"/><text x="${X(0)}" y="${Z(0) + 12}" text-anchor="middle" font-size="8" fill="#f6e7c2">Gate</text>`);
       return { svg: out.join(''), X, Z };
     },
     emberdeep(w, h) {
@@ -5802,13 +6732,17 @@
     }
   };
   function regionOf() { return where === 'in' ? interior.region : where; }
-  function currentRegionIndex() { const w = regionOf(); return w === 'emberdeep' || w === 'mtn' ? 5 : w === 'cogsworth' || w === 'cliff' ? 4 : w === 'cairnhold' || w === 'high' ? 3 : w === 'fernwater' ? 2 : w === 'orchards' || w === 'hills' ? 1 : 0; }
+  function currentRegionIndex() { const w = regionOf(); return w === 'skyhaven' || w === 'lift' || w === 'flight' ? 7 : w === 'lantern' || w === 'sea' ? 6 : w === 'emberdeep' || w === 'mtn' ? 5 : w === 'cogsworth' || w === 'cliff' ? 4 : w === 'cairnhold' || w === 'high' ? 3 : w === 'fernwater' ? 2 : w === 'orchards' || w === 'hills' ? 1 : 0; }
   function youAreHere() {
     // the player's spot on the parchment
     if (where === 'in') { const saved = where, px = player.position.x, pz = player.position.z; where = interior.region; player.position.x = interior.door.x; player.position.z = interior.door.z; const r = youAreHere(); where = saved; player.position.x = px; player.position.z = pz; return r; }
     if (where === 'village') { const [cx, cy] = MAPPOS[0]; return [cx + player.position.x * 0.25, cy + (player.position.z - 45) * 0.2]; }
     if (where === 'orchards') { const [cx, cy] = MAPPOS[1]; return [cx + player.position.x * 0.2, cy - (player.position.z - 55) * 0.22]; }
     if (where === 'fernwater') { const [cx, cy] = MAPPOS[2]; return [cx + player.position.x * 0.2, cy - (player.position.z - 60) * 0.2]; }
+    if (where === 'skyhaven') { const [cx, cy] = MAPPOS[7]; return [cx + player.position.x * 0.12, cy - (player.position.z - 60) * 0.12]; }
+    if (where === 'lift' || where === 'flight') { const tt = where === 'lift' ? liftT : 1 - flightT, a = MAPPOS[6], b = MAPPOS[7]; if (where === 'flight') { const h = MAPPOS[0]; return [b[0] + (h[0] - b[0]) * flightT, b[1] + (h[1] - b[1]) * flightT]; } return [a[0] + (b[0] - a[0]) * tt, a[1] + (b[1] - a[1]) * tt]; }
+    if (where === 'lantern') { const [cx, cy] = MAPPOS[6]; return [cx + player.position.x * 0.14, cy - (player.position.z - 70) * 0.14]; }
+    if (where === 'sea') { const t = clamp(player.position.z / SEA_LEN, 0, 1), a = MAPPOS[5], b = MAPPOS[6]; return [a[0] + (b[0] - a[0]) * t + 14 * Math.sin(t * Math.PI), a[1] + (b[1] - a[1]) * t + 18 * Math.sin(t * Math.PI)]; }
     if (where === 'emberdeep') { const [cx, cy] = MAPPOS[5]; return [cx + player.position.x * 0.16, cy - (player.position.z - 60) * 0.16]; }
     if (where === 'mtn') { const t = clamp(player.position.z / MTN_LEN, 0, 1), a = MAPPOS[4], b = MAPPOS[5]; return [a[0] + (b[0] - a[0]) * t + 16 * Math.sin(t * Math.PI), a[1] + (b[1] - a[1]) * t - 24 * Math.sin(t * Math.PI)]; }
     if (where === 'cogsworth') { const [cx, cy] = MAPPOS[4]; return [cx + player.position.x * 0.16, cy - (player.position.z - 50) * 0.16]; }
@@ -5866,8 +6800,8 @@
     } else { const sn = document.createElement('div'); sn.className = 'soon'; sn.textContent = 'Not built yet. The road will reach it.'; mapPanel.appendChild(sn); }
     if (gameStarted) {
       const here = document.createElement('div'); here.className = 'here';
-      const wr = regionOf(); const key = wr === 'orchards' ? 'orchards' : wr === 'village' ? 'village' : wr === 'fernwater' ? 'fernwater' : wr === 'cairnhold' ? 'cairnhold' : wr === 'cogsworth' ? 'cogsworth' : wr === 'emberdeep' ? 'emberdeep' : null;
-      here.innerHTML = `<b>You are here:</b> ${where === 'in' ? 'inside ' + interior.label : where === 'village' ? 'Thistledown Hollow' : where === 'road' ? 'on the Long Road' : where === 'hills' ? 'on the River Road' : where === 'high' ? 'on the High Road' : where === 'cairnhold' ? 'Cairnhold Highlands' : where === 'cliff' ? 'on the Cliff Road' : where === 'cogsworth' ? 'Cogsworth' : where === 'mtn' ? 'on the Mountain Road' : where === 'emberdeep' ? 'Emberdeep' : where === 'fernwater' ? 'Fernwater Crossing' : 'the Mallow Orchards'}${coins ? ` · ${coins} acorn coins` : ''}`;
+      const wr = regionOf(); const key = wr === 'orchards' ? 'orchards' : wr === 'village' ? 'village' : wr === 'fernwater' ? 'fernwater' : wr === 'cairnhold' ? 'cairnhold' : wr === 'cogsworth' ? 'cogsworth' : wr === 'emberdeep' ? 'emberdeep' : wr === 'lantern' ? 'lantern' : wr === 'skyhaven' ? 'skyhaven' : null;
+      here.innerHTML = `<b>You are here:</b> ${where === 'in' ? 'inside ' + interior.label : where === 'village' ? 'Thistledown Hollow' : where === 'road' ? 'on the Long Road' : where === 'hills' ? 'on the River Road' : where === 'high' ? 'on the High Road' : where === 'cairnhold' ? 'Cairnhold Highlands' : where === 'cliff' ? 'on the Cliff Road' : where === 'cogsworth' ? 'Cogsworth' : where === 'mtn' ? 'on the Mountain Road' : where === 'emberdeep' ? 'Emberdeep' : where === 'sea' ? 'on the Sea Road' : where === 'lantern' ? 'Lanternreach' : where === 'lift' ? 'on the sky-lift' : where === 'skyhaven' ? 'Skyhaven' : where === 'flight' ? 'in the air, flying home' : where === 'fernwater' ? 'Fernwater Crossing' : 'the Mallow Orchards'}${coins ? ` · ${coins} acorn coins` : ''}`;
       if (key) { const ins = INSET[key](300, key === 'village' ? 410 : 330); here.innerHTML += `<svg viewBox="0 0 300 ${key === 'village' ? 410 : 330}">${ins.svg}<circle id="inset-me" cx="${ins.X(where === 'in' ? interior.door.x : player.position.x)}" cy="${ins.Z(where === 'in' ? interior.door.z : player.position.z)}" r="5" fill="#d23b4e" stroke="#fff" stroke-width="1.5"/></svg>`; mapPanel._ins = ins; }
       mapPanel.appendChild(here);
     }
@@ -5898,6 +6832,9 @@
     else if (save.where === 'hills') { restoreAfter = place; goToHills(false); }
     else if (save.where === 'high') { restoreAfter = place; where = 'fernwater'; scene.remove(player); fernScene.add(player); if (beetle) { scene.remove(beetle); fernScene.add(beetle); } goToHigh(false); }
     else if (save.where === 'cliff') { restoreAfter = place; where = 'cairnhold'; scene.remove(player); cairnScene.add(player); if (beetle) { scene.remove(beetle); cairnScene.add(beetle); } goToCliff(false); }
+    else if (save.where === 'skyhaven' || save.where === 'lift' || save.where === 'flight') { restoreAfter = save.where === 'skyhaven' ? place : null; where = 'lift'; scene.remove(player); liftScene.add(player); if (beetle) { scene.remove(beetle); liftScene.add(beetle); } liftT = 1; goToSky(); }
+    else if (save.where === 'sea') { restoreAfter = place; where = 'emberdeep'; scene.remove(player); embScene.add(player); if (beetle) { scene.remove(beetle); embScene.add(beetle); } goToSea(false); }
+    else if (save.where === 'lantern') { restoreAfter = place; where = 'sea'; scene.remove(player); seaScene.add(player); if (beetle) { scene.remove(beetle); seaScene.add(beetle); } goToLantern(); }
     else if (save.where === 'mtn') { restoreAfter = place; where = 'cogsworth'; scene.remove(player); cogScene.add(player); if (beetle) { scene.remove(beetle); cogScene.add(beetle); } goToMtn(false); }
     else if (save.where === 'emberdeep') { restoreAfter = place; where = 'mtn'; scene.remove(player); mtnScene.add(player); if (beetle) { scene.remove(beetle); mtnScene.add(beetle); } goToEmberdeep(); }
     else if (save.where === 'cogsworth') { restoreAfter = place; where = 'cliff'; scene.remove(player); cliffScene.add(player); if (beetle) { scene.remove(beetle); cliffScene.add(beetle); } goToCogsworth(); }
@@ -5934,6 +6871,10 @@
     else if (key === 'hills') { kid.satchel.visible = true; coinsAtLeast(27); where = 'orchards'; scene.remove(player); orchScene.add(player); if (beetle) { scene.remove(beetle); orchScene.add(beetle); } setTimeout(() => goToHills(false), 200); }
     else if (key === 'high') { kid.satchel.visible = true; coinsAtLeast(45); where = 'fernwater'; scene.remove(player); fernScene.add(player); if (beetle) { scene.remove(beetle); fernScene.add(beetle); } setTimeout(() => goToHigh(false), 200); }
     else if (key === 'cliff') { kid.satchel.visible = true; coinsAtLeast(65); where = 'cairnhold'; scene.remove(player); cairnScene.add(player); if (beetle) { scene.remove(beetle); cairnScene.add(beetle); } buildBridge(); setTimeout(() => goToCliff(false), 200); }
+    else if (key === 'lift') { kid.satchel.visible = true; coinsAtLeast(125); bikeOwned = true; where = 'lantern'; scene.remove(player); lantScene.add(player); if (beetle) { scene.remove(beetle); lantScene.add(beetle); } setTimeout(() => goToLift(false), 200); }
+    else if (/^sky-(1[0-2]|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(4), 10); coinsAtLeast(125 + 2 * (n - 1)); bikeOwned = true; where = 'lift'; scene.remove(player); liftScene.add(player); if (beetle) { scene.remove(beetle); liftScene.add(beetle); } liftT = 1; if (n === 1) { phase = 'tosky'; } else { phase = 'doneS1'; pendingStart = { 2: startS2, 3: startS3, 4: startS4, 5: startS5, 6: startS6, 7: startS7, 8: startS8, 9: startS9, 10: startS10, 11: startS11, 12: startS12 }[n]; } setTimeout(goToSky, 200); }
+    else if (key === 'sea') { kid.satchel.visible = true; coinsAtLeast(105); bikeOwned = true; where = 'emberdeep'; scene.remove(player); embScene.add(player); if (beetle) { scene.remove(beetle); embScene.add(beetle); } setTimeout(() => goToSea(false), 200); }
+    else if (/^lant-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(5), 10); coinsAtLeast(105 + 2 * (n - 1)); bikeOwned = true; where = 'sea'; scene.remove(player); seaScene.add(player); if (beetle) { scene.remove(beetle); seaScene.add(beetle); } if (n === 1) { phase = 'tolant'; } else { phase = 'doneL1'; pendingStart = { 2: startL2, 3: startL3, 4: startL4, 5: startL5, 6: startL6, 7: startL7, 8: startL8, 9: startL9, 10: startL10 }[n]; } setTimeout(goToLantern, 200); }
     else if (key === 'mtn') { kid.satchel.visible = true; coinsAtLeast(85); bikeOwned = true; where = 'cogsworth'; scene.remove(player); cogScene.add(player); if (beetle) { scene.remove(beetle); cogScene.add(beetle); } setTimeout(() => goToMtn(false), 200); }
     else if (/^ember-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(6), 10); coinsAtLeast(85 + 2 * (n - 1)); bikeOwned = true; where = 'mtn'; scene.remove(player); mtnScene.add(player); if (beetle) { scene.remove(beetle); mtnScene.add(beetle); } if (n === 1) { phase = 'toemb'; } else { phase = 'doneE1'; pendingStart = { 2: startE2, 3: startE3, 4: startE4, 5: startE5, 6: startE6, 7: startE7, 8: startE8, 9: startE9, 10: startE10 }[n]; } setTimeout(goToEmberdeep, 200); }
     else if (/^cog-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(4), 10); coinsAtLeast(65 + 2 * (n - 1)); where = 'cliff'; scene.remove(player); cliffScene.add(player); if (beetle) { scene.remove(beetle); cliffScene.add(beetle); } if (n === 1) { phase = 'tocog'; } else { phase = 'doneG1'; pendingStart = { 2: startG2, 3: startG3, 4: startG4, 5: startG5, 6: startG6, 7: startG7, 8: startG8, 9: startG9, 10: startG10 }[n]; } setTimeout(goToCogsworth, 200); }
@@ -5950,7 +6891,7 @@
     else setTimeout(start, 500);
   }
   const h = location.hash.replace('#', '');
-  if (['lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'hills', 'high', 'cairn-1', 'cairn-2', 'cairn-3', 'cairn-4', 'cairn-5', 'cairn-6', 'cairn-7', 'cairn-8', 'cairn-9', 'cairn-10', 'cliff', 'cog-1', 'cog-2', 'cog-3', 'cog-4', 'cog-5', 'cog-6', 'cog-7', 'cog-8', 'cog-9', 'cog-10', 'mtn', 'ember-1', 'ember-2', 'ember-3', 'ember-4', 'ember-5', 'ember-6', 'ember-7', 'ember-8', 'ember-9', 'ember-10', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5', 'fern-6', 'fern-7', 'fern-8', 'fern-9'].includes(h)) launch(h);
+  if (['lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'hills', 'high', 'cairn-1', 'cairn-2', 'cairn-3', 'cairn-4', 'cairn-5', 'cairn-6', 'cairn-7', 'cairn-8', 'cairn-9', 'cairn-10', 'cliff', 'cog-1', 'cog-2', 'cog-3', 'cog-4', 'cog-5', 'cog-6', 'cog-7', 'cog-8', 'cog-9', 'cog-10', 'mtn', 'ember-1', 'ember-2', 'ember-3', 'ember-4', 'ember-5', 'ember-6', 'ember-7', 'ember-8', 'ember-9', 'ember-10', 'sea', 'lant-1', 'lant-2', 'lant-3', 'lant-4', 'lant-5', 'lant-6', 'lant-7', 'lant-8', 'lant-9', 'lant-10', 'lift', 'sky-1', 'sky-2', 'sky-3', 'sky-4', 'sky-5', 'sky-6', 'sky-7', 'sky-8', 'sky-9', 'sky-10', 'sky-11', 'sky-12', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5', 'fern-6', 'fern-7', 'fern-8', 'fern-9'].includes(h)) launch(h);
   else { startEl.hidden = false; drawMap(); }
 })();
 </script>
