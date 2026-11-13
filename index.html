@@ -6017,7 +6017,24 @@
   function die(why) {
     if (dead) return; dead = true; fading = true; fadeEl.textContent = why || 'You fell.'; fadeEl.classList.add('on');
     try { startAudio(); if (audioCtx) { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(110, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 1.2); g.gain.setValueAtTime(0.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.4); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 1.4); } } catch (e) {}
-    setTimeout(() => { if (save.check) { save.where = save.check.where; save.pos = save.check.pos; save.yaw = save.check.yaw; } else { save.where = 'village'; save.pos = [0, 0, 6.5]; save.yaw = Math.PI; } persist(); location.reload(); }, 2200);
+    setTimeout(respawn, 2200);
+  }
+  // wake at the last place you stood on solid ground, without restarting the page
+  function respawn() {
+    const c = save.check;
+    if (!c || c.where !== where) { // the safe spot is in another region: hand it to the normal loader
+      if (c) { save.where = c.where; save.pos = c.pos; save.yaw = c.yaw; } else { save.where = 'village'; save.pos = [0, 0, 6.5]; save.yaw = Math.PI; }
+      persist(); try { location.reload(); } catch (e) {} return;
+    }
+    if (riding) setRiding(false);
+    player.position.set(c.pos[0], 0, c.pos[2]); py = 0; vy = 0; vel.set(0, 0, 0); wasAir = false; fallPeak = 0;
+    lastGY = groundAt(c.pos[0], c.pos[2]); player.position.y = lastGY;
+    bodyYaw = camYaw = c.yaw; player.rotation.y = bodyYaw;
+    if (beetle) beetle.position.set(c.pos[0] - 1.5, groundAt(c.pos[0] - 1.5, c.pos[2] - 1), c.pos[2] - 1);
+    const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    hp = 100; hpFill.style.width = '100%'; hpEl.classList.remove('low', 'show');
+    save.where = c.where; save.pos = c.pos.slice(); save.yaw = c.yaw; persist();
+    setTimeout(() => { fadeEl.classList.remove('on'); fading = false; dead = false; hint('You wake where you last stood on solid ground.'); }, 700);
   }
   let camYaw = Math.PI, bodyYaw = Math.PI, pitch = 0.08, view = 'back', vy = 0, py = 0, wantJump = false;
   const vel = new THREE.Vector3(), targetV = new THREE.Vector3(); // momentum: where your feet are actually carrying you
@@ -6652,7 +6669,7 @@
       snow.geometry.attributes.position.needsUpdate = true;
     }
 
-    if (gameStarted && !fading && !dead) { saveTimer += dt; if (saveTimer > 2) { saveTimer = 0; if (where === 'in') { save.where = interior.region; save.pos = [interior.door.x, 0, interior.door.z]; save.yaw = interior.door.yaw; } else { save.where = where; save.pos = [player.position.x, py, player.position.z]; save.yaw = bodyYaw; } save.started = true; if (!dead && py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && where !== 'lift' && where !== 'flight') save.check = { where: save.where, pos: save.pos.slice(), yaw: save.yaw }; persist(); } }
+    if (gameStarted && !fading && !dead) { saveTimer += dt; if (saveTimer > 2) { saveTimer = 0; if (where === 'in') { save.where = interior.region; save.pos = [interior.door.x, 0, interior.door.z]; save.yaw = interior.door.yaw; } else if (py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && where !== 'lift' && where !== 'flight') { save.where = where; save.pos = [player.position.x, 0, player.position.z]; save.yaw = bodyYaw; } save.started = true; if (!dead && py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && where !== 'lift' && where !== 'flight') save.check = { where: save.where, pos: save.pos.slice(), yaw: save.yaw }; persist(); } }
     updateMapLive();
     renderer.render(curScene(), camera);
     requestAnimationFrame(tick);
