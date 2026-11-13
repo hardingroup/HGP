@@ -398,6 +398,26 @@
     });
   }
   const textTexes = [];
+  // ---------- hanging signs: boards on chains, readable from both sides, swaying a little ----------
+  const swingSigns = [];
+  const chainM = new THREE.MeshStandardMaterial({ color: '#4a4a4a', metalness: 0.7, roughness: 0.4 });
+  const linkGeo = new THREE.TorusGeometry(0.11, 0.035, 5, 10);
+  function chain(parent, x, y0, y1, z) { const n = Math.max(2, Math.round((y0 - y1) / 0.17)); for (let k = 0; k < n; k++) { const l = new THREE.Mesh(linkGeo, chainM); l.position.set(x, y0 - (k + 0.5) * (y0 - y1) / n, z); l.rotation.y = k % 2 ? Math.PI / 2 : 0; parent.add(l); } }
+  function hangBoards(sc, x, topY, z, ry, boards) {
+    const g = new THREE.Group(); g.position.set(x, topY, z); g.rotation.y = ry; sc.add(g);
+    let y = 0, prevW = 99;
+    boards.forEach((b, k) => { const w = b.geometry.parameters.width, h = b.geometry.parameters.height, gap = k ? 0.3 : 0.5, cx = Math.min(w, prevW) * 0.38; chain(g, -cx, y, y - gap, 0); chain(g, cx, y, y - gap, 0); b.position.set(0, y - gap - h / 2, 0); b.rotation.set(0, 0, 0); b.castShadow = true; g.add(b); y -= gap + h; prevW = w; });
+    g.userData.ph = Math.random() * 6; swingSigns.push(g); return g;
+  }
+  // a gallows signpost: the post stands to one side, the boards hang from its arm, so nothing is stuck on the back
+  function signpost(sc, x, gY, z, dir, boards, postM) {
+    const maxW = Math.max(...boards.map(b => b.geometry.parameters.width)), armLen = maxW + 1.1, topY = gY + 5.6;
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 6, 8), postM); post.position.set(x, gY + 3, z); post.castShadow = true; sc.add(post);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(armLen, 0.24, 0.24), postM); arm.position.set(x + dir * armLen / 2, topY, z); sc.add(arm);
+    const brace = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.16, 0.16), postM); brace.position.set(x + dir * 0.6, topY - 0.6, z); brace.rotation.z = dir * Math.PI / 4; sc.add(brace);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), postM); cap.position.set(x, gY + 6.05, z); sc.add(cap);
+    return hangBoards(sc, x + dir * (0.7 + maxW / 2), topY - 0.12, z, 0, boards);
+  }
   function signBoard(text, wUnits, hUnits, bg = '#8a6438', fg = '#f6e7c2') {
     const tex = textTex(text, 512, Math.round(512 * hUnits / wUnits), bg, fg);
     textTexes.push({ tex, text, bg, fg });
@@ -1579,13 +1599,11 @@
     // signposts at both ends
     const postM = mat('#6b4a2b');
     [[3, 'The Mallow Orchards', Math.PI, '#8a6438'], [HILL_LEN - 3, 'Fernwater Crossing', 0, '#4a5fb8']].forEach(([z, label, ry, colr]) => {
-      const x = roadX(z) - 6, h = hillH(x, z); const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 5, 8), postM); post.position.set(x, h + 2.5, z); hillScene.add(post);
-      const sg = signBoard(label, 6, 1.3, colr, '#f6e7c2'); sg.position.set(x, h + 4.2, z + (ry ? -0.3 : 0.3)); sg.rotation.y = ry; hillScene.add(sg);
-      const sg2 = signBoard('The River Road', 4.6, 1, '#f2e6c8', '#4a3420'); sg2.position.set(x, h + 2.9, z + (ry ? -0.3 : 0.3)); sg2.rotation.y = ry; hillScene.add(sg2);
+      const x = roadX(z) - 6, h = hillH(x, z); signpost(hillScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The River Road', 4.6, 1, '#f2e6c8', '#4a3420')], postM);
       hillSolids.push({ x, z, r: 0.5 });
     });
     // a stile gate at each end, like the one leaving the Hollow
-    [0, HILL_LEN].forEach(z => { const cx = roadX(z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 8, 10), postM); gp.position.set(cx + o, 4, z); hillScene.add(gp); hillSolids.push({ x: cx + o, z, r: 0.9 }); }); const arch = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), mat('#8a6438')); arch.position.set(cx, 7.4, z); hillScene.add(arch); const sg = signBoard(z ? 'Fernwater' : 'The Mallow Orchards', 6.4, 1.4, z ? '#4a5fb8' : '#5a3d22', '#f6e7c2'); sg.position.set(cx, 10, z); hillScene.add(sg); const sg2 = signBoard('The River Road', 5, 1.1, '#f2e6c8', '#4a3420'); sg2.position.set(cx, 8.9, z); hillScene.add(sg2); });
+    [0, HILL_LEN].forEach(z => { const cx = roadX(z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 8, 10), postM); gp.position.set(cx + o, 4, z); hillScene.add(gp); hillSolids.push({ x: cx + o, z, r: 0.9 }); }); const arch = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), mat('#8a6438')); arch.position.set(cx, 7.4, z); hillScene.add(arch); hangBoards(hillScene, cx, 12.45, z, 0, [signBoard(z ? 'Fernwater' : 'The Mallow Orchards', 6.4, 1.4, z ? '#4a5fb8' : '#5a3d22', '#f6e7c2'), signBoard('The River Road', 5, 1.1, '#f2e6c8', '#4a3420')]); });
     hillScene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o !== ground && o !== roadMesh) { o.castShadow = true; o.receiveShadow = true; } });
   }
   function goToHills(fromFern) {
@@ -2001,12 +2019,10 @@
     for (let z = 35; z < HIGH_LEN; z += 45) { const x = highRoadX(z) - 6, h = highH(x, z); let sy = h - 0.3; [1.3, 1.0, 0.7].forEach(r => { const st = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), mat('#9b9789', { flatShading: true })); st.scale.y = 0.6; sy += r * 0.51; st.position.set(x, sy, z); st.rotation.y = rnd(0, 3); st.castShadow = true; highScene.add(st); sy += r * 0.51; }); highSolids.push({ x, z, r: 1.3 }); }
     const postM = mat('#6b4a2b');
     [[3, 'Fernwater Crossing', Math.PI, '#4a5fb8'], [HIGH_LEN - 3, 'Cairnhold', 0, '#6e6a62']].forEach(([z, label, ry, colr]) => {
-      const x = highRoadX(z) - 6, h = highH(x, z); const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 5, 8), postM); post.position.set(x, h + 2.5, z); highScene.add(post);
-      const sg = signBoard(label, 6, 1.3, colr, '#f6e7c2'); sg.position.set(x, h + 4.2, z + (ry ? -0.3 : 0.3)); sg.rotation.y = ry; highScene.add(sg);
-      const sg2 = signBoard('The High Road', 4.6, 1, '#f2e6c8', '#4a3420'); sg2.position.set(x, h + 2.9, z + (ry ? -0.3 : 0.3)); sg2.rotation.y = ry; highScene.add(sg2);
+      const x = highRoadX(z) - 6, h = highH(x, z); signpost(highScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The High Road', 4.6, 1, '#f2e6c8', '#4a3420')], postM);
       highSolids.push({ x, z, r: 0.5 });
     });
-    [0, HIGH_LEN].forEach(z => { const cx = highRoadX(z), h = highH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); highScene.add(gp); highSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); highScene.add(lintel); const sg = signBoard(z ? 'Cairnhold' : 'Fernwater', 6.4, 1.4, z ? '#6e6a62' : '#4a5fb8', '#f6e7c2'); sg.position.set(cx, h + 8.6, z); highScene.add(sg); const sg2 = signBoard('The High Road', 5, 1.1, '#f2e6c8', '#4a3420'); sg2.position.set(cx, h + 10, z); highScene.add(sg2); });
+    [0, HIGH_LEN].forEach(z => { const cx = highRoadX(z), h = highH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); highScene.add(gp); highSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); highScene.add(lintel); const sg = signBoard(z ? 'Cairnhold' : 'Fernwater', 6.4, 1.4, z ? '#6e6a62' : '#4a5fb8', '#f6e7c2'); sg.position.set(cx, h + 8.5, z); highScene.add(sg); hangBoards(highScene, cx, h + 6.8, z, 0, [signBoard('The High Road', 5, 1.1, '#f2e6c8', '#4a3420')]); });
   }
   function goToHigh(fromCairn) {
     fadeTo('The High Road', () => {
@@ -2234,12 +2250,10 @@
     for (let z = 40; z < CLIFF_LEN; z += 60) { const x = cliffRoadX(z) + 6, h = cliffH(x, z); const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 4, 8), mat('#4a3420')); post.position.set(x, h + 2, z); cliffScene.add(post); const gear = makeGear(1.6, 12, '#b08a3a'); gear.position.set(x, h + 4.6, z); gear.rotation.x = Math.PI / 2; gear.userData.spin = 0.6; cliffScene.add(gear); spinners.push(gear); cliffSolids.push({ x, z, r: 0.5 }); }
     const postM = mat('#6b4a2b');
     [[3, 'Cairnhold', Math.PI, '#6e6a62'], [CLIFF_LEN - 3, 'Cogsworth', 0, '#b08a3a']].forEach(([z, label, ry, colr]) => {
-      const x = cliffRoadX(z) - 6, h = cliffH(x, z); const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 5, 8), postM); post.position.set(x, h + 2.5, z); cliffScene.add(post);
-      const sg = signBoard(label, 6, 1.3, colr, '#f6e7c2'); sg.position.set(x, h + 4.2, z + (ry ? -0.3 : 0.3)); sg.rotation.y = ry; cliffScene.add(sg);
-      const sg2 = signBoard('The Cliff Road', 4.6, 1, '#f2e6c8', '#4a3420'); sg2.position.set(x, h + 2.9, z + (ry ? -0.3 : 0.3)); sg2.rotation.y = ry; cliffScene.add(sg2);
+      const x = cliffRoadX(z) - 6, h = cliffH(x, z); signpost(cliffScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The Cliff Road', 4.6, 1, '#f2e6c8', '#4a3420')], postM);
       cliffSolids.push({ x, z, r: 0.5 });
     });
-    [0, CLIFF_LEN].forEach(z => { const cx = cliffRoadX(z), h = cliffH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); cliffScene.add(gp); cliffSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); cliffScene.add(lintel); const sg = signBoard(z ? 'Cogsworth' : 'Cairnhold', 6.4, 1.4, z ? '#b08a3a' : '#6e6a62', z ? '#1b1b1b' : '#f6e7c2'); sg.position.set(cx, h + 8.6, z); cliffScene.add(sg); const sg2 = signBoard('The Cliff Road', 5, 1.1, '#f2e6c8', '#4a3420'); sg2.position.set(cx, h + 10, z); cliffScene.add(sg2); });
+    [0, CLIFF_LEN].forEach(z => { const cx = cliffRoadX(z), h = cliffH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); cliffScene.add(gp); cliffSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); cliffScene.add(lintel); const sg = signBoard(z ? 'Cogsworth' : 'Cairnhold', 6.4, 1.4, z ? '#b08a3a' : '#6e6a62', z ? '#1b1b1b' : '#f6e7c2'); sg.position.set(cx, h + 8.5, z); cliffScene.add(sg); hangBoards(cliffScene, cx, h + 6.8, z, 0, [signBoard('The Cliff Road', 5, 1.1, '#f2e6c8', '#4a3420')]); });
   }
   function goToCliff(fromCog) {
     fadeTo('The Cliff Road', () => {
@@ -2458,9 +2472,7 @@
     for (let z = 50; z < MTN_LEN; z += 70) { const x = mtnRoadX(z) + 7, h = mtnH(x, z); const cart = new THREE.Mesh(new THREE.BoxGeometry(4, 2.2, 2.6), mat('#4b4b4b', { metalness: 0.5 })); cart.position.set(x, h + 1.6, z); cart.rotation.y = rnd(-0.3, 0.3); cart.castShadow = true; mtnScene.add(cart); for (let k = 0; k < 6; k++) { const ore = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5, 0), mat(pick(['#b08a3a', '#8a6a3a', '#5a5a52']), { flatShading: true, metalness: 0.4 })); ore.position.set(x + rnd(-1.4, 1.4), h + 2.9, z + rnd(-0.8, 0.8)); mtnScene.add(ore); } mtnSolids.push({ x, z, r: 2.4 }); }
     const postM = mat('#4b4b4b', { metalness: 0.5 });
     [[3, 'Cogsworth', Math.PI, '#b08a3a'], [MTN_LEN - 3, 'Emberdeep', 0, '#8a3a2a']].forEach(([z, label, ry, colr]) => {
-      const x = mtnRoadX(z) - 6, h = mtnH(x, z); const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 5, 8), postM); post.position.set(x, h + 2.5, z); mtnScene.add(post);
-      const sg = signBoard(label, 6, 1.3, colr, '#f6e7c2'); sg.position.set(x, h + 4.2, z + (ry ? -0.3 : 0.3)); sg.rotation.y = ry; mtnScene.add(sg);
-      const sg2 = signBoard('The Mountain Road', 5.2, 1, '#f2e6c8', '#4a3420'); sg2.position.set(x, h + 2.9, z + (ry ? -0.3 : 0.3)); sg2.rotation.y = ry; mtnScene.add(sg2);
+      const x = mtnRoadX(z) - 6, h = mtnH(x, z); signpost(mtnScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The Mountain Road', 5.2, 1, '#f2e6c8', '#4a3420')], postM);
       mtnSolids.push({ x, z, r: 0.5 });
     });
     { const cx = mtnRoadX(0), h = mtnH(cx, 0); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, 0); mtnScene.add(gp); mtnSolids.push({ x: cx + o, z: 0, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, 0); mtnScene.add(lintel); }
@@ -2470,7 +2482,7 @@
       const arch = new THREE.Mesh(new THREE.TorusGeometry(6.4, 1.2, 10, 24, Math.PI), mat('#3a3a3a', { metalness: 0.4 })); arch.position.set(cx, h + 12, MTN_LEN + 3); mtnScene.add(arch);
       const dark = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), mat('#1a0e08', { emissive: '#6a2a10', emissiveIntensity: 0.5 })); dark.position.set(cx, h + 6, MTN_LEN + 4); mtnScene.add(dark);
       const glow = new THREE.PointLight('#ff7a30', 1.2, 40); glow.position.set(cx, h + 5, MTN_LEN); mtnScene.add(glow);
-      const sg = signBoard('EMBERDEEP', 9, 1.8, '#1b1b1b', '#ff9a40'); sg.position.set(cx, h + 15, MTN_LEN + 2); mtnScene.add(sg); }
+      const sg = signBoard('EMBERDEEP', 9, 1.8, '#1b1b1b', '#ff9a40'); hangBoards(mtnScene, cx, h + 17.2, MTN_LEN + 2, 0, [sg]); }
   }
   { const gx = 149, gh = cogH(gx, 70); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(gx, gh + 3.5, 70 + o); cogScene.add(gp); cogSolids.push({ x: gx, z: 70 + o, r: 1 }); }); const lin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1, 12), mat('#7a7468')); lin.position.set(gx, gh + 7.3, 70); cogScene.add(lin); const sg = signBoard('To Emberdeep', 5.4, 1.3, '#8a3a2a', '#f6e7c2'); sg.position.set(gx - 0.2, gh + 8.6, 70); sg.rotation.y = -Math.PI / 2; cogScene.add(sg); }
   function goToMtn(fromEmb) {
@@ -2625,10 +2637,10 @@
       [-6, 6].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(2.4, 12, 2.4), mat('#3a3a3a', { metalness: 0.4 })); gp.position.set(cx + o, h + 6, -3); seaScene.add(gp); seaSolids.push({ x: cx + o, z: -3, r: 1.6 }); });
       const arch = new THREE.Mesh(new THREE.TorusGeometry(6.4, 1.2, 10, 24, Math.PI), mat('#3a3a3a', { metalness: 0.4 })); arch.position.set(cx, h + 12, -3); seaScene.add(arch);
       const dark = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), mat('#1a0e08', { emissive: '#6a2a10', emissiveIntensity: 0.5 })); dark.position.set(cx, h + 6, -4); seaScene.add(dark);
-      const sg = signBoard('EMBERDEEP', 8, 1.6, '#1b1b1b', '#ff9a40'); sg.position.set(cx, h + 15, -2); sg.rotation.y = Math.PI; seaScene.add(sg); }
+      const sg = signBoard('EMBERDEEP', 8, 1.6, '#1b1b1b', '#ff9a40'); hangBoards(seaScene, cx, h + 17.2, -2, 0, [sg]); }
     { const cx = seaRoadX(SEA_LEN), h = seaH(cx, SEA_LEN); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#e8e2d2')); gp.position.set(cx + o, h + 3.5, SEA_LEN); seaScene.add(gp); seaSolids.push({ x: cx + o, z: SEA_LEN, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#cfc8b6')); lintel.position.set(cx, h + 7.3, SEA_LEN); seaScene.add(lintel); const sg = signBoard('Lanternreach', 6.4, 1.4, '#1f3a5a', '#f6e7c2'); sg.position.set(cx, h + 8.6, SEA_LEN - 0.3); seaScene.add(sg); }
     const postM = mat('#4b4b4b', { metalness: 0.5 });
-    [[6, 'Emberdeep', Math.PI, '#8a3a2a'], [SEA_LEN - 6, 'Lanternreach', 0, '#1f3a5a']].forEach(([z, label, ry, colr]) => { const x = seaRoadX(z) - 6, h = seaH(x, z); const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 5, 8), postM); post.position.set(x, h + 2.5, z); seaScene.add(post); const sg = signBoard(label, 6, 1.3, colr, '#f6e7c2'); sg.position.set(x, h + 4.2, z + (ry ? -0.3 : 0.3)); sg.rotation.y = ry; seaScene.add(sg); const sg2 = signBoard('The Sea Road', 4.6, 1, '#f2e6c8', '#4a3420'); sg2.position.set(x, h + 2.9, z + (ry ? -0.3 : 0.3)); sg2.rotation.y = ry; seaScene.add(sg2); seaSolids.push({ x, z, r: 0.5 }); });
+    [[6, 'Emberdeep', Math.PI, '#8a3a2a'], [SEA_LEN - 6, 'Lanternreach', 0, '#1f3a5a']].forEach(([z, label, ry, colr]) => { const x = seaRoadX(z) - 6, h = seaH(x, z); signpost(seaScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The Sea Road', 4.6, 1, '#f2e6c8', '#4a3420')], postM); seaSolids.push({ x, z, r: 0.5 }); });
     [[-230, 60, 170, 110, 180, '#9a978f'], [-260, 260, 190, 130, 200, '#9a978f'], [-60, -200, 240, 150, 180, '#b9bcc2']].forEach(([ox, oz, rx, h, rz, c]) => mound(seaScene, ox, oz, rx, h, rz, c));
     // sea stacks off the coast
     [[150, 80, 9, 24], [190, 200, 12, 30], [130, 290, 7, 18]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.7, r, h, 9), mat('#6e6a62', { flatShading: true, roughness: 1 })); st.position.set(x, SEA_Y + h / 2 - 4, z); seaScene.add(st); });
@@ -6557,6 +6569,7 @@
       if (phase === 'c10cross' && player.position.z > GORGE.z1 + 4 && !talking()) { wren.position.set(-6, 0, GORGE.z1 + 8); wren.lookAt(player.position.x, 0, player.position.z); finishCairn(); }
     }
     spinners.forEach(g => { if (g.userData.spin) g.rotation.y += dt * g.userData.spin; });
+    if (!reduce) swingSigns.forEach(g => { g.rotation.x = Math.sin(t * 0.8 + g.userData.ph) * 0.035; });
     if (riding) { bike.userData.ring.rotation.x += dt * (moving ? 9 : 0); kid.legs[0].rotation.x = -0.9 + Math.sin(t * 9) * 0.5 * (moving ? 1 : 0); kid.legs[1].rotation.x = -0.9 - Math.sin(t * 9) * 0.5 * (moving ? 1 : 0); }
     if (where === 'cogsworth') {
       const dT = Math.hypot(player.position.x - TAMPOS.x, player.position.z - TAMPOS.z);
