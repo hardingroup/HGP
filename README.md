@@ -21,6 +21,13 @@ npx serve .
 then visit the address it prints. The game opens on a region map; Thistledown Hollow (ten lessons) and the
 Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playable. Any lesson can be started directly, which is handy for testing.
 
+## Falling, hurt and death
+
+- Cliffs and holes are real: the Cairnhold gorge, the bridges between Skyhaven's islands, the sea cliffs at Lanternreach. Step off and you fall.
+- A fall of more than 6 rods hurts; a health bar appears under the coins and refills slowly. A fall of 16 or more kills you, and so does the gorge floor or the open sky, whatever you fell from. Water never hurts.
+- Death is Skyrim's: the screen goes dark, a low note plays, and you wake at your last save, which the game writes every couple of seconds while you're standing on solid ground. You never save mid-air or at the bottom of something.
+- Rope fences along the island rims and the rope across the gorge lane (until the bridge is built) still hold you; bridges have no rails that stop you.
+
 ## Movement feel
 
 - **Momentum.** You take a few steps to get up to speed and a few to stop, so a sharp turn at a run slides a little. The bike is heavier: slower to wind up, longer to stop, wider turns. Water answers slowly.

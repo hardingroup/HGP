@@ -131,6 +131,8 @@
   body.touchmode .pad { display: flex; }
   .stam { width: 180px; height: 8px; border-radius: 4px; background: rgba(27,43,30,.85); border: 1px solid var(--panel-edge); overflow: hidden; align-self: flex-start; opacity: 0; transition: opacity .4s; }
   .stam.show { opacity: 1; }
+  .stam.hp .fill { background: #c8384a; }
+  .stam.hp.low .fill { background: #ff2a2a; }
   .stam .fill { height: 100%; width: 100%; background: var(--gold); transition: width .1s linear; }
   .stam.low .fill { background: var(--berry); }
   .fade { position: fixed; inset: 0; z-index: 30; background: #000; opacity: 0; transition: opacity .7s; pointer-events: none; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); color: var(--gold); font-size: clamp(22px, 4vw, 34px); letter-spacing: .04em; text-align: center; padding: 0 24px; }
@@ -272,6 +274,7 @@
     <div style="display:flex;justify-content:center"><div class="hint" id="hint" hidden></div></div>
   </div>
   <div class="bottom">
+    <div class="stam hp" id="hp"><div class="fill" id="hpfill"></div></div>
     <div class="stam" id="stam"><div class="fill" id="stamfill"></div></div>
     <div class="dialog" id="dialog" hidden>
       <div class="speaker" id="speaker">Old Bramblewick</div>
@@ -1582,7 +1585,7 @@
       hillSolids.push({ x, z, r: 0.5 });
     });
     // a stile gate at each end, like the one leaving the Hollow
-    [0, HILL_LEN].forEach(z => { const cx = roadX(z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 8, 10), postM); gp.position.set(cx + o, 4, z); hillScene.add(gp); hillSolids.push({ x: cx + o, z, r: 0.9 }); }); const arch = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), mat('#8a6438')); arch.position.set(cx, 7.4, z); hillScene.add(arch); });
+    [0, HILL_LEN].forEach(z => { const cx = roadX(z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 8, 10), postM); gp.position.set(cx + o, 4, z); hillScene.add(gp); hillSolids.push({ x: cx + o, z, r: 0.9 }); }); const arch = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), mat('#8a6438')); arch.position.set(cx, 7.4, z); hillScene.add(arch); const sg = signBoard(z ? 'Fernwater' : 'The Mallow Orchards', 6.4, 1.4, z ? '#4a5fb8' : '#5a3d22', '#f6e7c2'); sg.position.set(cx, 10, z); hillScene.add(sg); const sg2 = signBoard('The River Road', 5, 1.1, '#f2e6c8', '#4a3420'); sg2.position.set(cx, 8.9, z); hillScene.add(sg2); });
     hillScene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o !== ground && o !== roadMesh) { o.castShadow = true; o.receiveShadow = true; } });
   }
   function goToHills(fromFern) {
@@ -2003,7 +2006,7 @@
       const sg2 = signBoard('The High Road', 4.6, 1, '#f2e6c8', '#4a3420'); sg2.position.set(x, h + 2.9, z + (ry ? -0.3 : 0.3)); sg2.rotation.y = ry; highScene.add(sg2);
       highSolids.push({ x, z, r: 0.5 });
     });
-    [0, HIGH_LEN].forEach(z => { const cx = highRoadX(z), h = highH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); highScene.add(gp); highSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); highScene.add(lintel); });
+    [0, HIGH_LEN].forEach(z => { const cx = highRoadX(z), h = highH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); highScene.add(gp); highSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); highScene.add(lintel); const sg = signBoard(z ? 'Cairnhold' : 'Fernwater', 6.4, 1.4, z ? '#6e6a62' : '#4a5fb8', '#f6e7c2'); sg.position.set(cx, h + 8.6, z); highScene.add(sg); const sg2 = signBoard('The High Road', 5, 1.1, '#f2e6c8', '#4a3420'); sg2.position.set(cx, h + 10, z); highScene.add(sg2); });
   }
   function goToHigh(fromCairn) {
     fadeTo('The High Road', () => {
@@ -2056,10 +2059,10 @@
       const door = new THREE.Mesh(new THREE.BoxGeometry(3.6, 6, 0.3), mat('#3e2812')); door.position.set(0, 3, D / 2 + 0.1); g.add(door);
       const dframe = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.6, 0.8), greyM); dframe.position.set(0, 6.3, D / 2 + 0.1); g.add(dframe);
       [-1, 1].forEach(d => { const w = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.8), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.5 })); w.position.set(d * 6, 5, D / 2 + 0.02); g.add(w); const fr = new THREE.Mesh(new THREE.BoxGeometry(2.8, 3.2, 0.2), mat('#5a4a3a')); fr.position.set(d * 6, 5, D / 2 - 0.05); g.add(fr); });
-      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.9, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(-3, 7, D / 2 + 0.6); g.add(lamp);
-      const sign = signBoard(label, 9, 1.6, '#4a3420', '#f6e7c2'); sign.position.set(0, H + 0.8, D / 2 + 0.5); g.add(sign);
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.9, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(-9, 6.8, D / 2 + 0.6); g.add(lamp);
+      const sign = signBoard(label, 9, 1.4, '#4a3420', '#f6e7c2'); sign.position.set(0, H - 1.3, D / 2 + 0.25); g.add(sign);
       const steps = new THREE.Mesh(new THREE.BoxGeometry(6, 0.5, 2.4), mat('#8a7458')); steps.position.set(0, 0.25, D / 2 + 1.5); g.add(steps);
-      if (tower) { const tw = new THREE.Mesh(new THREE.CylinderGeometry(3, 3.4, H + 9, 12), stoneM); tw.position.set(-W / 2 + 1, (H + 9) / 2, -D / 2 + 1); tw.castShadow = true; g.add(tw); const cap = new THREE.Mesh(new THREE.ConeGeometry(3.6, 3, 12), mat('#5a6b7a')); cap.position.set(-W / 2 + 1, H + 10.5, -D / 2 + 1); g.add(cap); for (let k = 0; k < 8; k++) { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), stoneM); const a = k * Math.PI / 4; m.position.set(-W / 2 + 1 + Math.cos(a) * 3, H + 9.3, -D / 2 + 1 + Math.sin(a) * 3); g.add(m); } }
+      if (tower) { const tw = new THREE.Mesh(new THREE.CylinderGeometry(3, 3.4, H + 9, 12), stoneM); tw.position.set(-W / 2 + 1, (H + 9) / 2, -D / 2 + 1); tw.castShadow = true; g.add(tw); const par = new THREE.Mesh(new THREE.CylinderGeometry(3.7, 3.4, 0.7, 12), stoneM); par.position.set(-W / 2 + 1, H + 9.1, -D / 2 + 1); g.add(par); const cap = new THREE.Mesh(new THREE.ConeGeometry(2.3, 2.6, 12), mat('#5a6b7a')); cap.position.set(-W / 2 + 1, H + 10.9, -D / 2 + 1); g.add(cap); for (let k = 0; k < 8; k++) { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), stoneM); const a = k * Math.PI / 4; m.position.set(-W / 2 + 1 + Math.cos(a) * 3.2, H + 9.95, -D / 2 + 1 + Math.sin(a) * 3.2); m.rotation.y = -a; g.add(m); } }
       const doorX = x + Math.sin(facing) * (D / 2), doorZ = z + Math.cos(facing) * (D / 2);
       const path = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(doorX) - 3.5, 3), mat('#ffffff', { map: dirtTex, color: '#b9b2a4' })); path.rotation.x = -Math.PI / 2; path.position.set((doorX + (facing > 0 ? -3.5 : 3.5)) / 2, 0.04, doorZ); cairnScene.add(path);
       cairnBoxes.push({ id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } });
@@ -2236,7 +2239,7 @@
       const sg2 = signBoard('The Cliff Road', 4.6, 1, '#f2e6c8', '#4a3420'); sg2.position.set(x, h + 2.9, z + (ry ? -0.3 : 0.3)); sg2.rotation.y = ry; cliffScene.add(sg2);
       cliffSolids.push({ x, z, r: 0.5 });
     });
-    [0, CLIFF_LEN].forEach(z => { const cx = cliffRoadX(z), h = cliffH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); cliffScene.add(gp); cliffSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); cliffScene.add(lintel); });
+    [0, CLIFF_LEN].forEach(z => { const cx = cliffRoadX(z), h = cliffH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); cliffScene.add(gp); cliffSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); cliffScene.add(lintel); const sg = signBoard(z ? 'Cogsworth' : 'Cairnhold', 6.4, 1.4, z ? '#b08a3a' : '#6e6a62', z ? '#1b1b1b' : '#f6e7c2'); sg.position.set(cx, h + 8.6, z); cliffScene.add(sg); const sg2 = signBoard('The Cliff Road', 5, 1.1, '#f2e6c8', '#4a3420'); sg2.position.set(cx, h + 10, z); cliffScene.add(sg2); });
   }
   function goToCliff(fromCog) {
     fadeTo('The Cliff Road', () => {
@@ -3184,7 +3187,7 @@
   // dogs: one in the Hollow, one in Fernwater; they come and say hello
   [[scene, 6, 40, 'village', (nx, nz) => inFence(nx, nz, 3) && Math.hypot(nx, nz) > 14], [fernScene, 0, 24, 'fernwater', (nx, nz) => Math.abs(nx) < 14 && nz > 3 && nz < 50], [lantScene, -8, 80, 'lantern', (nx, nz) => Math.abs(nx) < 16 && nz > 4 && nz < 130]].forEach(([sc, x, z, key, okf]) => { const dg = makeDog(); dg.position.set(x, 0, z); sc.add(dg); wanderer(dg, { sceneKey: key, kind: 'dog', speed: 6, fleeSpeed: 11, flee: 0, radius: 30, ground: () => 0, bob: 0.25, gait: 10, ok: okf }); });
   // crows on the fences and gate posts; a hawk alone over the hills and the orchards
-  [[scene, 14, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 0, 'fernwater'], [orchScene, 30, 0, 110, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(); cr.position.set(x, y + 2.6, z); cr.rotation.y = rnd(0, 6.3); sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.6, z), state: 'perch', t: 0, a: 0 }); });
+  [[scene, 30, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 12, 'fernwater'], [orchScene, 48, 0, 70, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(); cr.position.set(x, y + 2.6, z); cr.rotation.y = rnd(0, 6.3); sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.6, z), state: 'perch', t: 0, a: 0 }); });
   addFlock(hillScene, roadX(330), 330, 120, 95, 1, hillH); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   addFlock(orchScene, 0, 50, 70, 80, 1, () => 0); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   function animalTick(c, dt, t) {
@@ -5995,6 +5998,15 @@
   function mapName() { return settings.input === 'gamepad' ? 'Start' : settings.input === 'touch' ? 'the map button' : keyLabel(settings.binds.map); }
   function devText(t) { return (t || '').replace(/\b([Pp]ress) E\b/g, (m, v) => v + ' ' + pickName()).replace(/\b([Pp]ress) M\b/g, (m, v) => v + ' ' + mapName()); }
   let stamina = 100, running = false, sitting = false, sitSeat = null;
+  let hp = 100, dead = false, lastGY = 0, fallPeak = 0, wasAir = false;
+  const hpEl = $('hp'), hpFill = $('hpfill');
+  function hurt(n, why) { if (dead) return; hp = Math.max(0, hp - n); hpFill.style.width = hp + '%'; hpEl.classList.toggle('low', hp < 30); hpEl.classList.toggle('show', hp < 99.5); if (hp <= 0) die(why); else if (why) flash(why); }
+  function heal(dt) { if (hp < 100 && !dead) { hp = Math.min(100, hp + dt * 2); hpFill.style.width = hp + '%'; hpEl.classList.toggle('low', hp < 30); hpEl.classList.toggle('show', hp < 99.5); } }
+  function die(why) {
+    if (dead) return; dead = true; fading = true; fadeEl.textContent = why || 'You fell.'; fadeEl.classList.add('on');
+    try { startAudio(); if (audioCtx) { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(110, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 1.2); g.gain.setValueAtTime(0.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.4); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 1.4); } } catch (e) {}
+    setTimeout(() => { if (save.check) { save.where = save.check.where; save.pos = save.check.pos; save.yaw = save.check.yaw; } else { save.where = 'village'; save.pos = [0, 0, 6.5]; save.yaw = Math.PI; } persist(); location.reload(); }, 2200);
+  }
   let camYaw = Math.PI, bodyYaw = Math.PI, pitch = 0.08, view = 'back', vy = 0, py = 0, wantJump = false;
   const vel = new THREE.Vector3(), targetV = new THREE.Vector3(); // momentum: where your feet are actually carrying you
   function currentAt(x, z) { if (where === 'fernwater') return targetV.set(-1.3, 0, 0); if (where === 'lantern') return targetV.set(-0.45, 0, 0.8); return targetV.set(0, 0, 0); }
@@ -6104,6 +6116,7 @@
   function inRiver(x, z) { if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2; }
   function groundAt(x, z) {
     if (where === 'in') return 0;
+    if (where === 'cairnhold') return (z > GORGE.z0 && z < GORGE.z1 && !(bridgeBuilt && Math.abs(x) < 3.5)) ? -GORGE.depth : 0;
     if (where === 'hills') return hillH(x, z);
     if (where === 'high') return highH(x, z);
     if (where === 'cliff') return cliffH(x, z);
@@ -6113,7 +6126,7 @@
     if (where === 'lantern') return onPier(x, z) ? PIER.y : inRiver(x, z) ? SEA_Y - 1.45 : lantH(x, z);
     if (where === 'lift') return gondola.position.y;
     if (where === 'flight') return flier.position.y + 0.9;
-    if (where === 'skyhaven') return skyH(x, z);
+    if (where === 'skyhaven') return (onIsland(x, z) || onBridge(x, z) || (z < 4 && Math.abs(x) < 6)) ? skyH(x, z) : -600;
     if (where !== 'fernwater') return 0;
     if (inRiver(x, z)) return -1.45;
     if (Math.abs(x) > 5.2) return 0;
@@ -6179,7 +6192,9 @@
       if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToHighFromCairn(); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
       // the gorge: only the bridge crosses it
       const onBridge = bridgeBuilt && Math.abs(p.x) < 3.2;
-      if (!onBridge) { if (prev.z < GORGE.z0 - 3 && p.z > GORGE.z0 - 3) p.z = GORGE.z0 - 3; if (prev.z > GORGE.z1 + 3 && p.z < GORGE.z1 + 3) p.z = GORGE.z1 + 3; }
+      // the rope across the lane holds until the bridge is built; everywhere else the gorge is a real drop, and the walls are too steep to climb
+      if (!bridgeBuilt && Math.abs(p.x) < 4.6 && prev.z < GORGE.z0 - 3.2 && p.z > GORGE.z0 - 3.2) p.z = GORGE.z0 - 3.2;
+      if (groundAt(prev.x, prev.z) < -5 && groundAt(p.x, p.z) > -5) { p.x = prev.x; p.z = prev.z; }
       if (p.z > CAIRN_LEN + 19 && Math.abs(p.x) < 4.5 && !fading) goToCliff(false); else p.z = Math.min(p.z, Math.abs(p.x) < 4.5 ? CAIRN_LEN + 21 : CAIRN_LEN + 18);
     }
     if (where === 'cliff') {
@@ -6241,7 +6256,8 @@
     if (where === 'flight') { p.x = flier.position.x; p.z = flier.position.z; }
     if (where === 'skyhaven') {
       skySolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      if (!onIsland(p.x, p.z) && !onBridge(p.x, p.z) && !(p.z < 4 && Math.abs(p.x) < 6)) { if (onIsland(p.x, prev.z) || onBridge(p.x, prev.z)) p.z = prev.z; else if (onIsland(prev.x, p.z) || onBridge(prev.x, p.z)) p.x = prev.x; else { p.x = prev.x; p.z = prev.z; } }
+      // the rope fences hold you at the rim; the bridges have none, and the air past them is just air
+      if (!onIsland(p.x, p.z) && !onBridge(p.x, p.z) && !(p.z < 4 && Math.abs(p.x) < 6) && ISLANDS.some(i => Math.hypot(prev.x - i.x, prev.z - i.z) < i.r - 1.2) && !onBridge(prev.x, prev.z)) { if (onIsland(p.x, prev.z)) p.z = prev.z; else if (onIsland(prev.x, p.z)) p.x = prev.x; else { p.x = prev.x; p.z = prev.z; } }
       if (p.z < 0.5 && Math.abs(p.x) < 3 && !fading) goToLiftDown(); else if (p.z < -1) p.z = -1;
       skyBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
     }
@@ -6435,7 +6451,17 @@
     // dropped acorns sprout if left too long; seedlings grow
     pickables.slice().forEach(o => { if (o.userData.dropped) { o.userData.age += dt; if (o.userData.age > 12) sproutAt(o); } });
     sprouts.forEach(g => { if (g.userData.grow < 1) { g.userData.grow = Math.min(1, g.userData.grow + dt * 0.5); g.scale.setScalar(0.01 + g.userData.grow * 0.99); } });
+    { const gNow = groundAt(player.position.x, player.position.z), locked2 = where === 'lift' || where === 'flight' || where === 'in';
+      const stepped = Math.hypot(player.position.x - prev.x, player.position.z - prev.z) > 0.001;
+      if (fading || !stepped || Math.abs(gNow - lastGY) > 80) { if (fading) wasAir = false; } // a gate, not a cliff
+      else if (!locked2 && !sitting && gNow < lastGY - 0.5 && py <= 0.001) { py = lastGY - gNow; vy = Math.min(vy, 0); } // the ground dropped away: you keep your height and start to fall
+      if (!sitting && !locked2) { const absY = gNow + py; if (py > 0.05) { if (!wasAir) fallPeak = absY; fallPeak = Math.max(fallPeak, absY); wasAir = true; } }
+      lastGY = gNow; }
     if (!sitting) { vy -= 26 * dt; py += vy * dt; if (py < 0) { py = 0; vy = 0; } }
+    if (wasAir && py <= 0.001 && !sitting) { wasAir = false; const gNow = groundAt(player.position.x, player.position.z), drop = fallPeak - gNow; if (where !== 'lift' && where !== 'flight') { if (gNow < -100) die('You fell out of the sky.'); else if (gNow <= -GORGE.depth + 0.5 && where === 'cairnhold') die('You fell into the gorge.'); else if (!inRiver(player.position.x, player.position.z)) { if (drop >= 16) die('You fell too far.'); else if (drop > 6) hurt(Math.round((drop - 6) * 9), 'That hurt. ' + Math.round(drop) + ' rods is a long way down.'); } } }
+    if (where === 'skyhaven' && groundAt(player.position.x, player.position.z) + py < -80) die('You fell out of the sky.');
+    if (where === 'cairnhold' && !dead && py <= 0.001 && groundAt(player.position.x, player.position.z) <= -GORGE.depth + 0.5) die('You fell into the gorge.');
+    heal(dt);
     const onGround = sitting || py <= 0.001;
     const gliding = vel.length() > 0.4;
     const swing = Math.sin(walkPhase) * (gliding && onGround ? (running ? 1.0 : 0.7) : 0);
@@ -6613,7 +6639,7 @@
       snow.geometry.attributes.position.needsUpdate = true;
     }
 
-    if (gameStarted && !fading) { saveTimer += dt; if (saveTimer > 2) { saveTimer = 0; if (where === 'in') { save.where = interior.region; save.pos = [interior.door.x, 0, interior.door.z]; save.yaw = interior.door.yaw; } else { save.where = where; save.pos = [player.position.x, py, player.position.z]; save.yaw = bodyYaw; } save.started = true; persist(); } }
+    if (gameStarted && !fading && !dead) { saveTimer += dt; if (saveTimer > 2) { saveTimer = 0; if (where === 'in') { save.where = interior.region; save.pos = [interior.door.x, 0, interior.door.z]; save.yaw = interior.door.yaw; } else { save.where = where; save.pos = [player.position.x, py, player.position.z]; save.yaw = bodyYaw; } save.started = true; if (!dead && py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && where !== 'lift' && where !== 'flight') save.check = { where: save.where, pos: save.pos.slice(), yaw: save.yaw }; persist(); } }
     updateMapLive();
     renderer.render(curScene(), camera);
     requestAnimationFrame(tick);
