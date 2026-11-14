@@ -28,6 +28,12 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - Death is Skyrim's: the screen goes dark, a low note plays, and you wake at your last save, which the game writes every couple of seconds while you're standing on solid ground. You never save mid-air or at the bottom of something.
 - Rope fences along the island rims and the rope across the gorge lane (until the bridge is built) still hold you; bridges have no rails that stop you.
 
+## Stamina, swimming and drowning
+
+- Stamina grows only from your own effort: running, swimming and climbing hills on foot make the bar slowly longer (up to three times its starting size). Riding never does. The game tells you each time it grows by ten.
+- Swimming uses stamina. Run out in the water and you start to drown: your health drains until you reach the shore, a pier ladder or the beach, or you die and wake at your last place on dry land.
+- Lanternreach's pier has ladders on both sides near its land end and at its far end, and a plank path runs from the pier up the cove beach to the town. The sea is open to swim anywhere; the camera follows you at the waterline.
+
 ## Movement feel
 
 - **Momentum.** You take a few steps to get up to speed and a few to stop, so a sharp turn at a run slides a little. The bike is heavier: slower to wind up, longer to stop, wider turns. Water answers slowly.

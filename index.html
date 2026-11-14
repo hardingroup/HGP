@@ -2664,12 +2664,14 @@
   // the plateau the town sits on; the cove slopes down to the water; everything past the cliff edge falls into the sea
   function lantH(x, z) {
     let h = 0.5 * Math.sin(x / 9) * Math.cos(z / 11) + 0.3 * Math.sin(x / 4 + 1) * Math.sin(z / 5);
-    const cove = Math.exp(-(Math.pow((z - COVE.z) / 22, 2))); // the beach: a notch in the cliff
+    const cove = Math.exp(-(Math.pow((z - COVE.z) / 30, 2))); // the beach: a notch in the cliff, gentle enough to walk
     const edge = 58 + cove * -14; // the cliff edge comes inland at the cove
-    if (x > edge) { const d = x - edge; h -= Math.min(d * (3.5 - 2.6 * cove), 30); }
+    if (x > edge) { const d = x - edge; h -= Math.min(d * Math.max(0.48, 3.5 - 3.02 * cove), 30); }
     h -= Math.max(0, -x - 58) * 2.2;
     return Math.max(h, SEA_Y - 4);
   }
+  const PIER_LADDERS = [[78, 1], [78, -1], [117, 1], [117, -1]];
+  function atLadder(x, z) { return PIER_LADDERS.some(([lx, sd]) => Math.abs(x - lx) < 1.7 && Math.abs(z - (PIER.z + sd * 2.6)) < 1.6); }
   function onPier(x, z) { return Math.abs(z - PIER.z) < 2.4 && x > PIER.x0 - 1 && x < PIER.x1 + 1; }
   const lantScene = new THREE.Scene();
   lantScene.fog = new THREE.Fog('#1b2a44', 80, 420); lantScene.background = new THREE.Color('#0f1a30');
@@ -2719,7 +2721,7 @@
       const dome = new THREE.Mesh(new THREE.SphereGeometry(7, 18, 12, 0, 6.283, 0, 1.6), brassM); dome.position.y = 8; g.add(dome);
       const slit = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 7.2), mat('#1b2a44')); slit.position.set(0, 10.5, 3.6); slit.rotation.x = 0.9; g.add(slit);
       const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 9, 10), brassM); scope.position.set(0, 12, 3); scope.rotation.x = -0.9; g.add(scope);
-      const door = new THREE.Mesh(new THREE.BoxGeometry(2.6, 4.6, 0.3), mat('#3a2a1e')); door.position.set(0, 2.3, 7.4); g.add(door);
+      const door = new THREE.Mesh(new THREE.BoxGeometry(2.6, 4.6, 0.3), mat('#3a2a1e')); door.position.set(0, 2.3, 7.45); g.add(door); const step = new THREE.Mesh(new THREE.BoxGeometry(4, 0.4, 2), stoneM); step.position.set(0, 0.2, 8.2); g.add(step);
       const sg = signBoard('The Observatory', 5.4, 1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 6.4, 7.6); g.add(sg);
       lantSolids.push({ x: -34, z: 32, r: 8 }); }
     // the cottages, each with its own inside
@@ -2739,6 +2741,18 @@
       interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
       return g;
     }
+    makeRoom('observatory', { w: 16, d: 16, h: 12, wall: '#cfc8b6', trim: '#1f3a5a', label: 'The Observatory', region: 'lantern', hint: 'A great brass telescope, star charts, and an orrery that turns on its own.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+      const brass = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 });
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.6, 2.4, 12), mat('#4a3a2a')); base.position.set(0, 1.2, -1); sc.add(base); solids.push({ x: 0, z: -1, r: 1.8 });
+      const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.7, 7, 14), brass); scope.position.set(0, 5, -2.6); scope.rotation.x = -0.9; sc.add(scope);
+      const eye = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.8, 8), brass); eye.position.set(0, 2.9, 0.4); eye.rotation.x = -0.9; sc.add(eye);
+      const orr = new THREE.Group(); orr.position.set(5, 2.4, 4); sc.add(orr); const sun = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 10), mat('#ffd36a', { emissive: '#ffb93a', emissiveIntensity: 0.8 })); orr.add(sun); [[1.2, '#9fc8e8'], [2, '#c8384a'], [2.8, '#e6ddc8']].forEach(([r, c]) => { const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 4, 32), brass); ring.rotation.x = Math.PI / 2; orr.add(ring); const pl = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), mat(c)); pl.position.x = r; const arm = new THREE.Group(); arm.add(pl); arm.userData.spin = 1.4 / r; orr.add(arm); spinners.push(arm); });
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.4, 2.4, 8), brass); stand.position.set(5, 1.2, 4); sc.add(stand); solids.push({ x: 5, z: 4, r: 1.2 });
+      const chart = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), mat('#1b2a44')); chart.position.set(-W / 2 + 0.15, 5, 0); chart.rotation.y = Math.PI / 2; sc.add(chart); for (let k = 0; k < 40; k++) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 3), mat('#ffffff', { emissive: '#ffffff' })); st.position.set(-W / 2 + 0.2, 5 + rnd(-1.8, 1.8), rnd(-2.8, 2.8)); sc.add(st); }
+      const lb = signBoard('The pole star: as high as you are north', 7, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(-W / 2 + 0.3, 7.6, 0); lb.rotation.y = Math.PI / 2; sc.add(lb);
+      wall(5, 2, 2.4, -4, 1, 5, mat('#5a3d22')); solids.push({ x: -4, z: 5, r: 2.4 }); const book = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.3, 1.2), mat('#7a2e2e')); book.position.set(-4, 2.15, 5); sc.add(book);
+    } });
+    interiors.observatory.door = { x: -34, z: 32 + 7.4 + 4.5, yaw: 0 };
     makeRoom('keepers', { w: 16, d: 13, h: 8, wall: '#e6ddc8', trim: '#2a3a5a', label: 'The Keeper’s Cottage', region: 'lantern', hint: 'Oil lamps, a log book open on the table, and the smell of the sea.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
       wall(6, 2, 3, -3, 1, -2, mat('#5a3d22')); solids.push({ x: -3, z: -2, r: 3 }); const book = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 1.8), mat('#efe3c4')); book.position.set(-3, 2.2, -2); sc.add(book);
       const lb = signBoard('Oil per night: 2, 4, 6, 8 …', 5.6, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(-3, 4.2, -D / 2 + 0.3); sc.add(lb);
@@ -2776,9 +2790,11 @@
     // the cove: a beach, a pier, three boats, a tide gauge on the pier, and a bell buoy out in the water
     { const pier = new THREE.Mesh(new THREE.BoxGeometry(PIER.x1 - PIER.x0, 0.6, 4.4), mat('#ffffff', { map: plankTex })); pier.position.set((PIER.x0 + PIER.x1) / 2, PIER.y - 0.3, PIER.z); pier.castShadow = true; lantScene.add(pier);
       for (let x = PIER.x0 + 2; x < PIER.x1; x += 8) [-1.9, 1.9].forEach(o => { const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 10, 8), mat('#4a3a2a')); pl.position.set(x, PIER.y - 5, PIER.z + o); lantScene.add(pl); const rl = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 5), mat('#4a3a2a')); rl.position.set(x, PIER.y + 0.6, PIER.z + o); lantScene.add(rl); });
-      const ramp = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 4.4), mat('#ffffff', { map: plankTex })); ramp.position.set(PIER.x0 - 6, PIER.y - 0.1, PIER.z); lantScene.add(ramp);
+      { const verts = [], uvs = [], idx = []; let n = 0; for (let x = 36; x <= PIER.x0 + 0.5; x += 1) { const h = lantH(x, PIER.z) + 0.08; [[-1.8, 0], [1.8, 1]].forEach(([o, u]) => { verts.push(x, h, PIER.z + o); uvs.push(u, x / 3); }); if (n > 0) { const a = (n - 1) * 2, b = n * 2; idx.push(a, b, a + 1, a + 1, b, b + 1); } n++; } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(idx); g.computeVertexNormals(); const path = new THREE.Mesh(g, mat('#ffffff', { map: plankTex, side: THREE.DoubleSide })); path.receiveShadow = true; lantScene.add(path); for (let x = 40; x < PIER.x0; x += 6) [-2, 2].forEach(o => { const pst = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.4, 5), mat('#4a3a2a')); pst.position.set(x, lantH(x, PIER.z + o) + 0.7, PIER.z + o); lantScene.add(pst); }); }
+      const ramp = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 4.4), mat('#ffffff', { map: plankTex })); ramp.position.set(PIER.x0 - 6, PIER.y - 0.1, PIER.z); ramp.visible = false;
       const gauge = new THREE.Mesh(new THREE.BoxGeometry(0.9, 9, 0.4), mat('#efe3c4')); gauge.position.set(PIER.x1 - 3, PIER.y + 3.5, PIER.z + 2.6); lantScene.add(gauge); [[2, 'Low 2'], [5, 'Mid 5'], [8, 'High 8']].forEach(([v, lb]) => { const s = signBoard(lb, 2.2, 0.6, '#efe3c4', '#1b1b1b'); s.position.set(PIER.x1 - 1.6, PIER.y - 1 + v, PIER.z + 2.6); lantScene.add(s); }); const tsg = signBoard('The tide gauge', 4, 0.9, '#1f3a5a', '#f6e7c2'); tsg.position.set(PIER.x1 - 3, PIER.y + 8.6, PIER.z + 2.6); lantScene.add(tsg);
       lantSolids.push({ x: PIER.x1 - 3, z: PIER.z + 2.6, r: 0.7 });
+      PIER_LADDERS.forEach(([lx, sd]) => { const g = new THREE.Group(); g.position.set(lx, 0, PIER.z + sd * 2.35); lantScene.add(g); const top = PIER.y + 0.9, bot = SEA_Y - 2.5, hgt = top - bot; [-0.6, 0.6].forEach(o => { const rail = new THREE.Mesh(new THREE.BoxGeometry(0.14, hgt, 0.14), mat('#5a3d22')); rail.position.set(o, bot + hgt / 2, 0); g.add(rail); }); for (let y = bot + 0.4; y < top - 0.2; y += 0.55) { const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 5), mat('#7a5a3a')); rung.rotation.z = Math.PI / 2; rung.position.set(0, y, 0); g.add(rung); } });
       function boat(x, z, ry, color, sail) { const g = new THREE.Group(); g.position.set(x, SEA_Y + 0.3, z); g.rotation.y = ry; lantScene.add(g); const hull = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 0.9, 7, 10, 1, false, 0, Math.PI), mat(color)); hull.rotation.z = Math.PI / 2; hull.rotation.y = Math.PI / 2; hull.scale.set(1, 1, 1); g.add(hull); const deck = new THREE.Mesh(new THREE.BoxGeometry(7, 0.3, 3.4), mat('#8a6a3a')); deck.position.y = 0.6; g.add(deck); if (sail) { const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 9, 8), mat('#5a3d22')); mast.position.y = 5; g.add(mast); const sl = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 6.5), mat('#efe3c4', { side: THREE.DoubleSide })); sl.position.set(1.2, 5.4, 0); sl.rotation.y = 0.3; g.add(sl); } g.userData.bob = rnd(0, 6); return g; }
       [[86, PIER.z + 6], [100, PIER.z - 6], [112, PIER.z + 6.5]].forEach(([x, z]) => [-2.2, 0, 2.2].forEach(o => lantSolids.push({ x: x + o, z, r: 1.5 }))); lantSolids.push({ x: 150, z: 86, r: 1.8 });
       lantScene.userData.boats = [boat(86, PIER.z + 6, 0, '#2a3a5a', true), boat(100, PIER.z - 6, 0.2, '#7a2e2e', false), boat(112, PIER.z + 6.5, -0.1, '#3f6f4a', true)];
@@ -6011,7 +6027,8 @@
   function mapName() { return settings.input === 'gamepad' ? 'Start' : settings.input === 'touch' ? 'the map button' : keyLabel(settings.binds.map); }
   function devText(t) { return (t || '').replace(/\b([Pp]ress) E\b/g, (m, v) => v + ' ' + pickName()).replace(/\b([Pp]ress) M\b/g, (m, v) => v + ' ' + mapName()); }
   let stamina = 100, running = false, sitting = false, sitSeat = null;
-  let hp = 100, dead = false, lastGY = 0, fallPeak = 0, wasAir = false;
+  let hp = 100, dead = false, lastGY = 0, fallPeak = 0, wasAir = false, stamMax = 100, stamInit = false, stamTen = 10, drowning = false;
+  function growStam(n) { stamMax = Math.min(300, stamMax + n); save.stamMax = +stamMax.toFixed(2); const ten = Math.floor(stamMax / 10); if (ten > stamTen) { stamTen = ten; flash('Your stamina grew. ' + Math.round(stamMax) + ' now.'); persist(); } }
   const hpEl = $('hp'), hpFill = $('hpfill');
   function hurt(n, why) { if (dead) return; hp = Math.max(0, hp - n); hpFill.style.width = hp + '%'; hpEl.classList.toggle('low', hp < 30); hpEl.classList.toggle('show', hp < 99.5); if (hp <= 0) die(why); else if (why) flash(why); }
   function heal(dt) { if (hp < 100 && !dead) { hp = Math.min(100, hp + dt * 2); hpFill.style.width = hp + '%'; hpEl.classList.toggle('low', hp < 30); hpEl.classList.toggle('show', hp < 99.5); } }
@@ -6033,7 +6050,7 @@
     bodyYaw = camYaw = c.yaw; player.rotation.y = bodyYaw;
     if (beetle) beetle.position.set(c.pos[0] - 1.5, groundAt(c.pos[0] - 1.5, c.pos[2] - 1), c.pos[2] - 1);
     const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    hp = 100; hpFill.style.width = '100%'; hpEl.classList.remove('low', 'show');
+    hp = 100; hpFill.style.width = '100%'; hpEl.classList.remove('low', 'show'); stamina = stamMax; drowning = false;
     save.where = c.where; save.pos = c.pos.slice(); save.yaw = c.yaw; persist();
     setTimeout(() => { fadeEl.classList.remove('on'); fading = false; dead = false; hint('You wake where you last stood on solid ground.'); }, 700);
   }
@@ -6274,10 +6291,11 @@
       const dh = groundAt(p.x, p.z) - groundAt(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
       if (run > 0.001 && dh / run > 1.0 && !onPier(p.x, p.z)) { p.x = prev.x; p.z = prev.z; }
       // from the water you climb onto the pier only at the ramp
-      if (inRiver(prev.x, prev.z) && onPier(p.x, p.z) && p.x > PIER.x0 + 2) { p.x = prev.x; p.z = prev.z; }
+      if (inRiver(prev.x, prev.z) && onPier(p.x, p.z) && p.x > PIER.x0 + 2 && !atLadder(prev.x, prev.z)) { p.x = prev.x; p.z = prev.z; }
       if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToSeaFromLant(); else if (p.z < 0.8 && Math.abs(p.x) >= 4.5) p.z = 0.8;
       if (p.z > LANT_LEN - 0.8 && Math.abs(p.x) < 56) p.z = LANT_LEN - 0.8;
       if (onPier(p.x, p.z) && p.x > PIER.x1 - 2.5 && !fading) goToLift(false);
+      if (Math.hypot(p.x - (-34), p.z - (32 + 7.4)) < 2.6 && !fading) enterInterior('observatory');
       lantBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
     }
     if (where === 'lift') {
@@ -6313,6 +6331,11 @@
     if (!sameSideOfWall(pos, player.position)) return false;
     if (where === 'fernwater') return !fernBoxes.some(bx => Math.abs(pos.x - bx.x) < bx.hw + 0.4 && Math.abs(pos.z - bx.z) < bx.hd + 0.4 && pos.y < 13);
     if (where === 'orchards') return Math.hypot(pos.x - MILL.x, pos.z - MILL.z) > 10 || pos.y > 24;
+    // every other place: the camera stays out of buildings, towers, pillars and big trunks, so walls never vanish
+    const g0 = groundAt(pos.x, pos.z), bxs = { cairnhold: cairnBoxes, cogsworth: cogBoxes, lantern: lantBoxes, skyhaven: skyBoxes }[where];
+    if (bxs && bxs.some(bx => Math.abs(pos.x - bx.x) < bx.hw + 0.5 && Math.abs(pos.z - bx.z) < bx.hd + 0.5 && pos.y < g0 + 14)) return false;
+    const sol = { village: solids, cairnhold: cairnSolids, cogsworth: cogSolids, lantern: lantSolids, skyhaven: skySolids, emberdeep: embSolids, hills: hillSolids }[where];
+    if (sol && sol.some(o => o.r > 2.5 && Math.hypot(pos.x - o.x, pos.z - o.z) < o.r + 0.4 && pos.y < g0 + 18)) return false;
     return true;
   }
 
@@ -6331,14 +6354,15 @@
     const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' ? 0.62 : ZOOMS[zoom]), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
     const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4;
     // when ground or a wall is in the way, the camera comes closer; it never climbs, so your view keeps the tilt you chose
-    const groundOk = p => where === 'in' || p.y >= Math.max(groundAt(p.x, p.z), -0.1) + 0.7;
+    const floorY = where === 'lantern' || where === 'sea' ? SEA_Y : where === 'cairnhold' ? -GORGE.depth : where === 'skyhaven' ? -600 : -0.1; // the lowest the camera may go: water, or the bottom of what you fell into
+    const groundOk = p => where === 'in' || p.y >= Math.max(groundAt(p.x, p.z), floorY) + 0.7;
     let dd = dist, pos;
     for (let i = 0; i < 24; i++) {
       pos = base.clone().add(new THREE.Vector3(Math.sin(off) * Math.cos(pitch) * dd, Math.sin(pitch) * dd + 0.8, Math.cos(off) * Math.cos(pitch) * dd));
       if ((camFree(pos) && groundOk(pos)) || dd < dist * 0.4) break;
       dd -= dist / 24;
     }
-    pos.y = Math.max(pos.y, Math.max(groundAt(pos.x, pos.z), -0.1) + 0.5);
+    pos.y = Math.max(pos.y, Math.max(groundAt(pos.x, pos.z), floorY) + 0.5);
     if (where === 'in') { pos.x = clamp(pos.x, -interior.w / 2 + 0.6, interior.w / 2 - 0.6); pos.z = clamp(pos.z, -interior.d / 2 + 0.6, interior.d / 2 - 0.6); pos.y = Math.min(pos.y, interior.h - 0.6); }
     const look = view === 'front' ? base.clone() : base.clone().add(new THREE.Vector3(Math.sin(camYaw) * Math.cos(pitch) * 3, -Math.sin(pitch) * 3, Math.cos(camYaw) * Math.cos(pitch) * 3));
     return [pos, look];
@@ -6435,11 +6459,18 @@
     const mag = Math.min(1, Math.hypot(mx, mz));
     if (sitting && mag > 0.05) standUp();
     const moving = mag > 0.05 && !sitting;
-    const wantRun = (keys.run || gp.run) && moving && stamina > 0;
+    if (!stamInit) { stamInit = true; stamMax = Math.max(100, save.stamMax || 100); stamina = stamMax; stamTen = Math.floor(stamMax / 10); }
+    const inWater = inRiver(player.position.x, player.position.z) && where !== 'in';
+    const wantRun = (keys.run || gp.run) && moving && stamina > 0 && !inWater;
     running = wantRun && (running || stamina > 15);
-    if (running) stamina = Math.max(0, stamina - dt * 22); else stamina = Math.min(100, stamina + dt * (moving ? 10 : 20));
+    if (running) stamina -= dt * 22; else if (inWater) stamina -= dt * (moving ? 4 : 2.5); else stamina += dt * (moving ? 10 : 20);
+    stamina = clamp(stamina, 0, stamMax);
+    // stamina grows only from your own effort: running, swimming and climbing (never from riding)
+    if (!riding && moving && (running || inWater)) growStam(dt * (inWater ? 0.035 : 0.025));
+    // out of breath in the water: you start to drown
+    if (inWater && stamina <= 0 && !dead) { if (!drowning) { drowning = true; flash('Out of breath. Get to shore, a ladder, or the beach!'); } if (hp - dt * 10 <= 0) die('You drowned.'); else hurt(dt * 10); } else drowning = false;
     if (stamina <= 0) running = false;
-    stamFill.style.width = stamina + '%'; stamEl.classList.toggle('low', stamina < 20); stamEl.classList.toggle('show', stamina < 99.5);
+    stamEl.style.width = Math.min(420, 180 * stamMax / 100) + 'px'; stamFill.style.width = (stamina / stamMax * 100) + '%'; stamEl.classList.toggle('low', stamina < 20); stamEl.classList.toggle('show', stamina < stamMax - 0.5 || inWater);
     if (moving) {
       const base = view === 'front' ? bodyYaw : camYaw;
       const dir = base + Math.atan2(mx, mz);
@@ -6486,6 +6517,7 @@
       if (fading || !stepped || Math.abs(gNow - lastGY) > 80) { if (fading) wasAir = false; } // a gate, not a cliff
       else if (!locked2 && !sitting && gNow < lastGY - 0.5 && py <= 0.001) { py = lastGY - gNow; vy = Math.min(vy, 0); } // the ground dropped away: you keep your height and start to fall
       if (!sitting && !locked2) { const absY = gNow + py; if (py > 0.05) { if (!wasAir) fallPeak = absY; fallPeak = Math.max(fallPeak, absY); wasAir = true; } }
+      if (stepped && !riding && !locked2 && py <= 0.001 && gNow > lastGY + dt * 0.8 && gNow - lastGY < 2) growStam(dt * 0.03);
       lastGY = gNow; }
     if (!sitting) { vy -= 26 * dt; py += vy * dt; if (py < 0) { py = 0; vy = 0; } }
     if (wasAir && py <= 0.001 && !sitting) { wasAir = false; const gNow = groundAt(player.position.x, player.position.z), drop = fallPeak - gNow; if (where !== 'lift' && where !== 'flight') { if (gNow < -100) die('You fell out of the sky.'); else if (gNow <= -GORGE.depth + 0.5 && where === 'cairnhold') die('You fell into the gorge.'); else if (!inRiver(player.position.x, player.position.z)) { if (drop >= 16) die('You fell too far.'); else if (drop > 6) hurt(Math.round((drop - 6) * 9), 'That hurt. ' + Math.round(drop) + ' rods is a long way down.'); } } }
@@ -6670,7 +6702,7 @@
       snow.geometry.attributes.position.needsUpdate = true;
     }
 
-    if (gameStarted && !fading && !dead) { saveTimer += dt; if (saveTimer > 2) { saveTimer = 0; if (where === 'in') { save.where = interior.region; save.pos = [interior.door.x, 0, interior.door.z]; save.yaw = interior.door.yaw; } else if (py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && where !== 'lift' && where !== 'flight') { save.where = where; save.pos = [player.position.x, 0, player.position.z]; save.yaw = bodyYaw; } save.started = true; if (!dead && py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && where !== 'lift' && where !== 'flight') save.check = { where: save.where, pos: save.pos.slice(), yaw: save.yaw }; persist(); } }
+    if (gameStarted && !fading && !dead) { saveTimer += dt; if (saveTimer > 2) { saveTimer = 0; if (where === 'in') { save.where = interior.region; save.pos = [interior.door.x, 0, interior.door.z]; save.yaw = interior.door.yaw; } else if (py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && where !== 'lift' && where !== 'flight') { save.where = where; save.pos = [player.position.x, 0, player.position.z]; save.yaw = bodyYaw; } save.started = true; if (!dead && py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && !inRiver(player.position.x, player.position.z) && where !== 'lift' && where !== 'flight') save.check = { where: save.where, pos: save.pos.slice(), yaw: save.yaw }; persist(); } }
     updateMapLive();
     renderer.render(curScene(), camera);
     requestAnimationFrame(tick);
