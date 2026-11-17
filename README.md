@@ -27,14 +27,22 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 
 ## One continuous world
 
-- The land is being joined into one continent you can walk across, with no loading screens between places. So far Thistledown Hollow, the Mallow Orchards, Fernwater Crossing, Cairnhold and Cogsworth are joined by real land. Each leg of the road is about a third of a mile for a 7-inch elf (roughly ten minutes on foot), over rolling hills with full-size trees.
+- The land is being joined into one continent you can walk across, with no loading screens between places. All eight towns are now one world: seven joined by real land from Thistledown Hollow to Lanternreach, and Skyhaven floating in the real sky above the sea off Lanternreach. Each leg of the road is about a third of a mile for a 7-inch elf (roughly ten minutes on foot), over rolling hills with full-size trees.
 - Fernwater is an open town with no fence: you can walk in from any side. The Fern runs through it and on across the country in both directions, and you can swim it anywhere (the current and drowning rules apply out there too).
 - Each town keeps its own local coordinates and sits on the continent as a tile with a position and a turn. The game draws the open land and any nearby town together each frame and swaps the player between frames at the town gates, so nothing pops.
 - The open land is built in 64-unit chunks around the player, a few per frame, and thrown away behind them, the way Minecraft does it. The same seed always grows the same hills, trees and stones. The Distance setting controls how many chunks are kept.
 - Cairnhold stands on a highland 26 units above the lowlands; the road from Fernwater climbs to it. A town tile can sit at any height, and the land rises to meet it. Like Fernwater it is open on every side.
 - Cairnhold's gorge is a real cut in the land, about 0.4 miles long, deepest by the town and running out to nothing at each end. Falling in kills you anywhere along it. You can walk around either end, or walk in at an end and follow the floor under the town. The bridge from the last Cairnhold lesson is the short way across.
 - Cogsworth sits at the foot of a real crag. The cliff behind the town is the crag's face; its sides are too steep to climb, but the back is a long walkable slope, so you can reach the top and look down on the town. Stepping off the edge kills you. The bike hill east of town carries on into the open land.
-- The Hollow's fence and the Orchards' hedge are solid from outside; the gates are the way in. The towns from Emberdeep onward still use the old fade between regions until they are added to the continent one at a time. The old River Road, High Road and Cliff Road scenes are retired.
+- Emberdeep is a hall cut through a real mountain ridge, about 0.4 miles long and 140 units high. The hall is a pocket interior the same size as the rock it sits in: you walk into the west door and fade into the hall, and its far door comes out on the other side of the ridge. The ridge's faces are too steep to climb; its ends are gentle, so you can walk round it or up onto the crest.
+- The east coast is real: a level plain behind a sea cliff, the cove by Lanternreach, and open sea beyond. You can swim the sea anywhere along the coast (the current and drowning rules apply), and the cliffs cannot be climbed from the water; the cove is the way back up.
+- It is always night at Lanternreach. The sky, sun and fog darken as you come within about 1,500 units of the town and are fully night by 600, so the stars, the moon and the lighthouse beam belong to the place rather than to a separate scene.
+- The sky-lift is a real cable from the end of Lanternreach's pier, over the Pillar Rocks, to Skyhaven, which floats 300 units up and about 230 out to sea. On the ride you see the real town and sea fall away below. Boarding and stepping off still use a short fade. Skyhaven is in the air, not on land: the only way up is the gondola, and stepping off an island is a fall you do not survive.
+- Above the cloud it is always bright day, so the gondola climbs out of Lanternreach's night into sunlight. The stars and the moon belong to the night below.
+- The flight home at the very end is still a storybook scene: a small model of the whole road passing under the glider. Flying the real 6 miles in under a minute would outrun the chunk loading.
+- The Hollow's fence and the Orchards' hedge are solid from outside; the gates are the way in. The six old road scenes (the Long Road, River Road, High Road, Cliff Road, Mountain Road and Sea Road) are deleted from the code. Old saves and map links that point at them open at the matching spot in the open land.
+- The open land has its animals: three deer, a fox, a badger, two pheasants, four rabbits and a flock of birds. They are one small company that keeps pace with you; anything left more than about 340 units behind turns up again somewhere ahead, clear of roads, towns, water and cliffs. Three squirrels live on the wild oaks near you, running up and down the trunks and foraging at the foot; each moves to a new oak when you leave its tree about 300 units behind.
+- These animals exist only on each player's own screen. For multiplayer they need to move to a shared wildlife layer on the server (a Supabase table plus a realtime channel), so that two players standing together see the same animals.
 - A bike can be granted to an account from the database (`save_blob.bike` in `game_saves`); the game keeps a granted bike whichever save wins at sign-in.
 
 ## Falling, hurt and death
@@ -56,6 +64,18 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Slopes push.** Downhill speeds you up and is harder to stop; uphill drags. Standing still on gentle ground holds you, but stand on something steep and you slide. Too steep still blocks you outright.
 - **Currents.** The Fernwater river carries you downstream while you swim; the Lanternreach sea pushes you gently toward the cove. Swim against them or use them.
 - **Jump** stays generous, and carries a little of your run with it. Hit a wall, a tree or a fence and you stop: whatever the world pushes back against is lost.
+
+## Title screen and your elf
+
+- The game opens on a title screen with the live Hollow turning slowly behind it: Continue (when there is a save), New game, Lessons and map, Settings, and cloud sign-in.
+- New game opens the creator: a name (up to 16 characters, "Elfling" if left blank) and colours for skin, hair, hat and tunic, shown on your elf as it turns. Begin starts the first lesson in Bramblewick's shop.
+- One elf per player. If there is already progress, Begin warns what will be lost and must be pressed a second time; it then wipes the save (and the cloud copy when signed in) and reloads into the first lesson.
+- The name and colours live in the save as `name` and `look`, and in the cloud inside `save_blob`. The `display_name` column in `game_players` is not written yet; multiplayer will need it.
+
+## Phones and tablets
+
+- Walking uses a thumb stick: a fixed round pad at the bottom left. The knob follows your thumb, and how far you push sets how fast you go. Drag the picture to look.
+- The picture is always drawn at the size of the box it is shown in, checked every frame, so it cannot be stretched when a phone's address bar shows or hides.
 
 ## The bike
 

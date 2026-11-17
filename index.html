@@ -115,19 +115,18 @@
   .reward svg { width: 64px; height: 64px; }
 
   /* touch controls: shown on touch screens only */
-  .pad { pointer-events: auto; width: 100%; display: none; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 8px; }
-  .dpad { display: grid; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 54px); gap: 6px; }
-  .dpad button, .act {
+  .pad { pointer-events: auto; width: 100%; display: none; justify-content: space-between; align-items: flex-end; flex-wrap: nowrap; gap: 8px; }
+  .stick { width: 136px; height: 136px; border-radius: 50%; background: rgba(27,43,30,.5); border: 2px solid var(--panel-edge); position: relative; touch-action: none; flex: none; }
+  .stick::after { content: ""; position: absolute; inset: 34px; border-radius: 50%; border: 1px dashed rgba(240,230,200,.35); }
+  .knob { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: rgba(240,230,200,.88); border: 2px solid var(--gold); pointer-events: none; will-change: transform; box-shadow: 0 3px 10px rgba(0,0,0,.35); }
+  .act {
     background: rgba(27,43,30,.85); color: var(--ink); border: 2px solid var(--panel-edge);
     border-radius: 14px; font-size: 22px; font-family: var(--font-body); touch-action: none; user-select: none;
   }
-  .dpad .up { grid-column: 2; grid-row: 1; }
-  .dpad .left { grid-column: 1; grid-row: 2; }
-  .dpad .down { grid-column: 2; grid-row: 2; }
-  .dpad .right { grid-column: 3; grid-row: 2; }
-  .acts { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; justify-content: flex-end; }
-  .act { width: 66px; height: 66px; border-radius: 50%; font-size: 14px; font-weight: 700; }
-  .act.main { width: 86px; height: 86px; border-color: var(--gold); font-size: 16px; }
+  .acts { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; justify-content: flex-end; max-width: 216px; }
+  .act { width: 60px; height: 60px; border-radius: 50%; font-size: 13px; font-weight: 700; }
+  .act.main { width: 84px; height: 84px; border-color: var(--gold); font-size: 15px; }
+  @media (min-width: 700px) { .acts { max-width: none; } }
   body.touchmode .pad { display: flex; }
   .stam { width: 180px; height: 8px; border-radius: 4px; background: rgba(27,43,30,.85); border: 1px solid var(--panel-edge); overflow: hidden; align-self: flex-start; opacity: 0; transition: opacity .4s; }
   .stam.show { opacity: 1; }
@@ -144,6 +143,27 @@
     padding-block: calc(16px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-bottom, 0px));
     display: flex; flex-direction: column; align-items: center; gap: 12px;
   }
+  /* the title screen: the live world behind, one card of choices in front */
+  .titleview { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: flex-start; overflow: auto;
+    background: linear-gradient(90deg, rgba(14,24,16,.86) 0, rgba(14,24,16,.5) 34%, rgba(14,24,16,0) 62%);
+    padding: calc(20px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(28px, env(safe-area-inset-left, 0px)); }
+  .titlecard { width: min(390px, 100%); display: flex; flex-direction: column; gap: 10px; margin-block: auto; }
+  .titlecard h1 { font-family: var(--font-display); color: var(--gold); font-size: clamp(38px, 7vw, 62px); line-height: 1.02; margin: 0 0 2px; text-shadow: 0 3px 18px rgba(0,0,0,.55); text-wrap: balance; }
+  .titlecard h2 { font-family: var(--font-display); color: var(--gold); font-size: 28px; margin: 0; }
+  .titlecard .tag { margin: 0 0 10px; color: var(--ink); font-size: 16px; text-shadow: 0 1px 8px rgba(0,0,0,.7); max-width: 34ch; }
+  .titlecard .btn.big { font-size: 18px; padding: 12px 18px; text-align: left; }
+  .titlecard .account { margin-top: 8px; }
+  .creator { background: rgba(27,43,30,.9); border: 2px solid var(--panel-edge); border-radius: 18px; padding: 18px; }
+  .creator label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--ink-soft); }
+  .creator input { font: inherit; font-size: 18px; color: var(--ink); background: var(--bg); border: 2px solid var(--panel-edge); border-radius: 10px; padding: 8px 10px; }
+  .swrow { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-soft); }
+  .sw { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sw button { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(0,0,0,.35); padding: 0; cursor: pointer; }
+  .sw button[aria-pressed="true"] { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .creator .warn { margin: 0; color: #ffcf9a; font-size: 14px; }
+  .creator .row { display: flex; gap: 10px; justify-content: space-between; margin-top: 4px; }
+  body.titled .hud { visibility: hidden; }
+  @media (max-width: 640px) { .titleview { align-items: flex-end; background: linear-gradient(0deg, rgba(14,24,16,.9) 0, rgba(14,24,16,.55) 55%, rgba(14,24,16,0) 85%); padding-left: max(16px, env(safe-area-inset-left, 0px)); } .titlecard { margin-block: auto 0; width: 100%; } .titlecard .tag { margin-bottom: 4px; } }
   .maphead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: min(1240px, 100%); }
   .maphead h1 { font-family: var(--font-display); color: var(--gold); font-size: clamp(24px, 4vw, 38px); margin: 0; }
   .maphead p { margin: 0; color: var(--ink-soft); flex: 1 1 240px; }
@@ -234,11 +254,33 @@
       <div class="row" style="margin-top:18px"><button class="btn primary" id="settingsdone">Done</button></div>
     </div>
   </div>
-<div class="mapview" id="start">
+<div class="titleview" id="title" hidden>
+  <div class="titlecard" id="titlemain">
+    <h1>The Long Road</h1>
+    <p class="tag">Seven inches tall, eight towns to cross, and everything worth knowing along the way.</p>
+    <button class="btn primary big" id="tcontinue" hidden>Continue</button>
+    <button class="btn big" id="tnew">New game</button>
+    <button class="btn big" id="tlessons">Lessons and map</button>
+    <button class="btn big" id="tsettings">Settings</button>
+    <div id="titleacct"></div>
+  </div>
+  <div class="titlecard creator" id="creator" hidden>
+    <h2>Who is setting out?</h2>
+    <label>Your elf's name <input id="elfname" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Elfling"></label>
+    <div class="swrow"><span>Skin</span><div class="sw" data-k="skin"></div></div>
+    <div class="swrow"><span>Hair</span><div class="sw" data-k="hair"></div></div>
+    <div class="swrow"><span>Hat</span><div class="sw" data-k="hat"></div></div>
+    <div class="swrow"><span>Tunic</span><div class="sw" data-k="tunic"></div></div>
+    <p class="warn" id="creatorwarn" hidden></p>
+    <div class="row"><button class="btn" id="creatorback">Back</button><button class="btn primary" id="creatorgo">Begin</button></div>
+  </div>
+</div>
+<div class="mapview" id="start" hidden>
   <div class="maphead">
     <h1>The Long Road</h1>
     <p id="maphint">The whole land, from the Hollow to Skyhaven. Pick a place, then a lesson, to begin.</p>
     <button class="btn primary" id="mapcontinue" hidden>Continue where you left off</button>
+    <button class="btn" id="maptitle">Title screen</button>
     <button class="btn" id="mapsettings">Settings</button>
     <button class="btn" id="mapreset" hidden>Start over</button>
     <div class="account" id="account">
@@ -282,12 +324,7 @@
       <div class="actions" id="actions"></div>
     </div>
     <div class="pad" id="pad">
-      <div class="dpad">
-        <button class="up" data-move="f" aria-label="Walk forward">&uarr;</button>
-        <button class="left" data-move="l" aria-label="Walk left">&larr;</button>
-        <button class="down" data-move="b" aria-label="Walk back">&darr;</button>
-        <button class="right" data-move="r" aria-label="Walk right">&rarr;</button>
-      </div>
+      <div class="stick" id="stick" role="application" aria-label="Move: slide your thumb in the direction you want to walk"><div class="knob" id="knob"></div></div>
       <div class="acts">
         <button class="act" id="mapbtn">Map</button>
         <button class="act" id="runbtn">Run</button>
@@ -1224,7 +1261,7 @@
     const bag = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, 0.25), mat('#8a5a2b')); bag.position.set(0.68, 1.35, 0.1); satchel.add(bag);
     [[0.5, 0.52], [0.5, -0.52]].forEach(([, z]) => { const strap = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.7, 0.05), mat('#6b4422')); strap.position.set(0.22, 1.75, z); strap.rotation.z = -0.42; satchel.add(strap); });
     satchel.visible = false; player.add(satchel);
-    Object.assign(kid, { legs, arms, hd, satchel });
+    Object.assign(kid, { legs, arms, hd, satchel, mats: { tunic: tunicM, skin: skinK, hair: hairM, hat: cap.material } });
   }
   player.position.set(0, 0, 6.5); scene.add(player);
 
@@ -1267,76 +1304,15 @@
 
   scene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.isSprite && o !== ground && o !== dirt) { o.castShadow = true; o.receiveShadow = true; } });
 
-  // ---------- the Long Road: a separate, simpler scene beyond the gate ----------
-  let where = 'village', fading = false, mapOpen = true, gameStarted = false, selRegion = 0, interior = null;
+  // ---------- game state, fades and moving the company between scenes ----------
+  let where = 'village', fading = false, mapOpen = true, gameStarted = false, selRegion = 0, interior = null, titleUp = false, creatorUp = false;
   const interiors = {}, fernBoxes = [];
-  const ROAD_LEN = 220;
-  const roadScene = new THREE.Scene();
-  roadScene.fog = new THREE.Fog('#d8d3a4', 60, 220);
-  roadScene.add(new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
-  roadScene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.8));
-  const roadSun = new THREE.DirectionalLight('#ffd99a', 1.0); roadSun.castShadow = true;
-  Object.assign(roadSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); roadSun.shadow.mapSize.set(4096, 4096); roadSun.shadow.radius = 2; roadSun.shadow.bias = -0.0006;
-  roadScene.add(roadSun); roadScene.add(roadSun.target);
-  {
-    const g = new THREE.Mesh(new THREE.PlaneGeometry(600, 800), mat('#ffffff', { map: groundTex })); g.rotation.x = -Math.PI / 2; g.position.set(0, 0, ROAD_LEN / 2); g.receiveShadow = true; roadScene.add(g);
-    const road = new THREE.Mesh(new THREE.PlaneGeometry(9, ROAD_LEN + 20), mat('#ffffff', { map: dirtTex })); road.rotation.x = -Math.PI / 2; road.position.set(0, 0.03, ROAD_LEN / 2); road.receiveShadow = true; roadScene.add(road);
-    [-1.8, 1.8].forEach(x => { const rut = new THREE.Mesh(new THREE.PlaneGeometry(0.5, ROAD_LEN + 20), mat('#5d4a2e', { roughness: 1 })); rut.rotation.x = -Math.PI / 2; rut.position.set(x, 0.04, ROAD_LEN / 2); roadScene.add(rut); });
-    // tall grass walls either side, with a few flowers and stones
-    const geo = new THREE.ConeGeometry(0.24, 1, 3); geo.translate(0, 0.5, 0);
-    const mesh = new THREE.InstancedMesh(geo, mat('#ffffff', { roughness: 0.9 }), 5000);
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 5000; i++) {
-      const side = i % 2 ? 1 : -1; pv.set(side * rnd(6.5, 80), 0, rnd(-30, ROAD_LEN + 80));
-      q.setFromEuler(new THREE.Euler(rnd(-0.25, 0.25), rnd(0, 6.3), rnd(-0.25, 0.25))); sv.set(1, rnd(3, 11), 1);
-      mesh.setMatrixAt(i, m4.compose(pv, q, sv)); mesh.setColorAt(i, col.set(pick(['#7d9c45', '#6b8c3a', '#8fae52', '#5f7f33', '#a3b25a'])));
-    }
-    roadScene.add(mesh);
-    for (let i = 0; i < 30; i++) { const f = makeFlower(pick(flowerColors)); f.position.set((i % 2 ? 1 : -1) * rnd(6, 40), 0, rnd(0, ROAD_LEN)); f.scale.setScalar(1.3); roadScene.add(f); }
-    for (let i = 0; i < 10; i++) { const m = makeMushroom(rnd(1.2, 2.6)); m.position.set((i % 2 ? 1 : -1) * rnd(7, 30), 0, rnd(10, ROAD_LEN)); roadScene.add(m); }
-    // the Hollow's fence and gate, seen from outside
-    const railM = mat('#8a6438'), postM = mat('#6b4a2b');
-    for (let x = -60; x <= 60; x += 4) { if (Math.abs(x) < 5) continue; const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 2.4, 7), postM); pm.position.set(x, 1.2, 0); roadScene.add(pm); }
-    [[-60, -5], [5, 60]].forEach(([a, b]) => [1.0, 1.9].forEach(y => { const r = new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.14, 0.14), railM); r.position.set((a + b) / 2, y, 0); roadScene.add(r); }));
-    [-5, 5].forEach(x => { const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 9, 10), postM); gp.position.set(x, 4.5, 0); roadScene.add(gp); const cap = new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), railM); cap.position.set(x, 9.1, 0); roadScene.add(cap); });
-    const arch = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), railM); arch.position.set(0, 7.6, 0); roadScene.add(arch);
-    const gs = signBoard('Thistledown Hollow', 7, 1.6, '#5a3d22', '#f6e7c2'); gs.position.set(0, 10.2, 0); roadScene.add(gs);
-    // the village roofs peeking over the fence behind you
-    const roofA = new THREE.Mesh(new THREE.SphereGeometry(R + 0.9, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat('#4f7a33')); roofA.position.set(0, 12.9, -104); roofA.scale.y = 0.62; roadScene.add(roofA);
-    const oakFar = new THREE.Mesh(new THREE.IcosahedronGeometry(16, 1), mat('#3e6b2b', { flatShading: true })); oakFar.position.set(-27, 42, -14); roadScene.add(oakFar);
-    const oakTrunk = new THREE.Mesh(new THREE.CylinderGeometry(3.8, 6, 40, 12), mat('#ffffff', { map: barkTex })); oakTrunk.position.set(-27, 20, -14); roadScene.add(oakTrunk);
-    // milestones along the way
-    for (let z = 40; z < ROAD_LEN; z += 40) { const st = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.8), mat('#9b9789')); st.position.set(6, 1.1, z); st.rotation.y = -0.3; roadScene.add(st); const lab = signBoard(String(z / 40), 0.9, 0.9, '#9b9789', '#3a3a3a'); lab.position.set(5.5, 1.5, z); lab.rotation.y = -Math.PI / 2 - 0.3; roadScene.add(lab); }
-    // the orchards ahead: apple trees, a stone mill and a wheel, out past the end of the road
-    for (let i = 0; i < 24; i++) { const tr = new THREE.Group(); const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 8, 8), mat('#5a4027')); trunk.position.y = 4; tr.add(trunk); const can = new THREE.Mesh(new THREE.SphereGeometry(5.5, 12, 10), mat(pick(['#4a7a31', '#56863a', '#3e6b2b']))); can.position.y = 10; tr.add(can); for (let k = 0; k < 8; k++) { const ap = new THREE.Mesh(new THREE.SphereGeometry(0.45, 8, 6), mat('#c4362e')); const a = rnd(0, 6.3), e = rnd(0.3, 1.5); ap.position.set(Math.cos(a) * Math.sin(e) * 5.4, 10 + Math.cos(e) * 5.4, Math.sin(a) * Math.sin(e) * 5.4); tr.add(ap); } tr.position.set((i % 2 ? 1 : -1) * (14 + Math.floor(i / 2) % 4 * 11), 0, ROAD_LEN + 10 + Math.floor(i / 8) * 22); roadScene.add(tr); }
-    const mill = new THREE.Group(); mill.position.set(0, 0, ROAD_LEN + 70); roadScene.add(mill);
-    const mb = new THREE.Mesh(new THREE.CylinderGeometry(7, 8.5, 22, 16), mat('#9b9789')); mb.position.y = 11; mill.add(mb);
-    const mr = new THREE.Mesh(new THREE.ConeGeometry(8.5, 9, 16), mat('#8a3a3a')); mr.position.y = 26.5; mill.add(mr);
-    const wheel = new THREE.Mesh(new THREE.TorusGeometry(7, 0.8, 8, 24), mat('#6b4a2b')); wheel.position.set(9.5, 8, 0); wheel.rotation.y = Math.PI / 2; mill.add(wheel);
-    for (let k = 0; k < 8; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 14, 0.5), mat('#6b4a2b')); sp.position.set(9.5, 8, 0); sp.rotation.x = k * Math.PI / 8; mill.add(sp); }
-    const osign = signBoard('Mallow Orchards', 6, 1.3, '#8a6438', '#f6e7c2'); osign.position.set(-5, 4, ROAD_LEN - 8); osign.rotation.y = 0.4; roadScene.add(osign);
-    const osign2 = signBoard('not built yet', 4.6, 1, '#f2e6c8', '#4a3420'); osign2.position.set(-5, 2.6, ROAD_LEN - 8); osign2.rotation.y = 0.4; roadScene.add(osign2);
-    const opost = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 5, 8), postM); opost.position.set(-5, 2.5, ROAD_LEN - 8.4); roadScene.add(opost);
-    roadScene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o !== g) { o.castShadow = true; o.receiveShadow = true; } });
-  }
   function fadeTo(text, mid, after) {
     fading = true; fadeEl.textContent = text; fadeEl.classList.add('on');
     setTimeout(() => { mid(); if (typeof restoreAfter === 'function') { const f = restoreAfter; restoreAfter = null; f(); } setTimeout(() => { fadeEl.classList.remove('on'); fading = false; const before = hint.current; after && after(); const now = hint.current; if (now && now !== before) { clearTimeout(fadeTo.timer); fadeTo.timer = setTimeout(() => { if (hint.current === now) hint(''); }, 9000); } }, 500); }, 800);
   }
   function moveCompany(from, to) { from.remove(player); to.add(player); if (beetle) { from.remove(beetle); to.add(beetle); } }
   function goToRoad() { const [x, z, y] = hollowGateOutside(); enterWild(x, z, y); }
-  function goToRoadOld() {
-    fadeTo('The Long Road', () => {
-      moveCompany(scene, roadScene); where = 'road'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint('The Long Road. The Mallow Orchards lie ahead. The gate behind you leads home.'));
-  }
-  function goToVillage() {
-    fadeTo('Thistledown Hollow', () => {
-      moveCompany(roadScene, scene); where = 'village'; player.position.set(0, 0, GATE.z - 3); bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; if (beetle) beetle.position.set(2, 0, GATE.z - 1);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint('Home again. Bramblewick\u2019s shop is at the top of the street.'));
-  }
 
   // ---------- Region 2: the Mallow Orchards and Quern Mill ----------
   const ORCH_LEN = 110, MILL = new THREE.Vector3(0, 0, 92), HOLPOS = new THREE.Vector3(-6, 0, 78), PIPPOS = new THREE.Vector3(14, 0, 70);
@@ -1485,16 +1461,9 @@
   }
   function goToOrchards() {
     fadeTo('The Mallow Orchards', () => {
-      moveCompany(where === 'village' ? scene : roadScene, orchScene); where = 'orchards'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
+      moveCompany(curScene(), orchScene); where = 'orchards'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => { hint('The Mallow Orchards. Quern Mill is at the end of the lane.'); if (phase === 'toorch') { phase = 'tomill'; } if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(-2, 0, 70); bodyYaw = camYaw = 0.3; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
-  }
-  function goToRoadFromOrchards() { const [x, z, y] = orchardGateOutside(); enterWild(x, z, y, 'Back on the Long Road. The Hollow is the other way.'); }
-  function goToRoadFromOrchardsOld() {
-    fadeTo('The Long Road', () => {
-      moveCompany(orchScene, roadScene); where = 'road'; player.position.set(0, 0, ROAD_LEN - 6); bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; if (beetle) beetle.position.set(2, 0, ROAD_LEN - 4);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint('Back on the Long Road. The Hollow is the other way.'));
   }
 
   // ---------- the open world: one continent, streamed in chunks around you ----------
@@ -1512,7 +1481,7 @@
   function toLocal(t, x, z) { const dx = x - t.ox, dz = z - t.oz, c = Math.cos(t.yaw), s = Math.sin(t.yaw); return [dx * c - dz * s, dx * s + dz * c]; }
   function inRect(t, lx, lz, m) { const R = t.rect; return lx > R[0] - m && lx < R[1] + m && lz > R[2] - m && lz < R[3] + m; }
   // the Hollow faces east-north-east toward the Orchards; the Orchards face on toward Fernwater (map positions from the continent sketch)
-  const HOLLOW_AT = [8200, 18800], ORCH_AT = [12500, 17200], FERN_AT = [16300, 14400], CAIRN_AT = [17400, 9300], COG_AT = [22300, 10600], EMBER_AT = [27400, 8100];
+  const HOLLOW_AT = [8200, 18800], ORCH_AT = [12500, 17200], FERN_AT = [16300, 14400], CAIRN_AT = [17400, 9300], COG_AT = [22300, 10600], EMBER_AT = [27400, 8100], LANT_AT = [37600, 12600];
   const yawV = Math.atan2(ORCH_AT[0] - HOLLOW_AT[0], ORCH_AT[1] - HOLLOW_AT[1]), yawO = Math.atan2(FERN_AT[0] - ORCH_AT[0], FERN_AT[1] - ORCH_AT[1]);
   const tileV = makeTile('village', scene, 0, 0, yawV, [FENCE.x0, FENCE.x1, FENCE.z0, FENCE.z1]);
   { const [cx, cz] = toWorld(tileV, 0, (FENCE.z0 + FENCE.z1) / 2); tileV.ox += HOLLOW_AT[0] - cx; tileV.oz += HOLLOW_AT[1] - cz; tileV.m.setPosition(tileV.ox, 0, tileV.oz); tileV.inv = tileV.m.clone().invert(); }
@@ -1543,7 +1512,41 @@
     return h;
   }
   const STITCHED = [tileV, tileO, tileF, tileC, tileG];
-  const ZONES = STITCHED.map(t => { const R = t.rect, [cx, cz] = toWorld(t, (R[0] + R[1]) / 2, (R[2] + R[3]) / 2); const r0 = Math.hypot(R[1] - R[0], R[3] - R[2]) / 2 + 22; return { t, cx, cz, r0, r1: r0 + (t.blend || 170), y: t.oy || 0 }; });
+  // Lanternreach stands on the east coast, where it is always night. Its +x is out to sea, its +z runs south along the cliffs.
+  const tileL = makeTile('lantern', null, 0, 0, 0, [-56, 230, 0, 200]); tileL.open = true; tileL.mapI = 6;
+  { const [cx, cz] = toWorld(tileL, 0, 70); tileL.ox += LANT_AT[0] - cx; tileL.oz += LANT_AT[1] - cz; tileL.m.setPosition(tileL.ox, 0, tileL.oz); tileL.inv = tileL.m.clone().invert(); }
+  STITCHED.push(tileL);
+  // The sky-lift is a real cable from the end of Lanternreach's pier, and Skyhaven really floats where the cable ends: 233 units out to sea and 300 up.
+  // Neither is land: nothing below them is flattened, and you cannot walk into them; the gondola is the only way.
+  const tileLift = makeTile('lift', null, tileL.ox + 118, tileL.oz + 118, 0, [-30, 260, -20, 20]); tileLift.air = true; tileLift.noTrim = true;
+  const tileS = makeTile('skyhaven', null, tileLift.ox + 233, tileLift.oz, Math.PI / 2, [-100, 115, -6, 135]); tileS.air = true; tileS.noTrim = true; tileS.oy = 300; tileS.m.setPosition(tileS.ox, 300, tileS.oz); tileS.inv = tileS.m.clone().invert();
+  STITCHED.push(tileLift, tileS);
+  STITCHED.forEach(t => { const R = t.rect; [t.cx, t.cz] = toWorld(t, (R[0] + R[1]) / 2, (R[2] + R[3]) / 2); });
+  const SEA_L = -16;
+  // the coast: a level plain behind a sea cliff, the cove by the town, and the seabed beyond. Near the town this is exactly the town's own ground.
+  function coast(x, z, h) {
+    const [lx, lz] = toLocal(tileL, x, z); if (lx < -900) return h;
+    const w = ss(-900, -250, lx); h = h * (1 - w) + (0.5 * Math.sin(lx / 9) * Math.cos(lz / 11) + 0.3 * Math.sin(lx / 4 + 1) * Math.sin(lz / 5)) * w;
+    const cove = Math.exp(-Math.pow((lz - 112) / 30, 2)), edge = 58 - 14 * cove;
+    if (lx > edge) h -= Math.min((lx - edge) * Math.max(0.48, 3.5 - 3.02 * cove), 30);
+    return Math.max(h, SEA_L - 4);
+  }
+  function offshore(x, z, m) { const [lx, lz] = toLocal(tileL, x, z); return lx > 58 - 14 * Math.exp(-Math.pow((lz - 112) / 30, 2)) - m; }
+  function wildSea(x, z) { return toLocal(tileL, x, z)[0] > 40 && worldH(x, z) < SEA_L - 1.2; }
+  function nightAt(x, z) { return ss(1500, 600, Math.hypot(x - LANT_AT[0], z - LANT_AT[1])); }
+  // Emberdeep is a hall cut straight through a mountain ridge. The ridge is real land; the hall is its inside, the same size as the rock around it.
+  // frameE: origin at the west door, +z running through the mountain toward Lanternreach, the ridge lying along x.
+  const yawE = Math.atan2(LANT_AT[0] - EMBER_AT[0], LANT_AT[1] - EMBER_AT[1]);
+  const frameE = { yaw: yawE, ox: EMBER_AT[0] - 60 * Math.sin(yawE), oz: EMBER_AT[1] - 60 * Math.cos(yawE) };
+  function ridge(x, z) {
+    const [lx, lz] = toLocal(frameE, x, z), ax = Math.abs(lx); if (ax > 1500 || lz < -60 || lz > 180) return 0;
+    let h = 140 * ss(-60, 40, lz) * ss(180, 80, lz) * ss(1500, 900, ax);
+    if (lz < 10 || lz > 110) h *= ss(30, 46, ax);   // a level approach cut in to each door
+    return h;
+  }
+  // the two doors, each with its own little frame: x across the doorway, z into the rock
+  const PORTALS = [{ key: 'w', yaw: yawE, at: toWorld(frameE, 0, 0) }, { key: 'e', yaw: yawE + Math.PI, at: toWorld(frameE, 0, 120) }].map(q => ({ key: q.key, yaw: q.yaw, ox: q.at[0], oz: q.at[1] }));
+  const ZONES = STITCHED.filter(t => !t.air).map(t => { const R = t.rect, [cx, cz] = toWorld(t, (R[0] + R[1]) / 2, (R[2] + R[3]) / 2); const r0 = Math.hypot(R[1] - R[0], R[3] - R[2]) / 2 + 22; return { t, cx, cz, r0, r1: r0 + (t.blend || 170), y: t.oy || 0 }; });
 
   // the land itself: rolling country, level around the towns and gentle along the road
   const bigH = (x, z) => 30 * vnoise(x / 820, z / 820, 11) + 10 * vnoise(x / 210, z / 210, 12);
@@ -1554,7 +1557,7 @@
   // the gorge: a sheer cut, deepest by the town and running out to nothing at each end
   function gorgeG(lx) { const [x, z] = toWorld(tileC, lx, GW.zc), [k, y] = zoneAt(x, z); return bigH(x, z) * k + y * (1 - k); }
   function gorgeDepth(lx) { return GW.depth * ss(GW.half, GW.half - 600, Math.abs(lx)); }
-  function noGrow(x, z, m) { if (riverD(x, z)[0] < RIVER.hw + m) return true; const [lx, lz] = toLocal(tileC, x, z); return Math.abs(lx) < GW.half && Math.abs(lz - GW.zc) < GW.rim + m; }
+  function noGrow(x, z, m) { if (riverD(x, z)[0] < RIVER.hw + m || offshore(x, z, 5)) return true; const [lx, lz] = toLocal(tileC, x, z); if (Math.abs(lx) < GW.half && Math.abs(lz - GW.zc) < GW.rim + m) return true; return ridge(x, z) > 6; }
   // the Long Road, leg by leg: the Hollow's gate to the Orchards' gate, then the Orchards' far gate to Fernwater
   function buildRoad(p) {
     const curve = new THREE.CatmullRomCurve3(p.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
@@ -1570,6 +1573,10 @@
       return { a: 'Fernwater Crossing', b: 'Cairnhold', ai: 2, bi: 3, pts: buildRoad([toWorld(tileF, 0, 117), toWorld(tileF, 0, 152), A, [A[0] + dx / 3 + nx * 130, A[1] + dz / 3 + nz * 130], [A[0] + dx * 2 / 3 - nx * 100, A[1] + dz * 2 / 3 - nz * 100], B, toWorld(tileC, -8, -170), toWorld(tileC, 0, -34), toWorld(tileC, 0, 3)]) }; })(),
     (() => { const A = toWorld(tileC, 12, 340), B = toWorld(tileG, -70, -330), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
       return { a: 'Cairnhold', b: 'Cogsworth', ai: 3, bi: 4, pts: buildRoad([toWorld(tileC, 0, 147), toWorld(tileC, 0, 185), A, [A[0] + dx / 3 - nx * 140, A[1] + dz / 3 - nz * 140], [A[0] + dx * 2 / 3 + nx * 110, A[1] + dz * 2 / 3 + nz * 110], B, toWorld(tileG, -10, -150), toWorld(tileG, 0, -34), toWorld(tileG, 0, 3)]) }; })(),
+    (() => { const A = toWorld(tileG, 300, 60), B = toWorld(frameE, 30, -420), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
+      return { a: 'Cogsworth', b: 'Emberdeep', ai: 4, bi: 5, pts: buildRoad([toWorld(tileG, 145, 70), toWorld(tileG, 178, 70), A, [A[0] + dx / 3 + nx * 150, A[1] + dz / 3 + nz * 150], [A[0] + dx * 2 / 3 - nx * 120, A[1] + dz * 2 / 3 - nz * 120], B, toWorld(frameE, 0, -170), toWorld(frameE, 0, -40), toWorld(frameE, 0, 2)]) }; })(),
+    (() => { const A = toWorld(frameE, 0, 430), B = toWorld(tileL, -70, -540), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
+      return { a: 'Emberdeep', b: 'Lanternreach', ai: 5, bi: 6, pts: buildRoad([toWorld(frameE, 0, 118), toWorld(frameE, 0, 165), A, [A[0] + dx / 3 - nx * 160, A[1] + dz / 3 - nz * 160], [A[0] + dx * 2 / 3 + nx * 140, A[1] + dz * 2 / 3 + nz * 140], B, toWorld(tileL, -10, -180), toWorld(tileL, 0, -34), toWorld(tileL, 0, 3)]) }; })(),
     { a: 'Mallow Orchards', b: 'Fernwater Crossing', ai: 1, bi: 2, pts: buildRoad([toWorld(tileO, 30, ORCH_LEN - 3), toWorld(tileO, 30, ORCH_LEN + 30), toWorld(tileO, 24, ORCH_LEN + 130), [13800, 16420], [15000, 15700], toWorld(tileF, -14, -150), toWorld(tileF, 0, -34), toWorld(tileF, 0, 3)]) },
   ];
   const roadPts = ROADS[0].pts;
@@ -1577,15 +1584,16 @@
   ROADS.forEach((RD, ri) => RD.pts.forEach((s, i) => { s.i = i; s.road = ri; const k = Math.floor(s.x / ROAD_CELL) + ',' + Math.floor(s.z / ROAD_CELL); if (!roadGrid.has(k)) roadGrid.set(k, []); roadGrid.get(k).push(s); }));
   function roadNear(x, z) { const cx = Math.floor(x / ROAD_CELL), cz = Math.floor(z / ROAD_CELL); let best = null, bd = 1e9; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const l = roadGrid.get((cx + a) + ',' + (cz + b)); if (l) for (const s of l) { const d = (s.x - x) * (s.x - x) + (s.z - z) * (s.z - z); if (d < bd) { bd = d; best = s; } } } if (best === null) return null; const P = ROADS[best.road].pts, a = P[Math.max(0, best.i - 1)], b = P[Math.min(P.length - 1, best.i + 1)], ex = b.x - a.x, ez = b.z - a.z, tt = clamp(((x - a.x) * ex + (z - a.z) * ez) / (ex * ex + ez * ez || 1), 0, 1); return { d: Math.sqrt(bd), h: a.h + (b.h - a.h) * tt, i: best.i, road: best.road }; }
   function worldH(x, z, noCrag) {
-    const [k, zy] = zoneAt(x, z); let h = (bigH(x, z) + fineH(x, z)) * k + zy * (1 - k) + cogLand(x, z, noCrag);
+    const [k, zy] = zoneAt(x, z); let h = (bigH(x, z) + fineH(x, z)) * k + zy * (1 - k);
     const r = roadNear(x, z); if (r && r.d < 26) { const b = ss(4.5, 26, r.d); h = r.h * (1 - b) + h * b; }
+    h += cogLand(x, z, noCrag) + ridge(x, z);
     // the river's bed and banks, outside the town
     const [rd, lx] = riverD(x, z);
     if (rd < 90 && Math.abs(lx) > 50) { const e = ss(50, 58, Math.abs(lx)), bed = rd < RIVER.hw ? -1.45 : -1.45 + 1.8 * ss(RIVER.hw, RIVER.hw + 9, rd), b = ss(RIVER.hw + 9, 90, rd), hr = rd < RIVER.hw + 9 ? bed : 0.35 * (1 - b) + Math.max(h, 0.35) * b; h = h * (1 - e) + hr * e; }
     // the gorge
     const [glx, glz] = toLocal(tileC, x, z), gd = Math.abs(glz - GW.zc), gax = Math.abs(glx);
     if (gd < GW.out && gax < GW.half + 40) { const G = gorgeG(glx), e = ss(GW.half + 40, GW.half, gax), hg = gd < GW.hw ? G - gorgeDepth(glx) : gd < GW.rim ? G : G + (h - G) * ss(GW.rim, GW.out, gd); h = h * (1 - e) + hg * e; }
-    return h;
+    return coast(x, z, h);
   }
 
   // the height the land mesh is drawn at: the same as the ground, except that it drops away under the gorge's own walls and floor
@@ -1611,7 +1619,8 @@
   const rockGeo = new THREE.DodecahedronGeometry(1, 0);
   const SHARED = new Set([terrainMat, grassGeo, grassMat, bloomGeo, bloomMat, rockGeo]);
   let worldLoadR = 7, worldGrassK = 1;
-  function worldGfx(distK, grassK) { worldLoadR = Math.max(3, Math.round(7 * distK)); worldGrassK = grassK; }
+  let worldDistK = 1;
+  function worldGfx(distK, grassK) { worldLoadR = Math.max(3, Math.round(7 * distK)); worldGrassK = grassK; worldDistK = distK; nightNow = -1; }
 
   const chunks = new Map();
   function buildChunk(cx, cz) {
@@ -1627,6 +1636,8 @@
       const nx = hAt(i - 1, j) - hAt(i + 1, j), nz = hAt(i, j - 1) - hAt(i, j + 1), ny = 2 * st, l = Math.hypot(nx, ny, nz); nor[v * 3] = nx / l; nor[v * 3 + 1] = ny / l; nor[v * 3 + 2] = nz / l;
       const tint = 0.9 + 0.16 * vnoise(x / 34, z / 34, 5) + 0.004 * clamp(h, -20, 20), dry = clamp(0.5 + vnoise(x / 260, z / 260, 6), 0, 1) * 0.12;
       col[v * 3] = tint + dry; col[v * 3 + 1] = tint + dry * 0.6; col[v * 3 + 2] = tint * 0.92;
+      if (h < -1.5 && offshore(x, z, 2)) { const sand = h < SEA_L + 2.5; col[v * 3] = sand ? 1.75 : 0.95; col[v * 3 + 1] = sand ? 1.35 : 0.8; col[v * 3 + 2] = sand ? 0.95 : 0.85; }
+      { const rg = ridge(x, z); if (rg > 4) { const rk = clamp((rg - 4) / 26, 0, 1), sk = clamp((rg - 100) / 24, 0, 1), g0 = 0.62 * tint; for (let q = 0; q < 3; q++) { let cc = col[v * 3 + q] * (1 - rk) + (q === 1 ? g0 * 0.9 : g0 * 1.05) * rk; col[v * 3 + q] = cc * (1 - sk) + 1.9 * sk; } } }
       uv[v * 2] = x / 14.4; uv[v * 2 + 1] = z / 14.4;
       if (i < n - 1 && j < n - 1) idx.push(v, v + n, v + 1, v + 1, v + n, v + n + 1);
     }
@@ -1634,7 +1645,7 @@
     const land = new THREE.Mesh(geo, terrainMat); land.receiveShadow = true; g.add(land);
     const solidsHere = [], R = seeded(cx, cz, 7), ccx = x0 + CHUNK / 2, ccz = z0 + CHUNK / 2;
     const nearTown = ZONES.some(zn => Math.hypot(ccx - zn.cx, ccz - zn.cz) < zn.r0 + 80), inTown = false;
-    const inTile = (x, z) => nearTown && STITCHED.some(t => { const l = toLocal(t, x, z); return inRect(t, l[0], l[1], t.open ? 10 : 2.5); });
+    const inTile = (x, z) => nearTown && STITCHED.some(t => { if (t.air) return false; const l = toLocal(t, x, z); return inRect(t, l[0], l[1], t.open ? 10 : 2.5); });
     const clearOfTown = (x, z, m) => ZONES.every(zn => Math.hypot(x - zn.cx, z - zn.cz) > zn.r0 + m);
     if (!inTown) {
       // grass and wildflowers
@@ -1647,7 +1658,7 @@
       bm.count = kb; if (kb > 0) g.add(bm);
       // trees, real size: a few per chunk, never on the road
       const nT = R() < 0.45 ? (R() < 0.3 ? 2 : 1) : 0;
-      for (let t = 0; t < nT; t++) { const x = x0 + 6 + R() * (CHUNK - 12), z = z0 + 6 + R() * (CHUNK - 12), r = roadNear(x, z); if ((r && r.d < 18) || !clearOfTown(x, z, 40) || noGrow(x, z, 16)) continue; const pine = R() < 0.25, K = 6 + R() * 5, tr = bigTree(g, x, z, worldH(x, z) - 0.4, K, pine); tr.rotation.y = R() * 6.3; tr.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); solidsHere.push({ x, z, r: (pine ? 0.9 : 1.2) * K }); }
+      for (let t = 0; t < nT; t++) { const x = x0 + 6 + R() * (CHUNK - 12), z = z0 + 6 + R() * (CHUNK - 12), r = roadNear(x, z); if ((r && r.d < 18) || !clearOfTown(x, z, 40) || noGrow(x, z, 16)) continue; const pine = R() < 0.25, K = 6 + R() * 5, tr = bigTree(g, x, z, worldH(x, z) - 0.4, K, pine); tr.rotation.y = R() * 6.3; tr.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); solidsHere.push({ x, z, r: (pine ? 0.9 : 1.2) * K, oak: !pine, K, y: worldH(x, z) }); }
       // stones
       const nR = Math.floor(R() * 3);
       for (let t = 0; t < nR; t++) { const x = x0 + R() * CHUNK, z = z0 + R() * CHUNK, r = roadNear(x, z); if ((r && r.d < 7) || noGrow(x, z, 2) || inTile(x, z)) continue; const sc = 0.5 + R() * 2.2, rock = new THREE.Mesh(rockGeo, mat(['#8c8577', '#9b958a', '#7a7468'][Math.floor(R() * 3)], { flatShading: true, roughness: 1 })); rock.scale.set(sc, sc * (0.5 + R() * 0.6), sc); rock.position.set(x, worldH(x, z) + sc * 0.2, z); rock.rotation.set(R() * 3, R() * 3, R() * 3); rock.castShadow = true; rock.receiveShadow = true; g.add(rock); if (sc > 0.8) solidsHere.push({ x, z, r: sc * 0.9 }); }
@@ -1683,8 +1694,20 @@
     mk(watV, watI, mat('#6f9fd0', { side: THREE.DoubleSide, roughness: 0.4 }));
     worldScene.add(gg);
   }
+  // Emberdeep's two doors: a dressed stone face set into the ridge, iron posts, an arch and a dark way in
+  const portalSolids = [];
+  PORTALS.forEach(q => {
+    const g = new THREE.Group(), y = worldH(...toWorld(q, 0, -6)); g.position.set(q.ox, y, q.oz); g.rotation.y = q.yaw; worldScene.add(g); q.y = y;
+    const iron = mat('#3a3a3a', { metalness: 0.4 });
+    const face = new THREE.Mesh(new THREE.BoxGeometry(80, 64, 20), mat('#5e5a52', { roughness: 1 })); face.position.set(0, 30, 14); face.receiveShadow = true; g.add(face);
+    [-6, 6].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(2.4, 12, 2.4), iron); gp.position.set(o, 6, 3); gp.castShadow = true; g.add(gp); const w = toWorld(q, o, 3); portalSolids.push({ x: w[0], z: w[1], r: 1.6 }); });
+    const arch = new THREE.Mesh(new THREE.TorusGeometry(6.4, 1.2, 10, 24, Math.PI), iron); arch.position.set(0, 12, 3); g.add(arch);
+    const dark = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), mat('#1a0e08', { emissive: '#6a2a10', emissiveIntensity: 0.6, side: THREE.DoubleSide })); dark.position.set(0, 6, 3.9); g.add(dark);
+    hangBoards(g, 0, 17.4, 2, 0, [signBoard('EMBERDEEP', 9, 1.8, '#1b1b1b', '#ff9a40')]);
+  });
   // the road itself, built once, and the things along it
-  const allRoadSolids = [];
+  const allRoadSolids = portalSolids.slice();
+  [[230, 0, 12], [260, 30, 10], [210, 70, 14], [230, 3, 2.4]].forEach(([x, z, r]) => allRoadSolids.push({ x: tileLift.ox + x, z: tileLift.oz + z, r }));   // the Pillar Rocks and the upper pylon stand in the real sea
   ROADS.forEach(RD => {
     const roadPts = RD.pts;
     const verts = [], uvs = [], idx = []; let n = 0, along = 0;
@@ -1705,10 +1728,25 @@
   worldScene.userData.roadSolids = allRoadSolids;
 
   // where you are when you're out in the open land
+  const worldHemi = worldScene.children.find(o => o.isHemisphereLight);
+  const DAYC = { sky: new THREE.Color('#fff1d0'), gnd: new THREE.Color('#41502a'), sun: new THREE.Color('#ffd99a'), fog: new THREE.Color('#d8d3a4'), dome: new THREE.Color('#ffffff'), hi: 0.8, si: 1.0 };
+  const NIGHTC = { sky: new THREE.Color('#4a6a9a'), gnd: new THREE.Color('#1a1a22'), sun: new THREE.Color('#9fb8e8'), fog: new THREE.Color('#1b2a44'), dome: new THREE.Color('#1c2a4a'), hi: 0.75, si: 0.55 };
+  const SKYC = { sky: new THREE.Color('#ffffff'), gnd: new THREE.Color('#6f8fb0'), sun: new THREE.Color('#fff8ec'), fog: new THREE.Color('#cfe0f2'), dome: new THREE.Color('#ffffff'), hi: 1.0, si: 1.1 };
+  let nightNow = -1, altNow = -1; const _c1 = new THREE.Color();
+  // n: how far into Lanternreach's night you are; a: how far above the cloud you are, where it is always bright day
+  function setNight(n, a) {
+    n *= 1 - a; if (Math.abs(n - nightNow) < 0.004 && Math.abs(a - altNow) < 0.004) return; nightNow = n; altNow = a;
+    const mix = (k, out) => out.copy(DAYC[k]).lerp(NIGHTC[k], n).lerp(SKYC[k], a), num = k => (DAYC[k] + (NIGHTC[k] - DAYC[k]) * n) * (1 - a) + SKYC[k] * a;
+    [tileL, tileLift, tileS].filter(t => t.scene).map(t => [t.hemi, t.sun, t.scene]).concat([[worldHemi, worldSun, worldScene]]).forEach(([hm, sn, sc]) => {
+      mix('sky', hm.color); mix('gnd', hm.groundColor); hm.intensity = num('hi'); mix('sun', sn.color); sn.intensity = num('si'); mix('fog', sc.fog.color);
+      if (sc.userData.fog0) sc.fog.far = sc.userData.fog0[1] * worldDistK * (1 + 1.2 * a); });
+    mix('dome', worldSky.material.color);
+    (worldScene.userData.nightOnly || []).forEach(o => (o.visible = n > 0.35));
+  }
   function frameOf(key) { return TILES[key] || null; }
   const _so = new THREE.Vector3();
   function sunOff(key) { const t = TILES[key]; if (!t) return _so.set(-170, 330, 160); const c = Math.cos(t.yaw), sn = Math.sin(t.yaw); return _so.set(-170 * c - 160 * sn, 330, -170 * sn + 160 * c); }
-  function nearestTown() { const [x, z] = playerWorldXZ(); let b = 0, bd = 1e12; ZONES.forEach((zn, i) => { const d = Math.hypot(x - zn.cx, z - zn.cz); if (d < bd) { bd = d; b = i; } }); return b; }
+  function nearestTown() { const [x, z] = playerWorldXZ(); let b = 0, bd = 1e12; ZONES.forEach((zn, i) => { const d = Math.hypot(x - zn.cx, z - zn.cz); if (d < bd) { bd = d; b = zn.t.mapI === undefined ? i : zn.t.mapI; } }); return b; }
   function playerWorldXZ() { const t = frameOf(where); return t ? toWorld(t, player.position.x, player.position.z) : [player.position.x, player.position.z]; }
   const _M = new THREE.Matrix4(), _I = new THREE.Matrix4();
   // step from one frame into another without a fade: the world is continuous, only the bookkeeping changes
@@ -1733,6 +1771,13 @@
       streamChunks(x, z, 60); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => hint(msg || 'The Long Road.'));
   }
+  // in through a door of Emberdeep, and out again to the same door
+  function enterHall(key) {
+    if (key === 'w') { goToEmberdeep(); return; }
+    fadeTo('Emberdeep', () => { moveCompany(curScene(), embScene); where = 'emberdeep'; if (riding) setRiding(false); player.position.set(0, 0, EMB_LEN - 5); py = 0; bodyYaw = camYaw = Math.PI; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(2, 0, EMB_LEN - 3); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); },
+      () => hint('The back of Emberdeep. The ore carts are behind you, the lava on your left now.'));
+  }
+  function leaveHall(key) { const q = PORTALS.find(o => o.key === key), [x, z] = toWorld(q, 0, -5); enterWild(x, z, q.yaw + Math.PI, key === 'w' ? 'Out of the mountain. The road runs down to Cogsworth.' : 'Out of the mountain. The road runs on to the coast and Lanternreach.'); }
   function hollowGateOutside() { const [x, z] = toWorld(tileV, 0, GATE.z + 6); return [x, z, yawV]; }
   function orchardGateOutside() { const [x, z] = toWorld(tileO, 0, -6); return [x, z, yawO + Math.PI]; }
 
@@ -1740,9 +1785,13 @@
   function collideWild(p, prev) {
     chunkSolidsNear(p.x, p.z).concat(worldScene.userData.roadSolids).forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
     const run = Math.hypot(p.x - prev.x, p.z - prev.z);
-    if (run > 0.001 && !wildRiver(prev.x, prev.z)) { const h0 = worldH(prev.x, prev.z), ux = (p.x - prev.x) / run, uz = (p.z - prev.z) / run;
+    if (run > 0.001 && !wildRiver(prev.x, prev.z) && !wildSea(prev.x, prev.z)) { const h0 = worldH(prev.x, prev.z), ux = (p.x - prev.x) / run, uz = (p.z - prev.z) / run;
       if (worldH(p.x, p.z) - h0 > 0.7 || worldH(prev.x + ux * 1.2, prev.z + uz * 1.2) - h0 > 1.2) { p.x = prev.x; p.z = prev.z; } }
+    for (const q of PORTALS) { const [qx, qz] = toLocal(q, p.x, p.z); if (Math.abs(qx) < 40.6 && qz > 3.2 && qz < 30) {
+        if (Math.abs(qx) < 4.4) { if (!fading) enterHall(q.key); p.x = prev.x; p.z = prev.z; return; }
+        const w = toWorld(q, qx, 3.2); p.x = w[0]; p.z = w[1]; } }
     for (const t of STITCHED) {
+      if (t.air) continue;
       const [lx, lz] = toLocal(t, p.x, p.z); if (!inRect(t, lx, lz, 0.8)) continue;
       if (t === tileV && Math.abs(lx) < 4.2 && lz > FENCE.z1 - 2) { if (lz < FENCE.z1) { switchFrame('village', prev); return; } continue; }
       if (t === tileO && Math.abs(lx) < 4.5 && lz < 1.5) { if (lz > 0.5) { switchFrame('orchards', prev); return; } continue; }
@@ -1759,13 +1808,13 @@
   function renderStitched() {
     const P = frameOf(where), Pinv = P ? P.inv : _I, [wx, wz] = playerWorldXZ();
     streamChunks(wx, wz, 3);
-    worldSky.position.set(wx, P ? P.oy || 0 : 0, wz); if (worldScene.userData.riverTex) worldScene.userData.riverTex.offset.x = (performance.now() * 0.00002) % 1;
+    worldSky.position.set(wx, P ? P.oy || 0 : 0, wz); setNight(nightAt(wx, wz), ss(140, 250, player.position.y + (P ? P.oy || 0 : 0))); if (worldScene.userData.seaTex) worldScene.userData.seaTex.offset.x = (performance.now() * 0.000012) % 1; if (worldScene.userData.riverTex) worldScene.userData.riverTex.offset.x = (performance.now() * 0.00002) % 1;
     renderer.autoClear = false; renderer.clear();
     worldScene.matrixAutoUpdate = false; worldScene.matrix.copy(Pinv); worldScene.matrixWorldNeedsUpdate = true;
     if (where !== 'wild') { worldSun.target.position.set(wx, 0, wz); worldSun.position.set(wx - 170, 330, wz + 160); }
     renderer.render(worldScene, camera);
     for (const t of STITCHED) {
-      const near = Math.hypot(wx - (ZONES[STITCHED.indexOf(t)].cx), wz - ZONES[STITCHED.indexOf(t)].cz) < worldScene.fog.far + 160;
+      const near = Math.hypot(wx - t.cx, wz - t.cz) < (t.air ? 1300 : worldScene.fog.far + 160);
       if (!near && t.key !== where) continue;
       t.scene.matrixAutoUpdate = false; t.scene.matrix.multiplyMatrices(Pinv, t.m); t.scene.matrixWorldNeedsUpdate = true;
       if (t.key !== where) { const [lx, lz] = toLocal(t, wx, wz), s = t.sun; const o = sunOff(t.key); s.target.position.set(lx, 0, lz); s.position.set(lx + o.x, 330, lz + o.z); }
@@ -1777,10 +1826,11 @@
   function trimTowns() {
     const keep = new Set([player, beetle].filter(Boolean));
     STITCHED.forEach(t => {
+      if (t.noTrim) return;
       const R = t.rect, m = 9, out = (x, z) => x < R[0] - m || x > R[1] + m || z < R[2] - m || z > R[3] + m;
       const box = new THREE.Box3(), c = new THREE.Vector3();
       t.scene.children.slice().forEach(o => {
-        if (keep.has(o) || o.isLight || o.userData.follow) return;
+        if (keep.has(o) || o.isLight || o.userData.follow || o.userData.keepHidden || (o.isMesh && o.material && o.material.fog === false)) return;
         if (o.isInstancedMesh) { const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), zero = new THREE.Vector3(0, 0, 0); for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, m4); m4.decompose(p, q, s); if (out(p.x, p.z)) { o.setMatrixAt(i, m4.compose(p, q, zero)); } } o.instanceMatrix.needsUpdate = true; return; }
         if (!t.noCrop && o.isMesh && o.geometry && (o.geometry.type === 'PlaneGeometry' || o.geometry.type === 'CircleGeometry') && Math.abs(o.rotation.x + Math.PI / 2) < 0.01 && o.position.y < 0.02) {
           // the town's ground: cut down to the town itself
@@ -1794,127 +1844,7 @@
   }
 
   // ---------- the River Road: hills between the orchards and Fernwater ----------
-  // A heightfield with a winding road laid over it. The ground is flat only inside towns; out here you climb.
-  const HILL_LEN = 620;
   const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-  function roadX(z) { return 30 * Math.sin(z / 52) + 11 * Math.sin(z / 21 + 1.3); }
-  function rawH(x, z) {
-    let h = 8 * Math.sin(x / 37 + 1) * Math.cos(z / 41) + 4.5 * Math.sin(x / 17) * Math.sin(z / 19 + 2) + 2 * Math.sin(x / 7.3) * Math.cos(z / 8.1);
-    h += 20 * Math.exp(-Math.pow((z - 300) / 60, 2));                 // the ridge in the middle
-    h += 9 * Math.exp(-(Math.pow((x + 90) / 50, 2) + Math.pow((z - 120) / 60, 2)));   // a hill off to the west
-    h += 13 * Math.exp(-(Math.pow((x - 100) / 55, 2) + Math.pow((z - 460) / 70, 2))); // and a bigger one to the east
-    h += 11 * Math.exp(-(Math.pow((x + 120) / 60, 2) + Math.pow((z - 520) / 60, 2)));  // a long shoulder in the north-west
-    h += Math.max(0, Math.abs(x) - 170) * 0.35;                       // the valley walls rise at the edges
-    return h * sstep(0, 26, z) * sstep(HILL_LEN, HILL_LEN - 26, z);
-  }
-  function roadProfile(z) { return rawH(roadX(z), z); }
-  function hillH(x, z) {
-    const d = Math.abs(x - roadX(z)); if (d > 16) return rawH(x, z);
-    const k = sstep(4.5, 16, d); return roadProfile(z) * (1 - k) + rawH(x, z) * k;
-  }
-  const hillScene = new THREE.Scene();
-  hillScene.fog = new THREE.Fog('#d9e2c6', 120, 520);
-  const hillSky = new THREE.Mesh(new THREE.SphereGeometry(900, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); hillScene.add(hillSky);
-  hillScene.add(new THREE.HemisphereLight('#fff1d0', '#5e6e3e', 1.1));
-  const hillSun = new THREE.DirectionalLight('#ffd99a', 1.05); hillSun.castShadow = true;
-  Object.assign(hillSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); hillSun.shadow.mapSize.set(4096, 4096); hillSun.shadow.radius = 2; hillSun.shadow.bias = -0.0006;
-  hillScene.add(hillSun); hillScene.add(hillSun.target);
-  const hillSolids = [];
-  {
-    // the ground
-    const W = 520, L = HILL_LEN + 160, SX = 200, SZ = 300;
-    const geo = new THREE.PlaneGeometry(W, L, SX, SZ); geo.rotateX(-Math.PI / 2); geo.translate(0, 0, HILL_LEN / 2);
-    const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i), z = pos.getZ(i), h = hillH(x, z); pos.setY(i, h);
-      const slope = Math.hypot(hillH(x + 1.5, z) - hillH(x - 1.5, z), hillH(x, z + 1.5) - hillH(x, z - 1.5)) / 3;
-      const onRoad = Math.abs(x - roadX(z)) < 4.3 && z > -6 && z < HILL_LEN + 6;
-      if (onRoad) c.set('#7f9a44'); else if (slope > 0.55) c.set('#8c8577'); else if (h > 22) c.set('#9aa86a'); else c.set(pick(['#6f9a3c', '#789e42', '#67903a', '#83a84b']));
-      c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
-    }
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
-    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); ground.receiveShadow = true; hillScene.add(ground);
-    // the road: a ribbon that follows roadX, with wheel ruts
-    const rw = 4.2, verts = [], uvs = [], idx = []; let n = 0;
-    for (let z = -12; z <= HILL_LEN + 12; z += 2) {
-      const cx = roadX(z), h = hillH(cx, z) + 0.22, dx = (roadX(z + 1) - roadX(z - 1)) / 2, len = Math.hypot(dx, 2), nx = 2 / len, nz = -dx / len;
-      [[-rw, 0], [-1.6, 0.25], [-1.2, 0.5], [1.2, 0.5], [1.6, 0.75], [rw, 1]].forEach(([o, u]) => { verts.push(cx + nx * o, h + (Math.abs(o) < 1.4 ? -0.04 : 0), z + nz * o); uvs.push(u * 2, z / 6); });
-      if (n > 0) for (let k = 0; k < 5; k++) { const a = (n - 1) * 6 + k, b = n * 6 + k; idx.push(a, b, a + 1, a + 1, b, b + 1); }
-      n++;
-    }
-    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); rg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); rg.setIndex(idx); rg.computeVertexNormals();
-    const roadMesh = new THREE.Mesh(rg, mat('#ffffff', { map: dirtTex, side: THREE.DoubleSide })); roadMesh.receiveShadow = true; hillScene.add(roadMesh);
-    // grass that sits on the slopes
-    const gg = new THREE.ConeGeometry(0.24, 1, 3); gg.translate(0, 0.5, 0);
-    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 16000);
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 16000; i++) {
-      pv.set(rnd(-210, 210), 0, rnd(-30, HILL_LEN + 40)); if (Math.abs(pv.x - roadX(pv.z)) < 5.5) { i--; continue; }
-      pv.y = hillH(pv.x, pv.z) - 0.1;
-      q.setFromEuler(new THREE.Euler(rnd(-0.25, 0.25), rnd(0, 6.3), rnd(-0.25, 0.25))); sv.set(1, rnd(2, 7), 1);
-      grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#7d9c45', '#6b8c3a', '#8fae52', '#5f7f33', '#a3b25a'])));
-    }
-    hillScene.add(grass);
-    // trees: round-headed oaks low down, pines on the ridge
-    // Real trees. To a seven-inch elf an oak is a tower: trunks like pillars, the canopy far overhead.
-    const treeSpots = [];
-    for (let i = 0; i < 70; i++) {
-      const x = rnd(-230, 230), z = rnd(-40, HILL_LEN + 60);
-      if (Math.abs(x - roadX(clamp(z, 0, HILL_LEN))) < 62 || treeSpots.some(t => Math.hypot(t[0] - x, t[1] - z) < 55)) { i--; continue; }
-      treeSpots.push([x, z]);
-      const h = hillH(x, z), tr = new THREE.Group(); tr.position.set(x, h - 2, z); hillScene.add(tr);
-      const pine = h > 14 || Math.random() < 0.3, K = pine ? rnd(17, 23) : rnd(15, 22);
-      if (pine) {
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 7.6, 10), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5; tr.add(trunk);
-        [0, 1, 2, 3].forEach(k => { const cone = new THREE.Mesh(new THREE.ConeGeometry(4.6 - k * 1.0, 5.5, 9), mat(pick(['#2f5f2a', '#3a6d32', '#2a5426']), { flatShading: true })); cone.position.y = 6.5 + k * 3.0; tr.add(cone); });
-        tr.scale.setScalar(K); tr.userData.trunkR = 0.9 * K; hillSolids.push({ x, z, r: 0.9 * K });
-      } else {
-        const sc = rnd(0.8, 1.3), trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.7 * sc, 1.2 * sc, 7.6 * sc, 12), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5 * sc; tr.add(trunk);
-        for (let b = 0; b < 3; b++) { const br = new THREE.Mesh(new THREE.CylinderGeometry(0.12 * sc, 0.3 * sc, 4 * sc, 6), mat('#ffffff', { map: barkTex })); br.position.set(Math.cos(b * 2.1) * 1.6 * sc, 7 * sc, Math.sin(b * 2.1) * 1.6 * sc); br.rotation.z = Math.cos(b * 2.1) * 0.9; br.rotation.x = -Math.sin(b * 2.1) * 0.9; tr.add(br); }
-        const can = new THREE.Mesh(new THREE.IcosahedronGeometry(5 * sc, 1), mat(pick(['#4a7a31', '#56863a', '#3e6b2b', '#6b8f3a']), { flatShading: true })); can.position.y = 10 * sc; can.scale.y = 0.85; tr.add(can);
-        [[2.5, 8.5], [-2.8, 9.2], [0.4, 12.4]].forEach(([ox, oy]) => { const c2 = new THREE.Mesh(new THREE.IcosahedronGeometry(3.2 * sc, 1), mat(pick(['#4a7a31', '#56863a', '#3e6b2b']), { flatShading: true })); c2.position.set(ox * sc, oy * sc, (ox > 0 ? -1.5 : 1.5) * sc); tr.add(c2); });
-        tr.scale.setScalar(K); tr.userData.trunkR = 1.2 * sc * K; tr.userData.oak = true; hillSolids.push({ x, z, r: 1.2 * sc * K });
-      }
-      // roots and a drift of leaves at the foot
-      const baseR = pine ? 0.9 : 1.2 * (tr.userData.trunkR / (1.2 * K)), nroots = 4 + Math.floor(rnd(0, 4));
-      for (let r = 0; r < nroots; r++) { const a = r * (6.28 / nroots) + rnd(-0.4, 0.4), len = rnd(1.6, 3.6), thick = rnd(0.18, 0.4);
-        const ex = x + Math.cos(a) * len * K, ez = z + Math.sin(a) * len * K; if (Math.abs(ex - roadX(clamp(ez, 0, HILL_LEN))) < 10 || Math.abs((x + ex) / 2 - roadX(clamp((z + ez) / 2, 0, HILL_LEN))) < 10) continue;
-        for (let q = 0.15; q < 0.8; q += 0.2) hillSolids.push({ x: x + Math.cos(a) * len * K * q, z: z + Math.sin(a) * len * K * q, r: thick * K * (1 - q) * 0.9 });
-        const piv = new THREE.Group(); piv.position.set(Math.cos(a) * baseR * 0.75, -0.12, Math.sin(a) * baseR * 0.75); piv.rotation.y = -a; tr.add(piv); const root = new THREE.Mesh(new THREE.CylinderGeometry(0.04, thick, len, 6), mat('#ffffff', { map: barkTex })); root.rotation.z = -Math.PI / 2 - rnd(0.12, 0.22); root.position.set(len / 2 - 0.2, -len * 0.08, 0); piv.add(root); const flare = new THREE.Mesh(new THREE.CylinderGeometry(thick * 0.9, thick * 1.8, 0.9, 6), mat('#ffffff', { map: barkTex })); flare.position.set(0.2, 0.25, 0); flare.rotation.z = -0.35; piv.add(flare); }
-    }
-    // rocks and boulders
-    for (let i = 0; i < 140; i++) {
-      const x = rnd(-210, 210), z = rnd(-20, HILL_LEN + 30); if (Math.abs(x - roadX(z)) < 6 || ((z < 18 || z > HILL_LEN - 18) && x < roadX(z) - 2 && x > roadX(z) - 26)) { i--; continue; }
-      const sc = rnd(0.8, 3.2), rock = new THREE.Mesh(new THREE.DodecahedronGeometry(sc, 0), mat(pick(['#8c8577', '#9b958a', '#7a7468']), { flatShading: true, roughness: 1 }));
-      rock.position.set(x, hillH(x, z) + sc * 0.3, z); rock.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); rock.scale.y = rnd(0.6, 1); hillScene.add(rock);
-      if (sc > 0.7) hillSolids.push({ x, z, r: sc * 0.9 });
-    }
-    for (let i = 0; i < 90; i++) { const z = rnd(0, HILL_LEN), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(5, 30); const f = makeFlower(pick(flowerColors)); f.position.set(x, hillH(x, z), z); f.scale.setScalar(1.3); hillScene.add(f); }
-    // waymarks: a cairn every so often, so you can tell how far you have come
-    for (let z = 40; z < HILL_LEN; z += 70) { const x = roadX(z) + 6, h = hillH(x, z); let sy = h - 0.3; [1.3, 1.0, 0.7].forEach((r, k) => { const st = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), mat('#9b9789', { flatShading: true })); st.scale.y = 0.6; sy += r * 0.6 * 0.85; st.position.set(x + rnd(-0.1, 0.1), sy, z + rnd(-0.1, 0.1)); st.rotation.y = rnd(0, 3); sy += r * 0.6 * 0.85; hillScene.add(st); }); hillSolids.push({ x, z, r: 1.2 }); }
-    // signposts at both ends
-    const postM = mat('#6b4a2b');
-    [[3, 'The Mallow Orchards', Math.PI, '#8a6438'], [HILL_LEN - 3, 'Fernwater Crossing', 0, '#4a5fb8']].forEach(([z, label, ry, colr]) => {
-      const x = roadX(z) - 6, h = hillH(x, z); signpost(hillScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The River Road', 4.6, 1, '#f2e6c8', '#4a3420')], postM);
-      hillSolids.push({ x, z, r: 0.5 });
-    });
-    // a stile gate at each end, like the one leaving the Hollow
-    [0, HILL_LEN].forEach(z => { const cx = roadX(z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 8, 10), postM); gp.position.set(cx + o, 4, z); hillScene.add(gp); hillSolids.push({ x: cx + o, z, r: 0.9 }); }); const arch = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), mat('#8a6438')); arch.position.set(cx, 7.4, z); hillScene.add(arch); hangBoards(hillScene, cx, 12.45, z, 0, [signBoard(z ? 'Fernwater' : 'The Mallow Orchards', 6.4, 1.4, z ? '#4a5fb8' : '#5a3d22', '#f6e7c2'), signBoard('The River Road', 5, 1.1, '#f2e6c8', '#4a3420')]); });
-    hillScene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o !== ground && o !== roadMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  }
-  function goToHills(fromFern) {
-    fadeTo('The River Road', () => {
-      moveCompany(fromFern ? fernScene : orchScene, hillScene); where = 'hills';
-      const z = fromFern ? HILL_LEN - 5 : 4, x = roadX(z); player.position.set(x, 0, z); bodyYaw = camYaw = fromFern ? Math.PI : 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(x - 2, hillH(x - 2, z), z);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint(fromFern ? 'The River Road climbs back over the ridge to the Mallow Orchards.' : 'The River Road. Fernwater lies over the ridge; follow the road, or wander.'));
-  }
-  function goToOrchardsFromHills() {
-    fadeTo('The Mallow Orchards', () => {
-      moveCompany(hillScene, orchScene); where = 'orchards'; player.position.set(30, 0, ORCH_LEN - 6); bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; if (beetle) beetle.position.set(32, 0, ORCH_LEN - 4);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint('Back in the orchards. The mill is to the west; the Long Road home is behind it.'));
-  }
 
   // ---------- interiors: every building is its own room, loaded when you walk through its door ----------
   function makeRoom(id, o) {
@@ -1944,7 +1874,7 @@
     sc.traverse(m => { if (m.isMesh && m !== outside && m !== floor) { m.castShadow = true; m.receiveShadow = true; } });
     interiors[id] = it; return it;
   }
-  function sceneOf(region) { return region === 'wild' ? worldScene : region === 'village' ? scene : region === 'road' ? roadScene : region === 'orchards' ? orchScene : region === 'hills' ? hillScene : region === 'fernwater' ? fernScene : region === 'high' ? highScene : region === 'cairnhold' ? cairnScene : region === 'cliff' ? cliffScene : region === 'cogsworth' ? cogScene : region === 'mtn' ? mtnScene : region === 'emberdeep' ? embScene : region === 'sea' ? seaScene : region === 'lantern' ? lantScene : region === 'lift' ? liftScene : region === 'skyhaven' ? skyScene : region === 'flight' ? flightScene : interior ? interior.scene : scene; }
+  function sceneOf(region) { return region === 'wild' ? worldScene : region === 'village' ? scene : region === 'orchards' ? orchScene : region === 'fernwater' ? fernScene : region === 'cairnhold' ? cairnScene : region === 'cogsworth' ? cogScene : region === 'emberdeep' ? embScene : region === 'lantern' ? lantScene : region === 'lift' ? liftScene : region === 'skyhaven' ? skyScene : region === 'flight' ? flightScene : interior ? interior.scene : scene; }
   function curScene() { return where === 'in' ? interior.scene : sceneOf(where); }
   const REGION_LABEL = { wild: 'The Long Road', village: 'Thistledown Hollow', road: 'The Long Road', orchards: 'The Mallow Orchards', hills: 'The River Road', fernwater: 'Fernwater Crossing', high: 'The High Road', cairnhold: 'Cairnhold Highlands', cliff: 'The Cliff Road', cogsworth: 'Cogsworth', mtn: 'The Mountain Road', emberdeep: 'Emberdeep', sea: 'The Sea Road', lantern: 'Lanternreach', lift: 'The sky-lift', skyhaven: 'Skyhaven', flight: 'The flight home' };
   function enterInterior(id, then) {
@@ -2227,112 +2157,11 @@
   }
   function goToFernwater() {
     fadeTo('Fernwater Crossing', () => {
-      moveCompany(where === 'hills' ? hillScene : where === 'orchards' ? orchScene : where === 'village' ? scene : roadScene, fernScene); where = 'fernwater'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
+      moveCompany(curScene(), fernScene); where = 'fernwater'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => { hint('Fernwater Crossing. The ferry dock is at the end of the lane, by the water.'); if (phase === 'tofern') phase = 'todock'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(4, 0, 48); bodyYaw = camYaw = 0.4; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
   }
-  function goToOrchardsFromFern() {
-    fadeTo('The Mallow Orchards', () => {
-      moveCompany(fernScene, orchScene); where = 'orchards'; player.position.set(0, 0, ORCH_LEN - 6); bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; if (beetle) beetle.position.set(2, 0, ORCH_LEN - 4);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint('Back in the orchards. The mill is ahead; the Long Road is behind it.'));
-  }
 
-  // ---------- the High Road: from Fernwater's far bank up into the highlands ----------
-  const HIGH_LEN = 300;
-  function highRoadX(z) { return 22 * Math.sin(z / 38) + 8 * Math.sin(z / 15 + 0.7); }
-  function highRawH(x, z) {
-    let h = 6 * Math.sin(x / 23) * Math.cos(z / 27) + 3 * Math.sin(x / 9 + 1) * Math.sin(z / 11) + 1.5 * Math.sin(x / 5.5) * Math.cos(z / 6.2);
-    h += 10 * Math.exp(-(Math.pow((x - 60) / 30, 2) + Math.pow((z - 150) / 40, 2)));
-    h += 14 * Math.exp(-(Math.pow((x + 70) / 35, 2) + Math.pow((z - 220) / 45, 2)));
-    h += 8 * Math.exp(-(Math.pow((x - 95) / 28, 2) + Math.pow((z - 60) / 35, 2)));
-    h += Math.max(0, Math.abs(x) - 120) * 0.5;
-    h *= sstep(0, 26, z) * sstep(HIGH_LEN, HIGH_LEN - 26, z);
-    return h + 26 * sstep(30, 250, z);  // the long climb up to the plateau
-  }
-  function highH(x, z) { const d = Math.abs(x - highRoadX(z)); if (d > 14) return highRawH(x, z); const k = sstep(4, 14, d); return highRawH(highRoadX(z), z) * (1 - k) + highRawH(x, z) * k; }
-  const highScene = new THREE.Scene();
-  highScene.fog = new THREE.Fog('#cfd6cf', 90, 380);
-  const highSky = new THREE.Mesh(new THREE.SphereGeometry(700, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); highScene.add(highSky);
-  highScene.add(new THREE.HemisphereLight('#f0f2ff', '#4e5a48', 1.0));
-  const highSun = new THREE.DirectionalLight('#fff3dc', 0.95); highSun.castShadow = true;
-  Object.assign(highSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); highSun.shadow.mapSize.set(4096, 4096); highSun.shadow.radius = 2;
-  highScene.add(highSun); highScene.add(highSun.target);
-  const highSolids = [];
-  {
-    const W = 360, L = HIGH_LEN + 160, SX = 150, SZ = 190;
-    const geo = new THREE.PlaneGeometry(W, L, SX, SZ); geo.rotateX(-Math.PI / 2); geo.translate(0, 0, HIGH_LEN / 2);
-    const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i), z = pos.getZ(i), h = highH(x, z); pos.setY(i, h);
-      const slope = Math.hypot(highH(x + 1.5, z) - highH(x - 1.5, z), highH(x, z + 1.5) - highH(x, z - 1.5)) / 3;
-      const heather = Math.sin(x / 11) * Math.cos(z / 13) > 0.55;
-      if (slope > 0.5) c.set('#7f7b72'); else if (heather) c.set(pick(['#7a5a8a', '#8a6a9a', '#6e5280'])); else c.set(pick(['#6f8a4a', '#7a9452', '#657f42', '#8a9a5a']));
-      c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
-    }
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
-    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); ground.receiveShadow = true; highScene.add(ground);
-    const rw = 3.8, verts = [], uvs = [], idx = []; let n = 0;
-    for (let z = -12; z <= HIGH_LEN + 12; z += 2) {
-      const cx = highRoadX(z), h = highH(cx, z) + 0.22, dx = (highRoadX(z + 1) - highRoadX(z - 1)) / 2, len = Math.hypot(dx, 2), nx = 2 / len, nz = -dx / len;
-      [[-rw, 0], [-1.4, 0.3], [1.4, 0.7], [rw, 1]].forEach(([o, u]) => { verts.push(cx + nx * o, h, z + nz * o); uvs.push(u * 2, z / 6); });
-      if (n > 0) for (let k = 0; k < 3; k++) { const a = (n - 1) * 4 + k, b = n * 4 + k; idx.push(a, b, a + 1, a + 1, b, b + 1); }
-      n++;
-    }
-    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); rg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); rg.setIndex(idx); rg.computeVertexNormals();
-    const roadMesh = new THREE.Mesh(rg, mat('#ffffff', { map: dirtTex, side: THREE.DoubleSide, color: '#b9b2a4' })); roadMesh.receiveShadow = true; highScene.add(roadMesh);
-    // short wiry grass and heather tufts
-    const gg = new THREE.ConeGeometry(0.22, 1, 3); gg.translate(0, 0.5, 0);
-    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 9000);
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 9000; i++) {
-      pv.set(rnd(-170, 170), 0, rnd(-30, HIGH_LEN + 40)); if (Math.abs(pv.x - highRoadX(pv.z)) < 5) { i--; continue; }
-      pv.y = highH(pv.x, pv.z) - 0.1; q.setFromEuler(new THREE.Euler(rnd(-0.3, 0.3), rnd(0, 6.3), rnd(-0.3, 0.3))); sv.set(1, rnd(1.2, 3.5), 1);
-      grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#8a9a5a', '#7a8a4a', '#a3a86a', '#8a6a9a', '#9a7aaa'])));
-    }
-    highScene.add(grass);
-    // crags and boulders everywhere, a few wind-bent pines
-    for (let i = 0; i < 160; i++) {
-      const x = rnd(-170, 170), z = rnd(-20, HIGH_LEN + 30); if (Math.abs(x - highRoadX(z)) < 6 || ((z < 18 || z > HIGH_LEN - 18) && x < highRoadX(z) - 2 && x > highRoadX(z) - 26)) { i--; continue; }
-      const sc = rnd(1, 5), rock = new THREE.Mesh(new THREE.DodecahedronGeometry(sc, 0), mat(pick(['#8c8577', '#9b958a', '#7a7468', '#6e6a62']), { flatShading: true, roughness: 1 }));
-      rock.position.set(x, highH(x, z) + sc * 0.25, z); rock.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); rock.scale.y = rnd(0.5, 1); rock.castShadow = true; rock.receiveShadow = true; highScene.add(rock);
-      if (sc > 0.7) highSolids.push({ x, z, r: sc * 0.9 });
-    }
-    const pineSpots = [];
-    for (let i = 0; i < 14; i++) {
-      const x = rnd(-160, 160), z = rnd(0, HIGH_LEN); if (Math.abs(x - highRoadX(z)) < 40 || pineSpots.some(t => Math.hypot(t[0] - x, t[1] - z) < 45)) { i--; continue; }
-      pineSpots.push([x, z]); const K = rnd(10, 15), tr = new THREE.Group(); tr.position.set(x, highH(x, z) - 1.5, z); tr.rotation.z = rnd(-0.12, 0.12); highScene.add(tr);
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.8, 7.6, 10), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5; trunk.castShadow = true; tr.add(trunk);
-      [0, 1, 2].forEach(k => { const cone = new THREE.Mesh(new THREE.ConeGeometry(3.6 - k * 0.9, 4.8, 9), mat(pick(['#2f5f2a', '#3a6d32']), { flatShading: true })); cone.position.y = 6.5 + k * 2.8; cone.position.x = 0.6 * (k + 1); cone.castShadow = true; tr.add(cone); });
-      tr.scale.setScalar(K); highSolids.push({ x, z, r: 0.8 * K });
-    }
-    // old drystone walls run across the slopes
-    for (let w = 0; w < 7; w++) {
-      const z0 = 30 + w * 38, side = w % 2 ? 1 : -1, x0 = highRoadX(z0) + side * 10, len = rnd(30, 70);
-      for (let k = 0; k < len; k += 2.2) { const x = x0 + side * k, z = z0 + Math.sin(k / 9) * 4, h = highH(x, z); const st = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.6, 1.2), mat(pick(['#8c8577', '#9b958a', '#7a7468']), { roughness: 1 })); st.position.set(x, h + 0.8, z); st.rotation.y = rnd(-0.1, 0.1); st.castShadow = true; highScene.add(st); highSolids.push({ x, z, r: 1.1 }); }
-    }
-    // cairns mark the way up
-    for (let z = 35; z < HIGH_LEN; z += 45) { const x = highRoadX(z) - 6, h = highH(x, z); let sy = h - 0.3; [1.3, 1.0, 0.7].forEach(r => { const st = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), mat('#9b9789', { flatShading: true })); st.scale.y = 0.6; sy += r * 0.51; st.position.set(x, sy, z); st.rotation.y = rnd(0, 3); st.castShadow = true; highScene.add(st); sy += r * 0.51; }); highSolids.push({ x, z, r: 1.3 }); }
-    const postM = mat('#6b4a2b');
-    [[3, 'Fernwater Crossing', Math.PI, '#4a5fb8'], [HIGH_LEN - 3, 'Cairnhold', 0, '#6e6a62']].forEach(([z, label, ry, colr]) => {
-      const x = highRoadX(z) - 6, h = highH(x, z); signpost(highScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The High Road', 4.6, 1, '#f2e6c8', '#4a3420')], postM);
-      highSolids.push({ x, z, r: 0.5 });
-    });
-    [0, HIGH_LEN].forEach(z => { const cx = highRoadX(z), h = highH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); highScene.add(gp); highSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); highScene.add(lintel); const sg = signBoard(z ? 'Cairnhold' : 'Fernwater', 6.4, 1.4, z ? '#6e6a62' : '#4a5fb8', '#f6e7c2'); sg.position.set(cx, h + 8.5, z); highScene.add(sg); hangBoards(highScene, cx, h + 6.8, z, 0, [signBoard('The High Road', 5, 1.1, '#f2e6c8', '#4a3420')]); });
-  }
-  function goToHigh(fromCairn) {
-    fadeTo('The High Road', () => {
-      moveCompany(fromCairn ? cairnScene : fernScene, highScene); where = 'high';
-      const z = fromCairn ? HIGH_LEN - 5 : 4, x = highRoadX(z); player.position.set(x, 0, z); bodyYaw = camYaw = fromCairn ? Math.PI : 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(x - 2, highH(x - 2, z), z);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint(fromCairn ? 'The High Road winds back down to Fernwater.' : 'The High Road. It climbs all the way to Cairnhold; the wind gets stronger near the top.'));
-  }
-  function goToFernFromHigh() {
-    fadeTo('Fernwater Crossing', () => {
-      moveCompany(highScene, fernScene); where = 'fernwater'; player.position.set(0, 0, FERN_LEN - 6); bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; if (beetle) beetle.position.set(2, 0, FERN_LEN - 4);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint('Fernwater’s far bank. The bridge back to town is ahead.'));
-  }
 
   // ---------- Region 4: Cairnhold Highlands, the surveyors' town above the gorge ----------
   const CAIRN_LEN = 130, WRENPOS = new THREE.Vector3(-13, 0, 34), PIP2POS = new THREE.Vector3(13, 0, 46), GORGE = { z0: 107, z1: 123, depth: 34 };
@@ -2439,11 +2268,10 @@
   }
   function goToCairn() {
     fadeTo('Cairnhold Highlands', () => {
-      moveCompany(where === 'high' ? highScene : curScene(), cairnScene); where = 'cairnhold'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
+      moveCompany(curScene(), cairnScene); where = 'cairnhold'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => { hint('Cairnhold. The Surveyors’ Lodge is on the right as you face the gorge; Wren Ashcombe is in the yard with a drawing board.'); if (phase === 'tocairn') phase = 'towren'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(-6, 0, 36); bodyYaw = camYaw = -1.2; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
   }
-  function goToHighFromCairn() { goToHigh(true); }
   // a plain elf builder for the highland folk
   function makeElfNPC(o) {
     const g = new THREE.Group(), skin = mat(o.skin || '#c9956a'), coat = mat(o.coat || '#5a6b7a');
@@ -2474,96 +2302,8 @@
   { for (let k = 0; k < 100; k++) { const link = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.05, 5, 10), mat(k % 10 === 9 ? '#e8b64c' : '#8a8a8a', { metalness: 0.7, roughness: 0.4 })); link.position.set(PIP2POS.x + 2 + k * 0.3, 0.12, PIP2POS.z - 1 + Math.sin(k / 7) * 0.4); link.rotation.x = Math.PI / 2; link.rotation.z = k % 2 ? 0 : Math.PI / 2; cairnScene.add(link); }
     const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 3, 6), mat('#c9a06a')); stick.position.set(PIP2POS.x + 1.2, 1.5, PIP2POS.z + 1.2); stick.rotation.z = 0.3; cairnScene.add(stick); }
 
-  // ---------- the Cliff Road: down from the highlands along the edge of the escarpment ----------
   const cogSolids = [], cogBoxes = [], spinners = [];
   let bikeOwned = false, riding = false, bike = null;
-  const CLIFF_LEN = 280;
-  function cliffRoadX(z) { return 18 * Math.sin(z / 34) + 7 * Math.sin(z / 13 + 2); }
-  function cliffRawH(x, z) {
-    let h = 4 * Math.sin(x / 21) * Math.cos(z / 25) + 2.5 * Math.sin(x / 8 + 1) * Math.sin(z / 10) + 1.2 * Math.sin(x / 5) * Math.cos(z / 5.5);
-    h += 9 * Math.exp(-(Math.pow((x + 80) / 40, 2) + Math.pow((z - 120) / 50, 2)));
-    h *= sstep(0, 26, z) * sstep(CLIFF_LEN, CLIFF_LEN - 26, z);
-    h += 30 * (1 - sstep(40, 230, z));                       // the long way down
-    h -= 26 * sstep(58, 74, x) * sstep(10, 40, z) * sstep(CLIFF_LEN - 10, CLIFF_LEN - 40, z); // the escarpment drops away on the right
-    h += Math.max(0, -x - 130) * 0.5;
-    return h;
-  }
-  function cliffH(x, z) { const d = Math.abs(x - cliffRoadX(z)); if (d > 14) return cliffRawH(x, z); const k = sstep(4, 14, d); return cliffRawH(cliffRoadX(z), z) * (1 - k) + cliffRawH(x, z) * k; }
-  const cliffScene = new THREE.Scene();
-  cliffScene.fog = new THREE.Fog('#d4d8d0', 90, 380);
-  const cliffSky = new THREE.Mesh(new THREE.SphereGeometry(700, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); cliffScene.add(cliffSky);
-  cliffScene.add(new THREE.HemisphereLight('#f0f2ff', '#4e5a48', 1.0));
-  const cliffSun = new THREE.DirectionalLight('#fff3dc', 0.95); cliffSun.castShadow = true;
-  Object.assign(cliffSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); cliffSun.shadow.mapSize.set(4096, 4096); cliffSun.shadow.radius = 2;
-  cliffScene.add(cliffSun); cliffScene.add(cliffSun.target);
-  const cliffSolids = [];
-  {
-    const W = 340, L = CLIFF_LEN + 160, SX = 140, SZ = 180;
-    const geo = new THREE.PlaneGeometry(W, L, SX, SZ); geo.rotateX(-Math.PI / 2); geo.translate(0, 0, CLIFF_LEN / 2);
-    const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i), z = pos.getZ(i), h = cliffH(x, z); pos.setY(i, h);
-      const slope = Math.hypot(cliffH(x + 1.5, z) - cliffH(x - 1.5, z), cliffH(x, z + 1.5) - cliffH(x, z - 1.5)) / 3;
-      if (slope > 0.7) c.set('#6e6a62'); else if (slope > 0.4) c.set('#8c8577'); else c.set(pick(['#6f8a4a', '#7a9452', '#8a9a5a', '#9aa86a']));
-      c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
-    }
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
-    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); ground.receiveShadow = true; cliffScene.add(ground);
-    const rw = 3.8, verts = [], uvs = [], idx = []; let n = 0;
-    for (let z = -12; z <= CLIFF_LEN + 12; z += 2) {
-      const cx = cliffRoadX(z), h = cliffH(cx, z) + 0.22, dx = (cliffRoadX(z + 1) - cliffRoadX(z - 1)) / 2, len = Math.hypot(dx, 2), nx = 2 / len, nz = -dx / len;
-      [[-rw, 0], [-1.4, 0.3], [1.4, 0.7], [rw, 1]].forEach(([o, u]) => { verts.push(cx + nx * o, h, z + nz * o); uvs.push(u * 2, z / 6); });
-      if (n > 0) for (let k = 0; k < 3; k++) { const a = (n - 1) * 4 + k, b = n * 4 + k; idx.push(a, b, a + 1, a + 1, b, b + 1); }
-      n++;
-    }
-    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); rg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); rg.setIndex(idx); rg.computeVertexNormals();
-    const roadMesh = new THREE.Mesh(rg, mat('#ffffff', { map: dirtTex, side: THREE.DoubleSide, color: '#b9b2a4' })); roadMesh.receiveShadow = true; cliffScene.add(roadMesh);
-    const gg = new THREE.ConeGeometry(0.22, 1, 3); gg.translate(0, 0.5, 0);
-    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 8000);
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 8000; i++) {
-      pv.set(rnd(-160, 60), 0, rnd(-30, CLIFF_LEN + 40)); if (Math.abs(pv.x - cliffRoadX(pv.z)) < 5) { i--; continue; }
-      pv.y = cliffH(pv.x, pv.z) - 0.1; q.setFromEuler(new THREE.Euler(rnd(-0.3, 0.3), rnd(0, 6.3), rnd(-0.3, 0.3))); sv.set(1, rnd(1.5, 4), 1);
-      grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#8a9a5a', '#7a8a4a', '#a3a86a', '#6f8a4a'])));
-    }
-    cliffScene.add(grass);
-    for (let i = 0; i < 120; i++) {
-      const x = rnd(-160, 70), z = rnd(-20, CLIFF_LEN + 30); if (Math.abs(x - cliffRoadX(z)) < 6 || ((z < 18 || z > CLIFF_LEN - 18) && x < cliffRoadX(z) - 2 && x > cliffRoadX(z) - 26)) { i--; continue; }
-      const sc = rnd(1, 4.5), rock = new THREE.Mesh(new THREE.DodecahedronGeometry(sc, 0), mat(pick(['#8c8577', '#9b958a', '#7a7468']), { flatShading: true, roughness: 1 }));
-      rock.position.set(x, cliffH(x, z) + sc * 0.25, z); rock.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); rock.scale.y = rnd(0.5, 1); rock.castShadow = true; rock.receiveShadow = true; cliffScene.add(rock);
-      if (sc > 0.7) cliffSolids.push({ x, z, r: sc * 0.9 });
-    }
-    const spots = [];
-    for (let i = 0; i < 16; i++) {
-      const x = rnd(-150, 40), z = rnd(0, CLIFF_LEN); if (Math.abs(x - cliffRoadX(z)) < 40 || spots.some(t => Math.hypot(t[0] - x, t[1] - z) < 45)) { i--; continue; }
-      spots.push([x, z]); const K = rnd(11, 16), tr = new THREE.Group(); tr.position.set(x, cliffH(x, z) - 1.5, z); cliffScene.add(tr);
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.8, 7.6, 10), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5; trunk.castShadow = true; tr.add(trunk);
-      [0, 1, 2].forEach(k => { const cone = new THREE.Mesh(new THREE.ConeGeometry(3.6 - k * 0.9, 4.8, 9), mat(pick(['#2f5f2a', '#3a6d32']), { flatShading: true })); cone.position.y = 6.5 + k * 2.8; cone.castShadow = true; tr.add(cone); });
-      tr.scale.setScalar(K); cliffSolids.push({ x, z, r: 0.8 * K });
-    }
-    // a guard wall along the drop, with gear-shaped waymarks the tinkers set
-    for (let z = 20; z < CLIFF_LEN - 20; z += 2.4) { const x = 56 + Math.sin(z / 20) * 2, h = cliffH(x, z); const st = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.4, 1.2), mat(pick(['#8c8577', '#9b958a']), { roughness: 1 })); st.position.set(x, h + 0.7, z); st.castShadow = true; cliffScene.add(st); cliffSolids.push({ x, z, r: 1.1 }); }
-    for (let z = 40; z < CLIFF_LEN; z += 60) { const x = cliffRoadX(z) + 6, h = cliffH(x, z); const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 4, 8), mat('#4a3420')); post.position.set(x, h + 2, z); cliffScene.add(post); const gear = makeGear(1.6, 12, '#b08a3a'); gear.position.set(x, h + 4.6, z); gear.rotation.x = Math.PI / 2; gear.userData.spin = 0.6; cliffScene.add(gear); spinners.push(gear); cliffSolids.push({ x, z, r: 0.5 }); }
-    const postM = mat('#6b4a2b');
-    [[3, 'Cairnhold', Math.PI, '#6e6a62'], [CLIFF_LEN - 3, 'Cogsworth', 0, '#b08a3a']].forEach(([z, label, ry, colr]) => {
-      const x = cliffRoadX(z) - 6, h = cliffH(x, z); signpost(cliffScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The Cliff Road', 4.6, 1, '#f2e6c8', '#4a3420')], postM);
-      cliffSolids.push({ x, z, r: 0.5 });
-    });
-    [0, CLIFF_LEN].forEach(z => { const cx = cliffRoadX(z), h = cliffH(cx, z); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, z); cliffScene.add(gp); cliffSolids.push({ x: cx + o, z, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, z); cliffScene.add(lintel); const sg = signBoard(z ? 'Cogsworth' : 'Cairnhold', 6.4, 1.4, z ? '#b08a3a' : '#6e6a62', z ? '#1b1b1b' : '#f6e7c2'); sg.position.set(cx, h + 8.5, z); cliffScene.add(sg); hangBoards(cliffScene, cx, h + 6.8, z, 0, [signBoard('The Cliff Road', 5, 1.1, '#f2e6c8', '#4a3420')]); });
-  }
-  function goToCliff(fromCog) {
-    fadeTo('The Cliff Road', () => {
-      moveCompany(fromCog ? cogScene : cairnScene, cliffScene); where = 'cliff';
-      const z = fromCog ? CLIFF_LEN - 5 : 4, x = cliffRoadX(z); player.position.set(x, 0, z); bodyYaw = camYaw = fromCog ? Math.PI : 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(x - 2, cliffH(x - 2, z), z);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint(fromCog ? 'The Cliff Road climbs back up to Cairnhold.' : 'The Cliff Road. It drops down the escarpment to Cogsworth; keep left of the wall.'));
-  }
-  function goToCairnFromCliff() {
-    fadeTo('Cairnhold Highlands', () => {
-      moveCompany(cliffScene, cairnScene); where = 'cairnhold'; player.position.set(0, 0, CAIRN_LEN + 14); bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; if (beetle) beetle.position.set(2, 0, CAIRN_LEN + 16);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint('Cairnhold’s far side. The bridge is ahead.'));
-  }
 
   // ---------- Region 5: Cogsworth, the clockwork town in the cliff ----------
   const COG_LEN = 110, TAMPOS = new THREE.Vector3(-10, 0, 40), CLIFFWALL = 96;
@@ -2708,105 +2448,12 @@
   }
   function goToCogsworth() {
     fadeTo('Cogsworth', () => {
-      moveCompany(where === 'cliff' ? cliffScene : curScene(), cogScene); where = 'cogsworth'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
+      moveCompany(curScene(), cogScene); where = 'cogsworth'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => { hint('Cogsworth. The Clockworks is on the right as you face the cliff; Tamsin Gearwright is outside it, covered in oil.'); if (phase === 'tocog') phase = 'totam'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(-4, 0, 42); bodyYaw = camYaw = -1.2; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
   }
 
-  // ---------- the Mountain Road: up from Cogsworth's hill to the mine mouth of Emberdeep ----------
-  const MTN_LEN = 300;
-  function mtnRoadX(z) { return 26 * Math.sin(z / 44) + 9 * Math.sin(z / 16 + 1); }
-  function mtnRawH(x, z) {
-    let h = 5 * Math.sin(x / 19) * Math.cos(z / 23) + 3 * Math.sin(x / 8 + 2) * Math.sin(z / 9) + 1.5 * Math.sin(x / 4.5) * Math.cos(z / 5);
-    h += 16 * Math.exp(-(Math.pow((x - 90) / 40, 2) + Math.pow((z - 110) / 50, 2)));
-    h += 22 * Math.exp(-(Math.pow((x + 95) / 45, 2) + Math.pow((z - 200) / 55, 2)));
-    h += Math.max(0, Math.abs(x) - 110) * 0.9;
-    h *= sstep(0, 26, z) * sstep(MTN_LEN, MTN_LEN - 26, z);
-    return h + 44 * sstep(30, 260, z);
-  }
-  function mtnH(x, z) { const d = Math.abs(x - mtnRoadX(z)); if (d > 14) return mtnRawH(x, z); const k = sstep(4, 14, d); return mtnRawH(mtnRoadX(z), z) * (1 - k) + mtnRawH(x, z) * k; }
-  const mtnScene = new THREE.Scene();
-  mtnScene.fog = new THREE.Fog('#dfe3e6', 80, 360);
-  const mtnSky = new THREE.Mesh(new THREE.SphereGeometry(700, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); mtnScene.add(mtnSky);
-  mtnScene.add(new THREE.HemisphereLight('#f4f6ff', '#4e5a58', 1.0));
-  const mtnSun = new THREE.DirectionalLight('#fff6e8', 1.0); mtnSun.castShadow = true;
-  Object.assign(mtnSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); mtnSun.shadow.mapSize.set(4096, 4096); mtnSun.shadow.radius = 2;
-  mtnScene.add(mtnSun); mtnScene.add(mtnSun.target);
-  const mtnSolids = [];
-  {
-    const W = 340, L = MTN_LEN + 160, SX = 140, SZ = 180;
-    const geo = new THREE.PlaneGeometry(W, L, SX, SZ); geo.rotateX(-Math.PI / 2); geo.translate(0, 0, MTN_LEN / 2);
-    const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i), z = pos.getZ(i), h = mtnH(x, z); pos.setY(i, h);
-      const slope = Math.hypot(mtnH(x + 1.5, z) - mtnH(x - 1.5, z), mtnH(x, z + 1.5) - mtnH(x, z - 1.5)) / 3;
-      if (h > 38 && slope < 0.6) c.set(pick(['#e8ecf0', '#dfe4ea', '#f2f4f6'])); else if (slope > 0.6) c.set('#6e6a62'); else if (h > 24) c.set(pick(['#8c8577', '#9b958a'])); else c.set(pick(['#6f8a4a', '#7a9452', '#8a9a5a']));
-      c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
-    }
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
-    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); ground.receiveShadow = true; mtnScene.add(ground);
-    const rw = 3.8, verts = [], uvs = [], idx = []; let n = 0;
-    for (let z = -12; z <= MTN_LEN + 12; z += 2) {
-      const cx = mtnRoadX(z), h = mtnH(cx, z) + 0.22, dx = (mtnRoadX(z + 1) - mtnRoadX(z - 1)) / 2, len = Math.hypot(dx, 2), nx = 2 / len, nz = -dx / len;
-      [[-rw, 0], [-1.4, 0.3], [1.4, 0.7], [rw, 1]].forEach(([o, u]) => { verts.push(cx + nx * o, h, z + nz * o); uvs.push(u * 2, z / 6); });
-      if (n > 0) for (let k = 0; k < 3; k++) { const a = (n - 1) * 4 + k, b = n * 4 + k; idx.push(a, b, a + 1, a + 1, b, b + 1); }
-      n++;
-    }
-    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); rg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); rg.setIndex(idx); rg.computeVertexNormals();
-    const roadMesh = new THREE.Mesh(rg, mat('#ffffff', { map: dirtTex, side: THREE.DoubleSide, color: '#a9a49a' })); roadMesh.receiveShadow = true; mtnScene.add(roadMesh);
-    const gg = new THREE.ConeGeometry(0.22, 1, 3); gg.translate(0, 0.5, 0);
-    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 6000);
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 6000; i++) {
-      pv.set(rnd(-160, 160), 0, rnd(-30, MTN_LEN * 0.7)); if (Math.abs(pv.x - mtnRoadX(pv.z)) < 5) { i--; continue; }
-      pv.y = mtnH(pv.x, pv.z) - 0.1; q.setFromEuler(new THREE.Euler(rnd(-0.3, 0.3), rnd(0, 6.3), rnd(-0.3, 0.3))); sv.set(1, rnd(1.2, 3), 1);
-      grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#8a9a5a', '#7a8a4a', '#a3a86a'])));
-    }
-    mtnScene.add(grass);
-    for (let i = 0; i < 170; i++) {
-      const x = rnd(-160, 160), z = rnd(-20, MTN_LEN + 30); if (Math.abs(x - mtnRoadX(z)) < 6 || ((z < 18 || z > MTN_LEN - 18) && x < mtnRoadX(z) - 2 && x > mtnRoadX(z) - 26)) { i--; continue; }
-      const sc = rnd(1, 6), rock = new THREE.Mesh(new THREE.DodecahedronGeometry(sc, 0), mat(pick(['#8c8577', '#9b958a', '#7a7468', '#6e6a62']), { flatShading: true, roughness: 1 }));
-      rock.position.set(x, mtnH(x, z) + sc * 0.25, z); rock.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); rock.scale.y = rnd(0.5, 1.2); rock.castShadow = true; rock.receiveShadow = true; mtnScene.add(rock);
-      if (sc > 0.7) mtnSolids.push({ x, z, r: sc * 0.9 });
-    }
-    const spots = [];
-    for (let i = 0; i < 12; i++) {
-      const x = rnd(-150, 150), z = rnd(0, MTN_LEN * 0.6); if (Math.abs(x - mtnRoadX(z)) < 40 || spots.some(t => Math.hypot(t[0] - x, t[1] - z) < 45)) { i--; continue; }
-      spots.push([x, z]); const K = rnd(9, 14), tr = new THREE.Group(); tr.position.set(x, mtnH(x, z) - 1.5, z); mtnScene.add(tr);
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.8, 7.6, 10), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5; trunk.castShadow = true; tr.add(trunk);
-      [0, 1, 2].forEach(k => { const cone = new THREE.Mesh(new THREE.ConeGeometry(3.6 - k * 0.9, 4.8, 9), mat(pick(['#2f5f2a', '#3a6d32']), { flatShading: true })); cone.position.y = 6.5 + k * 2.8; cone.castShadow = true; tr.add(cone); });
-      tr.scale.setScalar(K); mtnSolids.push({ x, z, r: 0.8 * K });
-    }
-    // ore carts abandoned on the way up, and the dwarves' iron waymarks
-    for (let z = 50; z < MTN_LEN; z += 70) { const x = mtnRoadX(z) + 7, h = mtnH(x, z); const cart = new THREE.Mesh(new THREE.BoxGeometry(4, 2.2, 2.6), mat('#4b4b4b', { metalness: 0.5 })); cart.position.set(x, h + 1.6, z); cart.rotation.y = rnd(-0.3, 0.3); cart.castShadow = true; mtnScene.add(cart); for (let k = 0; k < 6; k++) { const ore = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5, 0), mat(pick(['#b08a3a', '#8a6a3a', '#5a5a52']), { flatShading: true, metalness: 0.4 })); ore.position.set(x + rnd(-1.4, 1.4), h + 2.9, z + rnd(-0.8, 0.8)); mtnScene.add(ore); } mtnSolids.push({ x, z, r: 2.4 }); }
-    const postM = mat('#4b4b4b', { metalness: 0.5 });
-    [[3, 'Cogsworth', Math.PI, '#b08a3a'], [MTN_LEN - 3, 'Emberdeep', 0, '#8a3a2a']].forEach(([z, label, ry, colr]) => {
-      const x = mtnRoadX(z) - 6, h = mtnH(x, z); signpost(mtnScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The Mountain Road', 5.2, 1, '#f2e6c8', '#4a3420')], postM);
-      mtnSolids.push({ x, z, r: 0.5 });
-    });
-    { const cx = mtnRoadX(0), h = mtnH(cx, 0); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(cx + o, h + 3.5, 0); mtnScene.add(gp); mtnSolids.push({ x: cx + o, z: 0, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(cx, h + 7.3, 0); mtnScene.add(lintel); }
-    // the mine mouth: a dwarven arch cut into the rock, lit from within
-    { const cx = mtnRoadX(MTN_LEN), h = mtnH(cx, MTN_LEN); const face = new THREE.Mesh(new THREE.BoxGeometry(80, 60, 20), mat('#5e5a52', { roughness: 1 })); face.position.set(cx, h + 28, MTN_LEN + 14); mtnScene.add(face);
-      [-6, 6].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(2.4, 12, 2.4), mat('#3a3a3a', { metalness: 0.4 })); gp.position.set(cx + o, h + 6, MTN_LEN + 3); mtnScene.add(gp); mtnSolids.push({ x: cx + o, z: MTN_LEN + 3, r: 1.6 }); });
-      const arch = new THREE.Mesh(new THREE.TorusGeometry(6.4, 1.2, 10, 24, Math.PI), mat('#3a3a3a', { metalness: 0.4 })); arch.position.set(cx, h + 12, MTN_LEN + 3); mtnScene.add(arch);
-      const dark = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), mat('#1a0e08', { emissive: '#6a2a10', emissiveIntensity: 0.5 })); dark.position.set(cx, h + 6, MTN_LEN + 4); mtnScene.add(dark);
-      const glow = new THREE.PointLight('#ff7a30', 1.2, 40); glow.position.set(cx, h + 5, MTN_LEN); mtnScene.add(glow);
-      const sg = signBoard('EMBERDEEP', 9, 1.8, '#1b1b1b', '#ff9a40'); hangBoards(mtnScene, cx, h + 17.2, MTN_LEN + 2, 0, [sg]); }
-  }
   { const gx = 149, gh = cogH(gx, 70); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(gx, gh + 3.5, 70 + o); cogScene.add(gp); cogSolids.push({ x: gx, z: 70 + o, r: 1 }); }); const lin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1, 12), mat('#7a7468')); lin.position.set(gx, gh + 7.3, 70); cogScene.add(lin); const sg = signBoard('To Emberdeep', 5.4, 1.3, '#8a3a2a', '#f6e7c2'); sg.position.set(gx - 0.2, gh + 8.6, 70); sg.rotation.y = -Math.PI / 2; cogScene.add(sg); }
-  function goToMtn(fromEmb) {
-    fadeTo('The Mountain Road', () => {
-      moveCompany(fromEmb ? embScene : cogScene, mtnScene); where = 'mtn'; if (riding) setRiding(false);
-      const z = fromEmb ? MTN_LEN - 6 : 4, x = mtnRoadX(z); player.position.set(x, 0, z); bodyYaw = camYaw = fromEmb ? Math.PI : 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(x - 2, mtnH(x - 2, z), z);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint(fromEmb ? 'The Mountain Road winds back down to Cogsworth.' : 'The Mountain Road. It climbs to the snow line; the mine mouth of Emberdeep is at the top.'));
-  }
-  function goToCogFromMtn() {
-    fadeTo('Cogsworth', () => {
-      moveCompany(mtnScene, cogScene); where = 'cogsworth'; player.position.set(142, 0, 70); bodyYaw = camYaw = -Math.PI / 2; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(145, cogH(145, 72), 72);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint('The top of Cogsworth’s hill. The town is below.'));
-  }
 
   // ---------- Region 6: Emberdeep, the dwarven forges under the mountain ----------
   const EMB_LEN = 120, DURPOS = new THREE.Vector3(-10, 0, 42), LAVA_X = 34;
@@ -2866,107 +2513,14 @@
   tam2 = makeElfNPC({ coat: '#8a4a2a', skin: '#b98a63', hair: '#1b1b1b', hat: 'cap', capColor: '#3a3a3a', tall: 5.6, wide: 1.4 }); tam2.position.set(-2, 0, 70); tam2.rotation.y = 2.4; tam2.visible = false; embScene.add(tam2);
   function goToEmberdeep() {
     fadeTo('Emberdeep', () => {
-      moveCompany(where === 'mtn' ? mtnScene : curScene(), embScene); where = 'emberdeep'; if (riding) setRiding(false); player.position.set(0, 0, 4); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 1.5);
+      moveCompany(curScene(), embScene); where = 'emberdeep'; if (riding) setRiding(false); player.position.set(0, 0, 4); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 1.5);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => { hint('Emberdeep. Lava on the right, furnaces on the left. Master Durna is at the anvils ahead.'); if (phase === 'toemb') phase = 'todurna'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(-4, 0, 44); bodyYaw = camYaw = -1.2; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
   }
-  function goToMtnFromEmb() { goToMtn(true); }
 
-  // ---------- the Sea Road: out of the back of Emberdeep and down the mountain to the coast ----------
-  const SEA_LEN = 320, SEA_Y = -16;
-  function seaRoadX(z) { return 22 * Math.sin(z / 52 + 2) + 8 * Math.sin(z / 15); }
-  function seaRawH(x, z) {
-    let h = 4 * Math.sin(x / 21) * Math.cos(z / 25) + 2.5 * Math.sin(x / 7 + 1) * Math.sin(z / 10) + 1.2 * Math.sin(x / 4) * Math.cos(z / 5.5);
-    h += 18 * Math.exp(-(Math.pow((x + 90) / 45, 2) + Math.pow((z - 90) / 55, 2)));
-    h += 14 * Math.exp(-(Math.pow((x + 70) / 40, 2) + Math.pow((z - 230) / 50, 2)));
-    h += Math.max(0, -x - 120) * 0.8;
-    h -= Math.max(0, x - 58) * 1.6; // the land falls off the cliff edge into the sea
-    h *= sstep(0, 26, z) * sstep(SEA_LEN, SEA_LEN - 26, z);
-    return h + 46 * (1 - sstep(40, 280, z));
-  }
-  function seaH(x, z) { const d = Math.abs(x - seaRoadX(z)); if (d > 14) return seaRawH(x, z); const k = sstep(4, 14, d); return seaRawH(seaRoadX(z), z) * (1 - k) + seaRawH(x, z) * k; }
-  const seaScene = new THREE.Scene();
-  seaScene.fog = new THREE.Fog('#d9e2ea', 90, 420);
-  const seaSky = new THREE.Mesh(new THREE.SphereGeometry(700, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })); seaScene.add(seaSky);
-  seaScene.add(new THREE.HemisphereLight('#f4f8ff', '#4e5a58', 1.0));
-  const seaSun = new THREE.DirectionalLight('#fff6e8', 1.0); seaSun.castShadow = true;
-  Object.assign(seaSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); seaSun.shadow.mapSize.set(4096, 4096); seaSun.shadow.radius = 2;
-  seaScene.add(seaSun); seaScene.add(seaSun.target);
-  const seaSolids = [];
+  const SEA_Y = -16;
   const seaTex = canvasTex(256, 256, (gg, w, h) => { gg.fillStyle = '#2f6f9a'; gg.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { gg.strokeStyle = pick(['rgba(255,255,255,.18)', 'rgba(120,190,230,.35)', 'rgba(20,70,110,.3)']); gg.lineWidth = rnd(1, 3); const x = Math.random() * w, y = Math.random() * h; gg.beginPath(); gg.moveTo(x, y); gg.quadraticCurveTo(x + rnd(6, 18), y + rnd(-4, 4), x + rnd(14, 36), y); gg.stroke(); } }, [40, 40]);
   function seaPlane(sc, x, z, w, d, y) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: seaTex, roughness: 0.35, metalness: 0.1, color: '#8fc4e6' })); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); sc.add(m); return m; }
-  {
-    const W = 340, L = SEA_LEN + 160, SX = 140, SZ = 180;
-    const geo = new THREE.PlaneGeometry(W, L, SX, SZ); geo.rotateX(-Math.PI / 2); geo.translate(-40, 0, SEA_LEN / 2);
-    const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i), z = pos.getZ(i), h = seaH(x, z); pos.setY(i, h);
-      const slope = Math.hypot(seaH(x + 1.5, z) - seaH(x - 1.5, z), seaH(x, z + 1.5) - seaH(x, z - 1.5)) / 3;
-      if (slope > 0.7) c.set('#6e6a62'); else if (h > 30) c.set(pick(['#8c8577', '#9b958a'])); else if (h < SEA_Y + 2) c.set('#c9b98a'); else c.set(pick(['#5f8a4a', '#6f9452', '#7a9a5a']));
-      c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
-    }
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
-    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); ground.receiveShadow = true; seaScene.add(ground);
-    seaPlane(seaScene, 520, SEA_LEN / 2, 1000, 1400, SEA_Y);
-    const rw = 3.8, verts = [], uvs = [], idx = []; let n = 0;
-    for (let z = -12; z <= SEA_LEN + 12; z += 2) {
-      const cx = seaRoadX(z), h = seaH(cx, z) + 0.22, dx = (seaRoadX(z + 1) - seaRoadX(z - 1)) / 2, len = Math.hypot(dx, 2), nx = 2 / len, nz = -dx / len;
-      [[-rw, 0], [-1.4, 0.3], [1.4, 0.7], [rw, 1]].forEach(([o, u]) => { verts.push(cx + nx * o, h, z + nz * o); uvs.push(u * 2, z / 6); });
-      if (n > 0) for (let k = 0; k < 3; k++) { const a = (n - 1) * 4 + k, b = n * 4 + k; idx.push(a, b, a + 1, a + 1, b, b + 1); }
-      n++;
-    }
-    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); rg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); rg.setIndex(idx); rg.computeVertexNormals();
-    const roadMesh = new THREE.Mesh(rg, mat('#ffffff', { map: dirtTex, side: THREE.DoubleSide, color: '#b3a88f' })); roadMesh.receiveShadow = true; seaScene.add(roadMesh);
-    const gg = new THREE.ConeGeometry(0.22, 1, 3); gg.translate(0, 0.5, 0);
-    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 6000);
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 6000; i++) {
-      pv.set(rnd(-170, 56), 0, rnd(-30, SEA_LEN + 30)); if (Math.abs(pv.x - seaRoadX(pv.z)) < 5) { i--; continue; }
-      pv.y = seaH(pv.x, pv.z) - 0.1; q.setFromEuler(new THREE.Euler(rnd(-0.3, 0.3), rnd(0, 6.3), rnd(-0.3, 0.3))); sv.set(1, rnd(1.2, 3), 1);
-      grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#7a9a5a', '#6a8a4a', '#93a86a'])));
-    }
-    seaScene.add(grass);
-    for (let i = 0; i < 120; i++) {
-      const x = rnd(-170, 56), z = rnd(-20, SEA_LEN + 30); if (Math.abs(x - seaRoadX(z)) < 6 || ((z < 18 || z > SEA_LEN - 18) && x < seaRoadX(z) - 2 && x > seaRoadX(z) - 26)) { i--; continue; }
-      const sc = rnd(1, 5), rock = new THREE.Mesh(new THREE.DodecahedronGeometry(sc, 0), mat(pick(['#8c8577', '#9b958a', '#7a7468']), { flatShading: true, roughness: 1 }));
-      rock.position.set(x, seaH(x, z) + sc * 0.25, z); rock.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); rock.scale.y = rnd(0.5, 1.2); rock.castShadow = true; rock.receiveShadow = true; seaScene.add(rock);
-      if (sc > 0.7) seaSolids.push({ x, z, r: sc * 0.9 });
-    }
-    // wind-bent pines, leaning away from the sea
-    const spots = [];
-    for (let i = 0; i < 14; i++) {
-      const x = rnd(-160, 40), z = rnd(20, SEA_LEN - 20); if (Math.abs(x - seaRoadX(z)) < 30 || spots.some(t => Math.hypot(t[0] - x, t[1] - z) < 40)) { i--; continue; }
-      spots.push([x, z]); const K = rnd(8, 13), tr = new THREE.Group(); tr.position.set(x, seaH(x, z) - 1.5, z); tr.rotation.z = 0.18; seaScene.add(tr);
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.8, 7, 10), mat('#ffffff', { map: barkTex })); trunk.position.y = 3.5; trunk.castShadow = true; tr.add(trunk);
-      [0, 1, 2].forEach(k => { const cone = new THREE.Mesh(new THREE.ConeGeometry(3.4 - k * 0.9, 4.4, 9), mat(pick(['#3a6d32', '#2f5f2a']), { flatShading: true })); cone.position.set(-0.6 * k, 6.2 + k * 2.6, 0); cone.castShadow = true; tr.add(cone); });
-      tr.scale.setScalar(K); seaSolids.push({ x, z, r: 0.8 * K });
-    }
-    // the mine's back door: a tunnel mouth in the rock, and the gate to Lanternreach
-    { const cx = seaRoadX(0), h = seaH(cx, 0); const face = new THREE.Mesh(new THREE.BoxGeometry(90, 60, 20), mat('#5e5a52', { roughness: 1 })); face.position.set(cx, h + 26, -14); seaScene.add(face);
-      [-6, 6].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(2.4, 12, 2.4), mat('#3a3a3a', { metalness: 0.4 })); gp.position.set(cx + o, h + 6, -3); seaScene.add(gp); seaSolids.push({ x: cx + o, z: -3, r: 1.6 }); });
-      const arch = new THREE.Mesh(new THREE.TorusGeometry(6.4, 1.2, 10, 24, Math.PI), mat('#3a3a3a', { metalness: 0.4 })); arch.position.set(cx, h + 12, -3); seaScene.add(arch);
-      const dark = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), mat('#1a0e08', { emissive: '#6a2a10', emissiveIntensity: 0.5 })); dark.position.set(cx, h + 6, -4); seaScene.add(dark);
-      const sg = signBoard('EMBERDEEP', 8, 1.6, '#1b1b1b', '#ff9a40'); hangBoards(seaScene, cx, h + 17.2, -2, 0, [sg]); }
-    { const cx = seaRoadX(SEA_LEN), h = seaH(cx, SEA_LEN); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#e8e2d2')); gp.position.set(cx + o, h + 3.5, SEA_LEN); seaScene.add(gp); seaSolids.push({ x: cx + o, z: SEA_LEN, r: 1 }); }); const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#cfc8b6')); lintel.position.set(cx, h + 7.3, SEA_LEN); seaScene.add(lintel); const sg = signBoard('Lanternreach', 6.4, 1.4, '#1f3a5a', '#f6e7c2'); sg.position.set(cx, h + 8.6, SEA_LEN - 0.3); seaScene.add(sg); }
-    const postM = mat('#4b4b4b', { metalness: 0.5 });
-    [[6, 'Emberdeep', Math.PI, '#8a3a2a'], [SEA_LEN - 6, 'Lanternreach', 0, '#1f3a5a']].forEach(([z, label, ry, colr]) => { const x = seaRoadX(z) - 6, h = seaH(x, z); signpost(seaScene, x, h, z, -1, [signBoard(label, 6, 1.3, colr, '#f6e7c2'), signBoard('The Sea Road', 4.6, 1, '#f2e6c8', '#4a3420')], postM); seaSolids.push({ x, z, r: 0.5 }); });
-    [[-230, 60, 170, 110, 180, '#9a978f'], [-260, 260, 190, 130, 200, '#9a978f'], [-60, -200, 240, 150, 180, '#b9bcc2']].forEach(([ox, oz, rx, h, rz, c]) => mound(seaScene, ox, oz, rx, h, rz, c));
-    // sea stacks off the coast
-    [[150, 80, 9, 24], [190, 200, 12, 30], [130, 290, 7, 18]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.7, r, h, 9), mat('#6e6a62', { flatShading: true, roughness: 1 })); st.position.set(x, SEA_Y + h / 2 - 4, z); seaScene.add(st); });
-  }
-  function goToSea(fromLant) {
-    fadeTo('The Sea Road', () => {
-      moveCompany(fromLant ? lantScene : embScene, seaScene); where = 'sea'; if (riding) setRiding(false);
-      const z = fromLant ? SEA_LEN - 6 : 4, x = seaRoadX(z); player.position.set(x, 0, z); bodyYaw = camYaw = fromLant ? Math.PI : 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(x - 2, seaH(x - 2, z), z);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint(fromLant ? 'The Sea Road climbs back to the mountain and the mine.' : 'The Sea Road. Daylight again. It runs down the mountain to the coast; the sea is on your right the whole way.'));
-  }
-  function goToEmbFromSea() {
-    fadeTo('Emberdeep', () => {
-      moveCompany(seaScene, embScene); where = 'emberdeep'; player.position.set(0, 0, EMB_LEN - 5); bodyYaw = camYaw = Math.PI; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(2, 0, EMB_LEN - 3);
-      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint('The back of Emberdeep. The ore carts are behind you, the lava on your left now.'));
-  }
 
   // ---------- Region 7: Lanternreach, a lighthouse town on the sea cliffs, always at dusk ----------
   const LANT_LEN = 140, ASTPOS = new THREE.Vector3(14, 0, 44), LIGHT = { x: 40, z: 30 }, COVE = { x: 62, z: 112 }, PIER = { z: 118, x0: 70, x1: 118, y: SEA_Y + 1.3 };
@@ -2976,7 +2530,6 @@
     const cove = Math.exp(-(Math.pow((z - COVE.z) / 30, 2))); // the beach: a notch in the cliff, gentle enough to walk
     const edge = 58 + cove * -14; // the cliff edge comes inland at the cove
     if (x > edge) { const d = x - edge; h -= Math.min(d * Math.max(0.48, 3.5 - 3.02 * cove), 30); }
-    h -= Math.max(0, -x - 58) * 2.2;
     return Math.max(h, SEA_Y - 4);
   }
   const PIER_LADDERS = [[78, 1], [78, -1], [117, 1], [117, -1]];
@@ -3122,11 +2675,10 @@
   { const sext = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 6, 16, Math.PI / 3), mat('#b08a3a', { metalness: 0.6 })); sext.position.set(0.9, 3.2, 0.8); sext.rotation.y = 0.6; astra.add(sext); const strap = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.6, 0.1), mat('#5a3d22')); strap.position.set(0.5, 3.6, 0.9); strap.rotation.z = 0.35; astra.add(strap); }
   function goToLantern() {
     fadeTo('Lanternreach', () => {
-      moveCompany(where === 'sea' ? seaScene : curScene(), lantScene); where = 'lantern'; if (riding) setRiding(false); player.position.set(0, 0, 4); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 1.5);
+      moveCompany(curScene(), lantScene); where = 'lantern'; if (riding) setRiding(false); player.position.set(0, 0, 4); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 1.5);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => { hint('Lanternreach, at dusk. The lighthouse is on your right; Astra Vell is at its foot, looking up.'); if (phase === 'tolant') phase = 'toastra'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(10, 0, 40); bodyYaw = camYaw = 0.6; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
   }
-  function goToSeaFromLant() { goToSea(true); }
 
   // ---------- the sky-lift: from the end of Lanternreach's pier, out over the Pillar Rocks and up to Skyhaven ----------
   const LIFT_T = 22, LIFT_TOP = new THREE.Vector3(230, 300, 0);
@@ -3382,16 +2934,9 @@
   }
   hillsBeyond(fernScene, 0, -8, -1);                 // behind Fernwater's gate: the hills you came down
   hillsBeyond(orchScene, 30, ORCH_LEN + 8, 1);       // past the orchards' east gate: the hills ahead
-  orchardBeyond(hillScene, roadX(0), -10, -1);        // the start of the River Road looks back at the orchards
-  townBeyond(hillScene, roadX(HILL_LEN), HILL_LEN + 8, 1); // and its end looks down on Fernwater
-  hillsBeyond(roadScene, 0, ROAD_LEN + 8, 1);        // the Long Road's far gate: hills on the way to the orchards
   [[-120, 60, 150, 34, 90], [40, 110, 170, 44, 110], [160, 80, 140, 30, 90]].forEach(([ox, oz, rx, h, rz]) => mound(fernScene, ox, FERN_LEN + oz, rx, h, rz, pick(['#7a8a5a', '#6f7f52'])));
-  [[-110, 60, 140, 26, 90], [60, 90, 160, 30, 100]].forEach(([ox, oz, rx, h, rz]) => mound(highScene, highRoadX(HIGH_LEN) + ox, HIGH_LEN + oz, rx, h, rz, '#7a8a5a'));
-  townBeyond(highScene, highRoadX(0), -10, -1);
   [[-110, 60, 150, 30, 90], [80, 100, 160, 36, 100]].forEach(([ox, oz, rx, h, rz]) => mound(cairnScene, ox, CAIRN_LEN + 30 + oz, rx, h, rz, '#7a8a5a'));
-  [[-120, 60, 150, 30, 90], [70, 110, 170, 40, 110]].forEach(([ox, oz, rx, h, rz]) => mound(cliffScene, cliffRoadX(CLIFF_LEN) + ox, CLIFF_LEN + oz, rx, h, rz, '#6f7f52'));
   [[420, 70, 160, 90, 160, '#8c8577'], [540, -90, 200, 130, 200, '#9a978f'], [500, 230, 180, 110, 180, '#8c8577']].forEach(([ox, oz, rx, h, rz, c]) => mound(cogScene, ox, oz, rx, h, rz, c));
-  [[-200, 120, 140, 90, 160, '#9a978f'], [220, 60, 150, 110, 170, '#9a978f'], [0, MTN_LEN + 200, 260, 140, 160, '#b9bcc2']].forEach(([ox, oz, rx, h, rz, c]) => mound(mtnScene, ox, oz, rx, h, rz, c));
 
   // ---------- ambient life: birds overhead, rabbits in the hills, a heron by the river, birdsong ----------
   const flocks = [], critters = [];
@@ -3407,12 +2952,9 @@
     flocks.push(f);
   }
   addFlock(scene, 0, 50, 45, 42, 5, () => 0);
-  addFlock(roadScene, 0, 110, 60, 48, 6, () => 0);
   addFlock(orchScene, 0, 60, 50, 46, 5, () => 0);
-  addFlock(hillScene, roadX(150), 150, 80, 60, 6, hillH);
-  addFlock(hillScene, roadX(470), 470, 70, 58, 4, hillH);
   addFlock(fernScene, 0, 70, 55, 40, 6, () => 0);
-  addFlock(lantScene, 70, 80, 80, 26, 7, () => 0); addFlock(seaScene, 90, 180, 90, 20, 5, () => SEA_Y);
+  addFlock(lantScene, 70, 80, 80, 26, 7, () => 0);
   // rabbits: real scale next to a seven-inch elf, so about as long as you are tall
   function makeRabbit() {
     const g = new THREE.Group(); const fur = mat(pick(['#9a8468', '#7d6a52', '#b4a28a']), { roughness: 1 });
@@ -3423,10 +2965,6 @@
     [[-0.6, 0.6], [0.6, 0.6], [-0.5, -0.9], [0.5, -0.9]].forEach(([x, z]) => { const foot = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), fur); foot.scale.set(1, 0.6, 1.6); foot.position.set(x, 0.2, z); g.add(foot); });
     g.traverse(o => { if (o.isMesh) o.castShadow = true; });
     return g;
-  }
-  for (let i = 0; i < 5; i++) {
-    const z = 60 + i * (HILL_LEN - 120) / 4 + rnd(-25, 25), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(15, 60); const r = makeRabbit(); const [rx, rz] = clearSpotNear('hills', x, z, 30, 4); r.position.set(rx, hillH(rx, rz), rz); hillScene.add(r);
-    critters.push({ obj: r, kind: 'rabbit', sceneKey: 'hills', state: 'idle', timer: rnd(1, 4), target: null, hop: 0, ground: hillH });
   }
   // a heron on the far bank at Fernwater, stepping now and then
   {
@@ -3447,9 +2985,9 @@
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 5), mat('#2a2420')); body.rotation.x = Math.PI / 2; g.add(body);
     g.userData.wings = wings; g.userData.t = rnd(0, 100); g.userData.base = new THREE.Vector3(); return g;
   }
-  [[scene, 2, [-30, 30], [-5, 95]], [orchScene, 1, [-40, 40], [5, 100]], [fernScene, 1, [-14, 14], [4, 50]], [hillScene, 2, null, null]].forEach(([sc, n, xr, zr]) => {
-    for (let i = 0; i < n; i++) { const b = makeButterfly(); let x, z; if (xr) { x = rnd(xr[0], xr[1]); z = rnd(zr[0], zr[1]); } else { z = rnd(10, HILL_LEN - 10); x = roadX(z) + rnd(-30, 30); }
-      if (sc === scene && Math.hypot(x, z) < 16) { i--; continue; } if (sc === orchScene && Math.hypot(x - MILL.x, z - MILL.z) < 15) { i--; continue; } if (sc === fernScene && fernBoxes.some(bx => Math.abs(x - bx.x) < bx.hw + 5 && Math.abs(z - bx.z) < bx.hd + 5)) { i--; continue; } b.userData.base.set(x, (sc === hillScene ? hillH(x, z) : 0) + rnd(1.5, 4), z); b.position.copy(b.userData.base); sc.add(b); critters.push({ obj: b, kind: 'butterfly', sceneKey: sc === scene ? 'village' : sc === orchScene ? 'orchards' : sc === fernScene ? 'fernwater' : 'hills' }); }
+  [[scene, 2, [-30, 30], [-5, 95]], [orchScene, 1, [-40, 40], [5, 100]], [fernScene, 1, [-14, 14], [4, 50]]].forEach(([sc, n, xr, zr]) => {
+    for (let i = 0; i < n; i++) { const b = makeButterfly(); let x, z; if (xr) { x = rnd(xr[0], xr[1]); z = rnd(zr[0], zr[1]); } else { x = 0; z = 0; }
+      if (sc === scene && Math.hypot(x, z) < 16) { i--; continue; } if (sc === orchScene && Math.hypot(x - MILL.x, z - MILL.z) < 15) { i--; continue; } if (sc === fernScene && fernBoxes.some(bx => Math.abs(x - bx.x) < bx.hw + 5 && Math.abs(z - bx.z) < bx.hd + 5)) { i--; continue; } b.userData.base.set(x, 0 + rnd(1.5, 4), z); b.position.copy(b.userData.base); sc.add(b); critters.push({ obj: b, kind: 'butterfly', sceneKey: sc === scene ? 'village' : sc === orchScene ? 'orchards' : sc === fernScene ? 'fernwater' : 'hills' }); }
   });
   // a small kit for building animals out of blobs
   function blob(g, geo, m, x, y, z, sx = 1, sy = 1, sz = 1) { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.castShadow = true; g.add(o); return o; }
@@ -3498,7 +3036,7 @@
   function makeFrog() { const g = new THREE.Group(), m = mat('#5f9a3a'); blob(g, sph(0.7), m, 0, 0.5, 0, 1, 0.7, 1.2); [-1, 1].forEach(d => { blob(g, sph(0.22), mat('#f4c53a'), d * 0.35, 0.95, 0.4); blob(g, sph(0.1), mat('#1b1b1b'), d * 0.35, 1.0, 0.55); blob(g, sph(0.3), m, d * 0.7, 0.3, -0.5, 1.6, 0.6, 0.8); }); return g; }
   function makeDog() { const g = new THREE.Group(); g.scale.setScalar(0.66); const m = mat(pick(['#c9a06a', '#3a2a1e', '#e6dcc2'])); blob(g, sph(2.2), m, 0, 5.4, 0, 1, 0.9, 2.2); blob(g, new THREE.CylinderGeometry(1.1, 1.5, 3.2, 8), m, 0, 6.5, 3.6).rotation.x = 0.75; const head = blob(g, sph(1.5), m, 0, 7.2, 5, 1, 0.9, 1.3); blob(g, sph(0.9), m, 0, 6.6, 6.8, 0.8, 0.7, 1.3); blob(g, sph(0.3), mat('#1b1b1b'), 0, 6.8, 7.9); [-1, 1].forEach(d => { blob(g, sph(0.2), mat('#1b1b1b'), d * 0.6, 7.6, 6.1); blob(g, sph(0.6), m, d * 1.4, 7.6, 4.6, 0.6, 1.4, 0.8).rotation.z = -d * 0.5; }); const tail = blob(g, new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5), m, 0, 6.6, -5.2); tail.rotation.x = -1.1; g.userData.tail = tail; g.userData.legs = legSet(g, m, [[-1.2, 3], [1.2, 3], [-1.2, -3], [1.2, -3]], 4.2, 0.4); return g; }
   function makeCrow() { const b = makeBird(true); b.scale.setScalar(2.4); return b; }
-  function solidsFor(key) { return key === 'hills' ? hillSolids : key === 'orchards' ? orchSolids : key === 'fernwater' ? fernSolids : key === 'lantern' ? lantSolids : key === 'skyhaven' ? skySolids : solids; }
+  function solidsFor(key) { return key === 'wild' ? wildSol : key === 'orchards' ? orchSolids : key === 'fernwater' ? fernSolids : key === 'lantern' ? lantSolids : key === 'skyhaven' ? skySolids : solids; }
   function clearOf(key, x, z, pad) { return !solidsFor(key).some(s => Math.hypot(s.x - x, s.z - z) < s.r + pad); }
   // push a point out of any solid it overlaps; returns how far it had to move
   function pushClear(key, o, pad) { let moved = 0; solidsFor(key).forEach(s => { const dx = o.position.x - s.x, dz = o.position.z - s.z, d = Math.hypot(dx, dz), min = s.r + pad; if (d < min) { const k = d > 0.001 ? min / d : 1; o.position.x = s.x + (d > 0.001 ? dx * k : min); o.position.z = s.z + (d > 0.001 ? dz * k : 0); moved += min - d; } }); return moved; }
@@ -3506,19 +3044,14 @@
   function clearSpotNear(key, x, z, r, pad, okf) { for (let k = 0; k < 40; k++) { const a = rnd(0, 6.3), rr = rnd(0, r), nx = x + Math.cos(a) * rr, nz = z + Math.sin(a) * rr; if (clearOf(key, nx, nz, pad) && (!okf || okf(nx, nz))) return [nx, nz]; } return [x, z]; }
   function wanderer(obj, o) { const c = Object.assign({ obj, state: 'idle', timer: rnd(0.5, 3), speed: 4, flee: 0, fleeSpeed: 12, radius: 20, home: obj.position.clone(), ground: () => 0, bob: 0.3, gait: 8, ok: () => true, kind: 'wander', stuck: 0 }, o); if (!clearOf(c.sceneKey, obj.position.x, obj.position.z, (c.pad || 1.5) + 2)) { const [nx, nz] = clearSpotNear(c.sceneKey, obj.position.x, obj.position.z, 40, (c.pad || 1.5) + 2, c.ok); obj.position.x = nx; obj.position.z = nz; obj.position.y = c.ground(nx, nz); c.home.set(nx, 0, nz); } critters.push(c); return c; }
   // where the animals live
-  for (let i = 0; i < 3; i++) { const z = 90 + i * (HILL_LEN - 180) / 2 + rnd(-30, 30), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(60, 120); const g = makeDeer(i === 0); g.position.set(x, hillH(x, z), z); hillScene.add(g); wanderer(g, { sceneKey: 'hills', kind: 'deer', pad: 4, speed: 4, fleeSpeed: 24, flee: 22, radius: 90, ground: hillH, bob: 0.3, gait: 5, ok: (nx, nz) => Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 12 && Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
-  { const z = 400, x = roadX(z) - 70; const f = makeFox(); f.position.set(x, hillH(x, z), z); hillScene.add(f); wanderer(f, { sceneKey: 'hills', speed: 7, fleeSpeed: 16, flee: 12, radius: 160, ground: hillH, bob: 0.25, gait: 12, restless: true, ok: (nx, nz) => Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
-  { const z = 180, x = roadX(z) + 130; const b = makeBadger(); b.position.set(x, hillH(x, z), z); hillScene.add(b); wanderer(b, { sceneKey: 'hills', speed: 2.2, fleeSpeed: 7, flee: 8, radius: 30, ground: hillH, bob: 0.1, gait: 6, ok: (nx, nz) => Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 10 && Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
-  for (let i = 0; i < 3; i++) { const z = 120 + i * 180 + rnd(-40, 40), x = roadX(z) + (i % 2 ? 1 : -1) * rnd(12, 45); const ph = makePheasant(); ph.position.set(x, hillH(x, z), z); hillScene.add(ph); wanderer(ph, { sceneKey: 'hills', kind: 'pheasant', speed: 3, flee: 9, radius: 15, ground: hillH, bob: 0.1, gait: 10, ok: (nx, nz) => Math.abs(nx) < 200 && nz > 8 && nz < HILL_LEN - 8 }); }
-  [[scene, [[-20, 20], [-5, 95]], 0, () => 0, (x, z) => Math.hypot(x, z) > 15], [orchScene, [[-40, 40], [5, 95]], 0, () => 0, (x, z) => Math.hypot(x - MILL.x, z - MILL.z) > 14], [hillScene, null, 2, hillH, () => true]].forEach(([sc, rng, n, gf, okf]) => {
+  [[scene, [[-20, 20], [-5, 95]], 0, () => 0, (x, z) => Math.hypot(x, z) > 15], [orchScene, [[-40, 40], [5, 95]], 0, () => 0, (x, z) => Math.hypot(x - MILL.x, z - MILL.z) > 14]].forEach(([sc, rng, n, gf, okf]) => {
     const key = sc === scene ? 'village' : sc === orchScene ? 'orchards' : 'hills';
-    for (let i = 0; i < n; i++) { let x, z; if (rng) { x = rnd(rng[0][0], rng[0][1]); z = rnd(rng[1][0], rng[1][1]); } else { z = rnd(60, HILL_LEN - 60); x = roadX(z) + rnd(-80, 80); } if (!okf(x, z)) { i--; continue; } const h = makeHedgehog(); h.position.set(x, gf(x, z), z); sc.add(h); wanderer(h, { sceneKey: key, speed: 1.4, fleeSpeed: 1.4, flee: 0, radius: 10, ground: gf, bob: 0.05, gait: 10, ok: (nx, nz) => okf(nx, nz) && (key !== 'village' || inFence(nx, nz, 2)) }); }
-    for (let i = 0; i < (rng ? 1 : 3); i++) { let x, z; if (rng) { x = rnd(rng[0][0], rng[0][1]); z = rnd(rng[1][0], rng[1][1]); } else { z = rnd(60, HILL_LEN - 60); x = roadX(z) + rnd(-80, 80); } if (!okf(x, z)) { i--; continue; } const mo = makeMouse(); mo.position.set(x, gf(x, z), z); sc.add(mo); wanderer(mo, { sceneKey: key, speed: 9, fleeSpeed: 12, flee: 6, radius: 8, ground: gf, bob: 0.08, gait: 20, ok: (nx, nz) => okf(nx, nz) && (key !== 'village' || inFence(nx, nz, 2)) }); }
+    for (let i = 0; i < n; i++) { let x, z; if (rng) { x = rnd(rng[0][0], rng[0][1]); z = rnd(rng[1][0], rng[1][1]); } else { x = 0; z = 0; } if (!okf(x, z)) { i--; continue; } const h = makeHedgehog(); h.position.set(x, gf(x, z), z); sc.add(h); wanderer(h, { sceneKey: key, speed: 1.4, fleeSpeed: 1.4, flee: 0, radius: 10, ground: gf, bob: 0.05, gait: 10, ok: (nx, nz) => okf(nx, nz) && (key !== 'village' || inFence(nx, nz, 2)) }); }
+    for (let i = 0; i < (rng ? 1 : 3); i++) { let x, z; if (rng) { x = rnd(rng[0][0], rng[0][1]); z = rnd(rng[1][0], rng[1][1]); } else { x = 0; z = 0; } if (!okf(x, z)) { i--; continue; } const mo = makeMouse(); mo.position.set(x, gf(x, z), z); sc.add(mo); wanderer(mo, { sceneKey: key, speed: 9, fleeSpeed: 12, flee: 6, radius: 8, ground: gf, bob: 0.08, gait: 20, ok: (nx, nz) => okf(nx, nz) && (key !== 'village' || inFence(nx, nz, 2)) }); }
   });
   // squirrels run up and down the oaks: the Old Oak in the Hollow, and a few of the River Road's trees
   function squirrelOn(sc, x, z, baseY, key, trunkR, climb) { const sq = makeSquirrel(); sq.position.set(x + trunkR, baseY, z); sc.add(sq); critters.push({ obj: sq, kind: 'squirrel', sceneKey: key, tx: x, tz: z, baseY, h: 0, dir: 1, timer: rnd(1, 3), a: rnd(0, 6.3), r: trunkR, climb }); }
   squirrelOn(scene, OAK.x, OAK.z, 0, 'village', 5.2, 30);
-  hillScene.children.filter(o => o.userData.oak).filter((tr, k) => k % 6 === 0).slice(0, 5).forEach(tr => squirrelOn(hillScene, tr.position.x, tr.position.z, tr.position.y + 2, 'hills', tr.userData.trunkR, 110));
   // ducks on the river, frogs on the bank
   for (let i = 0; i < 3; i++) { const x = (i % 2 ? 1 : -1) * rnd(14, 44), z = rnd(62, 94); const du = makeDuck(); du.position.set(x, -0.3, z); fernScene.add(du); wanderer(du, { sceneKey: 'fernwater', speed: 2.2, fleeSpeed: 6, flee: 7, radius: 25, ground: () => -0.3, bob: 0, gait: 0, ok: (nx, nz) => nz > 61 && nz < 95 && Math.abs(nx) > 8 && Math.abs(nx) < 60 }); }
   for (let i = 0; i < 2; i++) { const x = (i % 2 ? 1 : -1) * rnd(10, 30), z = i < 1 ? 55.8 : 100.2; const fr = makeFrog(); fr.position.set(x, 0.9, z); fr.rotation.y = i < 2 ? 0 : Math.PI; fernScene.add(fr); critters.push({ obj: fr, kind: 'frog', sceneKey: 'fernwater', home: fr.position.clone(), state: 'sit', timer: 0 }); }
@@ -3526,7 +3059,6 @@
   [[scene, 6, 40, 'village', (nx, nz) => inFence(nx, nz, 3) && Math.hypot(nx, nz) > 14], [fernScene, 0, 24, 'fernwater', (nx, nz) => Math.abs(nx) < 14 && nz > 3 && nz < 50], [lantScene, -8, 80, 'lantern', (nx, nz) => Math.abs(nx) < 16 && nz > 4 && nz < 130]].forEach(([sc, x, z, key, okf]) => { const dg = makeDog(); dg.position.set(x, 0, z); sc.add(dg); wanderer(dg, { sceneKey: key, kind: 'dog', speed: 6, fleeSpeed: 11, flee: 0, radius: 30, ground: () => 0, bob: 0.25, gait: 10, ok: okf }); });
   // crows on the fences and gate posts; a hawk alone over the hills and the orchards
   [[scene, 30, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 12, 'fernwater'], [orchScene, 48, 0, 70, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(); cr.position.set(x, y + 2.6, z); cr.rotation.y = rnd(0, 6.3); sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.6, z), state: 'perch', t: 0, a: 0 }); });
-  addFlock(hillScene, roadX(330), 330, 120, 95, 1, hillH); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   addFlock(orchScene, 0, 50, 70, 80, 1, () => 0); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   function animalTick(c, dt, t) {
     const o = c.obj, dp = Math.hypot(player.position.x - o.position.x, player.position.z - o.position.z);
@@ -3540,7 +3072,7 @@
       }
       if (c.state === 'dash') { c.h = clamp(c.h + c.dir * dt * 34, 0, c.climb); c.a += dt * c.spin; }
       if (c.state === 'forage' || c.state === 'return') { const tx = c.state === 'forage' ? c.fx : 0, tz = c.state === 'forage' ? c.fz : 0, dx = tx - c.gx, dz = tz - c.gz, d = Math.hypot(dx, dz); if (d > 0.3) { c.gx += dx / d * 14 * dt; c.gz += dz / d * 14 * dt; c.hop += dt * 18; } else { c.gx = tx; c.gz = tz; if (c.state === 'return') { c.state = 'freeze'; c.timer = rnd(0.3, 1.5); } } }
-      const r = c.r + 0.35, ground = c.h < 0.5;
+      const r = (c.rf ? c.rf(c.h) : c.r) + 0.35, ground = c.h < 0.5;
       if (ground) { const gxw = c.tx + Math.cos(c.a) * (r + 1.2) + c.gx, gzw = c.tz + Math.sin(c.a) * (r + 1.2) + c.gz; o.position.set(gxw, c.baseY + (c.state === 'forage' || c.state === 'return' ? Math.abs(Math.sin(c.hop)) * 0.9 : 0), gzw); if (c.state === 'forage' || c.state === 'return') o.rotation.set(0, Math.atan2((c.state === 'forage' ? c.fx : 0) - c.gx + 0.001, (c.state === 'forage' ? c.fz : 0) - c.gz), 0); else o.rotation.set(0, o.rotation.y, 0); }
       else { o.position.set(c.tx + Math.cos(c.a) * r, c.baseY + c.h, c.tz + Math.sin(c.a) * r); o.up.set(Math.cos(c.a), 0, Math.sin(c.a)); o.lookAt(o.position.x, o.position.y + (c.state === 'dash' ? c.dir : 1) * 5, o.position.z); o.up.set(0, 1, 0); }
       o.userData.tail.rotation.x = 0.5 + (c.state === 'freeze' ? (Math.sin(t * 9 + c.a) > 0.75 ? 0.6 : 0) : Math.sin(t * 22) * 0.35);
@@ -3550,7 +3082,7 @@
     if (c.kind === 'crow') { if (c.state === 'perch') { o.userData.wings.forEach((w, i) => w.rotation.z = 0); o.position.y = c.perch.y + Math.abs(Math.sin(t * 2.2 + c.a)) * 0.05; if (dp < 9) { c.state = 'fly'; c.t = 0; c.a = Math.atan2(o.position.x - c.perch.x + 0.1, 1); } } else { c.t += dt; const r = 10 + c.t * 2, ang = c.a + c.t * 1.2, y = c.perch.y + Math.min(14, c.t * 6); if (c.t < 9) { o.position.set(c.perch.x + Math.cos(ang) * r, y, c.perch.z + Math.sin(ang) * r); o.lookAt(c.perch.x + Math.cos(ang + 0.1) * r, y, c.perch.z + Math.sin(ang + 0.1) * r); } else { o.position.lerp(c.perch, dt * 1.5); o.lookAt(c.perch.x, c.perch.y, c.perch.z - 1); if (o.position.distanceTo(c.perch) < 0.3) c.state = 'perch'; } const fl = Math.sin(c.t * 14) * 0.7; o.userData.wings[0].rotation.z = fl; o.userData.wings[1].rotation.z = -fl; } return; }
     // pheasants burst into the air when startled, glide, and land further off
     if (c.kind === 'pheasant' && c.state === 'burst') { c.timer -= dt; const k = 1 - c.timer / 2.2; o.position.set(c.from.x + (c.target.x - c.from.x) * k, c.ground(o.position.x, o.position.z) + Math.sin(k * Math.PI) * 9, c.from.z + (c.target.z - c.from.z) * k); const fl = Math.sin(t * 30) * 0.9; o.userData.wings[0].rotation.z = fl; o.userData.wings[1].rotation.z = -fl; if (c.timer <= 0) { c.state = 'idle'; c.timer = 3; o.userData.wings.forEach(w => w.rotation.z = 0); } return; }
-    if (c.kind === 'pheasant' && dp < c.flee && c.state !== 'burst') { c.state = 'burst'; c.timer = 2.2; c.from = o.position.clone(); const ang = Math.atan2(o.position.x - player.position.x, o.position.z - player.position.z) + rnd(-0.6, 0.6); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 28, 0, o.position.z + Math.cos(ang) * 28); if (!c.ok(c.target.x, c.target.z) || !clearOf('hills', c.target.x, c.target.z, 3)) c.target.set(o.position.x - Math.sin(ang) * 10, 0, o.position.z - Math.cos(ang) * 10); o.rotation.y = ang; return; }
+    if (c.kind === 'pheasant' && dp < c.flee && c.state !== 'burst') { c.state = 'burst'; c.timer = 2.2; c.from = o.position.clone(); const ang = Math.atan2(o.position.x - player.position.x, o.position.z - player.position.z) + rnd(-0.6, 0.6); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 28, 0, o.position.z + Math.cos(ang) * 28); if (!c.ok(c.target.x, c.target.z) || !clearOf(c.sceneKey, c.target.x, c.target.z, 3)) c.target.set(o.position.x - Math.sin(ang) * 10, 0, o.position.z - Math.cos(ang) * 10); o.rotation.y = ang; return; }
     // the general wanderer: idle, wander, flee; dogs come to you instead
     c.timer -= dt;
     if (c.kind === 'dog') { c.cool = Math.max(0, (c.cool || 0) - dt);
@@ -3572,6 +3104,34 @@
     o.position.y = c.ground(o.position.x, o.position.z); if (c.kind === 'dog') o.userData.tail.rotation.z = Math.sin(t * 5) * 0.2;
     if (c.kind === 'deer') { const nk = o.userData.neck, want = Math.sin(t * 0.8 + c.home.x) > 0.6 ? 1.55 : 0; nk.rotation.x += (want - nk.rotation.x) * Math.min(1, dt * 2.5); }
   }
+  // ---------- the open land's animals: a small company of deer, a fox, a badger, pheasants, rabbits and a flock that keeps pace with you ----------
+  let wildSol = [], wildSolT = 0; const wildFauna = [];
+  const wildOK = (x, z) => { if (noGrow(x, z, 6)) return false; const r = roadNear(x, z); if (r && r.d < 9) return false; return !STITCHED.some(t => { if (t.air) return false; const l = toLocal(t, x, z); return inRect(t, l[0], l[1], 16); }); };
+  { const [sx, sz] = toWorld(tileV, 70, 340);
+    const put = o => { o.position.set(sx + rnd(-70, 70), 0, sz + rnd(-70, 70)); o.position.y = worldH(o.position.x, o.position.z); worldScene.add(o); return o; };
+    const add = (o, opt) => wildFauna.push(wanderer(put(o), Object.assign({ sceneKey: 'wild', ground: worldH, ok: wildOK }, opt)));
+    [true, false, false].forEach(buck => add(makeDeer(buck), { kind: 'deer', speed: 5, fleeSpeed: 20, flee: 24, radius: 70, bob: 0.3, gait: 7, pad: 3 }));
+    add(makeFox(), { speed: 7, fleeSpeed: 16, flee: 12, radius: 110, bob: 0.25, gait: 10 });
+    add(makeBadger(), { speed: 2.2, fleeSpeed: 7, flee: 8, radius: 30, bob: 0.1, gait: 9 });
+    for (let i = 0; i < 2; i++) add(makePheasant(), { kind: 'pheasant', speed: 3, fleeSpeed: 3, flee: 10, radius: 25, bob: 0.1, gait: 12 });
+    for (let i = 0; i < 4; i++) { const c = { obj: put(makeRabbit()), kind: 'rabbit', sceneKey: 'wild', state: 'idle', timer: rnd(1, 4), target: null, hop: 0, ground: worldH, ok: wildOK }; critters.push(c); wildFauna.push(c); }
+    addFlock(worldScene, sx, sz, 80, 60, 6, worldH); }
+  // squirrels on the wild oaks: three of them, each on a tree near you, moving on to a new tree as you travel
+  const wildSquirrels = []; for (let i = 0; i < 3; i++) { squirrelOn(worldScene, 0, 0, -500, 'wild', 8, 40); wildSquirrels.push(critters[critters.length - 1]); }
+  const wildFlock = flocks[flocks.length - 1];
+  function wildLifeTick(dt) {
+    if (where !== 'wild') return; const px = player.position.x, pz = player.position.z;
+    wildFlock.cx += (px + Math.sin(bodyYaw) * 60 - wildFlock.cx) * Math.min(1, dt * 0.25); wildFlock.cz += (pz + Math.cos(bodyYaw) * 60 - wildFlock.cz) * Math.min(1, dt * 0.25);
+    wildSolT -= dt; if (wildSolT > 0) return; wildSolT = 1.3;
+    wildSol = []; chunks.forEach(c => { for (const sd of c.solids) if (Math.abs(sd.x - px) < 420 && Math.abs(sd.z - pz) < 420) wildSol.push(sd); });
+    { const oaks = wildSol.filter(sd => sd.oak && Math.hypot(sd.x - px, sd.z - pz) > 30 && Math.hypot(sd.x - px, sd.z - pz) < 240);
+      wildSquirrels.forEach(c => { if (c.tree && wildSol.includes(c.tree) && Math.hypot(c.tx - px, c.tz - pz) < 300) return;
+        const free = oaks.filter(sd => !wildSquirrels.some(q => q.tree === sd)); if (!free.length) return; const sd = free[Math.floor(Math.random() * free.length)];
+        c.tree = sd; c.tx = sd.x; c.tz = sd.z; c.baseY = sd.y + 0.2; c.r = sd.K * 1.2; c.rf = h => sd.K * 1.2 - 0.5 * h / 7.6; c.climb = sd.K * 5.4; c.h = 0; c.dir = 1; c.state = 'freeze'; c.gx = 0; c.gz = 0; c.timer = rnd(0.5, 2); c.obj.position.set(sd.x + c.r, c.baseY, sd.z); }); }
+    // anything left far behind turns up again somewhere ahead
+    wildFauna.forEach(c => { const o = c.obj; if (Math.hypot(o.position.x - px, o.position.z - pz) < 340) return;
+      for (let k = 0; k < 14; k++) { const ang = bodyYaw + rnd(-1.5, 1.5), r = rnd(150, 270), x = px + Math.sin(ang) * r, z = pz + Math.cos(ang) * r; if (!wildOK(x, z) || !clearOf('wild', x, z, 4)) continue; o.position.set(x, worldH(x, z), z); if (c.home) c.home.set(x, 0, z); c.state = 'idle'; c.timer = rnd(1, 4); c.target = null; c.stuck = 0; break; } });
+  }
   function ambientTick(dt, t) {
     const here = where === 'in' ? null : where;
     flocks.forEach(f => {
@@ -3591,7 +3151,7 @@
         if (c.state === 'hop' || c.state === 'flee') {
           const dx = c.target.x - o.position.x, dz = c.target.z - o.position.z, d = Math.hypot(dx, dz), sp = c.state === 'flee' ? 14 : 5;
           if (d < 0.5 || c.timer <= 0) { c.state = 'idle'; c.timer = rnd(1.5, 5); c.hop = 0; }
-          else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt; if (Math.abs(nx - roadX(clamp(nz, 0, HILL_LEN))) > 6 && Math.abs(nx) < 200 && nz > 5 && nz < HILL_LEN - 5) { o.position.x = nx; o.position.z = nz; if (pushClear('hills', o, 1.5) > 0.01) { c.stuck = (c.stuck || 0) + dt; if (c.stuck > 4) { const [hx, hz] = clearSpotNear('hills', o.position.x, o.position.z, 30, 4); o.position.x = hx; o.position.z = hz; c.stuck = 0; } } else c.stuck = 0; } else { c.state = 'idle'; c.timer = 1; } o.rotation.y = Math.atan2(dx, dz); c.hop += dt * (c.state === 'flee' ? 14 : 9); }
+          else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt; if (!c.ok || c.ok(nx, nz)) { o.position.x = nx; o.position.z = nz; if (pushClear(c.sceneKey, o, 1.5) > 0.01) { c.stuck = (c.stuck || 0) + dt; if (c.stuck > 4) { const [hx, hz] = clearSpotNear(c.sceneKey, o.position.x, o.position.z, 30, 4); o.position.x = hx; o.position.z = hz; c.stuck = 0; } } else c.stuck = 0; } else { c.state = 'idle'; c.timer = 1; } o.rotation.y = Math.atan2(dx, dz); c.hop += dt * (c.state === 'flee' ? 14 : 9); }
         }
         o.position.y = c.ground(o.position.x, o.position.z) + Math.abs(Math.sin(c.hop)) * (c.state === 'idle' ? 0 : 0.9);
         if (c.state === 'idle') { o.children[1].position.y = 1.9 - Math.abs(Math.sin(t * 2.2)) * 0.25; }
@@ -3791,17 +3351,17 @@
   function cloudSoon() { if (!session) return; cloudDirty = true; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudPush, 3000); }
   async function cloudPush() {
     if (!session || cloudBusy || !cloudDirty) return; cloudBusy = true; cloudDirty = false;
-    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, bike: !!save.bike } }); acctRefresh('Saved to the cloud.', 'ok'); }
+    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, bike: !!save.bike, name: save.name || '', look: save.look || null } }); acctRefresh('Saved to the cloud.', 'ok'); }
     catch (e) { cloudDirty = true; acctRefresh('Cloud save failed, kept locally. ' + e.message, 'err'); }
     cloudBusy = false;
   }
   function progressOf(sv) { return (sv.done ? sv.done.length : 0) * 1000 + (sv.coins || 0) + (sv.started ? 1 : 0); }
   async function cloudPull() {
     const c = await rpc('game_load_progress'); if (!c) return 'empty';
-    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike) };
+    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null };
     // a bike granted on the account is kept whichever save wins
     if (cloud.bike || save.bike) { cloud.bike = true; save.bike = true; bikeOwned = true; }
-    if (progressOf(cloud) >= progressOf(save)) { save = cloud; persist(); return 'cloud'; }
+    if (progressOf(cloud) >= progressOf(save)) { save = cloud; persist(); if (typeof applyLook === 'function') { applyLook(save.look); refreshTitle(); } return 'cloud'; }
     persist(); cloudSoon(); return 'local';
   }
   // the sign-in box on the map screen
@@ -3816,7 +3376,7 @@
     acctForm.hidden = true; acctRefresh('Loading your progress\u2026', '');
     try { const r = await cloudPull(); acctRefresh(r === 'cloud' ? 'Progress loaded from the cloud.' : r === 'local' ? 'Your progress here was further along, so it was sent to the cloud.' : 'Signed in. Your progress will save to the cloud.', 'ok'); }
     catch (e) { acctRefresh('Signed in, but loading failed: ' + e.message, 'err'); }
-    if (!gameStarted) drawMap(); else { setCoins(save.coins || 0); refreshSaveButtons(); }
+    if (!gameStarted) { drawMap(); refreshTitle(); } else { setCoins(save.coins || 0); refreshSaveButtons(); }
   }
   acctForm.addEventListener('submit', async e => {
     e.preventDefault(); acctRefresh('Signing in\u2026', '');
@@ -6371,7 +5931,7 @@
   }
   let camYaw = Math.PI, bodyYaw = Math.PI, pitch = 0.08, view = 'back', vy = 0, py = 0, wantJump = false;
   const vel = new THREE.Vector3(), targetV = new THREE.Vector3(); // momentum: where your feet are actually carrying you
-  function currentAt(x, z) { if (where === 'fernwater') return targetV.set(-1.3, 0, 0); if (where === 'wild') return wildRiver(x, z) ? targetV.set(-1.3 * Math.cos(tileF.yaw), 0, 1.3 * Math.sin(tileF.yaw)) : targetV.set(0, 0, 0); if (where === 'lantern') return targetV.set(-0.45, 0, 0.8); return targetV.set(0, 0, 0); }
+  function currentAt(x, z) { if (where === 'fernwater') return targetV.set(-1.3, 0, 0); if (where === 'wild') return wildRiver(x, z) ? targetV.set(-1.3 * Math.cos(tileF.yaw), 0, 1.3 * Math.sin(tileF.yaw)) : wildSea(x, z) ? targetV.set(-0.45, 0, 0.8) : targetV.set(0, 0, 0); if (where === 'lantern') return targetV.set(-0.45, 0, 0.8); return targetV.set(0, 0, 0); }
   const SENS = 0.0022;
   function toggleView() { view = view === 'back' ? 'front' : 'back'; if (view === 'front') camYaw = bodyYaw; }
   window.addEventListener('keydown', e => {
@@ -6394,10 +5954,14 @@
   document.addEventListener('contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
   document.addEventListener('selectstart', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden && cloudDirty) { clearTimeout(cloudTimer); cloudPush(); } });
-  pad.querySelectorAll('[data-move]').forEach(btn => {
-    const k = btn.dataset.move; const on = e => { e.preventDefault(); keys[k] = true; }, off = () => { keys[k] = false; };
-    btn.addEventListener('pointerdown', on); btn.addEventListener('pointerup', off); btn.addEventListener('pointerleave', off); btn.addEventListener('pointercancel', off);
-  });
+  // the thumb stick: a fixed pad; the knob follows your thumb, and how far you push sets how fast you go
+  const stickV = { x: 0, y: 0 };
+  { const st = $('stick'), kn = $('knob'), R = 46; let pid = null;
+    const set = e => { const r = st.getBoundingClientRect(); let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2); const d = Math.hypot(dx, dy); if (d > R) { dx *= R / d; dy *= R / d; } kn.style.transform = `translate(${dx}px, ${dy}px)`; const m = Math.min(1, d / R); stickV.x = m < 0.14 ? 0 : dx / R; stickV.y = m < 0.14 ? 0 : dy / R; };
+    const end = e => { if (e.pointerId !== pid) return; pid = null; stickV.x = stickV.y = 0; kn.style.transform = ''; };
+    st.addEventListener('pointerdown', e => { e.preventDefault(); pid = e.pointerId; try { st.setPointerCapture(pid); } catch (x) {} set(e); });
+    st.addEventListener('pointermove', e => { if (e.pointerId === pid) { e.preventDefault(); set(e); } });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => st.addEventListener(n, end)); }
   $('grab').addEventListener('click', pickNearest);
   { const rb = $('runbtn'); const on = e => { e.preventDefault(); keys.run = true; }, off = () => { keys.run = false; }; rb.addEventListener('pointerdown', on); rb.addEventListener('pointerup', off); rb.addEventListener('pointerleave', off); rb.addEventListener('pointercancel', off); }
   $('jumpbtn').addEventListener('click', () => { wantJump = true; });
@@ -6475,17 +6039,12 @@
   canvas.addEventListener('pointercancel', () => { down = null; dragged = false; });
 
   // ---------- movement and collisions ----------
-  function inRiver(x, z) { if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; if (where === 'wild') return wildRiver(x, z); return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2; }
+  function inRiver(x, z) { if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; if (where === 'wild') return wildRiver(x, z) || wildSea(x, z); return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2; }
   function groundAt(x, z) {
     if (where === 'in') return 0;
-    if (where === 'wild') return wildRiver(x, z) ? Math.min(worldH(x, z), -1.45) : worldH(x, z);
+    if (where === 'wild') return wildRiver(x, z) ? Math.min(worldH(x, z), -1.45) : wildSea(x, z) ? SEA_L - 1.45 : worldH(x, z);
     if (where === 'cairnhold') return (z > GORGE.z0 && z < GORGE.z1 && !(bridgeBuilt && Math.abs(x) < 3.5)) ? -GORGE.depth : 0;
-    if (where === 'hills') return hillH(x, z);
-    if (where === 'high') return highH(x, z);
-    if (where === 'cliff') return cliffH(x, z);
     if (where === 'cogsworth') return cogH(x, z);
-    if (where === 'mtn') return mtnH(x, z);
-    if (where === 'sea') return seaH(x, z);
     if (where === 'lantern') return onPier(x, z) ? PIER.y : inRiver(x, z) ? SEA_Y - 1.45 : lantH(x, z);
     if (where === 'lift') return gondola.position.y;
     if (where === 'flight') return flier.position.y + 0.9;
@@ -6517,10 +6076,6 @@
       p.x = clamp(p.x, FENCE.x0 + 0.8, FENCE.x1 - 0.8); p.z = Math.max(p.z, FENCE.z0 + 0.8);
       if (!atGate) p.z = Math.min(p.z, FENCE.z1 - 0.8);
       else if (p.z > GATE.z + 1.5 && !fading) { switchFrame('wild', prev); return; }
-    } else if (where === 'road') {
-      p.x = clamp(p.x, -11, 11); p.z = Math.max(p.z, 0);
-      if (p.z > ROAD_LEN - 2 && !fading) goToOrchards();
-      if (p.z < 1.2 && !fading) goToVillage();
     }
     if (where === 'orchards') {
       orchSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
@@ -6538,15 +6093,6 @@
       // the shop buildings: solid boxes, except at the door, which takes you inside
       fernBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } });
     }
-    if (where === 'high') {
-      highSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      p.x = clamp(p.x, -170, 170);
-      const dh = highH(p.x, p.z) - highH(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
-      if (run > 0.001 && dh / run > 1.0) { p.x = prev.x; p.z = prev.z; }
-      const nearRoad = Math.abs(p.x - highRoadX(clamp(p.z, 0, HIGH_LEN))) < 4.5;
-      if (p.z < 1.2 && nearRoad && !fading) goToFernFromHigh(); else p.z = Math.max(p.z, nearRoad ? -1 : 0.8);
-      if (p.z > HIGH_LEN - 1 && nearRoad && !fading) goToCairn(); else p.z = Math.min(p.z, nearRoad ? HIGH_LEN + 1 : HIGH_LEN - 0.8);
-    }
     if (where === 'cairnhold') {
       cairnSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       cairnBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } });
@@ -6557,55 +6103,25 @@
       if (!bridgeBuilt && Math.abs(p.x) < 4.6 && prev.z < GORGE.z0 - 3.2 && p.z > GORGE.z0 - 3.2) p.z = GORGE.z0 - 3.2;
       if (groundAt(prev.x, prev.z) < -5 && groundAt(p.x, p.z) > -5) { p.x = prev.x; p.z = prev.z; }
     }
-    if (where === 'cliff') {
-      cliffSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      p.x = clamp(p.x, -160, 70);
-      const dh = cliffH(p.x, p.z) - cliffH(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
-      if (run > 0.001 && dh / run > 1.0) { p.x = prev.x; p.z = prev.z; }
-      const nearRoad = Math.abs(p.x - cliffRoadX(clamp(p.z, 0, CLIFF_LEN))) < 4.5;
-      if (p.z < 1.2 && nearRoad && !fading) goToCairnFromCliff(); else p.z = Math.max(p.z, nearRoad ? -1 : 0.8);
-      if (p.z > CLIFF_LEN - 1 && nearRoad && !fading) goToCogsworth(); else p.z = Math.min(p.z, nearRoad ? CLIFF_LEN + 1 : CLIFF_LEN - 0.8);
-    }
     if (where === 'cogsworth') {
       cogSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       cogBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } });
       p.z = Math.min(p.z, CLIFFWALL - 2);
-      if (p.x > 148 && p.x > prev.x && Math.abs(p.z - 70) < 4.5 && !fading) { goToMtn(false); return; }
       if ((p.x < -60 || p.z < -0.5 || p.x > 150.5) && !fading) { switchFrame('wild', prev); return; }
-    }
-    if (where === 'mtn') {
-      mtnSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      p.x = clamp(p.x, -150, 150);
-      const dh = mtnH(p.x, p.z) - mtnH(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
-      if (run > 0.001 && dh / run > 1.0) { p.x = prev.x; p.z = prev.z; }
-      const nearRoad = Math.abs(p.x - mtnRoadX(clamp(p.z, 0, MTN_LEN))) < 4.5;
-      if (p.z < 1.2 && nearRoad && !fading) goToCogFromMtn(); else p.z = Math.max(p.z, nearRoad ? -1 : 0.8);
-      if (p.z > MTN_LEN - 1 && nearRoad && !fading) goToEmberdeep(); else p.z = Math.min(p.z, nearRoad ? MTN_LEN + 1 : MTN_LEN - 0.8);
     }
     if (where === 'emberdeep') {
       embSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       p.x = clamp(p.x, -66, LAVA_X - 1.8);
-      if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToMtnFromEmb(); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
-      if (p.z > EMB_LEN - 1.2 && Math.abs(p.x) < 4.5 && !fading) goToSea(false); else p.z = Math.min(p.z, Math.abs(p.x) < 4.5 ? EMB_LEN + 1 : 122);
-    }
-    if (where === 'sea') {
-      seaSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      p.x = clamp(p.x, -170, 56);
-      const dh = seaH(p.x, p.z) - seaH(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
-      if (run > 0.001 && dh / run > 1.0) { p.x = prev.x; p.z = prev.z; }
-      const nearRoad = Math.abs(p.x - seaRoadX(clamp(p.z, 0, SEA_LEN))) < 4.5;
-      if (p.z < 1.2 && nearRoad && !fading) goToEmbFromSea(); else p.z = Math.max(p.z, nearRoad ? -1 : 0.8);
-      if (p.z > SEA_LEN - 1 && nearRoad && !fading) goToLantern(); else p.z = Math.min(p.z, nearRoad ? SEA_LEN + 1 : SEA_LEN - 0.8);
+      if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) leaveHall('w'); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
+      if (p.z > EMB_LEN - 1.2 && Math.abs(p.x) < 4.5 && !fading) leaveHall('e'); else p.z = Math.min(p.z, Math.abs(p.x) < 4.5 ? EMB_LEN + 1 : 122);
     }
     if (where === 'lantern') {
       lantSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      p.x = clamp(p.x, -56, 230); p.z = clamp(p.z, -1, LANT_LEN + 60);
+      if ((p.x < -56 || p.x > 230 || p.z < -0.5 || p.z > 200) && !fading) { switchFrame('wild', prev); return; }
       const dh = groundAt(p.x, p.z) - groundAt(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
       if (run > 0.001 && dh / run > 1.0 && !onPier(p.x, p.z)) { p.x = prev.x; p.z = prev.z; }
       // from the water you climb onto the pier only at the ramp
       if (inRiver(prev.x, prev.z) && onPier(p.x, p.z) && p.x > PIER.x0 + 2 && !atLadder(prev.x, prev.z)) { p.x = prev.x; p.z = prev.z; }
-      if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToSeaFromLant(); else if (p.z < 0.8 && Math.abs(p.x) >= 4.5) p.z = 0.8;
-      if (p.z > LANT_LEN - 0.8 && Math.abs(p.x) < 56) p.z = LANT_LEN - 0.8;
       if (onPier(p.x, p.z) && p.x > PIER.x1 - 2.5 && !fading) goToLift(false);
       if (Math.hypot(p.x - (-34), p.z - (32 + 7.4)) < 2.6 && !fading) enterInterior('observatory');
       lantBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
@@ -6626,16 +6142,6 @@
       const hw = it.w / 2 - 0.9, hd = it.d / 2 - 0.9; p.x = clamp(p.x, -hw, hw);
       if (Math.abs(p.x) < 1.7 && p.z > it.d / 2 - 1.0 && !fading) exitInterior(); else p.z = clamp(p.z, -hd, Math.abs(p.x) < 1.7 ? it.d / 2 + 1 : hd);
     }
-    if (where === 'hills') {
-      hillSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      p.x = clamp(p.x, -210, 210);
-      // a cliff is a wall: you cannot climb a slope steeper than about forty-five degrees
-      const dh = hillH(p.x, p.z) - hillH(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
-      if (run > 0.001 && dh / run > 1.0) { p.x = prev.x; p.z = prev.z; }
-      const nearRoad = Math.abs(p.x - roadX(clamp(p.z, 0, HILL_LEN))) < 4.5;
-      if (p.z < 1.2 && nearRoad && !fading) goToOrchardsFromHills(); else p.z = Math.max(p.z, nearRoad ? -1 : 0.8);
-      if (p.z > HILL_LEN - 1 && nearRoad && !fading) goToFernwater(); else p.z = Math.min(p.z, nearRoad ? HILL_LEN + 1 : HILL_LEN - 0.8);
-    }
   }
   const sameSideOfWall = (a, b) => where !== 'village' || ((Math.hypot(a.x, a.z) < R) === (Math.hypot(b.x, b.z) < R));
   // the camera stays out of buildings: the shop wall in the Hollow, the shop boxes in Fernwater, the mill tower
@@ -6646,7 +6152,7 @@
     // every other place: the camera stays out of buildings, towers, pillars and big trunks, so walls never vanish
     const g0 = groundAt(pos.x, pos.z), bxs = { cairnhold: cairnBoxes, cogsworth: cogBoxes, lantern: lantBoxes, skyhaven: skyBoxes }[where];
     if (bxs && bxs.some(bx => Math.abs(pos.x - bx.x) < bx.hw + 0.5 && Math.abs(pos.z - bx.z) < bx.hd + 0.5 && pos.y < g0 + 14)) return false;
-    const sol = { village: solids, cairnhold: cairnSolids, cogsworth: cogSolids, lantern: lantSolids, skyhaven: skySolids, emberdeep: embSolids, hills: hillSolids }[where];
+    const sol = { village: solids, cairnhold: cairnSolids, cogsworth: cogSolids, lantern: lantSolids, skyhaven: skySolids, emberdeep: embSolids }[where];
     if (sol && sol.some(o => o.r > 2.5 && Math.hypot(pos.x - o.x, pos.z - o.z) < o.r + 0.4 && pos.y < g0 + 18)) return false;
     return true;
   }
@@ -6654,10 +6160,11 @@
   // ---------- loop ----------
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   function resize() {
-    const w = window.innerWidth, h = window.innerHeight;
+    const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight; shownW = w; shownH = h;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w < 600 ? 72 : 60; camera.updateProjectionMatrix();
   }
-  window.addEventListener('resize', resize); resize();
+  let shownW = 0, shownH = 0;
+  window.addEventListener('resize', resize); window.addEventListener('orientationchange', () => setTimeout(resize, 250)); if (window.visualViewport) window.visualViewport.addEventListener('resize', resize); resize();
 
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), fwd = new THREE.Vector3(), prev = new THREE.Vector3();
   const ZOOMS = [1, 1.7, 2.6]; let zoom = 0;
@@ -6666,7 +6173,7 @@
     const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' ? 0.62 : ZOOMS[zoom]), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
     const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4;
     // when ground or a wall is in the way, the camera comes closer; it never climbs, so your view keeps the tilt you chose
-    const floorY = where === 'wild' ? -1000 : where === 'lantern' || where === 'sea' ? SEA_Y : where === 'cairnhold' ? -GORGE.depth : where === 'skyhaven' ? -600 : -0.1; // the lowest the camera may go: water, or the bottom of what you fell into
+    const floorY = where === 'wild' ? (toLocal(tileL, player.position.x, player.position.z)[0] > 30 ? SEA_L : -1000) : where === 'lantern' || where === 'sea' ? SEA_Y : where === 'cairnhold' ? -GORGE.depth : where === 'skyhaven' ? -600 : -0.1; // the lowest the camera may go: water, or the bottom of what you fell into
     const groundOk = p => where === 'in' || p.y >= Math.max(groundAt(p.x, p.z), floorY) + 0.7;
     let dd = dist, pos;
     for (let i = 0; i < 24; i++) {
@@ -6688,14 +6195,14 @@
   try { Object.assign(gfx, JSON.parse(localStorage.getItem(GFX_KEY) || '{}')); } catch (e) {}
   function gpuName() { try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : ''; } catch (e) { return ''; } }
   function autoQuality() { const n = gpuName(); if (/SwiftShader|llvmpipe|Mali|Adreno|PowerVR/i.test(n)) return 'low'; if (/Intel|Iris|UHD|HD Graphics|Apple/i.test(n)) return 'medium'; return n ? 'high' : 'medium'; }
-  const ALL_SCENES = () => [worldScene, scene, roadScene, orchScene, hillScene, fernScene, highScene, cairnScene, cliffScene, cogScene, mtnScene, embScene, seaScene, lantScene, liftScene, skyScene, flightScene].concat(Object.values(interiors).map(i => i.scene));
+  const ALL_SCENES = () => [worldScene, scene, orchScene, fernScene, cairnScene, cogScene, embScene, lantScene, liftScene, skyScene, flightScene].concat(Object.values(interiors).map(i => i.scene));
   ALL_SCENES().forEach(sc => { if (sc.fog) sc.userData.fog0 = [sc.fog.near, sc.fog.far]; sc.traverse(o => { if (o.isInstancedMesh) o.userData.total = o.count; }); });
-  const farThings = []; hillScene.children.forEach(o => { if ((o.isGroup && o.userData.trunkR) || (o.isMesh && o.geometry && o.geometry.type === 'DodecahedronGeometry')) farThings.push(o); });
+  const farThings = [];
   function applyGfx() {
     const q = gfx.quality === 'auto' ? autoQuality() : gfx.quality, d = gfx.distance;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, q === 'low' ? 1 : q === 'medium' ? 1.5 : 2));
     renderer.shadowMap.enabled = q !== 'low'; const shadowSize = q === 'high' ? 4096 : 2048;
-    [worldSun, sun, roadSun, orchSun, hillSun, fernSun, highSun, cairnSun, cliffSun, cogSun, mtnSun, embSun, seaSun, lantSun, liftSun, skySun, flightSun].forEach(l => { if (l.shadow.mapSize.x !== shadowSize) { l.shadow.mapSize.set(shadowSize, shadowSize); if (l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null; } } });
+    [worldSun, sun, orchSun, fernSun, cairnSun, cogSun, embSun, lantSun, liftSun, skySun, flightSun].forEach(l => { if (l.shadow.mapSize.x !== shadowSize) { l.shadow.mapSize.set(shadowSize, shadowSize); if (l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null; } } });
     Object.values(interiors).forEach(it => it.scene.traverse(o => { if (o.isPointLight) o.castShadow = q === 'high'; }));
     const grassK = q === 'low' ? 0.35 : q === 'medium' ? 0.7 : 1;
     const distK = d === 'near' ? 0.55 : d === 'far' ? 1.6 : 1;
@@ -6705,7 +6212,7 @@
     $('gfxq').value = gfx.quality; $('gfxd').value = gfx.distance; $('gfxnote').textContent = gfx.quality === 'auto' ? `Auto picked ${q} for this device.` : '';
     try { localStorage.setItem(GFX_KEY, JSON.stringify(gfx)); } catch (e) {}
   }
-  function cullFar() { if (where !== 'hills') return; const lim = hillScene.fog.far * 1.15, px = player.position.x, pz = player.position.z; farThings.forEach(o => { o.visible = Math.hypot(o.position.x - px, o.position.z - pz) < lim + (o.userData.trunkR ? 120 : 0); }); }
+  function cullFar() {}
   // ---------- the settings screen ----------
   const setEl = $('settings'); let settingsFrom = null, listening = null;
   function openSettings() { if (!setEl.hidden) return; settingsFrom = mapOpen ? 'map' : 'game'; if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => (keys[k] = false)); renderSettings(); setEl.hidden = false; }
@@ -6739,7 +6246,7 @@
     const kb = settings.binds, L = keyLabel, kbd = t => `<kbd>${t}</kbd>`;
     const line = settings.input === 'gamepad'
       ? `${kbd('Left stick')} walk &middot; ${kbd('Right stick')} look &middot; ${kbd('B')} run &middot; ${kbd('A')} jump &middot; ${kbd('X')} pick up / talk / sit &middot; ${kbd('D-pad up')} ride &middot; ${kbd('Y')} flip view &middot; ${kbd('LB')}${kbd('RB')} zoom &middot; ${kbd('Start')} map &middot; ${kbd('Select')} settings`
-      : settings.input === 'touch' ? `Drag to look. The buttons below walk, run, jump, pick up and open the map.`
+      : settings.input === 'touch' ? `Drag the picture to look. Slide the round pad to walk; the buttons run, jump, pick up and open the map.`
       : `${kbd(L(kb.f))}${kbd(L(kb.l))}${kbd(L(kb.b))}${kbd(L(kb.r))} walk &middot; ${kbd('mouse')} look${settings.invert ? ' (inverted)' : ''} &middot; ${kbd(L(kb.run))} run &middot; ${kbd(L(kb.jump))} jump &middot; ${kbd(L(kb.pick))} pick up / talk / sit &middot; ${kbd(L(kb.ride))} ride &middot; ${kbd(L(kb.view))} flip view &middot; ${kbd(L(kb.zoom))} / ${kbd('wheel')} zoom &middot; ${kbd(L(kb.map))} map &middot; ${kbd(L(kb.settings))} settings &middot; ${kbd(L(kb.keys))} hide this<br><span id="lockhint">Click the game to grab the mouse, ${kbd('Esc')} to let go.</span>`;
     keysEl.innerHTML = line; keysEl.classList.toggle('gone', !settings.showKeys); keysShown = settings.showKeys ? 0 : 99;
     document.body.classList.toggle('touchmode', settings.input === 'touch');
@@ -6768,7 +6275,7 @@
     // walking, running, sitting
     pollGamepad(dt);
     let mx = gp.mx, mz = gp.mz;
-    if (!talking() && !fading && !mapOpen) { if (keys.f) mz += 1; if (keys.b) mz -= 1; if (keys.l) mx += 1; if (keys.r) mx -= 1; }
+    if (!talking() && !fading && !mapOpen) { if (keys.f) mz += 1; if (keys.b) mz -= 1; if (keys.l) mx += 1; if (keys.r) mx -= 1; mx -= stickV.x; mz -= stickV.y; }
     const mag = Math.min(1, Math.hypot(mx, mz));
     if (sitting && mag > 0.05) standUp();
     const moving = mag > 0.05 && !sitting;
@@ -6788,7 +6295,7 @@
       const base = view === 'front' ? bodyYaw : camYaw;
       const bspd = vel.length(), dir = riding ? bodyYaw + mx * dt * 2.3 * clamp(bspd / 4, 0, 1) / (1 + bspd / 26) : base + Math.atan2(mx, mz);
       fwd.set(Math.sin(dir), 0, Math.cos(dir));
-      const grade = where === 'hills' ? (hillH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - hillH(player.position.x, player.position.z)) / 1.5 : where === 'high' ? (highH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - highH(player.position.x, player.position.z)) / 1.5 : where === 'cliff' ? (cliffH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cliffH(player.position.x, player.position.z)) / 1.5 : where === 'cogsworth' ? (cogH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cogH(player.position.x, player.position.z)) / 1.5 : where === 'mtn' ? (mtnH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - mtnH(player.position.x, player.position.z)) / 1.5 : where === 'sea' ? (seaH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - seaH(player.position.x, player.position.z)) / 1.5 : where === 'lantern' || where === 'wild' ? (groundAt(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - groundAt(player.position.x, player.position.z)) / 1.5 : 0;
+      const grade = where === 'cogsworth' ? (cogH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cogH(player.position.x, player.position.z)) / 1.5 : where === 'lantern' || where === 'wild' ? (groundAt(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - groundAt(player.position.x, player.position.z)) / 1.5 : 0;
       const slopeK = grade > 0 ? 1 / (1 + grade * 2.2) : Math.min(1.25, 1 - grade * 0.4);
       if (grade > 0.25 && running) stamina = Math.max(0, stamina - dt * 20 * grade);
       const swimming = inRiver(player.position.x, player.position.z);
@@ -6857,8 +6364,9 @@
     const k = 1 - Math.pow(0.002, dt);
     camPos.lerp(cp, k); camLook.lerp(cl, k);
     camera.position.copy(camPos); camera.lookAt(camLook);
-    if (where === 'hills') hillSky.position.set(player.position.x, 0, player.position.z); if (where === 'high') highSky.position.set(player.position.x, 0, player.position.z); if (where === 'cliff') cliffSky.position.set(player.position.x, 0, player.position.z); if (where === 'mtn') mtnSky.position.set(player.position.x, 0, player.position.z); if (where === 'sea') seaSky.position.set(player.position.x, 0, player.position.z); if (where === 'lantern' && lantScene.userData.stars) lantScene.userData.stars.position.set(player.position.x, 0, player.position.z); if (where === 'skyhaven') skyScene.userData.dome.position.set(player.position.x, -200, player.position.z);
-    if (where !== 'in') { const sunNow = where === 'wild' ? worldSun : where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : where === 'hills' ? hillSun : where === 'high' ? highSun : where === 'cairnhold' ? cairnSun : where === 'cliff' ? cliffSun : where === 'cogsworth' ? cogSun : where === 'mtn' ? mtnSun : where === 'emberdeep' ? embSun : where === 'sea' ? seaSun : where === 'lantern' ? lantSun : where === 'lift' ? liftSun : where === 'skyhaven' ? skySun : where === 'flight' ? flightSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(sunOff(where)); }
+    if (titleUp) titleCam(t);
+    if (where === 'lantern' && lantScene.userData.stars) lantScene.userData.stars.position.set(player.position.x, 0, player.position.z); if (where === 'skyhaven') skyScene.userData.dome.position.set(player.position.x, -200, player.position.z);
+    if (where !== 'in') { const sunNow = where === 'wild' ? worldSun : where === 'village' ? sun : where === 'orchards' ? orchSun : where === 'cairnhold' ? cairnSun : where === 'cogsworth' ? cogSun : where === 'emberdeep' ? embSun : where === 'lantern' ? lantSun : where === 'lift' ? liftSun : where === 'skyhaven' ? skySun : where === 'flight' ? flightSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(sunOff(where)); }
 
     // Bramblewick watches you
     if (!reduce) { bw.position.y = Math.sin(t * 1.6) * 0.06; head.rotation.z = Math.sin(t * 0.9) * 0.05; }
@@ -6984,9 +6492,10 @@
     if (where === 'in' && interior.id === 'tides' && interior.scene.userData.tideFloat) interior.scene.userData.tideFloat.position.y = 3 + Math.sin(t * 0.5) * 2.4;
     if (where === 'in' && interior.id === 'mill') { const u = interior.scene.userData; u.runner.rotation.y += dt * wheelSpeed * 1.5; u.shaft.rotation.y += dt * wheelSpeed * 1.5; u.gear.rotation.y += dt * wheelSpeed * 1.5; u.axle.rotation.x += dt * wheelSpeed; }
     if (gameStarted && !mapOpen && keysShown < 99) { keysShown += dt; if (keysShown > 9) { keysEl.classList.add('gone'); keysShown = 99; } }
-    ambientTick(dt, t); songTick(dt); cullTimer += dt; if (cullTimer > 0.5) { cullTimer = 0; cullFar(); }
+    if (canvas.clientWidth !== shownW || canvas.clientHeight !== shownH) resize();
+    ambientTick(dt, t); wildLifeTick(dt); songTick(dt); cullTimer += dt; if (cullTimer > 0.5) { cullTimer = 0; cullFar(); }
     // your beetle trots along behind you
-    if (beetle && inRiver(beetle.position.x, beetle.position.z)) { if (where === 'lantern') { beetle.position.set(40, lantH(40, COVE.z), COVE.z); } else if (where === 'wild') { const [, lx, lz] = riverD(beetle.position.x, beetle.position.z), [bx, bz] = toWorld(tileF, lx, lz < 78 ? 52 : 104); beetle.position.set(bx, worldH(bx, bz), bz); } else { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; } }
+    if (beetle && inRiver(beetle.position.x, beetle.position.z)) { if (where === 'lantern') { beetle.position.set(40, lantH(40, COVE.z), COVE.z); } else if (where === 'wild' && wildSea(beetle.position.x, beetle.position.z)) { const [bx, bz] = toWorld(tileL, 40, 112); beetle.position.set(bx, worldH(bx, bz), bz); } else if (where === 'wild') { const [, lx, lz] = riverD(beetle.position.x, beetle.position.z), [bx, bz] = toWorld(tileF, lx, lz < 78 ? 52 : 104); beetle.position.set(bx, worldH(bx, bz), bz); } else { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; } }
     if (beetle && beetle.userData.follow && !inRiver(player.position.x, player.position.z)) {
       const dxb = player.position.x - beetle.position.x, dzb = player.position.z - beetle.position.z, db = Math.hypot(dxb, dzb);
       if (db > 40 || (where === 'fernwater' && (player.position.z > 97.6) !== (beetle.position.z > 97.6) && Math.abs(player.position.x) > 5.2)) { beetle.position.set(player.position.x + 2, 0, player.position.z + 2); }
@@ -7033,11 +6542,30 @@
   tileV.sun = sun; tileO.sun = orchSun; tileF.sun = fernSun; tileF.scene = fernScene;
   fernScene.children.forEach(o => { if (o.isMesh && o.material && o.material.side === THREE.BackSide && o.material.map === skyTex) o.visible = false; }); fernScene.fog.color.copy(worldScene.fog.color); fernScene.fog.near = 150; fernScene.fog.far = 430;
   if (water) { const w0 = water.geometry.parameters.width; water.geometry.dispose(); water.geometry = new THREE.PlaneGeometry(92, 46); water.material.map.repeat.x *= 92 / w0;
-    const rt = water.material.map.clone(); rt.needsUpdate = true; rt.repeat.set(7 * 6000 / 300, 1); worldScene.userData.riverTex = rt;
+    const rt = water.material.map.clone(); rt.needsUpdate = true; rt.repeat.set(7 * 22000 / 300, 1); worldScene.userData.riverTex = rt;
     const rm = new THREE.MeshStandardMaterial({ map: rt, roughness: 0.5, metalness: 0, transparent: true, opacity: 0.95 }), rg = new THREE.Group(); rg.matrixAutoUpdate = false; rg.matrix.copy(tileF.m);
-    [-1, 1].forEach(sd => { const pl = new THREE.Mesh(new THREE.PlaneGeometry(6000, 55), rm); pl.rotation.x = -Math.PI / 2; pl.position.set(sd * 3046, 0.06, RIVER.z); rg.add(pl); });
+    const lxCoast = (tileL.ox - 620 - toWorld(tileF, 0, RIVER.z)[0]) / Math.cos(tileF.yaw);   // the Fern runs out on the coastal plain
+    [-1, 1].forEach(sd => { const len = (Math.sign(lxCoast) === sd ? Math.abs(lxCoast) : 22000) - 46, pl = new THREE.Mesh(new THREE.PlaneGeometry(len, 55), rm); pl.rotation.x = -Math.PI / 2; pl.position.set(sd * (46 + len / 2), 0.06, RIVER.z); rg.add(pl); });
     worldScene.add(rg); }
   fernScene.children.forEach(o => { if (o.isMesh && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.width === 144) { const sd = Math.sign(o.position.x); o.geometry.dispose(); o.geometry = new THREE.BoxGeometry(46, 1.2, 3); o.position.x = sd * 29; } });
+  // Lanternreach joins the continent: its sea becomes the world's sea, and its night becomes the sky's
+  tileL.sun = lantSun; tileL.scene = lantScene; tileL.hemi = lantScene.children.find(o => o.isHemisphereLight); lantScene.background = null;
+  lantScene.fog.near = 150; lantScene.fog.far = 430; lantScene.userData.sea.visible = false; lantScene.userData.sea.userData.keepHidden = true;
+  { const st = seaTex.clone(); st.needsUpdate = true; st.wrapS = st.wrapT = THREE.RepeatWrapping; st.repeat.set(seaTex.repeat.x * 9000 / 1100, seaTex.repeat.y * 26000 / 1400); worldScene.userData.seaTex = st;
+    const ws = new THREE.Mesh(new THREE.PlaneGeometry(9000, 26000), new THREE.MeshStandardMaterial({ map: st, roughness: 0.35, metalness: 0.1, color: '#3a5f86' })); ws.rotation.x = -Math.PI / 2; ws.position.set(tileL.ox + 20 + 4500, SEA_L, tileL.oz); worldScene.add(ws); }
+  // the sky-lift and Skyhaven join the continent: one sea, one sky; the stars and the moon belong to the night below the cloud
+  tileLift.scene = liftScene; tileLift.sun = liftSun; tileLift.hemi = liftScene.children.find(o => o.isHemisphereLight); liftScene.background = null;
+  tileS.scene = skyScene; tileS.sun = skySun; tileS.hemi = skyScene.children.find(o => o.isHemisphereLight); skyScene.background = null; skyScene.userData.dome.visible = false;
+  skyScene.children.forEach(o => { if (o.isMesh && ((o.geometry.type === 'PlaneGeometry' && o.geometry.parameters.width >= 1200) || (o.geometry.type === 'SphereGeometry' && o.scale.x >= 150))) o.visible = false; });   // the painted land and sea far below give way to the real ones
+  liftScene.userData.sea.visible = false; liftScene.userData.stars.visible = false;
+  liftScene.children.forEach(o => { if (o.isMesh && o.geometry.type === 'SphereGeometry' && o.material.fog === false) o.visible = false; if (o.isMesh && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.width === 24 && o.geometry.parameters.depth === 4.4) o.visible = false; });
+  worldScene.userData.nightOnly = lantScene.children.filter(o => o.isPoints || (o.isMesh && o.geometry.type === 'SphereGeometry' && o.material.fog === false));
+  nightNow = -1;
+  // town ground that meets the open land wears the land's own grass, so there is no hard edge where one stops and the other starts
+  function groundLike(mesh, w, d, color) { const t = terrainTex.clone(); t.needsUpdate = true; t.repeat.set(w / 14.4, d / 14.4); mesh.material = new THREE.MeshStandardMaterial({ map: t, color, roughness: 1 }); }
+  cogScene.children.forEach(o => { if (o.isMesh && o.geometry.type === 'PlaneGeometry' && o.geometry.parameters.width === 150 && o.geometry.parameters.height === 130 && o.material.vertexColors) {
+    const t = terrainTex.clone(); t.needsUpdate = true; t.repeat.set(150 / 14.4, 130 / 14.4); o.material.map = t; o.material.needsUpdate = true;
+    const c = o.geometry.attributes.color; for (let i = 0; i < c.count; i++) { const road = c.getX(i) > c.getY(i); c.setXYZ(i, road ? 1.3 : 0.96, road ? 1.08 : 1.0, road ? 0.86 : 0.9); } c.needsUpdate = true; } });
   // Cogsworth joins the continent
   tileG.sun = cogSun; tileG.scene = cogScene;
   cogScene.children.forEach(o => { if (o.isMesh && o.material && o.material.side === THREE.BackSide && o.material.map === skyTex) o.visible = false; });
@@ -7047,11 +6575,12 @@
   cairnScene.children.forEach(o => {
     if (o.isMesh && o.material && o.material.side === THREE.BackSide && o.material.map === skyTex) o.visible = false;
     if (o.isMesh && o.geometry.type === 'PlaneGeometry' && o.geometry.parameters.width === 240) { const h = o.geometry.parameters.height; o.geometry.dispose();
-      if (h === GORGE.z0 + 60) { o.geometry = new THREE.PlaneGeometry(138, GORGE.z0 + 9); o.position.z = (GORGE.z0 - 9) / 2; }
-      else if (h === 80) { o.geometry = new THREE.PlaneGeometry(138, 36); o.position.z = GORGE.z1 + 18; }
+      if (h === GORGE.z0 + 60) { o.geometry = new THREE.PlaneGeometry(138, GORGE.z0 + 9); o.position.z = (GORGE.z0 - 9) / 2; groundLike(o, 138, GORGE.z0 + 9, '#dcd9cc'); }
+      else if (h === 80) { o.geometry = new THREE.PlaneGeometry(138, 36); o.position.z = GORGE.z1 + 18; groundLike(o, 138, 36, '#dcd9cc'); }
       else o.geometry = new THREE.PlaneGeometry(138, h); }
   });
   cairnScene.fog.color.copy(worldScene.fog.color); cairnScene.fog.near = 150; cairnScene.fog.far = 430;
+  STITCHED.forEach(t => { t.scene.userData.fog0 = [150, 430]; t.scene.fog.near = 150 * worldDistK; t.scene.fog.far = 430 * worldDistK; });
   trimTowns();
   tick();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => {
@@ -7199,16 +6728,10 @@
     if (where === 'skyhaven') { const [cx, cy] = MAPPOS[7]; return [cx + player.position.x * 0.12, cy - (player.position.z - 60) * 0.12]; }
     if (where === 'lift' || where === 'flight') { const tt = where === 'lift' ? liftT : 1 - flightT, a = MAPPOS[6], b = MAPPOS[7]; if (where === 'flight') { const h = MAPPOS[0]; return [b[0] + (h[0] - b[0]) * flightT, b[1] + (h[1] - b[1]) * flightT]; } return [a[0] + (b[0] - a[0]) * tt, a[1] + (b[1] - a[1]) * tt]; }
     if (where === 'lantern') { const [cx, cy] = MAPPOS[6]; return [cx + player.position.x * 0.14, cy - (player.position.z - 70) * 0.14]; }
-    if (where === 'sea') { const t = clamp(player.position.z / SEA_LEN, 0, 1), a = MAPPOS[5], b = MAPPOS[6]; return [a[0] + (b[0] - a[0]) * t + 14 * Math.sin(t * Math.PI), a[1] + (b[1] - a[1]) * t + 18 * Math.sin(t * Math.PI)]; }
     if (where === 'emberdeep') { const [cx, cy] = MAPPOS[5]; return [cx + player.position.x * 0.16, cy - (player.position.z - 60) * 0.16]; }
-    if (where === 'mtn') { const t = clamp(player.position.z / MTN_LEN, 0, 1), a = MAPPOS[4], b = MAPPOS[5]; return [a[0] + (b[0] - a[0]) * t + 16 * Math.sin(t * Math.PI), a[1] + (b[1] - a[1]) * t - 24 * Math.sin(t * Math.PI)]; }
     if (where === 'cogsworth') { const [cx, cy] = MAPPOS[4]; return [cx + player.position.x * 0.16, cy - (player.position.z - 50) * 0.16]; }
-    if (where === 'cliff') { const t = clamp(player.position.z / CLIFF_LEN, 0, 1), a = MAPPOS[3], b = MAPPOS[4]; return [a[0] + (b[0] - a[0]) * t - 20 * Math.sin(t * Math.PI), a[1] + (b[1] - a[1]) * t - 20 * Math.sin(t * Math.PI)]; }
     if (where === 'cairnhold') { const [cx, cy] = MAPPOS[3]; return [cx + player.position.x * 0.18, cy - (player.position.z - 60) * 0.18]; }
-    if (where === 'high') { const t = clamp(player.position.z / HIGH_LEN, 0, 1), a = MAPPOS[2], b = MAPPOS[3]; return [a[0] + (b[0] - a[0]) * t + 20 * Math.sin(t * Math.PI), a[1] + (b[1] - a[1]) * t - 30 * Math.sin(t * Math.PI)]; }
-    if (where === 'hills') { const t = clamp(player.position.z / HILL_LEN, 0, 1), a = MAPPOS[1], b = MAPPOS[2]; return [a[0] + (b[0] - a[0]) * t + 30 * Math.sin(t * Math.PI), a[1] + (b[1] - a[1]) * t - 40 * Math.sin(t * Math.PI)]; }
-    const t = clamp(player.position.z / ROAD_LEN, 0, 1), a = MAPPOS[0], b = MAPPOS[1];
-    return [a[0] + (b[0] - a[0]) * t + 40 * Math.sin(t * Math.PI) * 0.3, a[1] + (b[1] - a[1]) * t - 22 * Math.sin(t * Math.PI)];
+    return MAPPOS[0];
   }
   function drawMap() {
     const road = roadPath(MAPPOS);
@@ -7291,13 +6814,13 @@
     else if (save.where === 'high') { const [x, z] = toWorld(tileF, 0, 128); enterWild(x, z, yawF, 'The Long Road. Cairnhold is up on the highland ahead.'); }
     else if (save.where === 'cliff') { const [x, z] = toWorld(tileC, 0, 158); enterWild(x, z, yawC, 'The Long Road. Cogsworth lies ahead, under its crag.'); }
     else if (save.where === 'skyhaven' || save.where === 'lift' || save.where === 'flight') { restoreAfter = save.where === 'skyhaven' ? place : null; where = 'lift'; scene.remove(player); liftScene.add(player); if (beetle) { scene.remove(beetle); liftScene.add(beetle); } liftT = 1; goToSky(); }
-    else if (save.where === 'sea') { restoreAfter = place; where = 'emberdeep'; scene.remove(player); embScene.add(player); if (beetle) { scene.remove(beetle); embScene.add(beetle); } goToSea(false); }
-    else if (save.where === 'lantern') { restoreAfter = place; where = 'sea'; scene.remove(player); seaScene.add(player); if (beetle) { scene.remove(beetle); seaScene.add(beetle); } goToLantern(); }
-    else if (save.where === 'mtn') { restoreAfter = place; where = 'cogsworth'; scene.remove(player); cogScene.add(player); if (beetle) { scene.remove(beetle); cogScene.add(beetle); } goToMtn(false); }
-    else if (save.where === 'emberdeep') { restoreAfter = place; where = 'mtn'; scene.remove(player); mtnScene.add(player); if (beetle) { scene.remove(beetle); mtnScene.add(beetle); } goToEmberdeep(); }
-    else if (save.where === 'cogsworth') { restoreAfter = place; where = 'cliff'; scene.remove(player); cliffScene.add(player); if (beetle) { scene.remove(beetle); cliffScene.add(beetle); } goToCogsworth(); }
-    else if (save.where === 'cairnhold') { restoreAfter = place; where = 'high'; scene.remove(player); highScene.add(player); if (beetle) { scene.remove(beetle); highScene.add(beetle); } if (save.done.includes('cairn-10')) buildBridge(); goToCairn(); }
-    else { place(); hint(`Welcome back. ${coins} acorn coins, ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Press M for the map.`); }
+    else if (save.where === 'sea') { leaveHall('e'); }
+    else if (save.where === 'lantern') { restoreAfter = place; goToLantern(); }
+    else if (save.where === 'mtn') { const [x, z] = toWorld(tileG, 158, 70); enterWild(x, z, yawG + Math.PI / 2, 'The Long Road. Emberdeep is under the mountain ahead.'); }
+    else if (save.where === 'emberdeep') { restoreAfter = place; goToEmberdeep(); }
+    else if (save.where === 'cogsworth') { restoreAfter = place; goToCogsworth(); }
+    else if (save.where === 'cairnhold') { restoreAfter = place; if (save.done.includes('cairn-10')) buildBridge(); goToCairn(); }
+    else { place(); hint(`Welcome back${save.name ? ', ' + save.name : ''}. ${coins} acorn coins, ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Press M for the map.`); }
   }
   let restoreAfter = null;
   $('mapbtn').addEventListener('click', toggleMap);
@@ -7331,12 +6854,12 @@
     else if (key === 'cliff') { kid.satchel.visible = true; coinsAtLeast(65); where = 'cairnhold'; scene.remove(player); cairnScene.add(player); if (beetle) { scene.remove(beetle); cairnScene.add(beetle); } buildBridge(); setTimeout(() => { const [x, z] = toWorld(tileC, 0, 158); enterWild(x, z, yawC, 'The Long Road. Cogsworth lies ahead, under its crag.'); }, 200); }
     else if (key === 'lift') { kid.satchel.visible = true; coinsAtLeast(125); bikeOwned = true; where = 'lantern'; scene.remove(player); lantScene.add(player); if (beetle) { scene.remove(beetle); lantScene.add(beetle); } setTimeout(() => goToLift(false), 200); }
     else if (/^sky-(1[0-2]|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(4), 10); coinsAtLeast(125 + 2 * (n - 1)); bikeOwned = true; where = 'lift'; scene.remove(player); liftScene.add(player); if (beetle) { scene.remove(beetle); liftScene.add(beetle); } liftT = 1; if (n === 1) { phase = 'tosky'; } else { phase = 'doneS1'; pendingStart = { 2: startS2, 3: startS3, 4: startS4, 5: startS5, 6: startS6, 7: startS7, 8: startS8, 9: startS9, 10: startS10, 11: startS11, 12: startS12 }[n]; } setTimeout(goToSky, 200); }
-    else if (key === 'sea') { kid.satchel.visible = true; coinsAtLeast(105); bikeOwned = true; where = 'emberdeep'; scene.remove(player); embScene.add(player); if (beetle) { scene.remove(beetle); embScene.add(beetle); } setTimeout(() => goToSea(false), 200); }
-    else if (/^lant-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(5), 10); coinsAtLeast(105 + 2 * (n - 1)); bikeOwned = true; where = 'sea'; scene.remove(player); seaScene.add(player); if (beetle) { scene.remove(beetle); seaScene.add(beetle); } if (n === 1) { phase = 'tolant'; } else { phase = 'doneL1'; pendingStart = { 2: startL2, 3: startL3, 4: startL4, 5: startL5, 6: startL6, 7: startL7, 8: startL8, 9: startL9, 10: startL10 }[n]; } setTimeout(goToLantern, 200); }
-    else if (key === 'mtn') { kid.satchel.visible = true; coinsAtLeast(85); bikeOwned = true; where = 'cogsworth'; scene.remove(player); cogScene.add(player); if (beetle) { scene.remove(beetle); cogScene.add(beetle); } setTimeout(() => goToMtn(false), 200); }
-    else if (/^ember-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(6), 10); coinsAtLeast(85 + 2 * (n - 1)); bikeOwned = true; where = 'mtn'; scene.remove(player); mtnScene.add(player); if (beetle) { scene.remove(beetle); mtnScene.add(beetle); } if (n === 1) { phase = 'toemb'; } else { phase = 'doneE1'; pendingStart = { 2: startE2, 3: startE3, 4: startE4, 5: startE5, 6: startE6, 7: startE7, 8: startE8, 9: startE9, 10: startE10 }[n]; } setTimeout(goToEmberdeep, 200); }
-    else if (/^cog-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(4), 10); coinsAtLeast(65 + 2 * (n - 1)); where = 'cliff'; scene.remove(player); cliffScene.add(player); if (beetle) { scene.remove(beetle); cliffScene.add(beetle); } if (n === 1) { phase = 'tocog'; } else { phase = 'doneG1'; pendingStart = { 2: startG2, 3: startG3, 4: startG4, 5: startG5, 6: startG6, 7: startG7, 8: startG8, 9: startG9, 10: startG10 }[n]; } setTimeout(goToCogsworth, 200); }
-    else if (/^cairn-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(6), 10); coinsAtLeast(45 + 2 * (n - 1)); where = 'high'; scene.remove(player); highScene.add(player); if (beetle) { scene.remove(beetle); highScene.add(beetle); } if (n === 1) { phase = 'tocairn'; } else { phase = 'doneC1'; pendingStart = { 2: startC2, 3: startC3, 4: startC4, 5: startC5, 6: startC6, 7: startC7, 8: startC8, 9: startC9, 10: startC10 }[n]; } setTimeout(goToCairn, 200); }
+    else if (key === 'sea') { kid.satchel.visible = true; coinsAtLeast(105); bikeOwned = true; where = 'emberdeep'; scene.remove(player); embScene.add(player); if (beetle) { scene.remove(beetle); embScene.add(beetle); } setTimeout(() => leaveHall('e'), 200); }
+    else if (/^lant-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(5), 10); coinsAtLeast(105 + 2 * (n - 1)); bikeOwned = true; if (n === 1) { phase = 'tolant'; } else { phase = 'doneL1'; pendingStart = { 2: startL2, 3: startL3, 4: startL4, 5: startL5, 6: startL6, 7: startL7, 8: startL8, 9: startL9, 10: startL10 }[n]; } setTimeout(goToLantern, 200); }
+    else if (key === 'mtn') { kid.satchel.visible = true; coinsAtLeast(85); bikeOwned = true; where = 'cogsworth'; scene.remove(player); cogScene.add(player); if (beetle) { scene.remove(beetle); cogScene.add(beetle); } setTimeout(() => { const [x, z] = toWorld(tileG, 158, 70); enterWild(x, z, yawG + Math.PI / 2, 'The Long Road. Emberdeep is under the mountain ahead.'); }, 200); }
+    else if (/^ember-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(6), 10); coinsAtLeast(85 + 2 * (n - 1)); bikeOwned = true; if (n === 1) { phase = 'toemb'; } else { phase = 'doneE1'; pendingStart = { 2: startE2, 3: startE3, 4: startE4, 5: startE5, 6: startE6, 7: startE7, 8: startE8, 9: startE9, 10: startE10 }[n]; } setTimeout(goToEmberdeep, 200); }
+    else if (/^cog-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(4), 10); coinsAtLeast(65 + 2 * (n - 1)); if (n === 1) { phase = 'tocog'; } else { phase = 'doneG1'; pendingStart = { 2: startG2, 3: startG3, 4: startG4, 5: startG5, 6: startG6, 7: startG7, 8: startG8, 9: startG9, 10: startG10 }[n]; } setTimeout(goToCogsworth, 200); }
+    else if (/^cairn-(10|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(6), 10); coinsAtLeast(45 + 2 * (n - 1)); if (n === 1) { phase = 'tocairn'; } else { phase = 'doneC1'; pendingStart = { 2: startC2, 3: startC3, 4: startC4, 5: startC5, 6: startC6, 7: startC7, 8: startC8, 9: startC9, 10: startC10 }[n]; } setTimeout(goToCairn, 200); }
     else if (key === 'street' || key === 'gate') {
       player.position.set(0, 0, key === 'gate' ? 90 : 20); bodyYaw = camYaw = 0; kid.satchel.visible = true; coinsAtLeast(19);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
@@ -7346,11 +6869,42 @@
       phase = 'tofen'; setTasks([{ id: 'jars', icon: 'jar', label: 'Jars', have: 0, need: 3 }]); labels.fen.visible = true;
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }
-    else setTimeout(start, 500);
+    else { placeInShop(); player.rotation.y = bodyYaw; setTimeout(start, 500); }
   }
+  // ---------- the title screen and the making of your elf ----------
+  const LOOKS = { skin: ['#f6dcc0', '#f0c9a0', '#d9a273', '#b07a4f', '#7d5234', '#573823'], hair: ['#8a4b22', '#2a2420', '#c9a14a', '#b5432a', '#e9e2d0', '#6a4a8a'], hat: ['#b0472f', '#2f6f9a', '#6a4a8a', '#d99a2b', '#3f7a44', '#3a3a3a'], tunic: ['#6f9a3a', '#3f7a8a', '#9a5a3a', '#7a5aa0', '#c4a03a', '#b05070'] };
+  const DEFAULT_LOOK = { skin: LOOKS.skin[1], hair: LOOKS.hair[0], hat: LOOKS.hat[0], tunic: LOOKS.tunic[0] };
+  function applyLook(look) { const L = Object.assign({}, DEFAULT_LOOK, look || {}); Object.keys(kid.mats).forEach(k => { if (/^#[0-9a-f]{6}$/i.test(L[k])) kid.mats[k].color.set(L[k]); }); }
+  const titleEl = $('title'), titleMain = $('titlemain'), creatorEl = $('creator'); let draft = null, newArmed = false;
+  $('titleacct').appendChild($('account'));   // signing in belongs on the title screen
+  function refreshTitle() { const c = $('tcontinue'); c.hidden = !save.started; c.textContent = save.name ? `Continue as ${save.name}` : 'Continue'; }
+  function showTitle() { titleUp = true; creatorUp = false; titleEl.hidden = false; titleMain.hidden = false; creatorEl.hidden = true; startEl.hidden = true; document.body.classList.add('titled'); refreshTitle(); applyLook(save.look); player.position.set(0, 0, 6.5); player.rotation.y = Math.PI; }
+  function hideTitle() { titleUp = false; creatorUp = false; titleEl.hidden = true; document.body.classList.remove('titled'); }
+  // behind the title the camera drifts round the Hollow; in the creator it stands in front of your elf while the elf slowly turns
+  function titleCam(t) {
+    if (creatorUp) { player.position.set(6, 0, 46); player.rotation.y = t * 0.55; kid.hd.rotation.set(0, 0, 0); const w = window.innerWidth < 640; camera.position.set(6 + (w ? 0 : -2.6), w ? 3.0 : 2.6, 46 + (w ? 13 : 8.5)); camera.lookAt(6 + (w ? 0 : -2.6), w ? -3.6 : 1.9, 46);
+      critters.forEach(c => { if (c.kind === 'dog' && Math.hypot(c.obj.position.x - 6, c.obj.position.z - 46) < 16) { c.state = 'wander'; c.cool = 30; c.timer = 4; c.target = new THREE.Vector3(c.obj.position.x < 6 ? -24 : 30, 0, 46 + (c.obj.position.z < 46 ? -26 : 26)); } });   // the dogs keep out of the picture
+      return; }
+    const a = t * 0.045 + 0.6; camera.position.set(Math.sin(a) * 62, 22 + Math.sin(t * 0.07) * 3, 46 + Math.cos(a) * 62); camera.lookAt(0, 7, 44);
+  }
+  function drawSwatches() { creatorEl.querySelectorAll('.sw').forEach(row => { const k = row.dataset.k; row.innerHTML = ''; LOOKS[k].forEach((hex, i) => { const b = document.createElement('button'); b.type = 'button'; b.style.background = hex; b.setAttribute('aria-label', `${k} colour ${i + 1}`); b.setAttribute('aria-pressed', String(draft[k] === hex)); b.onclick = () => { draft[k] = hex; applyLook(draft); drawSwatches(); }; row.appendChild(b); }); }); }
+  const hasProgress = () => !!(save.started || save.done.length || save.coins);
+  $('tcontinue').addEventListener('click', () => { hideTitle(); continueGame(); });
+  $('tlessons').addEventListener('click', () => { hideTitle(); startEl.hidden = false; drawMap(); });
+  $('maptitle').addEventListener('click', () => { if (!gameStarted) showTitle(); });
+  $('tsettings').addEventListener('click', openSettings);
+  $('tnew').addEventListener('click', () => { creatorUp = true; newArmed = false; titleMain.hidden = true; creatorEl.hidden = false; draft = Object.assign({}, DEFAULT_LOOK, hasProgress() ? {} : save.look || {}); $('elfname').value = hasProgress() ? '' : save.name || ''; $('creatorwarn').hidden = true; $('creatorgo').textContent = 'Begin'; applyLook(draft); drawSwatches(); });
+  $('creatorback').addEventListener('click', () => showTitle());
+  $('creatorgo').addEventListener('click', () => {
+    const name = $('elfname').value.replace(/\s+/g, ' ').trim().slice(0, 16) || 'Elfling';
+    if (hasProgress() && !newArmed) { newArmed = true; const w = $('creatorwarn'); w.hidden = false; w.textContent = `This starts a brand new elf. ${save.name || 'Your current elf'}, with ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished and ${save.coins || 0} acorn coins, will be gone for good. Press again if you are sure.`; $('creatorgo').textContent = 'Yes, start over'; return; }
+    if (hasProgress()) { clearSave(); save.name = name; save.look = draft; persist(); const go = () => { location.hash = 'lesson-1'; location.reload(); }; if (session) { cloudDirty = true; cloudPush().finally(go); } else go(); return; }
+    save.name = name; save.look = draft; persist(); hideTitle(); launch('lesson-1');
+  });
+  applyLook(save.look);
   const h = location.hash.replace('#', '');
   if (['lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'hills', 'high', 'cairn-1', 'cairn-2', 'cairn-3', 'cairn-4', 'cairn-5', 'cairn-6', 'cairn-7', 'cairn-8', 'cairn-9', 'cairn-10', 'cliff', 'cog-1', 'cog-2', 'cog-3', 'cog-4', 'cog-5', 'cog-6', 'cog-7', 'cog-8', 'cog-9', 'cog-10', 'mtn', 'ember-1', 'ember-2', 'ember-3', 'ember-4', 'ember-5', 'ember-6', 'ember-7', 'ember-8', 'ember-9', 'ember-10', 'sea', 'lant-1', 'lant-2', 'lant-3', 'lant-4', 'lant-5', 'lant-6', 'lant-7', 'lant-8', 'lant-9', 'lant-10', 'lift', 'sky-1', 'sky-2', 'sky-3', 'sky-4', 'sky-5', 'sky-6', 'sky-7', 'sky-8', 'sky-9', 'sky-10', 'sky-11', 'sky-12', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5', 'fern-6', 'fern-7', 'fern-8', 'fern-9'].includes(h)) launch(h);
-  else { startEl.hidden = false; drawMap(); }
+  else { drawMap(); showTitle(); }
 })();
 </script>
 
