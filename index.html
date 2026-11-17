@@ -192,7 +192,6 @@
 </head>
 <body>
 
-
 <canvas id="scene" aria-label="Bramblewick's shop and the forest clearing outside, seen from seven inches tall"></canvas>
 <div class="fade" id="fade" aria-live="polite"></div>
   <div id="settings" hidden>
@@ -1326,7 +1325,8 @@
     setTimeout(() => { mid(); if (typeof restoreAfter === 'function') { const f = restoreAfter; restoreAfter = null; f(); } setTimeout(() => { fadeEl.classList.remove('on'); fading = false; const before = hint.current; after && after(); const now = hint.current; if (now && now !== before) { clearTimeout(fadeTo.timer); fadeTo.timer = setTimeout(() => { if (hint.current === now) hint(''); }, 9000); } }, 500); }, 800);
   }
   function moveCompany(from, to) { from.remove(player); to.add(player); if (beetle) { from.remove(beetle); to.add(beetle); } }
-  function goToRoad() {
+  function goToRoad() { const [x, z, y] = hollowGateOutside(); enterWild(x, z, y); }
+  function goToRoadOld() {
     fadeTo('The Long Road', () => {
       moveCompany(scene, roadScene); where = 'road'; player.position.set(0, 0, 3); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 0.5);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
@@ -1490,11 +1490,301 @@
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => { hint('The Mallow Orchards. Quern Mill is at the end of the lane.'); if (phase === 'toorch') { phase = 'tomill'; } if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(-2, 0, 70); bodyYaw = camYaw = 0.3; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
   }
-  function goToRoadFromOrchards() {
+  function goToRoadFromOrchards() { const [x, z, y] = orchardGateOutside(); enterWild(x, z, y, 'Back on the Long Road. The Hollow is the other way.'); }
+  function goToRoadFromOrchardsOld() {
     fadeTo('The Long Road', () => {
       moveCompany(orchScene, roadScene); where = 'road'; player.position.set(0, 0, ROAD_LEN - 6); bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; if (beetle) beetle.position.set(2, 0, ROAD_LEN - 4);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => hint('Back on the Long Road. The Hollow is the other way.'));
+  }
+
+  // ---------- the open world: one continent, streamed in chunks around you ----------
+  // Positions here are continent coordinates, the same ones as the continent map. One unit is about 2¼ real inches.
+  // Each town keeps its own local layout; a tile says where on the continent it sits and which way it faces.
+  const CHUNK = 64, CSEG = 16;
+  const ss = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  function hash2(ix, iz, s) { let h = (Math.imul(ix, 374761393) + Math.imul(iz, 668265263) + Math.imul(s | 0, 982451653)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+  function vnoise(x, z, s) { const ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz, u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz); const a = hash2(ix, iz, s), b = hash2(ix + 1, iz, s), c = hash2(ix, iz + 1, s), d = hash2(ix + 1, iz + 1, s); return (a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v) * 2 - 1; }
+  function seeded(a, b, s) { let t = (Math.imul(a, 73856093) ^ Math.imul(b, 19349663) ^ Math.imul(s, 83492791)) >>> 0; return () => { t = (t + 0x6D2B79F5) | 0; let r = Math.imul(t ^ (t >>> 15), 1 | t); r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r; return ((r ^ (r >>> 14)) >>> 0) / 4294967296; }; }
+
+  const TILES = {};
+  function makeTile(key, sc, ox, oz, yaw, rect) { const m = new THREE.Matrix4().makeRotationY(yaw); m.setPosition(ox, 0, oz); return (TILES[key] = { key, scene: sc, ox, oz, yaw, m, inv: m.clone().invert(), rect }); }
+  function toWorld(t, x, z) { const c = Math.cos(t.yaw), s = Math.sin(t.yaw); return [t.ox + x * c + z * s, t.oz - x * s + z * c]; }
+  function toLocal(t, x, z) { const dx = x - t.ox, dz = z - t.oz, c = Math.cos(t.yaw), s = Math.sin(t.yaw); return [dx * c - dz * s, dx * s + dz * c]; }
+  function inRect(t, lx, lz, m) { const R = t.rect; return lx > R[0] - m && lx < R[1] + m && lz > R[2] - m && lz < R[3] + m; }
+  // the Hollow faces east-north-east toward the Orchards; the Orchards face on toward Fernwater (map positions from the continent sketch)
+  const HOLLOW_AT = [8200, 18800], ORCH_AT = [12500, 17200], FERN_AT = [16300, 14400], CAIRN_AT = [17400, 9300], COG_AT = [22300, 10600], EMBER_AT = [27400, 8100];
+  const yawV = Math.atan2(ORCH_AT[0] - HOLLOW_AT[0], ORCH_AT[1] - HOLLOW_AT[1]), yawO = Math.atan2(FERN_AT[0] - ORCH_AT[0], FERN_AT[1] - ORCH_AT[1]);
+  const tileV = makeTile('village', scene, 0, 0, yawV, [FENCE.x0, FENCE.x1, FENCE.z0, FENCE.z1]);
+  { const [cx, cz] = toWorld(tileV, 0, (FENCE.z0 + FENCE.z1) / 2); tileV.ox += HOLLOW_AT[0] - cx; tileV.oz += HOLLOW_AT[1] - cz; tileV.m.setPosition(tileV.ox, 0, tileV.oz); tileV.inv = tileV.m.clone().invert(); }
+  const tileO = makeTile('orchards', orchScene, 0, 0, yawO, [-51, 51, 0, ORCH_LEN + 3]);
+  { const [cx, cz] = toWorld(tileO, 0, ORCH_LEN / 2); tileO.ox += ORCH_AT[0] - cx; tileO.oz += ORCH_AT[1] - cz; tileO.m.setPosition(tileO.ox, 0, tileO.oz); tileO.inv = tileO.m.clone().invert(); }
+  // Fernwater is an open river town: no fence, you can walk or swim in from any side. It faces on toward Cairnhold.
+  const yawF = Math.atan2(CAIRN_AT[0] - FERN_AT[0], CAIRN_AT[1] - FERN_AT[1]);
+  const tileF = makeTile('fernwater', null, 0, 0, yawF, [-46, 46, 0, 120]); tileF.open = true;
+  { const [cx, cz] = toWorld(tileF, 0, 60); tileF.ox += FERN_AT[0] - cx; tileF.oz += FERN_AT[1] - cz; tileF.m.setPosition(tileF.ox, 0, tileF.oz); tileF.inv = tileF.m.clone().invert(); }
+  // the Fern runs straight through the town and on across the country in both directions
+  const RIVER = { z: 78, hw: 19.6 };
+  function riverD(x, z) { const [lx, lz] = toLocal(tileF, x, z); return [Math.abs(lz - RIVER.z), lx, lz]; }
+  function wildRiver(x, z) { const [rd, lx] = riverD(x, z); return rd < RIVER.hw && Math.abs(lx) >= 46; }
+  // Cairnhold stands on a highland 26 units up, open on every side, facing on toward Cogsworth. Its gorge runs out across the country both ways.
+  const yawC = Math.atan2(COG_AT[0] - CAIRN_AT[0], COG_AT[1] - CAIRN_AT[1]);
+  const tileC = makeTile('cairnhold', null, 0, 0, yawC, [-60, 60, 0, 150]); tileC.open = true; tileC.oy = 26; tileC.blend = 1000; tileC.noCrop = true;
+  { const [cx, cz] = toWorld(tileC, 0, 75); tileC.ox += CAIRN_AT[0] - cx; tileC.oz += CAIRN_AT[1] - cz; tileC.m.setPosition(tileC.ox, tileC.oy, tileC.oz); tileC.inv = tileC.m.clone().invert(); }
+  const GW = { zc: 115, hw: 8, depth: 34, half: 1800, rim: 20, out: 46 };
+  // Cogsworth sits at the foot of a crag, its east gate pointing at Emberdeep. The crag is real: you can climb its back and look down on the town.
+  const yawG = Math.atan2(-(EMBER_AT[1] - COG_AT[1]), EMBER_AT[0] - COG_AT[0]);
+  const tileG = makeTile('cogsworth', null, 0, 0, yawG, [-60, 150, 0, 94]); tileG.open = true;
+  { const [cx, cz] = toWorld(tileG, 45, 47); tileG.ox += COG_AT[0] - cx; tileG.oz += COG_AT[1] - cz; tileG.m.setPosition(tileG.ox, 0, tileG.oz); tileG.inv = tileG.m.clone().invert(); }
+  // the bike hill east of town and the crag behind it, in Cogsworth's own coordinates
+  function cogLand(x, z, noCrag) {
+    const [lx, lz] = toLocal(tileG, x, z); if (Math.abs(lx) > 240 || lz < -10 || lz > 540) return 0;
+    let h = 14 * Math.max(0, 1 - Math.pow((lx - 110) / 70, 2) - Math.pow((lz - 70) / 60, 2)) * ss(46, 72, lx);
+    if (!noCrag) { const ax = Math.abs(lx), back = ss(520, 200, lz), front = ax < 130 ? (lz >= 96.5 ? 1 : 0) : ss(98, 124, lz); h += 90 * ss(215, 135, ax) * front * back; }
+    return h;
+  }
+  const STITCHED = [tileV, tileO, tileF, tileC, tileG];
+  const ZONES = STITCHED.map(t => { const R = t.rect, [cx, cz] = toWorld(t, (R[0] + R[1]) / 2, (R[2] + R[3]) / 2); const r0 = Math.hypot(R[1] - R[0], R[3] - R[2]) / 2 + 22; return { t, cx, cz, r0, r1: r0 + (t.blend || 170), y: t.oy || 0 }; });
+
+  // the land itself: rolling country, level around the towns and gentle along the road
+  const bigH = (x, z) => 30 * vnoise(x / 820, z / 820, 11) + 10 * vnoise(x / 210, z / 210, 12);
+  const fineH = (x, z) => 3 * vnoise(x / 60, z / 60, 13) + 0.7 * vnoise(x / 15, z / 15, 14);
+  // how much of the wild land's own shape survives here (0 inside a town), and the level the nearest town stands at
+  function zoneAt(x, z) { let k = 1, y = 0; for (const zn of ZONES) { const d = Math.hypot(x - zn.cx, z - zn.cz); if (d < zn.r1) { const kk = ss(zn.r0, zn.r1, d); if (kk < k) { k = kk; y = zn.y; } } } return [k, y]; }
+  function townK(x, z) { return zoneAt(x, z)[0]; }
+  // the gorge: a sheer cut, deepest by the town and running out to nothing at each end
+  function gorgeG(lx) { const [x, z] = toWorld(tileC, lx, GW.zc), [k, y] = zoneAt(x, z); return bigH(x, z) * k + y * (1 - k); }
+  function gorgeDepth(lx) { return GW.depth * ss(GW.half, GW.half - 600, Math.abs(lx)); }
+  function noGrow(x, z, m) { if (riverD(x, z)[0] < RIVER.hw + m) return true; const [lx, lz] = toLocal(tileC, x, z); return Math.abs(lx) < GW.half && Math.abs(lz - GW.zc) < GW.rim + m; }
+  // the Long Road, leg by leg: the Hollow's gate to the Orchards' gate, then the Orchards' far gate to Fernwater
+  function buildRoad(p) {
+    const curve = new THREE.CatmullRomCurve3(p.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
+    const n = Math.round(curve.getLength() / 2), out = curve.getSpacedPoints(n).map(v => ({ x: v.x, z: v.z, h: 0 }));
+    out.forEach(s => { const [k, y] = zoneAt(s.x, s.z); s.h = bigH(s.x, s.z) * k + y * (1 - k); });
+    const sm = out.map((s, i) => { let a = 0, c = 0; for (let k = -30; k <= 30; k++) { const q = out[clamp(i + k, 0, out.length - 1)]; a += q.h; c++; } return a / c; });
+    out.forEach((s, i) => { const [k, y] = zoneAt(s.x, s.z); s.h = sm[i] * k + y * (1 - k); });
+    return out;
+  }
+  const ROADS = [
+    { a: 'Thistledown Hollow', b: 'Mallow Orchards', ai: 0, bi: 1, pts: buildRoad([toWorld(tileV, 0, GATE.z + 1), toWorld(tileV, 0, GATE.z + 30), toWorld(tileV, -10, GATE.z + 120), [10400, 18200], [11300, 17900], toWorld(tileO, 6, -120), toWorld(tileO, 0, -30), toWorld(tileO, 0, -1)]) },
+    (() => { const A = toWorld(tileF, 6, 300), B = toWorld(tileC, -40, -440), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
+      return { a: 'Fernwater Crossing', b: 'Cairnhold', ai: 2, bi: 3, pts: buildRoad([toWorld(tileF, 0, 121), toWorld(tileF, 0, 152), A, [A[0] + dx / 3 + nx * 130, A[1] + dz / 3 + nz * 130], [A[0] + dx * 2 / 3 - nx * 100, A[1] + dz * 2 / 3 - nz * 100], B, toWorld(tileC, -8, -170), toWorld(tileC, 0, -34), toWorld(tileC, 0, 1)]) }; })(),
+    (() => { const A = toWorld(tileC, 12, 340), B = toWorld(tileG, -70, -330), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
+      return { a: 'Cairnhold', b: 'Cogsworth', ai: 3, bi: 4, pts: buildRoad([toWorld(tileC, 0, 151), toWorld(tileC, 0, 185), A, [A[0] + dx / 3 - nx * 140, A[1] + dz / 3 - nz * 140], [A[0] + dx * 2 / 3 + nx * 110, A[1] + dz * 2 / 3 + nz * 110], B, toWorld(tileG, -10, -150), toWorld(tileG, 0, -34), toWorld(tileG, 0, 1)]) }; })(),
+    { a: 'Mallow Orchards', b: 'Fernwater Crossing', ai: 1, bi: 2, pts: buildRoad([toWorld(tileO, 30, ORCH_LEN + 1), toWorld(tileO, 30, ORCH_LEN + 30), toWorld(tileO, 24, ORCH_LEN + 130), [13800, 16420], [15000, 15700], toWorld(tileF, -14, -150), toWorld(tileF, 0, -34), toWorld(tileF, 0, 1)]) },
+  ];
+  const roadPts = ROADS[0].pts;
+  const ROAD_CELL = 32, roadGrid = new Map();
+  ROADS.forEach((RD, ri) => RD.pts.forEach((s, i) => { s.i = i; s.road = ri; const k = Math.floor(s.x / ROAD_CELL) + ',' + Math.floor(s.z / ROAD_CELL); if (!roadGrid.has(k)) roadGrid.set(k, []); roadGrid.get(k).push(s); }));
+  function roadNear(x, z) { const cx = Math.floor(x / ROAD_CELL), cz = Math.floor(z / ROAD_CELL); let best = null, bd = 1e9; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const l = roadGrid.get((cx + a) + ',' + (cz + b)); if (l) for (const s of l) { const d = (s.x - x) * (s.x - x) + (s.z - z) * (s.z - z); if (d < bd) { bd = d; best = s; } } } return best === null ? null : { d: Math.sqrt(bd), h: best.h, i: best.i, road: best.road }; }
+  function worldH(x, z, noCrag) {
+    const [k, zy] = zoneAt(x, z); let h = (bigH(x, z) + fineH(x, z)) * k + zy * (1 - k) + cogLand(x, z, noCrag);
+    const r = roadNear(x, z); if (r && r.d < 26) { const b = ss(4.5, 26, r.d); h = r.h * (1 - b) + h * b; }
+    // the river's bed and banks, outside the town
+    const [rd, lx] = riverD(x, z);
+    if (rd < 90 && Math.abs(lx) > 50) { const e = ss(50, 58, Math.abs(lx)), bed = rd < RIVER.hw ? -1.45 : -1.45 + 1.8 * ss(RIVER.hw, RIVER.hw + 9, rd), b = ss(RIVER.hw + 9, 90, rd), hr = rd < RIVER.hw + 9 ? bed : 0.35 * (1 - b) + Math.max(h, 0.35) * b; h = h * (1 - e) + hr * e; }
+    // the gorge
+    const [glx, glz] = toLocal(tileC, x, z), gd = Math.abs(glz - GW.zc), gax = Math.abs(glx);
+    if (gd < GW.out && gax < GW.half + 40) { const G = gorgeG(glx), e = ss(GW.half + 40, GW.half, gax), hg = gd < GW.hw ? G - gorgeDepth(glx) : gd < GW.rim ? G : G + (h - G) * ss(GW.rim, GW.out, gd); h = h * (1 - e) + hg * e; }
+    return h;
+  }
+
+  // the height the land mesh is drawn at: the same as the ground, except that it drops away under the gorge's own walls and floor
+  function meshH(x, z) { const [lx, lz] = toLocal(tileC, x, z), gd = Math.abs(lz - GW.zc), ax = Math.abs(lx); if (gd < GW.rim && ax < GW.half) { const G = gorgeG(lx), low = G - gorgeDepth(lx) - 3 * ss(GW.half, GW.half - 100, ax); if (gd < 14) return low; }
+    { const [cx, cz] = toLocal(tileG, x, z); if (Math.abs(cx) < 127 && cz >= 90 && cz < 111) return worldH(x, z, true); } // the cliff face itself is Cogsworth's own wall
+    return worldH(x, z); }
+  // the world scene: one sky, one sun, fog at the edge of what's loaded
+  const worldScene = new THREE.Scene();
+  worldScene.fog = new THREE.Fog('#d8d3a4', 150, 430); worldScene.userData.fog0 = [150, 430];
+  const worldSky = new THREE.Mesh(new THREE.SphereGeometry(900, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false, depthWrite: false })); worldSky.renderOrder = -1; worldScene.add(worldSky);
+  worldScene.add(new THREE.HemisphereLight('#fff1d0', '#41502a', 0.8));
+  const worldSun = new THREE.DirectionalLight('#ffd99a', 1.0); worldSun.castShadow = true;
+  Object.assign(worldSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); worldSun.shadow.mapSize.set(2048, 2048); worldSun.shadow.radius = 2; worldSun.shadow.bias = -0.0006;
+  worldScene.add(worldSun); worldScene.add(worldSun.target);
+  // the towns' own skies and fog give way to the world's
+  [scene, orchScene].forEach(sc => { sc.children.forEach(o => { if (o.isMesh && o.material && o.material.side === THREE.BackSide && o.material.map === skyTex) o.visible = false; }); sc.fog.near = 150; sc.fog.far = 430; });
+
+  const terrainTex = groundTex.clone(); terrainTex.needsUpdate = true; terrainTex.repeat.set(1, 1); terrainTex.wrapS = terrainTex.wrapT = THREE.RepeatWrapping;
+  const terrainMat = new THREE.MeshStandardMaterial({ map: terrainTex, vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 });
+  const grassGeo = new THREE.ConeGeometry(0.22, 1, 3); grassGeo.translate(0, 0.5, 0);
+  const grassMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.9 });
+  const bloomGeo = new THREE.IcosahedronGeometry(0.32, 0), bloomMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.6 });
+  const rockGeo = new THREE.DodecahedronGeometry(1, 0);
+  const SHARED = new Set([terrainMat, grassGeo, grassMat, bloomGeo, bloomMat, rockGeo]);
+  let worldLoadR = 7, worldGrassK = 1;
+  function worldGfx(distK, grassK) { worldLoadR = Math.max(3, Math.round(7 * distK)); worldGrassK = grassK; }
+
+  const chunks = new Map();
+  function buildChunk(cx, cz) {
+    const g = new THREE.Group(), x0 = cx * CHUNK, z0 = cz * CHUNK, n = CSEG + 1, st = CHUNK / CSEG;
+    // heights with a one-cell border so normals match the neighbours exactly
+    const H = new Float32Array((n + 2) * (n + 2));
+    for (let j = -1; j <= n; j++) for (let i = -1; i <= n; i++) H[(j + 1) * (n + 2) + (i + 1)] = meshH(x0 + i * st, z0 + j * st);
+    const hAt = (i, j) => H[(j + 1) * (n + 2) + (i + 1)];
+    const pos = new Float32Array(n * n * 3), nor = new Float32Array(n * n * 3), col = new Float32Array(n * n * 3), uv = new Float32Array(n * n * 2), idx = [];
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const v = j * n + i, x = x0 + i * st, z = z0 + j * st, h = hAt(i, j);
+      pos[v * 3] = x; pos[v * 3 + 1] = h; pos[v * 3 + 2] = z;
+      const nx = hAt(i - 1, j) - hAt(i + 1, j), nz = hAt(i, j - 1) - hAt(i, j + 1), ny = 2 * st, l = Math.hypot(nx, ny, nz); nor[v * 3] = nx / l; nor[v * 3 + 1] = ny / l; nor[v * 3 + 2] = nz / l;
+      const tint = 0.9 + 0.16 * vnoise(x / 34, z / 34, 5) + 0.004 * clamp(h, -20, 20), dry = clamp(0.5 + vnoise(x / 260, z / 260, 6), 0, 1) * 0.12;
+      col[v * 3] = tint + dry; col[v * 3 + 1] = tint + dry * 0.6; col[v * 3 + 2] = tint * 0.92;
+      uv[v * 2] = x / 14.4; uv[v * 2 + 1] = z / 14.4;
+      if (i < n - 1 && j < n - 1) idx.push(v, v + n, v + 1, v + 1, v + n, v + n + 1);
+    }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); geo.setIndex(idx); geo.computeBoundingSphere();
+    const land = new THREE.Mesh(geo, terrainMat); land.receiveShadow = true; g.add(land);
+    const solidsHere = [], R = seeded(cx, cz, 7), ccx = x0 + CHUNK / 2, ccz = z0 + CHUNK / 2;
+    const inTown = ZONES.some(zn => Math.hypot(ccx - zn.cx, ccz - zn.cz) < zn.r0 + 30);
+    const clearOfTown = (x, z, m) => ZONES.every(zn => Math.hypot(x - zn.cx, z - zn.cz) > zn.r0 + m);
+    if (!inTown) {
+      // grass and wildflowers
+      const nG = Math.round(170 * worldGrassK), gm = new THREE.InstancedMesh(grassGeo, grassMat, nG), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), c = new THREE.Color(), e = new THREE.Euler();
+      let k = 0;
+      for (let t = 0; t < nG * 2 && k < nG; t++) { const x = x0 + R() * CHUNK, z = z0 + R() * CHUNK, r = roadNear(x, z); if ((r && r.d < 5.2) || noGrow(x, z, 7)) continue; pv.set(x, worldH(x, z) - 0.05, z); q.setFromEuler(e.set((R() - 0.5) * 0.5, R() * 6.3, (R() - 0.5) * 0.5)); sv.set(1, 1.2 + R() * 2.4, 1); gm.setMatrixAt(k, m4.compose(pv, q, sv)); gm.setColorAt(k, c.set(['#7d9c45', '#6b8c3a', '#8fae52', '#5f7f33', '#a3b25a'][Math.floor(R() * 5)])); k++; }
+      gm.count = k; gm.receiveShadow = true; if (k > 0) g.add(gm);
+      const nB = Math.floor(R() * 14 * worldGrassK), bm = new THREE.InstancedMesh(bloomGeo, bloomMat, Math.max(1, nB)); let kb = 0;
+      for (let t = 0; t < nB; t++) { const x = x0 + R() * CHUNK, z = z0 + R() * CHUNK, r = roadNear(x, z); if ((r && r.d < 6) || noGrow(x, z, 7)) continue; pv.set(x, worldH(x, z) + 1.3 + R() * 0.8, z); sv.set(1, 0.8, 1); bm.setMatrixAt(kb, m4.compose(pv, q.identity(), sv)); bm.setColorAt(kb, c.set(['#f4f1e6', '#f2d14a', '#b48ad8', '#e8728a', '#f4f1e6'][Math.floor(R() * 5)])); kb++; }
+      bm.count = kb; if (kb > 0) g.add(bm);
+      // trees, real size: a few per chunk, never on the road
+      const nT = R() < 0.45 ? (R() < 0.3 ? 2 : 1) : 0;
+      for (let t = 0; t < nT; t++) { const x = x0 + 6 + R() * (CHUNK - 12), z = z0 + 6 + R() * (CHUNK - 12), r = roadNear(x, z); if ((r && r.d < 18) || !clearOfTown(x, z, 40) || noGrow(x, z, 16)) continue; const pine = R() < 0.25, K = 6 + R() * 5, tr = bigTree(g, x, z, worldH(x, z) - 0.4, K, pine); tr.rotation.y = R() * 6.3; tr.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); solidsHere.push({ x, z, r: (pine ? 0.9 : 1.2) * K }); }
+      // stones
+      const nR = Math.floor(R() * 3);
+      for (let t = 0; t < nR; t++) { const x = x0 + R() * CHUNK, z = z0 + R() * CHUNK, r = roadNear(x, z); if ((r && r.d < 7) || noGrow(x, z, 2)) continue; const sc = 0.5 + R() * 2.2, rock = new THREE.Mesh(rockGeo, mat(['#8c8577', '#9b958a', '#7a7468'][Math.floor(R() * 3)], { flatShading: true, roughness: 1 })); rock.scale.set(sc, sc * (0.5 + R() * 0.6), sc); rock.position.set(x, worldH(x, z) + sc * 0.2, z); rock.rotation.set(R() * 3, R() * 3, R() * 3); rock.castShadow = true; rock.receiveShadow = true; g.add(rock); if (sc > 0.8) solidsHere.push({ x, z, r: sc * 0.9 }); }
+      if (R() < 0.12) { const x = x0 + R() * CHUNK, z = z0 + R() * CHUNK, r = roadNear(x, z); if ((!r || r.d > 7) && !noGrow(x, z, 4)) { const m = makeMushroom(1.2 + R() * 1.6); m.position.set(x, worldH(x, z), z); g.add(m); } }
+    }
+    worldScene.add(g);
+    return { cx, cz, g, solids: solidsHere };
+  }
+  function dropChunk(c) { worldScene.remove(c.g); c.g.traverse(o => { if (o.geometry && !SHARED.has(o.geometry)) o.geometry.dispose(); if (o.material && !SHARED.has(o.material)) [].concat(o.material).forEach(m => m.dispose()); }); }
+  let ringCache = null, ringR = -1;
+  function ringOffsets(r) { if (ringR === r) return ringCache; const out = []; for (let a = -r; a <= r; a++) for (let b = -r; b <= r; b++) out.push([a, b, a * a + b * b]); out.sort((p, q) => p[2] - q[2]); ringR = r; return (ringCache = out); }
+  function streamChunks(wx, wz, budget) {
+    const ccx = Math.floor(wx / CHUNK), ccz = Math.floor(wz / CHUNK), r = worldLoadR;
+    for (const [key, c] of chunks) if (Math.max(Math.abs(c.cx - ccx), Math.abs(c.cz - ccz)) > r + 2) { dropChunk(c); chunks.delete(key); }
+    let built = 0;
+    for (const [a, b] of ringOffsets(r)) { const key = (ccx + a) + ',' + (ccz + b); if (chunks.has(key)) continue; chunks.set(key, buildChunk(ccx + a, ccz + b)); if (++built >= budget) break; }
+  }
+  function chunkSolidsNear(x, z) { const cx = Math.floor(x / CHUNK), cz = Math.floor(z / CHUNK), out = []; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const c = chunks.get((cx + a) + ',' + (cz + b)); if (c) out.push(...c.solids); } return out; }
+
+  // the gorge outside the town: clean rock walls, a floor with the torrent, and a grass rim, all following the land
+  {
+    const rimV = [], rimUV = [], rimI = [], rockV = [], rockI = [], watV = [], watI = [];
+    [-1, 1].forEach(sd => { let first = true; for (let a = 69; a <= GW.half; a += 6) { const lx = sd * a, G = gorgeG(lx) + 0.04, F = G - 0.04 - gorgeDepth(lx), z = GW.zc;
+      const r0 = rimV.length / 3; [[z - GW.rim], [z - GW.hw], [z + GW.hw], [z + GW.rim]].forEach(([lz]) => { rimV.push(lx, G, lz); rimUV.push(lx / 14.4, lz / 14.4); });
+      const k0 = rockV.length / 3; rockV.push(lx, G, z - GW.hw, lx, F, z - GW.hw, lx, F, z + GW.hw, lx, G, z + GW.hw);
+      const w0 = watV.length / 3; watV.push(lx, F + 0.1, z - 2.5, lx, F + 0.1, z + 2.5);
+      if (!first) { [[0, 1], [2, 3]].forEach(([p, q]) => rimI.push(r0 - 4 + p, r0 + p, r0 - 4 + q, r0 - 4 + q, r0 + p, r0 + q)); [[0, 1], [1, 2], [2, 3]].forEach(([p, q]) => rockI.push(k0 - 4 + p, k0 + p, k0 - 4 + q, k0 - 4 + q, k0 + p, k0 + q)); if (gorgeDepth(lx) > 6) watI.push(w0 - 2, w0, w0 - 1, w0 - 1, w0, w0 + 1); }
+      first = false; } });
+    const gg = new THREE.Group(); gg.matrixAutoUpdate = false; gg.matrix.makeRotationY(yawC).setPosition(tileC.ox, 0, tileC.oz);
+    const mk = (v, i, m, uv) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); if (uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(i); g.computeVertexNormals(); const me = new THREE.Mesh(g, m); me.frustumCulled = false; me.receiveShadow = true; gg.add(me); };
+    mk(rimV, rimI, new THREE.MeshStandardMaterial({ map: terrainTex, color: '#f2f2e4', roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), rimUV);
+    mk(rockV, rockI, mat('#7d786d', { side: THREE.DoubleSide, flatShading: true, roughness: 1 }));
+    mk(watV, watI, mat('#6f9fd0', { side: THREE.DoubleSide, roughness: 0.4 }));
+    worldScene.add(gg);
+  }
+  // the road itself, built once, and the things along it
+  const allRoadSolids = [];
+  ROADS.forEach(RD => {
+    const roadPts = RD.pts;
+    const verts = [], uvs = [], idx = []; let n = 0, along = 0;
+    for (let i = 0; i < roadPts.length; i++) { const a = roadPts[Math.max(0, i - 1)], b = roadPts[Math.min(roadPts.length - 1, i + 1)], dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, nx = dz / L, nz = -dx / L, s = roadPts[i]; if (i) along += Math.hypot(s.x - roadPts[i - 1].x, s.z - roadPts[i - 1].z);
+      [[-4, 0], [-1.6, 0.3], [1.6, 0.7], [4, 1]].forEach(([o, u]) => { const x = s.x + nx * o, z = s.z + nz * o; verts.push(x, worldH(x, z) + 0.06, z); uvs.push(u * 2, along / 6); });
+      if (n) for (let k = 0; k < 3; k++) { const a0 = (n - 1) * 4 + k, b0 = n * 4 + k; idx.push(a0, b0, a0 + 1, a0 + 1, b0, b0 + 1); } n++; }
+    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); rg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); rg.setIndex(idx); rg.computeVertexNormals();
+    const roadMesh = new THREE.Mesh(rg, mat('#ffffff', { map: dirtTex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 })); roadMesh.receiveShadow = true; roadMesh.frustumCulled = false; worldScene.add(roadMesh);
+    // signposts at each end and milestones that count down in real feet
+    const total = roadPts.length * 2, postM = mat('#6b4a2b');
+    const waymark = (i, toward, sub) => { const s = roadPts[i], a = roadPts[Math.min(roadPts.length - 1, i + 1)], dx = a.x - s.x, dz = a.z - s.z, L = Math.hypot(dx, dz) || 1, x = s.x + dz / L * 7, z = s.z - dx / L * 7, y = worldH(x, z); const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 6, 8), postM); post.position.set(x, y + 3, z); worldScene.add(post); const sg = signBoard(toward, Math.max(6.4, toward.length * 0.46), 1.3, '#5a3d22', '#f6e7c2'); sg.position.set(x, y + 5, z); sg.rotation.y = Math.atan2(dx, dz); worldScene.add(sg); if (sub) { const sg2 = signBoard(sub, 5.2, 1, '#f2e6c8', '#4a3420'); sg2.position.set(x, y + 3.7, z); sg2.rotation.y = sg.rotation.y; worldScene.add(sg2); } return { x, z }; };
+    const ftLeft = i => Math.round((roadPts.length - 1 - i) * 2 * 2.25 / 12 / 50) * 50;
+    const sA = waymark(18, RD.b, `${ftLeft(18).toLocaleString()} feet`), sB = waymark(roadPts.length - 19, RD.a, `${Math.round((roadPts.length - 19) * 2 * 2.25 / 12 / 50) * 50} feet back`);
+    const roadSolids = [{ x: sA.x, z: sA.z, r: 0.5 }, { x: sB.x, z: sB.z, r: 0.5 }];
+    for (let i = 120; i < roadPts.length - 100; i += 120) { const s = roadPts[i], a = roadPts[i + 1], dx = a.x - s.x, dz = a.z - s.z, L = Math.hypot(dx, dz) || 1, x = s.x - dz / L * 6, z = s.z + dx / L * 6, y = worldH(x, z); const st = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.8), mat('#9b9789')); st.position.set(x, y + 1.1, z); st.rotation.y = Math.atan2(dx, dz); st.castShadow = true; worldScene.add(st); const lab = signBoard(`${ftLeft(i)} ft`, 1.6, 0.6, '#9b9789', '#2b2b2b'); lab.position.set(x, y + 1.6, z); lab.rotation.y = st.rotation.y; worldScene.add(lab); roadSolids.push({ x, z, r: 0.9 }); }
+    allRoadSolids.push(...roadSolids);
+  });
+  worldScene.userData.roadSolids = allRoadSolids;
+
+  // where you are when you're out in the open land
+  function frameOf(key) { return TILES[key] || null; }
+  function nearestTown() { const [x, z] = playerWorldXZ(); let b = 0, bd = 1e12; ZONES.forEach((zn, i) => { const d = Math.hypot(x - zn.cx, z - zn.cz); if (d < bd) { bd = d; b = i; } }); return b; }
+  function playerWorldXZ() { const t = frameOf(where); return t ? toWorld(t, player.position.x, player.position.z) : [player.position.x, player.position.z]; }
+  const _M = new THREE.Matrix4(), _I = new THREE.Matrix4();
+  // step from one frame into another without a fade: the world is continuous, only the bookkeeping changes
+  function switchFrame(toKey, prev) {
+    const from = frameOf(where), to = frameOf(toKey);
+    _M.copy(to ? to.inv : _I).multiply(from ? from.m : _I);
+    const dyaw = (from ? from.yaw : 0) - (to ? to.yaw : 0);
+    moveCompany(curScene(), sceneOf(toKey));
+    player.position.applyMatrix4(_M); if (prev) prev.applyMatrix4(_M); camPos.applyMatrix4(_M); camLook.applyMatrix4(_M);
+    if (beetle) beetle.position.applyMatrix4(_M);
+    vel.applyAxisAngle(new THREE.Vector3(0, 1, 0), dyaw);
+    bodyYaw += dyaw; camYaw += dyaw; player.rotation.y = bodyYaw;
+    fallPeak += (from ? from.oy || 0 : 0) - (to ? to.oy || 0 : 0);
+    where = toKey; lastGY = groundAt(player.position.x, player.position.z);
+    flash(toKey === 'wild' ? 'The Long Road' : REGION_LABEL[toKey]);
+  }
+  // put the player in the open world at a world position (used by saves and by the old road entrances)
+  function enterWild(x, z, yaw, msg) {
+    fadeTo('The Long Road', () => {
+      moveCompany(curScene(), worldScene); where = 'wild'; if (riding) setRiding(false);
+      player.position.set(x, worldH(x, z), z); bodyYaw = camYaw = yaw; player.rotation.y = yaw; if (beetle) beetle.position.set(x - 2, worldH(x - 2, z), z);
+      streamChunks(x, z, 60); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    }, () => hint(msg || 'The Long Road.'));
+  }
+  function hollowGateOutside() { const [x, z] = toWorld(tileV, 0, GATE.z + 6); return [x, z, yawV]; }
+  function orchardGateOutside() { const [x, z] = toWorld(tileO, 0, -6); return [x, z, yawO + Math.PI]; }
+
+  // collision in the open world: trees and stones, the town fences (you go in only through a gate), and slopes too steep to climb
+  function collideWild(p, prev) {
+    chunkSolidsNear(p.x, p.z).concat(worldScene.userData.roadSolids).forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
+    const dh = worldH(p.x, p.z) - worldH(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
+    if (run > 0.001 && dh / run > 1 && !wildRiver(prev.x, prev.z)) { p.x = prev.x; p.z = prev.z; }
+    for (const t of STITCHED) {
+      const [lx, lz] = toLocal(t, p.x, p.z); if (!inRect(t, lx, lz, 0.8)) continue;
+      if (t === tileV && Math.abs(lx) < 4.2 && lz > FENCE.z1 - 2 && lz < FENCE.z1 + 0.5) { if (lz < FENCE.z1) { switchFrame('village', prev); return; } continue; }
+      if (t === tileO && Math.abs(lx) < 4.5 && lz < 1.5) { if (lz > 0.5) { switchFrame('orchards', prev); return; } continue; }
+      if (t === tileO && Math.abs(lx - 30) < 4.5 && lz > ORCH_LEN - 1.5) { if (lz < ORCH_LEN - 0.5) { switchFrame('orchards', prev); return; } continue; }
+      if (t.open) { if (inRect(t, lx, lz, -0.5)) { switchFrame(t.key, prev); return; } continue; }
+      p.x = prev.x; p.z = prev.z; return;
+    }
+  }
+
+  // draw the world and the towns standing in it, each in its own frame
+  function renderStitched() {
+    const P = frameOf(where), Pinv = P ? P.inv : _I, [wx, wz] = playerWorldXZ();
+    streamChunks(wx, wz, 3);
+    worldSky.position.set(wx, P ? P.oy || 0 : 0, wz); if (worldScene.userData.riverTex) worldScene.userData.riverTex.offset.x = (performance.now() * 0.00002) % 1;
+    renderer.autoClear = false; renderer.clear();
+    worldScene.matrixAutoUpdate = false; worldScene.matrix.copy(Pinv); worldScene.matrixWorldNeedsUpdate = true;
+    if (where !== 'wild') { worldSun.target.position.set(wx, 0, wz); worldSun.position.set(wx - 170, 330, wz + 160); }
+    renderer.render(worldScene, camera);
+    for (const t of STITCHED) {
+      const near = Math.hypot(wx - (ZONES[STITCHED.indexOf(t)].cx), wz - ZONES[STITCHED.indexOf(t)].cz) < worldScene.fog.far + 160;
+      if (!near && t.key !== where) continue;
+      t.scene.matrixAutoUpdate = false; t.scene.matrix.multiplyMatrices(Pinv, t.m); t.scene.matrixWorldNeedsUpdate = true;
+      if (t.key !== where) { const [lx, lz] = toLocal(t, wx, wz), s = t.sun; s.target.position.set(lx, 0, lz); s.position.set(lx - 170, 330, lz + 160); }
+      renderer.render(t.scene, camera);
+    }
+    renderer.autoClear = true;
+  }
+  // the towns show only what is inside their own walls; the open world supplies everything outside them
+  function trimTowns() {
+    const keep = new Set([player, beetle].filter(Boolean));
+    STITCHED.forEach(t => {
+      const R = t.rect, m = 9, out = (x, z) => x < R[0] - m || x > R[1] + m || z < R[2] - m || z > R[3] + m;
+      const box = new THREE.Box3(), c = new THREE.Vector3();
+      t.scene.children.slice().forEach(o => {
+        if (keep.has(o) || o.isLight || o.userData.follow) return;
+        if (o.isInstancedMesh) { const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), zero = new THREE.Vector3(0, 0, 0); for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, m4); m4.decompose(p, q, s); if (out(p.x, p.z)) { o.setMatrixAt(i, m4.compose(p, q, zero)); } } o.instanceMatrix.needsUpdate = true; return; }
+        if (!t.noCrop && o.isMesh && o.geometry && (o.geometry.type === 'PlaneGeometry' || o.geometry.type === 'CircleGeometry') && Math.abs(o.rotation.x + Math.PI / 2) < 0.01 && o.position.y < 0.02) {
+          // the town's ground: cut down to the town itself
+          o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox; if (bb.max.x - bb.min.x > 150) { const W = R[1] - R[0] + 2 * m, D = R[3] - R[2] + 2 * m; o.geometry.dispose(); o.geometry = new THREE.PlaneGeometry(W, D); o.position.set((R[0] + R[1]) / 2, 0, (R[2] + R[3]) / 2); if (o.material.map) { o.material.map = o.material.map.clone(); o.material.map.needsUpdate = true; o.material.map.repeat.set(W / 14.4, D / 14.4); o.material.needsUpdate = true; } } return;
+        }
+        box.setFromObject(o); if (box.isEmpty()) return; box.getCenter(c);
+        if (box.max.x < R[0] - m || box.min.x > R[1] + m || box.max.z < R[2] - m || box.min.z > R[3] + m) o.visible = false;
+        else if ((c.x < R[0] - 60 || c.x > R[1] + 60 || c.z < R[2] - 60 || c.z > R[3] + 60) && Math.max(box.max.x - box.min.x, box.max.z - box.min.z) > 100) o.visible = false; // far hills that only brush the town
+      });
+    });
   }
 
   // ---------- the River Road: hills between the orchards and Fernwater ----------
@@ -1648,9 +1938,9 @@
     sc.traverse(m => { if (m.isMesh && m !== outside && m !== floor) { m.castShadow = true; m.receiveShadow = true; } });
     interiors[id] = it; return it;
   }
-  function sceneOf(region) { return region === 'village' ? scene : region === 'road' ? roadScene : region === 'orchards' ? orchScene : region === 'hills' ? hillScene : region === 'fernwater' ? fernScene : region === 'high' ? highScene : region === 'cairnhold' ? cairnScene : region === 'cliff' ? cliffScene : region === 'cogsworth' ? cogScene : region === 'mtn' ? mtnScene : region === 'emberdeep' ? embScene : region === 'sea' ? seaScene : region === 'lantern' ? lantScene : region === 'lift' ? liftScene : region === 'skyhaven' ? skyScene : region === 'flight' ? flightScene : interior ? interior.scene : scene; }
+  function sceneOf(region) { return region === 'wild' ? worldScene : region === 'village' ? scene : region === 'road' ? roadScene : region === 'orchards' ? orchScene : region === 'hills' ? hillScene : region === 'fernwater' ? fernScene : region === 'high' ? highScene : region === 'cairnhold' ? cairnScene : region === 'cliff' ? cliffScene : region === 'cogsworth' ? cogScene : region === 'mtn' ? mtnScene : region === 'emberdeep' ? embScene : region === 'sea' ? seaScene : region === 'lantern' ? lantScene : region === 'lift' ? liftScene : region === 'skyhaven' ? skyScene : region === 'flight' ? flightScene : interior ? interior.scene : scene; }
   function curScene() { return where === 'in' ? interior.scene : sceneOf(where); }
-  const REGION_LABEL = { village: 'Thistledown Hollow', road: 'The Long Road', orchards: 'The Mallow Orchards', hills: 'The River Road', fernwater: 'Fernwater Crossing', high: 'The High Road', cairnhold: 'Cairnhold Highlands', cliff: 'The Cliff Road', cogsworth: 'Cogsworth', mtn: 'The Mountain Road', emberdeep: 'Emberdeep', sea: 'The Sea Road', lantern: 'Lanternreach', lift: 'The sky-lift', skyhaven: 'Skyhaven', flight: 'The flight home' };
+  const REGION_LABEL = { wild: 'The Long Road', village: 'Thistledown Hollow', road: 'The Long Road', orchards: 'The Mallow Orchards', hills: 'The River Road', fernwater: 'Fernwater Crossing', high: 'The High Road', cairnhold: 'Cairnhold Highlands', cliff: 'The Cliff Road', cogsworth: 'Cogsworth', mtn: 'The Mountain Road', emberdeep: 'Emberdeep', sea: 'The Sea Road', lantern: 'Lanternreach', lift: 'The sky-lift', skyhaven: 'Skyhaven', flight: 'The flight home' };
   function enterInterior(id, then) {
     const it = interiors[id]; if (!it || fading) return;
     fadeTo(it.label, () => {
@@ -2103,7 +2393,7 @@
     wallRun(16, 56, 34, 56, 2.4); wallRun(34, 56, 34, 68, 2.4);
     const lean = new THREE.Group(); lean.position.set(16, 0, 70); lean.rotation.y = 0.35; cairnScene.add(lean); for (let k = 0; k < 5; k++) { const st = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.6, 1.2), mat('#8c8577')); st.position.set(k * 2.2, 0.8 + (k % 2) * 0.1, 0); st.rotation.z = 0.12; lean.add(st); } cairnSolids.push({ x: 20, z: 71, r: 5 });
     const ysign = signBoard('Stone yard', 4.4, 1, '#f2e6c8', '#4a3420'); ysign.position.set(26, 4.2, 12); cairnScene.add(ysign); const ypost = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 4, 6), mat('#5a4a3a')); ypost.position.set(26, 2, 12); cairnScene.add(ypost);
-    // the pasture: a fenced rectangle, 12 by 8 (in surveyor's rods: one rod is two strides)
+    // the pasture: a fenced rectangle, 12 by 8 (in yards)
     const pasture = { x: -36, z: 74, w: 24, h: 16 }; const postM2 = mat('#6b4a2b');
     for (let k = 0; k <= 12; k++) [pasture.z - pasture.h / 2, pasture.z + pasture.h / 2].forEach(z => { const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 2, 6), postM2); pm.position.set(pasture.x - pasture.w / 2 + k * 2, 1, z); cairnScene.add(pm); });
     for (let k = 1; k < 8; k++) [pasture.x - pasture.w / 2, pasture.x + pasture.w / 2].forEach(x => { const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 2, 6), postM2); pm.position.set(x, 1, pasture.z - pasture.h / 2 + k * 2); cairnScene.add(pm); });
@@ -2113,7 +2403,7 @@
     // the odd field: an L of low wall
     wallRun(22, 78, 42, 78, 1.2); wallRun(42, 78, 42, 90, 1.2); wallRun(42, 90, 34, 90, 1.2); wallRun(34, 90, 34, 100, 1.2); wallRun(34, 100, 22, 100, 1.2); wallRun(22, 100, 22, 78, 1.2);
     const osign = signBoard('The odd field', 4.6, 1, '#f2e6c8', '#4a3420'); osign.position.set(32, 3.4, 76); cairnScene.add(osign);
-    // the cairn ring: twelve standing stones, radius 7 rods
+    // the cairn ring: twelve standing stones, radius 7 yards
     for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6, x = Math.cos(a) * 14, z = 92 + Math.sin(a) * 14; const st = new THREE.Mesh(new THREE.BoxGeometry(1.6, rnd(3.5, 5), 1.1), mat(pick(['#8c8577', '#7a7468']), { roughness: 1 })); st.position.set(x, 2, z); st.rotation.y = -a; st.rotation.z = rnd(-0.08, 0.08); st.castShadow = true; cairnScene.add(st); cairnSolids.push({ x, z, r: 1.1 }); }
     const centre = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 1, 10), greyM); centre.position.set(0, 0.5, 92); cairnScene.add(centre);
     // the cisterns: a round tank and a square one
@@ -2699,7 +2989,7 @@
     for (let i = 0; i < 3000; i++) { pv.set(rnd(-56, 56), 0, rnd(2, LANT_LEN - 2)); if (Math.abs(pv.x) < 5 || lantH(pv.x, pv.z) < -1) { i--; continue; } pv.y = lantH(pv.x, pv.z) - 0.1; q.setFromEuler(new THREE.Euler(rnd(-0.3, 0.3), rnd(0, 6.3), rnd(-0.3, 0.3))); sv.set(1, rnd(1, 2.4), 1); grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#5a8452', '#4f7a4a', '#7a9a6a']))); }
     lantScene.add(grass);
     const whiteM = mat('#f2efe6', { roughness: 0.8 }), redM = mat('#b8323a'), ironM = mat('#3a3a3a', { metalness: 0.6, roughness: 0.5 }), brassM = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 }), stoneM = mat('#8c8577');
-    // the lighthouse: 40 rods tall, red bands, a lantern room, and the beam that goes round
+    // the lighthouse: about 7½ feet tall at the elf's scale (one game unit is about 2¼ inches), red bands, a lantern room, and the beam that goes round
     { const g = new THREE.Group(); g.position.set(LIGHT.x, 0, LIGHT.z); lantScene.add(g);
       const base = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 7.5, 3, 20), stoneM); base.position.y = 1.5; g.add(base);
       const tower = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 5.2, 34, 20), whiteM); tower.position.y = 20; tower.castShadow = true; g.add(tower);
@@ -3490,8 +3780,10 @@
   async function cloudPull() {
     const c = await rpc('game_load_progress'); if (!c) return 'empty';
     const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike) };
+    // a bike granted on the account is kept whichever save wins
+    if (cloud.bike || save.bike) { cloud.bike = true; save.bike = true; bikeOwned = true; }
     if (progressOf(cloud) >= progressOf(save)) { save = cloud; persist(); return 'cloud'; }
-    cloudSoon(); return 'local';
+    persist(); cloudSoon(); return 'local';
   }
   // the sign-in box on the map screen
   const acctOpen = $('acctopen'), acctOut = $('acctout'), acctForm = $('acctform'), acctWho = $('acctwho'), acctStatus = $('acctstatus');
@@ -5144,17 +5436,17 @@
   function startC3() {
     phase = 'c3';
     say([
-      'The pasture past the lodge. It’s <b>12 rods</b> long and <b>8 rods</b> wide, and the shepherd wants it fenced.',
+      'The pasture past the lodge. It’s <b>12 yards</b> long and <b>8 yards</b> wide, and the shepherd wants it fenced.',
       'The distance all the way <b>around</b> a shape is its <b>perimeter</b>. Walk the edge and add up the sides.'
-    ], () => askNumber('A 12 by 8 pasture. How many rods of fence go all the way round?', 40, rectSvg(12, 8),
-      back => stepLines(['12 + 8 + 12 + 8', '= 20 + 20', '= <b style="color:var(--gold)">40</b> rods'], () => setTimeout(back, 900)),
-      () => say(['40 rods. Two lengths and two widths: 2 × (12 + 8).', 'Posts go every <b>2 rods</b>, all the way round.'],
-        () => askNumber('40 rods of fence, a post every 2 rods. How many posts?', 20, rectSvg(12, 8, { posts: 2 }),
+    ], () => askNumber('A 12 by 8 pasture. How many yards of fence go all the way round?', 40, rectSvg(12, 8),
+      back => stepLines(['12 + 8 + 12 + 8', '= 20 + 20', '= <b style="color:var(--gold)">40</b> yards'], () => setTimeout(back, 900)),
+      () => say(['40 yards. Two lengths and two widths: 2 × (12 + 8).', 'Posts go every <b>2 yards</b>, all the way round.'],
+        () => askNumber('40 yards of fence, a post every 2 yards. How many posts?', 20, rectSvg(12, 8, { posts: 2 }),
           back => stepLines(['40 ÷ 2 = <b style="color:var(--gold)">20</b> posts', '(going round, the first post is also the last)'], () => setTimeout(back, 1200)),
-          () => say(['20 posts. Now the <b>inside</b>. How much grass is there? That’s <b>area</b>: how many <b>square rods</b> fit in it.', 'Picture it as a grid of squares, one rod each way. 12 along, 8 up.'],
-            () => askNumber('12 rods by 8 rods. How many square rods of grass?', 96, rectSvg(12, 8, { grid: true }),
-              back => stepLines(['8 rows of 12 squares', '12 × 8 = <b style="color:var(--gold)">96</b> square rods'], () => setTimeout(back, 900)),
-              () => say(['96 square rods. Perimeter is around; area is inside. Length times width, every time, for a rectangle.'],
+          () => say(['20 posts. Now the <b>inside</b>. How much grass is there? That’s <b>area</b>: how many <b>square yards</b> fit in it.', 'Picture it as a grid of squares, one yard each way. 12 along, 8 up.'],
+            () => askNumber('12 yards by 8 yards. How many square yards of grass?', 96, rectSvg(12, 8, { grid: true }),
+              back => stepLines(['8 rows of 12 squares', '12 × 8 = <b style="color:var(--gold)">96</b> square yards'], () => setTimeout(back, 900)),
+              () => say(['96 square yards. Perimeter is around; area is inside. Length times width, every time, for a rectangle.'],
                 () => rewardCairn(3, 'The pasture fenced', 'You learned <b style="color:var(--gold)">perimeter</b> (add the sides) and <b style="color:var(--gold)">area</b> (length × width) of a rectangle.', startC4), WREN), WREN), WREN), WREN), WREN), WREN), WREN);
   }
   // Lesson 4: odd fields (compound shapes and triangles)
@@ -5164,7 +5456,7 @@
       'Now the odd field, the L-shaped one by the yard. Nobody can fence it straight, so nobody knows its area.',
       'The trick: a strange shape is just <b>plain shapes stuck together</b>. Cut it into rectangles, find each, add them.'
     ], () => askNumber('The L: a 10 by 6 piece on top of a 6 by 5 piece. What is its whole area?', 90, lshapeSvg(false),
-      back => showExpl(expl(lshapeSvg(true), 'Top piece 10 × 6 = 60. Bottom piece 6 × 5 = 30. Together, 90 square rods.'), back, 2600),
+      back => showExpl(expl(lshapeSvg(true), 'Top piece 10 × 6 = 60. Bottom piece 6 × 5 = 30. Together, 90 square yards.'), back, 2600),
       () => say(['90. Cut, measure, add.', 'The last corner of the field is a <b>triangle</b>: a point cut off a rectangle. A triangle is <b>half</b> of the rectangle it sits in.'],
         () => askNumber('A triangle with base 8 and height 6. What is its area?', 24, triSvg(8, 6, { box: true }),
           back => stepLines(['The rectangle round it: 8 × 6 = 48', 'The triangle is half of it', '48 ÷ 2 = <b style="color:var(--gold)">24</b>'], () => setTimeout(back, 900)),
@@ -5175,29 +5467,29 @@
   function startC5() {
     phase = 'c5';
     say([
-      'The cairn ring. Twelve stones on a circle. The old surveyors set the middle stone and walked out <b>7 rods</b> to every one.',
+      'The cairn ring. Twelve stones on a circle. The old surveyors set the middle stone and walked out <b>7 yards</b> to every one.',
       'Middle to edge is the <b>radius</b>. Edge to edge through the middle is the <b>diameter</b>: twice the radius.'
-    ], () => askNumber('The ring’s radius is 7 rods. What is its diameter?', 14, circleSvg(7, { radius: true }),
+    ], () => askNumber('The ring’s radius is 7 yards. What is its diameter?', 14, circleSvg(7, { radius: true }),
       back => showExpl(expl(circleSvg(7, { diameter: true }), 'Across the whole circle is two radiuses: 7 + 7 = 14.'), back, 2000),
       () => say(['14. Now the walk <b>around</b> it, the <b>circumference</b>. Here’s the secret every surveyor knows:', 'Around any circle is a little more than <b>3 times</b> across it. The exact number is called <b>pi</b>, about <b>3.14</b>. Circumference = pi × diameter.'],
-        () => ask('Diameter 14. About how far is it around the ring?', ['about 22 rods', 'about 44 rods', 'about 154 rods'], 'about 44 rods',
-          back => showExpl(expl(circleSvg(7, { diameter: true, around: true }), '3.14 × 14 = 43.96, so about 44 rods around.'), back, 2400),
+        () => ask('Diameter 14. About how far is it around the ring?', ['about 22 yards', 'about 44 yards', 'about 154 yards'], 'about 44 yards',
+          back => showExpl(expl(circleSvg(7, { diameter: true, around: true }), '3.14 × 14 = 43.96, so about 44 yards around.'), back, 2400),
           () => say(['About 44. A bit more than 3 times 14.', 'And the grass <b>inside</b> the ring, its <b>area</b>? Pi times the radius times the radius: pi × r × r.'],
-            () => ask('Radius 7. About what is the area inside the ring?', ['about 44 square rods', 'about 154 square rods', 'about 308 square rods'], 'about 154 square rods',
+            () => ask('Radius 7. About what is the area inside the ring?', ['about 44 square yards', 'about 154 square yards', 'about 308 square yards'], 'about 154 square yards',
               back => showExpl(expl(circleSvg(7, { radius: true, note: '3.14 × 7 × 7 = 153.86' }), 'Pi times 7 times 7: 3.14 × 49 is about 154.'), back, 2400),
-              () => say(['About 154 square rods. Around is pi times diameter; inside is pi times radius squared. Two rules, every circle in the world.'],
+              () => say(['About 154 square yards. Around is pi times diameter; inside is pi times radius squared. Two rules, every circle in the world.'],
                 () => rewardCairn(5, 'The cairn ring surveyed', 'You learned <b style="color:var(--gold)">radius, diameter, circumference</b> (π × d) and the <b style="color:var(--gold)">area of a circle</b> (π × r × r).', startC6), WREN), WREN), WREN), WREN), WREN), WREN), WREN);
   }
   // Lesson 6: filling a cistern (volume of boxes and cylinders)
   function startC6() {
     phase = 'c6';
     say([
-      'Dry summers up here. The cisterns catch the rain, and I need to know what they hold. That’s <b>volume</b>: how many <b>cubic rods</b> fit inside.',
+      'Dry summers up here. The cisterns catch the rain, and I need to know what they hold. That’s <b>volume</b>: how many <b>cubic yards</b> fit inside.',
       'The square tank is a box: 6 long, 4 wide, 3 deep. Area of the floor, then stack it up by the depth.'
-    ], () => askNumber('A box 6 by 4 by 3. How many cubic rods does it hold?', 72, boxSvg(6, 4, 3),
-      back => stepLines(['Floor: 6 × 4 = 24 squares', 'Stacked 3 deep: 24 × 3', '= <b style="color:var(--gold)">72</b> cubic rods'], () => setTimeout(back, 900)),
+    ], () => askNumber('A box 6 by 4 by 3. How many cubic yards does it hold?', 72, boxSvg(6, 4, 3),
+      back => stepLines(['Floor: 6 × 4 = 24 squares', 'Stacked 3 deep: 24 × 3', '= <b style="color:var(--gold)">72</b> cubic yards'], () => setTimeout(back, 900)),
       () => say(['72. Length times width times height.', 'The round tank is a <b>cylinder</b>: radius 2, and 5 deep. Same idea: the round floor’s area, stacked up 5.'],
-        () => ask('Cylinder, radius 2, height 5. About what does it hold?', ['about 31 cubic rods', 'about 63 cubic rods', 'about 126 cubic rods'], 'about 63 cubic rods',
+        () => ask('Cylinder, radius 2, height 5. About what does it hold?', ['about 31 cubic yards', 'about 63 cubic yards', 'about 126 cubic yards'], 'about 63 cubic yards',
           back => showExpl(expl(cylSvg(2, 5, '3.14 × 2 × 2 × 5 = 62.8'), 'The round floor: pi × 2 × 2 = 12.56. Stacked 5 deep: 62.8, about 63.'), back, 2600),
           () => say(['About 63. Floor area times height works for any straight-sided tank, square or round.', 'The box holds more. I’d always wondered. Thank you.'],
             () => rewardCairn(6, 'The cisterns measured', 'You learned <b style="color:var(--gold)">volume</b>: floor area × height, for a box (l × w × h) and a cylinder (π × r × r × h).', startC7), WREN), WREN), WREN), WREN), WREN);
@@ -5239,15 +5531,15 @@
     phase = 'c9';
     say([
       'Pip wants to know how tall the Old Oak back in the Hollow is. Nobody can climb it with a chain. So we don’t.',
-      'Stand a stick in the sun. A <b>2-rod</b> stick throws a <b>3-rod</b> shadow. At the same moment the oak throws a <b>60-rod</b> shadow.',
+      'Stand a stick in the sun. A <b>2-foot</b> stick throws a <b>3-foot</b> shadow. At the same moment the oak throws a <b>60-foot</b> shadow.',
       'The stick and its shadow make a triangle. The oak and its shadow make the <b>same shape</b>, bigger. Same shape means every side grew by the same amount.'
     ], () => askNumber('The shadow grew from 3 to 60. How many times bigger is that?', 20, shadowSvg(),
       back => stepLines(['3 × ? = 60', '60 ÷ 3 = <b style="color:var(--gold)">20</b> times bigger'], () => setTimeout(back, 900)),
       () => say(['20 times. So the oak is 20 times the stick.'],
-        () => askNumber('The stick is 2 rods tall and the oak is 20 times bigger. How tall is the oak?', 40, shadowSvg('stick 2, shadow 3  →  oak ?, shadow 60'),
-          back => stepLines(['2 × 20 = <b style="color:var(--gold)">40</b> rods tall'], () => setTimeout(back, 900)),
-          () => say(['40 rods. <b>Similar</b> shapes: same angles, every side scaled by one number. Measure the small one, scale up.', 'You’ve got the whole kit now. Units, corners, around, inside, round, volume, the ladder, the grid, scaling. Time to build the bridge.'],
-            () => rewardCairn(9, 'The Old Oak measured: 40 rods', 'You learned <b style="color:var(--gold)">similar triangles</b>: same shape, every side scaled by the same number.', startC10), WREN), WREN), WREN), WREN), WREN);
+        () => askNumber('The stick is 2 feet tall and the oak is 20 times bigger. How tall is the oak?', 40, shadowSvg('stick 2, shadow 3  →  oak ?, shadow 60'),
+          back => stepLines(['2 × 20 = <b style="color:var(--gold)">40</b> feet tall'], () => setTimeout(back, 900)),
+          () => say(['40 feet. <b>Similar</b> shapes: same angles, every side scaled by one number. Measure the small one, scale up.', 'You’ve got the whole kit now. Units, corners, around, inside, round, volume, the ladder, the grid, scaling. Time to build the bridge.'],
+            () => rewardCairn(9, 'The Old Oak measured: 40 feet', 'You learned <b style="color:var(--gold)">similar triangles</b>: same shape, every side scaled by the same number.', startC10), WREN), WREN), WREN), WREN), WREN);
   }
   // Lesson 10, the capstone: the Cairnhold Bridge
   function startC10() {
@@ -5440,9 +5732,9 @@
       { num: ['48-tooth chainring, 16-tooth cog. One pedal turn makes how many wheel turns?', 3, gearsSvg(16, 48), ['48 ÷ 16 = ' + G(3) + ' wheel turns per pedal turn']] },
       { say: ['3 to 1. Fast on the flat, but every pedal turn has to drag the wheel round three times, and on the hill your legs will give out.', 'For the hill, the ratio must be <b>2 to 1 or lower</b>. Pick the cog.'] },
       { choice: ['48-tooth chainring. Which cog gives 2 to 1 or lower for the hill?', ['12-tooth cog', '16-tooth cog', '24-tooth cog'], '24-tooth cog', expl(gearsSvg(24, 48, '48 ÷ 24 = 2'), '48 ÷ 12 = 4, 48 ÷ 16 = 3, 48 ÷ 24 = 2. Only the 24-tooth cog gives 2 to 1.')] },
-      { say: ['24 teeth. 2 to 1: slower, stronger. That’s the hill gear.', 'Last number. The wheel is 2 rods across, so one wheel turn rolls about 3.14 × 2 ≈ 6.3 rods. At 2 to 1, one pedal turn is two wheel turns.'] },
-      { choice: ['One pedal turn, two wheel turns of about 6.3 rods each. About how far does one pedal turn take you?', ['about 3 rods', 'about 6 rods', 'about 13 rods'], 'about 13 rods', expl(circleSvg(1, { diameter: true }), 'Around the wheel is π × 2 ≈ 6.3 rods. Two turns: about 12.6, call it 13 rods per pedal.')] },
-      { say: ['About 13 rods a pedal. You know your bicycle better than anyone who’s ever sat on one. Pip, bring it out!'] },
+      { say: ['24 teeth. 2 to 1: slower, stronger. That’s the hill gear.', 'Last number. The wheel is 2 inches across, so one wheel turn rolls about 3.14 × 2 ≈ 6.3 inches. At 2 to 1, one pedal turn is two wheel turns.'] },
+      { choice: ['One pedal turn, two wheel turns of about 6.3 inches each. About how far does one pedal turn take you?', ['about 3 inches', 'about 6 inches', 'about 13 inches'], 'about 13 inches', expl(circleSvg(1, { diameter: true }), 'Around the wheel is π × 2 ≈ 6.3 inches. Two turns: about 12.6, call it 13 inches per pedal.')] },
+      { say: ['About 13 inches a pedal. You know your bicycle better than anyone who’s ever sat on one. Pip, bring it out!'] },
       { do: () => { bikeOwned = true; save.bike = true; persist(); setRiding(true); } },
       { say: ['There. Yours. Press the <b>ride</b> key (R, or up on the controller’s pad) to get on and off. It’s the first thing in the land faster than your legs, and it won’t make you stronger; only your legs do that.', 'Now go and climb that hill, and look back at my town from the top.'] }
     ], TAM, () => { phase = 'g10climb'; hint('Ride up the hill on the right side of town, past the bike rack. Tamsin will meet you at the top.'); });
@@ -5823,8 +6115,8 @@
     if (['toilsa', 'tosky'].includes(phase)) {
       phase = 's1';
       runScript([
-        { say: ['Don’t look down yet. Look at the rail. I’m <b>Quill</b>. Professor, if you must. Astra wrote that you can find a limit by feel. Up here we find them on purpose.', 'A glider leaves the rail and covers 120 rods in 8 seconds. Its <b>average</b> speed is distance over time. Easy.'] },
-        { num: ['120 rods in 8 seconds. Average speed, in rods per second?', 15, exprSvg('120 ÷ 8'), ['120 ÷ 8 = ' + G(15)]] },
+        { say: ['Don’t look down yet. Look at the rail. I’m <b>Quill</b>. Professor, if you must. Astra wrote that you can find a limit by feel. Up here we find them on purpose.', 'A glider leaves the rail and covers 120 feet in 8 seconds. Its <b>average</b> speed is distance over time. Easy.'] },
+        { num: ['120 feet in 8 seconds. Average speed, in feet per second?', 15, exprSvg('120 ÷ 8'), ['120 ÷ 8 = ' + G(15)]] },
         { say: ['15. But the glider isn’t going 15 the whole way. It starts slow and speeds up. What is its speed at <i>one instant</i>, say exactly 2 seconds in? Distance over time, with no time? That’s 0 ÷ 0.', 'Here’s the trick. The flight log says position s = t². Take the average speed from t = 2 to t = 3: (9 − 4) ÷ 1.'] },
         { num: ['s = t². Average speed from t = 2 to t = 3?', 5, tangentSvg(x => x * x, 2, 3, 'the secant from 2 to 3'), ['s(3) − s(2) = 9 − 4 = 5', 'over 1 second: ' + G(5)]] },
         { say: ['5. That’s the slope of the straight line from the point at 2 to the point at 3: a <b>secant</b>. Now shrink the gap. From 2 to 2.1: s(2.1) = 4.41.'] },
@@ -6027,6 +6319,8 @@
   function mapName() { return settings.input === 'gamepad' ? 'Start' : settings.input === 'touch' ? 'the map button' : keyLabel(settings.binds.map); }
   function devText(t) { return (t || '').replace(/\b([Pp]ress) E\b/g, (m, v) => v + ' ' + pickName()).replace(/\b([Pp]ress) M\b/g, (m, v) => v + ' ' + mapName()); }
   let stamina = 100, running = false, sitting = false, sitSeat = null;
+  const UNIT_IN = 2.25; // one game unit in real inches (the elf stands about 7 inches tall)
+  function realLen(u) { const inch = u * UNIT_IN; if (inch < 24) return Math.round(inch) + ' inches'; const ft = inch / 12; return (ft < 10 ? ft.toFixed(1) : Math.round(ft)) + ' feet'; }
   let hp = 100, dead = false, lastGY = 0, fallPeak = 0, wasAir = false, stamMax = 100, stamInit = false, stamTen = 10, drowning = false;
   function growStam(n) { stamMax = Math.min(300, stamMax + n); save.stamMax = +stamMax.toFixed(2); const ten = Math.floor(stamMax / 10); if (ten > stamTen) { stamTen = ten; flash('Your stamina grew. ' + Math.round(stamMax) + ' now.'); persist(); } }
   const hpEl = $('hp'), hpFill = $('hpfill');
@@ -6040,6 +6334,8 @@
   // wake at the last place you stood on solid ground, without restarting the page
   function respawn() {
     const c = save.check;
+    const joined = k => k === 'wild' || !!TILES[k];
+    if (c && c.where !== where && joined(c.where) && joined(where)) { moveCompany(curScene(), sceneOf(c.where)); where = c.where; }
     if (!c || c.where !== where) { // the safe spot is in another region: hand it to the normal loader
       if (c) { save.where = c.where; save.pos = c.pos; save.yaw = c.yaw; } else { save.where = 'village'; save.pos = [0, 0, 6.5]; save.yaw = Math.PI; }
       persist(); try { location.reload(); } catch (e) {} return;
@@ -6056,7 +6352,7 @@
   }
   let camYaw = Math.PI, bodyYaw = Math.PI, pitch = 0.08, view = 'back', vy = 0, py = 0, wantJump = false;
   const vel = new THREE.Vector3(), targetV = new THREE.Vector3(); // momentum: where your feet are actually carrying you
-  function currentAt(x, z) { if (where === 'fernwater') return targetV.set(-1.3, 0, 0); if (where === 'lantern') return targetV.set(-0.45, 0, 0.8); return targetV.set(0, 0, 0); }
+  function currentAt(x, z) { if (where === 'fernwater') return targetV.set(-1.3, 0, 0); if (where === 'wild') return wildRiver(x, z) ? targetV.set(-1.3 * Math.cos(tileF.yaw), 0, 1.3 * Math.sin(tileF.yaw)) : targetV.set(0, 0, 0); if (where === 'lantern') return targetV.set(-0.45, 0, 0.8); return targetV.set(0, 0, 0); }
   const SENS = 0.0022;
   function toggleView() { view = view === 'back' ? 'front' : 'back'; if (view === 'front') camYaw = bodyYaw; }
   window.addEventListener('keydown', e => {
@@ -6160,9 +6456,10 @@
   canvas.addEventListener('pointercancel', () => { down = null; dragged = false; });
 
   // ---------- movement and collisions ----------
-  function inRiver(x, z) { if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2; }
+  function inRiver(x, z) { if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; if (where === 'wild') return wildRiver(x, z); return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2; }
   function groundAt(x, z) {
     if (where === 'in') return 0;
+    if (where === 'wild') return wildRiver(x, z) ? Math.min(worldH(x, z), -1.45) : worldH(x, z);
     if (where === 'cairnhold') return (z > GORGE.z0 && z < GORGE.z1 && !(bridgeBuilt && Math.abs(x) < 3.5)) ? -GORGE.depth : 0;
     if (where === 'hills') return hillH(x, z);
     if (where === 'high') return highH(x, z);
@@ -6185,6 +6482,7 @@
   }
   function collide(prev) {
     const p = player.position;
+    if (where === 'wild') { collideWild(p, prev); return; }
     if (where === 'village') solids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
     // the shop wall is a ring with a doorway
     const dx = p.x - SHOP.x, dz = p.z - SHOP.z, d = Math.hypot(dx, dz), ang = Math.atan2(dx, dz);
@@ -6199,7 +6497,7 @@
       const atGate = Math.abs(p.x) < 4.2;
       p.x = clamp(p.x, FENCE.x0 + 0.8, FENCE.x1 - 0.8); p.z = Math.max(p.z, FENCE.z0 + 0.8);
       if (!atGate) p.z = Math.min(p.z, FENCE.z1 - 0.8);
-      else if (p.z > GATE.z + 1.5 && !fading) goToRoad();
+      else if (p.z > GATE.z + 1.5 && !fading) { switchFrame('wild', prev); return; }
     } else if (where === 'road') {
       p.x = clamp(p.x, -11, 11); p.z = Math.max(p.z, 0);
       if (p.z > ROAD_LEN - 2 && !fading) goToOrchards();
@@ -6209,15 +6507,13 @@
       orchSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       p.x = clamp(p.x, -47, 47);
       if (Math.hypot(p.x - MILL.x, p.z - (MILL.z + 9.6)) < 2.4 && !fading) enterInterior('mill');
-      if (p.z > ORCH_LEN - 1 && Math.abs(p.x - 30) < 4.5 && !fading) goToHills(false); else p.z = Math.min(p.z, Math.abs(p.x - 30) < 4.5 ? ORCH_LEN + 1 : ORCH_LEN - 2);
-      if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToRoadFromOrchards(); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
+      if (p.z > ORCH_LEN + 0.5 && Math.abs(p.x - 30) < 4.5 && !fading) { switchFrame('wild', prev); return; } else p.z = Math.min(p.z, Math.abs(p.x - 30) < 4.5 ? ORCH_LEN + 1 : ORCH_LEN - 2);
+      if (p.z < -0.5 && Math.abs(p.x) < 4.5 && !fading) { switchFrame('wild', prev); return; } else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
     }
     if (where === 'fernwater') {
       fernSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       // the river: stay on the boardwalk when over the water
-      p.x = clamp(p.x, -44, 44);
-      if (p.z > FERN_LEN - 1.2 && Math.abs(p.x) < 4.5 && !fading) goToHigh(false); else p.z = Math.min(p.z, Math.abs(p.x) < 4.5 ? FERN_LEN + 1 : FERN_LEN - 2);
-      if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToHills(true); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
+      if ((Math.abs(p.x) > 46 || p.z < -0.5 || p.z > FERN_LEN + 0.5) && !fading) { switchFrame('wild', prev); return; }
       // you can swim under the bridge, but you climb onto it only at the ramps
       if (inRiver(prev.x, prev.z) && Math.abs(p.x) <= 5.2 && p.z > 56.5 && p.z < 99.5) p.x = prev.x;
       // the shop buildings: solid boxes, except at the door, which takes you inside
@@ -6235,14 +6531,12 @@
     if (where === 'cairnhold') {
       cairnSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       cairnBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } });
-      p.x = clamp(p.x, -60, 60);
-      if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToHighFromCairn(); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
+      if ((Math.abs(p.x) > 60 || p.z < -0.5 || p.z > CAIRN_LEN + 20.5) && !fading) { switchFrame('wild', prev); return; }
       // the gorge: only the bridge crosses it
       const onBridge = bridgeBuilt && Math.abs(p.x) < 3.2;
       // the rope across the lane holds until the bridge is built; everywhere else the gorge is a real drop, and the walls are too steep to climb
       if (!bridgeBuilt && Math.abs(p.x) < 4.6 && prev.z < GORGE.z0 - 3.2 && p.z > GORGE.z0 - 3.2) p.z = GORGE.z0 - 3.2;
       if (groundAt(prev.x, prev.z) < -5 && groundAt(p.x, p.z) > -5) { p.x = prev.x; p.z = prev.z; }
-      if (p.z > CAIRN_LEN + 19 && Math.abs(p.x) < 4.5 && !fading) goToCliff(false); else p.z = Math.min(p.z, Math.abs(p.x) < 4.5 ? CAIRN_LEN + 21 : CAIRN_LEN + 18);
     }
     if (where === 'cliff') {
       cliffSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
@@ -6256,10 +6550,9 @@
     if (where === 'cogsworth') {
       cogSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       cogBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } });
-      p.x = clamp(p.x, -60, 150); p.z = Math.min(p.z, CLIFFWALL - 2);
-      if (p.z < 1.2 && Math.abs(p.x) < 4.5 && !fading) goToCliff(true); else p.z = Math.max(p.z, Math.abs(p.x) < 4.5 ? -1 : 0.8);
-      if (p.x > 60 && Math.abs(p.z - 70) > 60) p.x = 60;
-      if (p.x > 148 && Math.abs(p.z - 70) < 4.5 && !fading) goToMtn(false); else p.x = Math.min(p.x, Math.abs(p.z - 70) < 4.5 ? 149 : 146);
+      p.z = Math.min(p.z, CLIFFWALL - 2);
+      if (p.x > 148 && p.x > prev.x && Math.abs(p.z - 70) < 4.5 && !fading) { goToMtn(false); return; }
+      if ((p.x < -60 || p.z < -0.5 || p.x > 150.5) && !fading) { switchFrame('wild', prev); return; }
     }
     if (where === 'mtn') {
       mtnSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
@@ -6354,7 +6647,7 @@
     const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' ? 0.62 : ZOOMS[zoom]), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
     const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4;
     // when ground or a wall is in the way, the camera comes closer; it never climbs, so your view keeps the tilt you chose
-    const floorY = where === 'lantern' || where === 'sea' ? SEA_Y : where === 'cairnhold' ? -GORGE.depth : where === 'skyhaven' ? -600 : -0.1; // the lowest the camera may go: water, or the bottom of what you fell into
+    const floorY = where === 'wild' ? -1000 : where === 'lantern' || where === 'sea' ? SEA_Y : where === 'cairnhold' ? -GORGE.depth : where === 'skyhaven' ? -600 : -0.1; // the lowest the camera may go: water, or the bottom of what you fell into
     const groundOk = p => where === 'in' || p.y >= Math.max(groundAt(p.x, p.z), floorY) + 0.7;
     let dd = dist, pos;
     for (let i = 0; i < 24; i++) {
@@ -6376,19 +6669,20 @@
   try { Object.assign(gfx, JSON.parse(localStorage.getItem(GFX_KEY) || '{}')); } catch (e) {}
   function gpuName() { try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : ''; } catch (e) { return ''; } }
   function autoQuality() { const n = gpuName(); if (/SwiftShader|llvmpipe|Mali|Adreno|PowerVR/i.test(n)) return 'low'; if (/Intel|Iris|UHD|HD Graphics|Apple/i.test(n)) return 'medium'; return n ? 'high' : 'medium'; }
-  const ALL_SCENES = () => [scene, roadScene, orchScene, hillScene, fernScene, highScene, cairnScene, cliffScene, cogScene, mtnScene, embScene, seaScene, lantScene, liftScene, skyScene, flightScene].concat(Object.values(interiors).map(i => i.scene));
+  const ALL_SCENES = () => [worldScene, scene, roadScene, orchScene, hillScene, fernScene, highScene, cairnScene, cliffScene, cogScene, mtnScene, embScene, seaScene, lantScene, liftScene, skyScene, flightScene].concat(Object.values(interiors).map(i => i.scene));
   ALL_SCENES().forEach(sc => { if (sc.fog) sc.userData.fog0 = [sc.fog.near, sc.fog.far]; sc.traverse(o => { if (o.isInstancedMesh) o.userData.total = o.count; }); });
   const farThings = []; hillScene.children.forEach(o => { if ((o.isGroup && o.userData.trunkR) || (o.isMesh && o.geometry && o.geometry.type === 'DodecahedronGeometry')) farThings.push(o); });
   function applyGfx() {
     const q = gfx.quality === 'auto' ? autoQuality() : gfx.quality, d = gfx.distance;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, q === 'low' ? 1 : q === 'medium' ? 1.5 : 2));
     renderer.shadowMap.enabled = q !== 'low'; const shadowSize = q === 'high' ? 4096 : 2048;
-    [sun, roadSun, orchSun, hillSun, fernSun, highSun, cairnSun, cliffSun, cogSun, mtnSun, embSun, seaSun, lantSun, liftSun, skySun, flightSun].forEach(l => { if (l.shadow.mapSize.x !== shadowSize) { l.shadow.mapSize.set(shadowSize, shadowSize); if (l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null; } } });
+    [worldSun, sun, roadSun, orchSun, hillSun, fernSun, highSun, cairnSun, cliffSun, cogSun, mtnSun, embSun, seaSun, lantSun, liftSun, skySun, flightSun].forEach(l => { if (l.shadow.mapSize.x !== shadowSize) { l.shadow.mapSize.set(shadowSize, shadowSize); if (l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null; } } });
     Object.values(interiors).forEach(it => it.scene.traverse(o => { if (o.isPointLight) o.castShadow = q === 'high'; }));
     const grassK = q === 'low' ? 0.35 : q === 'medium' ? 0.7 : 1;
     const distK = d === 'near' ? 0.55 : d === 'far' ? 1.6 : 1;
     ALL_SCENES().forEach(sc => { sc.traverse(o => { if (o.isInstancedMesh && o.userData.total) o.count = Math.floor(o.userData.total * grassK); }); if (sc.fog && sc.userData.fog0) { sc.fog.near = sc.userData.fog0[0] * distK; sc.fog.far = sc.userData.fog0[1] * distK; } });
     ALL_SCENES().forEach(sc => sc.traverse(o => { if (o.isMesh && o.material && o.material.needsUpdate !== undefined) o.material.needsUpdate = true; }));
+    worldGfx(distK, grassK);
     $('gfxq').value = gfx.quality; $('gfxd').value = gfx.distance; $('gfxnote').textContent = gfx.quality === 'auto' ? `Auto picked ${q} for this device.` : '';
     try { localStorage.setItem(GFX_KEY, JSON.stringify(gfx)); } catch (e) {}
   }
@@ -6475,7 +6769,7 @@
       const base = view === 'front' ? bodyYaw : camYaw;
       const dir = base + Math.atan2(mx, mz);
       fwd.set(Math.sin(dir), 0, Math.cos(dir));
-      const grade = where === 'hills' ? (hillH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - hillH(player.position.x, player.position.z)) / 1.5 : where === 'high' ? (highH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - highH(player.position.x, player.position.z)) / 1.5 : where === 'cliff' ? (cliffH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cliffH(player.position.x, player.position.z)) / 1.5 : where === 'cogsworth' ? (cogH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cogH(player.position.x, player.position.z)) / 1.5 : where === 'mtn' ? (mtnH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - mtnH(player.position.x, player.position.z)) / 1.5 : where === 'sea' ? (seaH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - seaH(player.position.x, player.position.z)) / 1.5 : where === 'lantern' ? (groundAt(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - groundAt(player.position.x, player.position.z)) / 1.5 : 0;
+      const grade = where === 'hills' ? (hillH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - hillH(player.position.x, player.position.z)) / 1.5 : where === 'high' ? (highH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - highH(player.position.x, player.position.z)) / 1.5 : where === 'cliff' ? (cliffH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cliffH(player.position.x, player.position.z)) / 1.5 : where === 'cogsworth' ? (cogH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cogH(player.position.x, player.position.z)) / 1.5 : where === 'mtn' ? (mtnH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - mtnH(player.position.x, player.position.z)) / 1.5 : where === 'sea' ? (seaH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - seaH(player.position.x, player.position.z)) / 1.5 : where === 'lantern' || where === 'wild' ? (groundAt(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - groundAt(player.position.x, player.position.z)) / 1.5 : 0;
       const slopeK = grade > 0 ? 1 / (1 + grade * 2.2) : Math.min(1.25, 1 - grade * 0.4);
       if (grade > 0.25 && running) stamina = Math.max(0, stamina - dt * 20 * grade);
       const swimming = inRiver(player.position.x, player.position.z);
@@ -6520,9 +6814,8 @@
       if (stepped && !riding && !locked2 && py <= 0.001 && gNow > lastGY + dt * 0.8 && gNow - lastGY < 2) growStam(dt * 0.03);
       lastGY = gNow; }
     if (!sitting) { vy -= 26 * dt; py += vy * dt; if (py < 0) { py = 0; vy = 0; } }
-    if (wasAir && py <= 0.001 && !sitting) { wasAir = false; const gNow = groundAt(player.position.x, player.position.z), drop = fallPeak - gNow; if (where !== 'lift' && where !== 'flight') { if (gNow < -100) die('You fell out of the sky.'); else if (gNow <= -GORGE.depth + 0.5 && where === 'cairnhold') die('You fell into the gorge.'); else if (!inRiver(player.position.x, player.position.z)) { if (drop >= 16) die('You fell too far.'); else if (drop > 6) hurt(Math.round((drop - 6) * 9), 'That hurt. ' + Math.round(drop) + ' rods is a long way down.'); } } }
+    if (wasAir && py <= 0.001 && !sitting) { wasAir = false; const gNow = groundAt(player.position.x, player.position.z), drop = fallPeak - gNow; if (where !== 'lift' && where !== 'flight') { if (gNow < -100) die('You fell out of the sky.'); else if (gNow <= -GORGE.depth + 0.5 && where === 'cairnhold') die('You fell into the gorge.'); else if (!inRiver(player.position.x, player.position.z)) { if (drop >= 16) die('You fell too far.'); else if (drop > 6) hurt(Math.round((drop - 6) * 9), 'That hurt. ' + realLen(drop) + ' is a long way down for an elf.'); } } }
     if (where === 'skyhaven' && groundAt(player.position.x, player.position.z) + py < -80) die('You fell out of the sky.');
-    if (where === 'cairnhold' && !dead && py <= 0.001 && groundAt(player.position.x, player.position.z) <= -GORGE.depth + 0.5) die('You fell into the gorge.');
     heal(dt);
     const onGround = sitting || py <= 0.001;
     const gliding = vel.length() > 0.4;
@@ -6545,7 +6838,7 @@
     camPos.lerp(cp, k); camLook.lerp(cl, k);
     camera.position.copy(camPos); camera.lookAt(camLook);
     if (where === 'hills') hillSky.position.set(player.position.x, 0, player.position.z); if (where === 'high') highSky.position.set(player.position.x, 0, player.position.z); if (where === 'cliff') cliffSky.position.set(player.position.x, 0, player.position.z); if (where === 'mtn') mtnSky.position.set(player.position.x, 0, player.position.z); if (where === 'sea') seaSky.position.set(player.position.x, 0, player.position.z); if (where === 'lantern' && lantScene.userData.stars) lantScene.userData.stars.position.set(player.position.x, 0, player.position.z); if (where === 'skyhaven') skyScene.userData.dome.position.set(player.position.x, -200, player.position.z);
-    if (where !== 'in') { const sunNow = where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : where === 'hills' ? hillSun : where === 'high' ? highSun : where === 'cairnhold' ? cairnSun : where === 'cliff' ? cliffSun : where === 'cogsworth' ? cogSun : where === 'mtn' ? mtnSun : where === 'emberdeep' ? embSun : where === 'sea' ? seaSun : where === 'lantern' ? lantSun : where === 'lift' ? liftSun : where === 'skyhaven' ? skySun : where === 'flight' ? flightSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-170, 330, 160)); }
+    if (where !== 'in') { const sunNow = where === 'wild' ? worldSun : where === 'village' ? sun : where === 'road' ? roadSun : where === 'orchards' ? orchSun : where === 'hills' ? hillSun : where === 'high' ? highSun : where === 'cairnhold' ? cairnSun : where === 'cliff' ? cliffSun : where === 'cogsworth' ? cogSun : where === 'mtn' ? mtnSun : where === 'emberdeep' ? embSun : where === 'sea' ? seaSun : where === 'lantern' ? lantSun : where === 'lift' ? liftSun : where === 'skyhaven' ? skySun : where === 'flight' ? flightSun : fernSun; sunNow.target.position.copy(player.position); sunNow.position.copy(player.position).add(new THREE.Vector3(-170, 330, 160)); }
 
     // Bramblewick watches you
     if (!reduce) { bw.position.y = Math.sin(t * 1.6) * 0.06; head.rotation.z = Math.sin(t * 0.9) * 0.05; }
@@ -6664,7 +6957,7 @@
     if (gameStarted && !mapOpen && keysShown < 99) { keysShown += dt; if (keysShown > 9) { keysEl.classList.add('gone'); keysShown = 99; } }
     ambientTick(dt, t); songTick(dt); cullTimer += dt; if (cullTimer > 0.5) { cullTimer = 0; cullFar(); }
     // your beetle trots along behind you
-    if (beetle && inRiver(beetle.position.x, beetle.position.z)) { if (where === 'lantern') { beetle.position.set(40, lantH(40, COVE.z), COVE.z); } else { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; } }
+    if (beetle && inRiver(beetle.position.x, beetle.position.z)) { if (where === 'lantern') { beetle.position.set(40, lantH(40, COVE.z), COVE.z); } else if (where === 'wild') { const [, lx, lz] = riverD(beetle.position.x, beetle.position.z), [bx, bz] = toWorld(tileF, lx, lz < 78 ? 52 : 104); beetle.position.set(bx, worldH(bx, bz), bz); } else { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; } }
     if (beetle && beetle.userData.follow && !inRiver(player.position.x, player.position.z)) {
       const dxb = player.position.x - beetle.position.x, dzb = player.position.z - beetle.position.z, db = Math.hypot(dxb, dzb);
       if (db > 40 || (where === 'fernwater' && (player.position.z > 97.6) !== (beetle.position.z > 97.6) && Math.abs(player.position.x) > 5.2)) { beetle.position.set(player.position.x + 2, 0, player.position.z + 2); }
@@ -6702,11 +6995,35 @@
       snow.geometry.attributes.position.needsUpdate = true;
     }
 
-    if (gameStarted && !fading && !dead) { saveTimer += dt; if (saveTimer > 2) { saveTimer = 0; if (where === 'in') { save.where = interior.region; save.pos = [interior.door.x, 0, interior.door.z]; save.yaw = interior.door.yaw; } else if (py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && where !== 'lift' && where !== 'flight') { save.where = where; save.pos = [player.position.x, 0, player.position.z]; save.yaw = bodyYaw; } save.started = true; if (!dead && py < 0.05 && groundAt(player.position.x, player.position.z) > -5 && !inRiver(player.position.x, player.position.z) && where !== 'lift' && where !== 'flight') save.check = { where: save.where, pos: save.pos.slice(), yaw: save.yaw }; persist(); } }
+    if (gameStarted && !fading && !dead) { saveTimer += dt; if (saveTimer > 2) { saveTimer = 0; if (where === 'in') { save.where = interior.region; save.pos = [interior.door.x, 0, interior.door.z]; save.yaw = interior.door.yaw; } else if (py < 0.05 && (where === 'wild' || groundAt(player.position.x, player.position.z) > -5) && where !== 'lift' && where !== 'flight') { save.where = where; save.pos = [player.position.x, 0, player.position.z]; save.yaw = bodyYaw; } save.started = true; if (!dead && py < 0.05 && (where === 'wild' || groundAt(player.position.x, player.position.z) > -5) && !inRiver(player.position.x, player.position.z) && where !== 'lift' && where !== 'flight') save.check = { where: save.where, pos: save.pos.slice(), yaw: save.yaw }; persist(); } }
     updateMapLive();
-    renderer.render(curScene(), camera);
+    if (where === 'wild' || TILES[where]) renderStitched(); else renderer.render(curScene(), camera);
     requestAnimationFrame(tick);
   }
+  // Fernwater joins the continent: its own sky and fog give way, its water is cut to the town, and the Fern runs on outside
+  tileV.sun = sun; tileO.sun = orchSun; tileF.sun = fernSun; tileF.scene = fernScene;
+  fernScene.children.forEach(o => { if (o.isMesh && o.material && o.material.side === THREE.BackSide && o.material.map === skyTex) o.visible = false; }); fernScene.fog.color.copy(worldScene.fog.color); fernScene.fog.near = 150; fernScene.fog.far = 430;
+  if (water) { const w0 = water.geometry.parameters.width; water.geometry.dispose(); water.geometry = new THREE.PlaneGeometry(92, 46); water.material.map.repeat.x *= 92 / w0;
+    const rt = water.material.map.clone(); rt.needsUpdate = true; rt.repeat.set(7 * 6000 / 300, 1); worldScene.userData.riverTex = rt;
+    const rm = new THREE.MeshStandardMaterial({ map: rt, roughness: 0.5, metalness: 0, transparent: true, opacity: 0.95 }), rg = new THREE.Group(); rg.matrixAutoUpdate = false; rg.matrix.copy(tileF.m);
+    [-1, 1].forEach(sd => { const pl = new THREE.Mesh(new THREE.PlaneGeometry(6000, 55), rm); pl.rotation.x = -Math.PI / 2; pl.position.set(sd * 3046, 0.06, RIVER.z); rg.add(pl); });
+    worldScene.add(rg); }
+  fernScene.children.forEach(o => { if (o.isMesh && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.width === 144) { const sd = Math.sign(o.position.x); o.geometry.dispose(); o.geometry = new THREE.BoxGeometry(46, 1.2, 3); o.position.x = sd * 29; } });
+  // Cogsworth joins the continent
+  tileG.sun = cogSun; tileG.scene = cogScene;
+  cogScene.children.forEach(o => { if (o.isMesh && o.material && o.material.side === THREE.BackSide && o.material.map === skyTex) o.visible = false; });
+  cogScene.fog.color.copy(worldScene.fog.color); cogScene.fog.near = 150; cogScene.fog.far = 430;
+  // Cairnhold joins the continent: its plateau and gorge are cut to the town, and the world carries them on outside
+  tileC.sun = cairnSun; tileC.scene = cairnScene;
+  cairnScene.children.forEach(o => {
+    if (o.isMesh && o.material && o.material.side === THREE.BackSide && o.material.map === skyTex) o.visible = false;
+    if (o.isMesh && o.geometry.type === 'PlaneGeometry' && o.geometry.parameters.width === 240) { const h = o.geometry.parameters.height; o.geometry.dispose();
+      if (h === GORGE.z0 + 60) { o.geometry = new THREE.PlaneGeometry(138, GORGE.z0 + 9); o.position.z = (GORGE.z0 - 9) / 2; }
+      else if (h === 80) { o.geometry = new THREE.PlaneGeometry(138, 36); o.position.z = GORGE.z1 + 18; }
+      else o.geometry = new THREE.PlaneGeometry(138, h); }
+  });
+  cairnScene.fog.color.copy(worldScene.fog.color); cairnScene.fog.near = 150; cairnScene.fog.far = 430;
+  trimTowns();
   tick();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => {
     textTexes.forEach(({ tex, text, bg, fg }) => {
@@ -6842,10 +7159,11 @@
     }
   };
   function regionOf() { return where === 'in' ? interior.region : where; }
-  function currentRegionIndex() { const w = regionOf(); return w === 'skyhaven' || w === 'lift' || w === 'flight' ? 7 : w === 'lantern' || w === 'sea' ? 6 : w === 'emberdeep' || w === 'mtn' ? 5 : w === 'cogsworth' || w === 'cliff' ? 4 : w === 'cairnhold' || w === 'high' ? 3 : w === 'fernwater' ? 2 : w === 'orchards' || w === 'hills' ? 1 : 0; }
+  function currentRegionIndex() { const w = regionOf(); return w === 'skyhaven' || w === 'lift' || w === 'flight' ? 7 : w === 'lantern' || w === 'sea' ? 6 : w === 'emberdeep' || w === 'mtn' ? 5 : w === 'cogsworth' || w === 'cliff' ? 4 : w === 'cairnhold' || w === 'high' ? 3 : w === 'fernwater' ? 2 : w === 'orchards' || w === 'hills' ? 1 : w === 'wild' ? nearestTown() : 0; }
   function youAreHere() {
     // the player's spot on the parchment
     if (where === 'in') { const saved = where, px = player.position.x, pz = player.position.z; where = interior.region; player.position.x = interior.door.x; player.position.z = interior.door.z; const r = youAreHere(); where = saved; player.position.x = px; player.position.z = pz; return r; }
+    if (where === 'wild') { const r = roadNear(player.position.x, player.position.z); if (!r) return MAPPOS[nearestTown()]; const RD = ROADS[r.road], t = r.i / (RD.pts.length - 1), a = MAPPOS[RD.ai], b = MAPPOS[RD.bi]; return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
     if (where === 'village') { const [cx, cy] = MAPPOS[0]; return [cx + player.position.x * 0.25, cy + (player.position.z - 45) * 0.2]; }
     if (where === 'orchards') { const [cx, cy] = MAPPOS[1]; return [cx + player.position.x * 0.2, cy - (player.position.z - 55) * 0.22]; }
     if (where === 'fernwater') { const [cx, cy] = MAPPOS[2]; return [cx + player.position.x * 0.2, cy - (player.position.z - 60) * 0.2]; }
@@ -6911,7 +7229,7 @@
     if (gameStarted) {
       const here = document.createElement('div'); here.className = 'here';
       const wr = regionOf(); const key = wr === 'orchards' ? 'orchards' : wr === 'village' ? 'village' : wr === 'fernwater' ? 'fernwater' : wr === 'cairnhold' ? 'cairnhold' : wr === 'cogsworth' ? 'cogsworth' : wr === 'emberdeep' ? 'emberdeep' : wr === 'lantern' ? 'lantern' : wr === 'skyhaven' ? 'skyhaven' : null;
-      here.innerHTML = `<b>You are here:</b> ${where === 'in' ? 'inside ' + interior.label : where === 'village' ? 'Thistledown Hollow' : where === 'road' ? 'on the Long Road' : where === 'hills' ? 'on the River Road' : where === 'high' ? 'on the High Road' : where === 'cairnhold' ? 'Cairnhold Highlands' : where === 'cliff' ? 'on the Cliff Road' : where === 'cogsworth' ? 'Cogsworth' : where === 'mtn' ? 'on the Mountain Road' : where === 'emberdeep' ? 'Emberdeep' : where === 'sea' ? 'on the Sea Road' : where === 'lantern' ? 'Lanternreach' : where === 'lift' ? 'on the sky-lift' : where === 'skyhaven' ? 'Skyhaven' : where === 'flight' ? 'in the air, flying home' : where === 'fernwater' ? 'Fernwater Crossing' : 'the Mallow Orchards'}${coins ? ` · ${coins} acorn coins` : ''}`;
+      here.innerHTML = `<b>You are here:</b> ${where === 'in' ? 'inside ' + interior.label : where === 'village' ? 'Thistledown Hollow' : where === 'road' || where === 'wild' ? 'on the Long Road' : where === 'hills' ? 'on the River Road' : where === 'high' ? 'on the High Road' : where === 'cairnhold' ? 'Cairnhold Highlands' : where === 'cliff' ? 'on the Cliff Road' : where === 'cogsworth' ? 'Cogsworth' : where === 'mtn' ? 'on the Mountain Road' : where === 'emberdeep' ? 'Emberdeep' : where === 'sea' ? 'on the Sea Road' : where === 'lantern' ? 'Lanternreach' : where === 'lift' ? 'on the sky-lift' : where === 'skyhaven' ? 'Skyhaven' : where === 'flight' ? 'in the air, flying home' : where === 'fernwater' ? 'Fernwater Crossing' : 'the Mallow Orchards'}${coins ? ` · ${coins} acorn coins` : ''}`;
       if (key) { const ins = INSET[key](300, key === 'village' ? 410 : 330); here.innerHTML += `<svg viewBox="0 0 300 ${key === 'village' ? 410 : 330}">${ins.svg}<circle id="inset-me" cx="${ins.X(where === 'in' ? interior.door.x : player.position.x)}" cy="${ins.Z(where === 'in' ? interior.door.z : player.position.z)}" r="5" fill="#d23b4e" stroke="#fff" stroke-width="1.5"/></svg>`; mapPanel._ins = ins; }
       mapPanel.appendChild(here);
     }
@@ -6936,12 +7254,13 @@
     kid.satchel.visible = save.done.length > 0; setCoins(save.coins || 0); phase = 'free'; bikeOwned = !!save.bike || save.done.includes('cog-10');
     if (save.beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(save.pos[0] - 2, 0, save.pos[2] - 2); }
     const place = () => { player.position.set(save.pos[0], 0, save.pos[2]); py = 0; bodyYaw = camYaw = save.yaw || 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(player.position.x - 2, 0, player.position.z - 2); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); };
-    if (save.where === 'road') { restoreAfter = place; goToRoad(); }
+    if (save.where === 'road') { goToRoad(); }
+    else if (save.where === 'wild') { enterWild(save.pos[0], save.pos[2], save.yaw || 0, 'The Long Road.'); }
     else if (save.where === 'orchards') { restoreAfter = place; goToOrchards(); }
     else if (save.where === 'fernwater') { restoreAfter = place; goToFernwater(); }
-    else if (save.where === 'hills') { restoreAfter = place; goToHills(false); }
-    else if (save.where === 'high') { restoreAfter = place; where = 'fernwater'; scene.remove(player); fernScene.add(player); if (beetle) { scene.remove(beetle); fernScene.add(beetle); } goToHigh(false); }
-    else if (save.where === 'cliff') { restoreAfter = place; where = 'cairnhold'; scene.remove(player); cairnScene.add(player); if (beetle) { scene.remove(beetle); cairnScene.add(beetle); } goToCliff(false); }
+    else if (save.where === 'hills') { const [x, z] = toWorld(tileO, 30, ORCH_LEN + 8); enterWild(x, z, yawO, 'The Long Road. Fernwater Crossing lies ahead.'); }
+    else if (save.where === 'high') { const [x, z] = toWorld(tileF, 0, 128); enterWild(x, z, yawF, 'The Long Road. Cairnhold is up on the highland ahead.'); }
+    else if (save.where === 'cliff') { const [x, z] = toWorld(tileC, 0, 158); enterWild(x, z, yawC, 'The Long Road. Cogsworth lies ahead, under its crag.'); }
     else if (save.where === 'skyhaven' || save.where === 'lift' || save.where === 'flight') { restoreAfter = save.where === 'skyhaven' ? place : null; where = 'lift'; scene.remove(player); liftScene.add(player); if (beetle) { scene.remove(beetle); liftScene.add(beetle); } liftT = 1; goToSky(); }
     else if (save.where === 'sea') { restoreAfter = place; where = 'emberdeep'; scene.remove(player); embScene.add(player); if (beetle) { scene.remove(beetle); embScene.add(beetle); } goToSea(false); }
     else if (save.where === 'lantern') { restoreAfter = place; where = 'sea'; scene.remove(player); seaScene.add(player); if (beetle) { scene.remove(beetle); seaScene.add(beetle); } goToLantern(); }
@@ -6978,9 +7297,9 @@
     else if (/^fern-[1-9]$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(-1), 10); coinsAtLeast(27 + 2 * (n - 1)); if (n === 1) { phase = 'tofern'; } else { phase = 'doneF1'; pendingStart = { 'fern-2': () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb\u2019s bakery is the big red building on the right as you face the river. Walk in through the door.'); }, 'fern-3': () => enterInterior('bakery', () => setTimeout(startF3, 400)), 'fern-4': startF4, 'fern-5': startF5, 'fern-6': startF6, 'fern-7': startF7, 'fern-8': startF8, 'fern-9': () => { phase = 'tofen2'; nearFen2 = false; fenArrives(); hint('Fen\u2019s barge is at the dock. Go and say hello.'); } }[key]; } setTimeout(goToFernwater, 200); }
     else if (key === 'orch-1') { kid.satchel.visible = true; coinsAtLeast(22); phase = 'toorch'; setTimeout(goToOrchards, 200); }
     else if (key === 'road') { kid.satchel.visible = true; coinsAtLeast(19); setTimeout(goToRoad, 200); }
-    else if (key === 'hills') { kid.satchel.visible = true; coinsAtLeast(27); where = 'orchards'; scene.remove(player); orchScene.add(player); if (beetle) { scene.remove(beetle); orchScene.add(beetle); } setTimeout(() => goToHills(false), 200); }
-    else if (key === 'high') { kid.satchel.visible = true; coinsAtLeast(45); where = 'fernwater'; scene.remove(player); fernScene.add(player); if (beetle) { scene.remove(beetle); fernScene.add(beetle); } setTimeout(() => goToHigh(false), 200); }
-    else if (key === 'cliff') { kid.satchel.visible = true; coinsAtLeast(65); where = 'cairnhold'; scene.remove(player); cairnScene.add(player); if (beetle) { scene.remove(beetle); cairnScene.add(beetle); } buildBridge(); setTimeout(() => goToCliff(false), 200); }
+    else if (key === 'hills') { kid.satchel.visible = true; coinsAtLeast(27); where = 'orchards'; scene.remove(player); orchScene.add(player); if (beetle) { scene.remove(beetle); orchScene.add(beetle); } setTimeout(() => { const [x, z] = toWorld(tileO, 30, ORCH_LEN + 8); enterWild(x, z, yawO, 'The Long Road. Fernwater Crossing lies ahead.'); }, 200); }
+    else if (key === 'high') { kid.satchel.visible = true; coinsAtLeast(45); where = 'fernwater'; scene.remove(player); fernScene.add(player); if (beetle) { scene.remove(beetle); fernScene.add(beetle); } setTimeout(() => { const [x, z] = toWorld(tileF, 0, 128); enterWild(x, z, yawF, 'The Long Road. Cairnhold is up on the highland ahead.'); }, 200); }
+    else if (key === 'cliff') { kid.satchel.visible = true; coinsAtLeast(65); where = 'cairnhold'; scene.remove(player); cairnScene.add(player); if (beetle) { scene.remove(beetle); cairnScene.add(beetle); } buildBridge(); setTimeout(() => { const [x, z] = toWorld(tileC, 0, 158); enterWild(x, z, yawC, 'The Long Road. Cogsworth lies ahead, under its crag.'); }, 200); }
     else if (key === 'lift') { kid.satchel.visible = true; coinsAtLeast(125); bikeOwned = true; where = 'lantern'; scene.remove(player); lantScene.add(player); if (beetle) { scene.remove(beetle); lantScene.add(beetle); } setTimeout(() => goToLift(false), 200); }
     else if (/^sky-(1[0-2]|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(4), 10); coinsAtLeast(125 + 2 * (n - 1)); bikeOwned = true; where = 'lift'; scene.remove(player); liftScene.add(player); if (beetle) { scene.remove(beetle); liftScene.add(beetle); } liftT = 1; if (n === 1) { phase = 'tosky'; } else { phase = 'doneS1'; pendingStart = { 2: startS2, 3: startS3, 4: startS4, 5: startS5, 6: startS6, 7: startS7, 8: startS8, 9: startS9, 10: startS10, 11: startS11, 12: startS12 }[n]; } setTimeout(goToSky, 200); }
     else if (key === 'sea') { kid.satchel.visible = true; coinsAtLeast(105); bikeOwned = true; where = 'emberdeep'; scene.remove(player); embScene.add(player); if (beetle) { scene.remove(beetle); embScene.add(beetle); } setTimeout(() => goToSea(false), 200); }
