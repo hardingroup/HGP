@@ -65,6 +65,15 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Currents.** The Fernwater river carries you downstream while you swim; the Lanternreach sea pushes you gently toward the cove. Swim against them or use them.
 - **Jump** stays generous, and carries a little of your run with it. Hit a wall, a tree or a fence and you stop: whatever the world pushes back against is lost.
 
+## Doors, fences and stairs
+
+- Every building's door is a real leaf on a hinge. It swings open as you come within about 8 units and shuts behind you. Inside a room the door stands shut until you walk up to it, so you only see outside through an open door.
+- Rooms in Lanternreach have night outside their doors, to match the town.
+- In the Hollow, straight-sided things (garden beds, rail fences, the potting shed) are box colliders in `hollowBoxes`: you slide along them and cannot pass through. A box with an `id` is a building entered at its door.
+- Fernsby's nursery is a 32 by 28 unit yard with its beds, cold frame, barrel and bench spread apart, a solid rail fence on three sides, and a potting shed you can walk into.
+- The spiral stair round Aldric's tree is climbable: 28 steps wind once round outside the platform and land on its rim, 21 units up. The stair passes over itself, so the game picks the step nearest your own height. Above 2.6 units you are clear of furniture and fences; the trunk still blocks. Stepping off is a real fall.
+- Animals that get stuck pick a new direction. They are only ever moved to a clear spot when more than 140 units from you, so you never see one jump.
+
 ## Title screen and your elf
 
 - The game opens on a title screen with the live Hollow turning slowly behind it: Continue (when there is a save), New game, Lessons and map, Settings, and cloud sign-in.
