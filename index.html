@@ -5962,10 +5962,14 @@
     st.addEventListener('pointerdown', e => { e.preventDefault(); pid = e.pointerId; try { st.setPointerCapture(pid); } catch (x) {} set(e); });
     st.addEventListener('pointermove', e => { if (e.pointerId === pid) { e.preventDefault(); set(e); } });
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => st.addEventListener(n, end)); }
-  $('grab').addEventListener('click', pickNearest);
+  // the round buttons answer the touch itself, not the click a phone may or may not send after it
+  function tapButton(el, fn) { let last = 0; const fire = e => { const now = performance.now(); if (now - last < 350) return; last = now; fn(e); };
+    el.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; e.preventDefault(); fire(e); });
+    el.addEventListener('click', fire); }
+  tapButton($('grab'), pickNearest);
   { const rb = $('runbtn'); const on = e => { e.preventDefault(); keys.run = true; }, off = () => { keys.run = false; }; rb.addEventListener('pointerdown', on); rb.addEventListener('pointerup', off); rb.addEventListener('pointerleave', off); rb.addEventListener('pointercancel', off); }
-  $('jumpbtn').addEventListener('click', () => { wantJump = true; });
-  $('viewbtn').addEventListener('click', toggleView);
+  tapButton($('jumpbtn'), () => { wantJump = true; });
+  tapButton($('viewbtn'), toggleView);
 
   // gamepad: left stick walks, right stick looks, A jumps (or presses the highlighted button), X picks up, Y switches view
   const gp = { mx: 0, mz: 0, prev: [], seen: false, run: false };
@@ -6823,7 +6827,7 @@
     else { place(); hint(`Welcome back${save.name ? ', ' + save.name : ''}. ${coins} acorn coins, ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Press M for the map.`); }
   }
   let restoreAfter = null;
-  $('mapbtn').addEventListener('click', toggleMap);
+  tapButton($('mapbtn'), toggleMap);
   window.addEventListener('keydown', e => { if (!$('settings').hidden) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {

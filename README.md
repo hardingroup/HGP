@@ -75,6 +75,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 ## Phones and tablets
 
 - Walking uses a thumb stick: a fixed round pad at the bottom left. The knob follows your thumb, and how far you push sets how fast you go. Drag the picture to look.
+- The round buttons (Map, Run, View, Jump, Pick up) answer the touch itself. The game stops the browser's own touch handling on the control pad so the page cannot scroll or zoom, and that also stops phones sending a click afterwards, so nothing there may rely on click.
 - The picture is always drawn at the size of the box it is shown in, checked every frame, so it cannot be stretched when a phone's address bar shows or hides.
 
 ## The bike
