@@ -1,11 +1,4 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>The Long Road</title>
-<style>[hidden]{display:none!important} html{height:100%} body{margin:0;height:100%;overflow:hidden}</style>
-<title>Bramblewick's First Lesson</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><title>The Long Road</title><style>[hidden]{display:none!important} html{height:100%} body{margin:0;height:100%;overflow:hidden}</style><title>Bramblewick's First Lesson</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Shantell+Sans:wght@400;600;700&display=swap">
@@ -208,9 +201,7 @@
   .account .status.ok { color: #7cc47a; }
   @media (max-width: 480px) { .line { font-size: 17px; } }
   @media (prefers-reduced-motion: reduce) { .tok { transition: none; } }
-</style>
-</head>
-<body>
+</style></head><body>
 
 <canvas id="scene" aria-label="Bramblewick's shop and the forest clearing outside, seen from seven inches tall"></canvas>
 <div class="fade" id="fade" aria-live="polite"></div>
@@ -464,15 +455,23 @@
   // ---------- world layout: one village street, north to south, inside a fence ----------
   const SHOP = new THREE.Vector3(0, 0, 0), R = 11, GAP = Math.asin(2.5 / R);
   const BWPOS = new THREE.Vector3(5, 0, -5.5);
-  const NURS = new THREE.Vector3(-24, 0, 32), MARIPOS = new THREE.Vector3(-24, 0, 38.5);
-  const WOOD = new THREE.Vector3(27, 0, 38), ALDPOS = new THREE.Vector3(24, 0, 42);
-  const FEN = new THREE.Vector3(-17, 0, 64), FENPOS = new THREE.Vector3(-19.6, 0, 64);
-  const BUSH = new THREE.Vector3(21, 0, 66);
-  const OAK = new THREE.Vector3(-27, 0, 90);
+  const NURS = new THREE.Vector3(-36, 0, 46), MARIPOS = new THREE.Vector3(-36, 0, 52.5);
+  const WOOD = new THREE.Vector3(38, 0, 50), ALDPOS = new THREE.Vector3(35, 0, 54);
+  const FEN = new THREE.Vector3(-26, 0, 92), FENPOS = new THREE.Vector3(-28.6, 0, 92);
+  const BUSH = new THREE.Vector3(30, 0, 96);
+  const OAK = new THREE.Vector3(-38, 0, 126);
+  // a home for each of the four who work here: [x, z] is the middle of the cottage, its door faces south; from is where its path leaves the street
+  const HOMES = [
+    { id: 'bwhome', x: 30, z: 4, from: [7, 16], sign: 'Bramblewick', wall: '#e9dcc3', trim: '#5a3d22', roof: '#4f7a33', door: '#5b3a1e', flower: '#f4d35e' },
+    { id: 'marihome', x: -40, z: 10, from: [-7, 16], sign: 'Fernsby', wall: '#e6dfc6', trim: '#3e6b52', roof: '#6f9a3a', door: '#3e6b52', flower: '#e68fb0' },
+    { id: 'aldhome', x: 46, z: 72, from: [0, 80.4], sign: 'Bough', wall: '#d8c9a4', trim: '#4a3420', roof: '#8a6a3c', door: '#6b4a2b', flower: '#9fb7f0' },
+    { id: 'fenhome', x: -46, z: 76, from: [0, 80], sign: 'Dewberry', wall: '#f0e2d8', trim: '#8a3a4a', roof: '#a8563a', door: '#8a3a4a', flower: '#d23b4e' }
+  ];
+  const nearHome = (x, z, pad = 0) => HOMES.some(h => Math.abs(x - h.x) < 8.5 + pad && Math.abs(z - h.z) < 7.5 + pad);
   const YARD = new THREE.Vector3(0, 0, 17);
   const DOOR = new THREE.Vector3(0, 0, R + 1.5);
-  const GATE = new THREE.Vector3(0, 0, 104);
-  const FENCE = { x0: -44, x1: 44, z0: -18, z1: 104 };
+  const GATE = new THREE.Vector3(0, 0, 152);
+  const FENCE = { x0: -64, x1: 64, z0: -24, z1: 152 };
   const inFence = (x, z, pad = 0) => x > FENCE.x0 + pad && x < FENCE.x1 - pad && z > FENCE.z0 + pad && z < FENCE.z1 - pad;
   const solids = [];
   // straight-sided things in the Hollow: garden beds, fences, sheds. Each is a box you slide along; one with an id is a building you can enter at its door.
@@ -482,14 +481,15 @@
     const t = clamp((wx * vx + wz * vz) / L, 0, 1); return Math.hypot(px - (ax + vx * t), pz - (az + vz * t));
   };
   // [from, to, trim at the far end, width]
-  const STREET0 = new THREE.Vector3(0, 0, 14), STREET1 = new THREE.Vector3(0, 0, 103);
+  const STREET0 = new THREE.Vector3(0, 0, 14), STREET1 = new THREE.Vector3(0, 0, GATE.z - 1);
   const pathEnds = [
     [STREET0, STREET1, 0, 8],
-    [new THREE.Vector3(0, 0, 32), NURS, 15.5, 4], [new THREE.Vector3(0, 0, 38), WOOD, 9, 4],
-    [new THREE.Vector3(0, 0, 64), FEN, 6, 4], [new THREE.Vector3(0, 0, 66), BUSH, 6, 4], [new THREE.Vector3(0, 0, 90), OAK, 9, 4]
+    [new THREE.Vector3(0, 0, NURS.z), NURS, 15.5, 4], [new THREE.Vector3(0, 0, WOOD.z), WOOD, 9, 4],
+    [new THREE.Vector3(0, 0, FEN.z), FEN, 6, 4], [new THREE.Vector3(0, 0, BUSH.z), BUSH, 6, 4], [new THREE.Vector3(0, 0, OAK.z), OAK, 9, 4],
+    ...HOMES.map(h => [new THREE.Vector3(h.from[0], 0, h.from[1]), new THREE.Vector3(h.x, 0, h.z + 8.4), 0, 3])
   ];
   const onPath = (x, z, pad) => pathEnds.some(([a, b, , w]) => distSeg(x, z, a.x, a.z, b.x, b.z) < w / 2 + pad);
-  const nearBig = (x, z, pad) => Math.hypot(x - SHOP.x, z - SHOP.z) < R + 2 + pad || Math.hypot(x - OAK.x, z - OAK.z) < 9 + pad || Math.hypot(x - BUSH.x, z - BUSH.z) < 6 + pad || Math.hypot(x - YARD.x, z - YARD.z) < 9 + pad || Math.hypot(x - FEN.x, z - FEN.z) < 9 + pad || Math.hypot(x - NURS.x, z - NURS.z) < 21 + pad || Math.hypot(x - WOOD.x, z - WOOD.z) < 11 + pad;
+  const nearBig = (x, z, pad) => Math.hypot(x - SHOP.x, z - SHOP.z) < R + 2 + pad || Math.hypot(x - OAK.x, z - OAK.z) < 9 + pad || Math.hypot(x - BUSH.x, z - BUSH.z) < 6 + pad || Math.hypot(x - YARD.x, z - YARD.z) < 9 + pad || Math.hypot(x - FEN.x, z - FEN.z) < 9 + pad || Math.hypot(x - NURS.x, z - NURS.z) < 21 + pad || Math.hypot(x - WOOD.x, z - WOOD.z) < 11 + pad || nearHome(x, z, pad);
 
   // ---------- ground, street and side paths ----------
   const ground = new THREE.Mesh(new THREE.CircleGeometry(260, 64), mat('#ffffff', { map: groundTex }));
@@ -503,7 +503,7 @@
     scene.add(grp);
   });
   // wheel ruts down the main street
-  [-1.6, 1.6].forEach(x => { const rut = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 88), mat('#5d4a2e', { roughness: 1 })); rut.rotation.x = -Math.PI / 2; rut.position.set(x, 0.035, 58); scene.add(rut); });
+  [-1.6, 1.6].forEach(x => { const rut = new THREE.Mesh(new THREE.PlaneGeometry(0.5, GATE.z - 16), mat('#5d4a2e', { roughness: 1 })); rut.rotation.x = -Math.PI / 2; rut.position.set(x, 0.035, (GATE.z + 14) / 2); scene.add(rut); });
 
   // ---------- the village fence and the south gate ----------
   {
@@ -537,18 +537,18 @@
     mesh.count = i; scene.add(mesh); return mesh;
   }
   grassField(4200, 3, 10, p => {
-    p.set(rnd(-130, 130), 0, rnd(-100, 190));
+    p.set(rnd(-150, 150), 0, rnd(-110, 240));
     return !inFence(p.x, p.z, 1.5) && !(Math.abs(p.x) < 6 && p.z > FENCE.z1 && p.z < FENCE.z1 + 40);
   }, 0.24);
-  grassField(2600, 0.2, 0.6, p => {
+  grassField(5000, 0.2, 0.6, p => {
     p.set(rnd(FENCE.x0 + 1, FENCE.x1 - 1), 0, rnd(FENCE.z0 + 1, FENCE.z1 - 1));
-    return Math.hypot(p.x, p.z) > R + 0.8 && !onPath(p.x, p.z, -0.5) && Math.hypot(p.x - OAK.x, p.z - OAK.z) > 6.5 && Math.hypot(p.x - BUSH.x, p.z - BUSH.z) > 5 && Math.hypot(p.x - NURS.x, p.z - NURS.z) > 20 && Math.hypot(p.x - WOOD.x, p.z - WOOD.z) > 9;
+    return Math.hypot(p.x, p.z) > R + 0.8 && !onPath(p.x, p.z, -0.5) && Math.hypot(p.x - OAK.x, p.z - OAK.z) > 6.5 && Math.hypot(p.x - BUSH.x, p.z - BUSH.z) > 5 && Math.hypot(p.x - NURS.x, p.z - NURS.z) > 20 && Math.hypot(p.x - WOOD.x, p.z - WOOD.z) > 9 && !nearHome(p.x, p.z, -1);
   }, 0.07);
   {
     const mesh = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.5, 0), mat('#ffffff', { roughness: 1 }), 140);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
     for (let i = 0; i < 140; i++) {
-      let guard = 0; do { p.set(rnd(FENCE.x0, FENCE.x1), 0.1, rnd(FENCE.z0, FENCE.z1)); } while (guard++ < 30 && (Math.hypot(p.x, p.z) < R + 1 || Math.hypot(p.x - NURS.x, p.z - NURS.z) < 20 || Math.hypot(p.x - WOOD.x, p.z - WOOD.z) < 9));
+      let guard = 0; do { p.set(rnd(FENCE.x0, FENCE.x1), 0.1, rnd(FENCE.z0, FENCE.z1)); } while (guard++ < 30 && (Math.hypot(p.x, p.z) < R + 1 || Math.hypot(p.x - NURS.x, p.z - NURS.z) < 20 || Math.hypot(p.x - WOOD.x, p.z - WOOD.z) < 9 || nearHome(p.x, p.z, 1) || onPath(p.x, p.z, 0.5)));
       q.setFromEuler(new THREE.Euler(rnd(0, 3), rnd(0, 3), rnd(0, 3)));
       const k = rnd(0.4, 1.6); s.set(k, k * 0.6, k * rnd(0.8, 1.2));
       mesh.setMatrixAt(i, m4.compose(p, q, s)); mesh.setColorAt(i, col.set(pick(['#9b9789', '#86826f', '#b1ab98', '#7c786a'])));
@@ -594,17 +594,17 @@
     return g;
   }
   const flowerColors = ['#f0e6f5', '#e68fb0', '#f4d35e', '#9fb7f0', '#ffffff'];
-  for (let i = 0, guard = 0; i < 30 && guard < 900; guard++) {
+  for (let i = 0, guard = 0; i < 54 && guard < 1500; guard++) {
     const x = rnd(FENCE.x0 + 3, FENCE.x1 - 3), z = rnd(FENCE.z0 + 3, FENCE.z1 - 3);
     if (nearBig(x, z, -1) || onPath(x, z, 1.5)) continue;
     const f = makeFlower(pick(flowerColors)); f.position.set(x, 0, z); f.rotation.y = rnd(0, 6.3); scene.add(f); i++;
   }
   for (let i = 0, guard = 0; i < 40 && guard < 900; guard++) {
-    const x = rnd(-120, 120), z = rnd(-90, 170);
+    const x = rnd(-140, 140), z = rnd(-100, 220);
     if (inFence(x, z, 4) || (Math.abs(x) < 8 && z > FENCE.z1)) continue;
     const f = makeFlower(pick(flowerColors)); f.position.set(x, 0, z); f.rotation.y = rnd(0, 6.3); f.scale.setScalar(1.3); scene.add(f); i++;
   }
-  [[-36, 10, 2.2], [-34, 13, 1.2], [36, 14, 1.8], [-38, 56, 2.4], [38, 86, 1.1], [-12, 48, 1.4], [12, 84, 1.3], [34, 60, 1.6], [-50, 40, 2.6], [52, 30, 2.2], [-20, 120, 2.4], [24, 124, 1.8]].forEach(([x, z, sz]) => {
+  [[-58, 20, 2.2], [-56, 24, 1.2], [56, 14, 1.8], [-57, 68, 2.4], [54, 104, 1.1], [-14, 66, 1.4], [14, 112, 1.3], [57, 56, 1.6], [-72, 40, 2.6], [74, 30, 2.2], [-20, 168, 2.4], [24, 172, 1.8], [-52, 142, 1.5], [50, 136, 2.0]].forEach(([x, z, sz]) => {
     const m = makeMushroom(sz); m.position.set(x, 0, z); m.rotation.y = rnd(0, 6); scene.add(m); solids.push({ x, z, r: sz * 0.9 });
   });
 
@@ -780,7 +780,7 @@
     const dz = R * Math.cos(GAP);
     [-1, 1].forEach(d => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 6, 10), mat('#7a5a3a')); post.position.set(d * 2.55, 3, dz); shop.add(post); });
     const arch = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.32, 10, 30, Math.PI), mat('#7a5a3a')); arch.position.set(0, 6, dz); shop.add(arch);
-    const hinge = new THREE.Group(); hinge.position.set(-2.5, 0, dz); hinge.rotation.y = -1.8; shop.add(hinge);
+    const hinge = new THREE.Group(); hinge.position.set(-2.5, 0, dz); shop.userData.hinge = hinge; shop.add(hinge);
     const doorM = mat('#5b3a1e');
     const dPanel = new THREE.Mesh(new THREE.BoxGeometry(5, 3.5, 0.25), doorM); dPanel.position.set(2.5, 1.75, 0); hinge.add(dPanel);
     const dTop = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.5, 0.25, 24, 1, false, 0, Math.PI), doorM); dTop.rotation.x = Math.PI / 2; dTop.rotation.z = 0; dTop.position.set(2.5, 3.5, 0); hinge.add(dTop);
@@ -1180,6 +1180,31 @@
     puff.userData.t = i / 7; scene.add(puff); smoke.push(puff);
   }
 
+  // ---------- a home for each of the four: cottages with a door you can walk through ----------
+  HOMES.forEach(h => {
+    const g = new THREE.Group(); g.position.set(h.x, 0, h.z); scene.add(g);
+    const W = 14, D = 10, H = 6.6, wallM = mat(h.wall, { roughness: 1 }), trimM = mat(h.trim), stone = mat('#8d8676', { roughness: 1 });
+    const box = (w, hh, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m); b.position.set(x, y, z); g.add(b); return b; };
+    box(W, H, D, 0, H / 2, 0, wallM); box(W + 0.4, 0.9, D + 0.4, 0, 0.45, 0, stone);
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => box(0.55, H, 0.55, sx * W / 2, H / 2, sz * D / 2, trimM));
+    box(W + 0.3, 0.45, 0.3, 0, H - 0.2, D / 2 + 0.05, trimM); box(0.3, 0.45, D + 0.3, -W / 2 - 0.05, H - 0.2, 0, trimM); box(0.3, 0.45, D + 0.3, W / 2 + 0.05, H - 0.2, 0, trimM);
+    const rg = new THREE.Group(); rg.position.y = H + 2.3; rg.scale.z = (D + 2.4) / (W + 2.4); g.add(rg);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry((W / 2 + 1.2) * Math.SQRT2, 4.6, 4), mat(h.roof, { roughness: 1 })); roof.rotation.y = Math.PI / 4; rg.add(roof);
+    box(1.5, 5, 1.5, W / 2 - 2.8, H + 2, -1.2, stone); box(1.8, 0.4, 1.8, W / 2 - 2.8, H + 4.6, -1.2, stone);
+    box(3.6, 0.25, 1.5, 0, 0.12, D / 2 + 0.85, stone);
+    { const door = new THREE.Mesh(new THREE.BoxGeometry(2.8, 4.8, 0.3), mat(h.door)); door.position.set(0, 2.4, D / 2 + 0.1); g.add(door); hingeDoor(door, g); }
+    box(3.3, 0.35, 0.4, 0, 5, D / 2 + 0.1, trimM);
+    [-1, 1].forEach(d => {
+      const w = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.1), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.45 })); w.position.set(d * 4.3, 3.7, D / 2 + 0.03); g.add(w);
+      box(2.5, 0.2, 0.2, d * 4.3, 4.85, D / 2 + 0.08, trimM); box(2.5, 0.2, 0.2, d * 4.3, 2.55, D / 2 + 0.08, trimM); box(0.16, 2.2, 0.16, d * 4.3, 3.7, D / 2 + 0.08, trimM);
+      box(2.6, 0.5, 0.7, d * 4.3, 2.2, D / 2 + 0.4, trimM);
+      for (let k = 0; k < 5; k++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 6), mat(h.flower)); fl.position.set(d * 4.3 - 1 + k * 0.5, 2.62 + (k % 2) * 0.12, D / 2 + 0.45); g.add(fl); }
+    });
+    const sg = signBoard(h.sign, 4.6, 0.95, h.trim, '#f6e7c2'); sg.position.set(0, 5.85, D / 2 + 0.32); g.add(sg);
+    g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    hollowBoxes.push({ id: h.id, x: h.x, z: h.z, hw: W / 2 + 0.2, hd: D / 2 + 0.2, door: { x: h.x, z: h.z + D / 2 + 0.2 } });
+  });
+
   // ---------- Old Bramblewick ----------
   const bw = new THREE.Group();
   const skin = mat('#e8c19a'), robeM = mat('#3e6b52'), trim = mat('#e8b64c', { roughness: 0.5 }), hatM = mat('#7a3e2a'), white = mat('#eee8dc');
@@ -1334,8 +1359,9 @@
     extDoors.push({ hinge, w, a: 0, scene: null, wp: null });
   }
   function doorsTick(dt) {
-    if (where === 'in') { const it = interior, open = player.position.z > it.d / 2 - 7.5 ? 1 : 0; it.doorA += (open - it.doorA) * Math.min(1, dt * 4.5); it.hinge.rotation.y = it.doorA * 1.75; return; }
+    if (where === 'in') { const it = interior, open = player.position.z > it.d / 2 - 7.5 ? 1 : 0; it.doorA += (open - it.doorA) * Math.min(1, dt * 4.5); it.hinge.rotation.y = -it.doorA * 1.75; return; }
     const sc = curScene(), px = player.position.x, pz = player.position.z;
+    if (where === 'village') { const ins = Math.hypot(px, pz) < R, open = Math.hypot(px, pz - R) < (ins ? 5.5 : 8) ? 1 : 0; storeDoorA += (open - storeDoorA) * Math.min(1, dt * 4.5); shop.userData.hinge.rotation.y = -1.8 * storeDoorA; }
     for (const d of extDoors) {
       if (!d.scene) { const v = new THREE.Vector3(d.w / 2, 0, 0); let o = d.hinge; while (o && !o.isScene) { o.updateMatrix(); v.applyMatrix4(o.matrix); o = o.parent; } if (!o) continue; d.scene = o; d.wp = v; }
       if (d.scene !== sc) continue;
@@ -1520,7 +1546,7 @@
   const HOLLOW_AT = [8200, 18800], ORCH_AT = [12500, 17200], FERN_AT = [16300, 14400], CAIRN_AT = [17400, 9300], COG_AT = [22300, 10600], EMBER_AT = [27400, 8100], LANT_AT = [37600, 12600];
   const yawV = Math.atan2(ORCH_AT[0] - HOLLOW_AT[0], ORCH_AT[1] - HOLLOW_AT[1]), yawO = Math.atan2(FERN_AT[0] - ORCH_AT[0], FERN_AT[1] - ORCH_AT[1]);
   const tileV = makeTile('village', scene, 0, 0, yawV, [FENCE.x0, FENCE.x1, FENCE.z0, FENCE.z1]);
-  { const [cx, cz] = toWorld(tileV, 0, (FENCE.z0 + FENCE.z1) / 2); tileV.ox += HOLLOW_AT[0] - cx; tileV.oz += HOLLOW_AT[1] - cz; tileV.m.setPosition(tileV.ox, 0, tileV.oz); tileV.inv = tileV.m.clone().invert(); }
+  { const [cx, cz] = toWorld(tileV, 0, GATE.z - 61); tileV.ox += HOLLOW_AT[0] - cx; tileV.oz += HOLLOW_AT[1] - cz; tileV.m.setPosition(tileV.ox, 0, tileV.oz); tileV.inv = tileV.m.clone().invert(); }
   const tileO = makeTile('orchards', orchScene, 0, 0, yawO, [-51, 51, 0, ORCH_LEN + 3]);
   { const [cx, cz] = toWorld(tileO, 0, ORCH_LEN / 2); tileO.ox += ORCH_AT[0] - cx; tileO.oz += ORCH_AT[1] - cz; tileO.m.setPosition(tileO.ox, 0, tileO.oz); tileO.inv = tileO.m.clone().invert(); }
   // Fernwater is an open river town: no fence, you can walk or swim in from any side. It faces on toward Cairnhold.
@@ -1903,7 +1929,7 @@
     for (let x = -W / 2 + 4; x < W / 2; x += 4) wall(0.45, 0.45, D + 1, x, H - 0.25, 0, trimM);
     wall(W + 1, 0.3, D + 1, 0, H + 0.15, 0, mat('#6b4a2b'));
     const dframe = wall(gap * 2 + 0.8, 0.5, 0.8, 0, 6.3, D / 2 + 0.25, trimM); dframe.castShadow = true;
-    const hinge = new THREE.Group(); hinge.position.set(-gap, 0, D / 2 + 0.1); sc.add(hinge);
+    const hinge = new THREE.Group(); hinge.position.set(-gap, 0, D / 2 + 0.4); sc.add(hinge);
     const leaf = new THREE.Mesh(new THREE.BoxGeometry(gap * 2, 6.05, 0.2), mat('#3e2812')); leaf.position.set(gap, 3.03, 0); leaf.castShadow = true; hinge.add(leaf);
     { const knob = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), mat('#d8b24a', { metalness: 0.6, roughness: 0.3 })); knob.position.set(gap * 2 - 0.45, 2.8, -0.24); hinge.add(knob); }
     // windows along the side walls
@@ -1933,7 +1959,7 @@
     }, () => hint(''));
   }
   // Marigold's potting shed, in the Hollow
-  makeRoom('potting', { w: 18, d: 13, h: 8, wall: '#e6dfc6', trim: '#3e6b52', label: 'Fernsby’s Potting Shed', region: 'village', hint: 'Seed trays, clay pots and the smell of damp earth.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+  makeRoom('potting', { w: 24, d: 18, h: 8, wall: '#e6dfc6', trim: '#3e6b52', label: 'Fernsby’s Potting Shed', region: 'village', hint: 'Seed trays, clay pots and the smell of damp earth.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
     const top = mat('#ffffff', { map: plankTex });
     [[-W / 2 + 1.6, -1, 2.4, 9], [W / 2 - 1.6, -1, 2.4, 9]].forEach(([x, z, w, d]) => { wall(w, 0.25, d, x, 2.2, z, top); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => wall(0.3, 2.1, 0.3, x + sx * (w / 2 - 0.25), 1.05, z + sz * (d / 2 - 0.3), trimM)); for (let k = 0; k < 4; k++) solids.push({ x, z: z - d / 2 + 1.1 + k * (d - 2.2) / 3, r: 1.25 });
       for (let k = 0; k < 9; k++) { const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.32, 0.6, 10), mat('#b5653a')); const pz = z - d / 2 + 0.7 + k * (d - 1.4) / 8; pot.position.set(x + rnd(-0.5, 0.5), 2.63, pz); sc.add(pot); const sd = seedling(rnd(0.35, 0.75)); sd.position.set(pot.position.x, 2.85, pz); sc.add(sd); } });
@@ -1944,6 +1970,91 @@
     const can = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1, 12), mat('#5a7a8a', { metalness: 0.4 })); can.position.set(-5.5, 0.5, 3.6); sc.add(can); solids.push({ x: -5.5, z: 3.6, r: 0.8 });
   } });
   interiors.potting.door = { x: NURS.x, z: NURS.z - 7.5 + 4.5, yaw: 0 };
+  // the four homes: every one has a hearth, a bed, a table, and clear floor from the door to the fire
+  function homeKit(sc, solids, { wall, W, D, H, trimM }, o) {
+    const wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 });
+    wall(6.4, 5.4, 1.6, 0, 2.7, -D / 2 + 0.8, stone); wall(3.2, 2.6, 0.3, 0, 1.5, -D / 2 + 1.62, mat('#1a1410')); wall(7.2, 0.3, 2.1, 0, 5.5, -D / 2 + 1.05, top);
+    const fire = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.5, 7), new THREE.MeshBasicMaterial({ color: '#ff9a3a' })); fire.position.set(0, 0.95, -D / 2 + 1.8); sc.add(fire);
+    const fl = new THREE.PointLight('#ff8a3a', 0.9, 28); fl.position.set(0, 2, -D / 2 + 3.2); sc.add(fl);
+    [-2.2, 0, 2.2].forEach(x => solids.push({ x, z: -D / 2 + 0.9, r: 1.5 }));
+    const rug = new THREE.Mesh(new THREE.CircleGeometry(3.8, 28), mat(o.rug, { roughness: 1 })); rug.rotation.x = -Math.PI / 2; rug.position.set(0, 0.03, -1.5); sc.add(rug);
+    const bx = -W / 2 + 2.7, bz = -D / 2 + 4.6;
+    wall(4.2, 1.1, 7.2, bx, 0.75, bz, wood); wall(4, 0.5, 6.8, bx, 1.5, bz + 0.1, mat(o.quilt, { roughness: 1 })); wall(3.1, 0.5, 1.4, bx, 1.9, bz - 2.5, mat('#f2ead8')); wall(4.4, 3.2, 0.3, bx, 1.6, bz - 3.7, dark);
+    solids.push({ x: bx, z: bz - 2, r: 2.3 }, { x: bx, z: bz + 1.7, r: 2.3 });
+    const tx = W / 2 - 7, tz = 3.2;
+    wall(4.4, 0.3, 3, tx, 2.25, tz, top); [[-1.9, -1.2], [1.9, -1.2], [-1.9, 1.2], [1.9, 1.2]].forEach(([x, z]) => wall(0.28, 2.1, 0.28, tx + x, 1.05, tz + z, dark)); solids.push({ x: tx - 1, z: tz, r: 1.7 }, { x: tx + 1, z: tz, r: 1.7 });
+    [[tx - 3.5, tz], [tx + 0.4, tz + 2.8]].forEach(([x, z]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.55, 1.4, 12), wood); st.position.set(x, 0.7, z); sc.add(st); solids.push({ x, z, r: 0.7 }); });
+    const c = candle(true); c.position.set(tx - 1.2, 2.4, tz - 0.4); sc.add(c);
+    return { wood, dark, top, tx, tz };
+  }
+  // a long shelf on the east wall, with things stood along it
+  function wallShelf(sc, wall, W, y, z0, len, items) {
+    wall(1.3, 0.2, len, W / 2 - 0.75, y, z0, mat('#ffffff', { map: plankTex }));
+    items.forEach((obj, i) => { obj.position.set(W / 2 - 0.8, y + 0.1, z0 - len / 2 + 0.6 + i * (len - 1.2) / Math.max(1, items.length - 1)); obj.rotation.y = -Math.PI / 2 + rnd(-0.3, 0.3); sc.add(obj); });
+  }
+  makeRoom('bwhome', { w: 26, d: 20, h: 9, wall: '#e9dcc3', trim: '#5a3d22', label: 'Bramblewick’s Cottage', region: 'village', hint: 'Books to the rafters, and a kettle that is never quite cold.', decorate: (sc, solids, k) => {
+    const { wall, W, D } = k, { dark, top, tx, tz } = homeKit(sc, solids, k, { rug: '#8a3a3a', quilt: '#3e6b52' });
+    wall(0.25, 7, 9, W / 2 - 0.2, 3.5, -4.5, dark);
+    [1.1, 2.9, 4.7, 6.5].forEach((y, r) => { wall(1.3, 0.18, 9, W / 2 - 0.8, y, -4.5, top); for (let z = -8.7; z < -0.5; z += 0.42) { if (Math.random() < 0.12) continue; const hh = rnd(0.9, 1.4); wall(0.8, hh, 0.34, W / 2 - 0.85, y + 0.09 + hh / 2, z, mat(pick(['#7a3e2a', '#3e6b52', '#2f4f7a', '#8a6a3c', '#5a3d5a', '#b08a3a']))); } });
+    for (let z = -8; z <= -1; z += 2.3) solids.push({ x: W / 2 - 0.9, z, r: 1.3 });
+    const ax = 4.8, az = -D / 2 + 5.2, red = mat('#7a3e2a', { roughness: 1 });
+    wall(2.6, 1.1, 2.4, ax, 0.85, az, red); wall(2.6, 2.8, 0.6, ax, 2.2, az - 1.2, red); wall(0.5, 1.2, 2.4, ax - 1.4, 1.7, az, red); wall(0.5, 1.2, 2.4, ax + 1.4, 1.7, az, red); solids.push({ x: ax, z: az - 0.2, r: 1.7 });
+    const kettle = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 10), mat('#8a7a5a', { metalness: 0.6, roughness: 0.4 })); kettle.position.set(-1.6, 5.95, -D / 2 + 1.2); sc.add(kettle);
+    const led = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.2, 1), mat('#efe3c8')); led.position.set(tx + 0.8, 2.5, tz + 0.2); led.rotation.y = 0.3; sc.add(led);
+    [acornPerson('#3a6bd0'), acornTop(), acornCart()].forEach((t, i) => { t.position.set(0.8 + i * 0.9, 5.66, -D / 2 + 1.1); sc.add(t); });
+  } });
+  makeRoom('marihome', { w: 26, d: 20, h: 9, wall: '#e6dfc6', trim: '#3e6b52', label: 'Fernsby Cottage', region: 'village', hint: 'Every sill has something growing on it.', decorate: (sc, solids, k) => {
+    const { wall, W, D, H } = k, { top, dark } = homeKit(sc, solids, k, { rug: '#6f9a3a', quilt: '#e68fb0' });
+    wall(2.2, 0.25, 9, W / 2 - 1.3, 2.2, -4, top); [[-0.8, -4.2], [0.8, -4.2], [-0.8, 4.2], [0.8, 4.2]].forEach(([x, z]) => wall(0.28, 2.1, 0.28, W / 2 - 1.3 + x, 1.05, -4 + z, dark));
+    for (let i = 0; i < 8; i++) { const z = -8 + i * 1.15, pot = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.32, 0.6, 10), mat('#b5653a')); pot.position.set(W / 2 - 1.3 + rnd(-0.4, 0.4), 2.63, z); sc.add(pot); const sd = seedling(rnd(0.5, 1)); sd.position.set(pot.position.x, 2.85, z); sc.add(sd); }
+    for (let z = -7.5; z <= -0.5; z += 2.3) solids.push({ x: W / 2 - 1.3, z, r: 1.4 });
+    for (let i = 0; i < 12; i++) { const hb = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1.1, 6), mat(pick(['#6f9a3a', '#8fbf4a', '#9a8a4a', '#b08ac0']))); hb.rotation.x = Math.PI; hb.position.set(-10 + i * 1.8, H - 1.1, 2 + (i % 3) * 0.4); sc.add(hb); }
+    const fern = new THREE.Group(); fern.position.set(-W / 2 + 2, 0, D / 2 - 3); sc.add(fern);
+    const fp = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.8, 1.4, 12), mat('#b5653a')); fp.position.y = 0.7; fern.add(fp);
+    for (let i = 0; i < 9; i++) { const lf = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), mat('#4f8a3a')); lf.scale.set(0.22, 0.08, 1.2); lf.position.y = 2.1; lf.rotation.set(-0.5, i * 0.7, 0); lf.position.x = Math.sin(i * 0.7) * 0.8; lf.position.z = Math.cos(i * 0.7) * 0.8; fern.add(lf); }
+    solids.push({ x: -W / 2 + 2, z: D / 2 - 3, r: 1.3 });
+    [0, 1, 2].forEach(i => { const j = jar(['#8fbf4a', '#d9a33f', '#b08ac0'][i], 0.6); j.position.set(-1.4 + i * 1.4, 5.66, -D / 2 + 1.1); sc.add(j); });
+  } });
+  makeRoom('aldhome', { w: 26, d: 20, h: 9, wall: '#d8c9a4', trim: '#4a3420', label: 'Bough’s House', region: 'village', hint: 'Everything in here is curved, and he made all of it.', decorate: (sc, solids, k) => {
+    const { wall, W, D } = k, { top, dark, wood, tx, tz } = homeKit(sc, solids, k, { rug: '#8a6a3c', quilt: '#2f4f7a' });
+    wall(2.4, 0.3, 8, W / 2 - 1.4, 2.25, -4.5, top); [[-0.9, -3.7], [0.9, -3.7], [-0.9, 3.7], [0.9, 3.7]].forEach(([x, z]) => wall(0.3, 2.1, 0.3, W / 2 - 1.4 + x, 1.05, -4.5 + z, dark));
+    for (let z = -7.5; z <= -1.5; z += 2) solids.push({ x: W / 2 - 1.4, z, r: 1.5 });
+    const h1 = hammer(); h1.position.set(W / 2 - 1.5, 2.5, -6.8); h1.rotation.set(Math.PI / 2, 0, 0.7); sc.add(h1);
+    const s1 = saw(); s1.position.set(W / 2 - 1.4, 2.6, -4.6); s1.rotation.set(-Math.PI / 2, 0, 1.2); sc.add(s1);
+    const c1 = chisel(); c1.position.set(W / 2 - 1.2, 2.5, -2.6); c1.rotation.set(Math.PI / 2, 0, 0.3); sc.add(c1);
+    for (let i = 0; i < 16; i++) { const sh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 0.1), mat('#d8b985')); sh.position.set(W / 2 - 1.4 + rnd(-1, 1), 2.42, -4.5 + rnd(-3.6, 3.6)); sh.rotation.y = rnd(0, 6); sc.add(sh); }
+    [2.2, 3.6, 5].forEach((y, i) => { const arc = new THREE.Mesh(new THREE.TorusGeometry(1.2 + i * 0.5, 0.12, 6, 20, Math.PI), mat('#c9a06a')); arc.position.set(W / 2 - 0.4, y + 1.2, 4.5); arc.rotation.y = Math.PI / 2; sc.add(arc); });
+    const model = new THREE.Group(); model.position.set(tx + 0.9, 2.4, tz); sc.add(model);
+    const mt = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 1.6, 8), mat('#6b4a2b')); mt.position.y = 0.8; model.add(mt);
+    const mp = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.5, 0.1, 12), wood); mp.position.y = 1.1; model.add(mp);
+    const mc = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6, 0), mat('#4a7a31', { flatShading: true })); mc.position.y = 2; model.add(mc);
+    const rx = -4.6, rz = -D / 2 + 5.4;
+    [-0.9, 0.9].forEach(d => { const rk = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.1, 6, 16, 1.5), dark); rk.position.set(rx + d, 1.75, rz); rk.rotation.set(0, Math.PI / 2, -Math.PI / 2 - 0.75); sc.add(rk); });
+    wall(2, 0.2, 1.8, rx, 1.3, rz, wood); wall(2, 2.4, 0.2, rx, 2.4, rz - 0.9, wood); solids.push({ x: rx, z: rz, r: 1.5 });
+  } });
+  makeRoom('fenhome', { w: 26, d: 20, h: 9, wall: '#f0e2d8', trim: '#8a3a4a', label: 'Dewberry Cottage', region: 'village', hint: 'Jam jars to the ceiling. It smells of berries and sugar.', decorate: (sc, solids, k) => {
+    const { wall, W, D } = k, { tx, tz } = homeKit(sc, solids, k, { rug: '#c8384a', quilt: '#f4d35e' });
+    const cols = ['#b0203a', '#6a2d7a', '#2f5fb0', '#d9a33f', '#8a2a4a', '#3e8a52'];
+    [2.2, 4.2, 6.2].forEach((y, r) => wallShelf(sc, wall, W, y, -4.5, 9, Array.from({ length: 9 }, (_, i) => jar(cols[(i + r) % cols.length], rnd(0.5, 0.9)))));
+    wall(1.3, 2.1, 9, W / 2 - 0.75, 1.05, -4.5, mat('#7a5a3a')); for (let z = -8; z <= -1; z += 2.3) solids.push({ x: W / 2 - 0.9, z, r: 1.3 });
+    [[-3.5, 4.5, '#d23b4e'], [-6, 6, '#3a6bd0'], [5, 7, '#d23b4e']].forEach(([x, z, col]) => {
+      const bk = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.8, 1.1, 14, 1, true), mat('#a07a44', { side: THREE.DoubleSide })); bk.position.set(x, 0.55, z); sc.add(bk);
+      for (let i = 0; i < 9; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), mat(col, { roughness: 0.3 })); b.position.set(x + rnd(-0.5, 0.5), 0.9 + rnd(0, 0.3), z + rnd(-0.5, 0.5)); sc.add(b); }
+      solids.push({ x, z, r: 1.1 });
+    });
+    [paintPot('#d23b4e'), paintPot('#7a3d9a'), paintPot('#3a6bd0')].forEach((p, i) => { p.position.set(tx + 0.4 + i * 0.6, 2.4, tz + 0.5); sc.add(p); });
+    [0, 1, 2, 3].forEach(i => { const j = jar(cols[i], 0.8); j.position.set(-2 + i * 1.3, 5.66, -D / 2 + 1.1); sc.add(j); });
+  } });
+  HOMES.forEach(h => { interiors[h.id].door = { x: h.x, z: h.z + 5.2 + 4.5, yaw: 0 }; });
+  // the Village Stores is a room too: its door shuts behind you, and the Hollow waits outside
+  let storeDoorA = 0;
+  function storeDoor(inward) {
+    fadeTo(inward ? 'Village Stores' : 'Thistledown Hollow', () => {
+      player.position.set(0, 0, inward ? R - 3.4 : R + 3.8); py = 0; vy = 0; bodyYaw = camYaw = inward ? Math.PI : 0; player.rotation.y = bodyYaw;
+      if (beetle) beetle.position.set(1.8, 0, inward ? R - 4.6 : R + 5.4);
+      const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
+    });
+  }
   // Fernwater's four shops
   makeRoom('bakery', { w: 20, d: 16, h: 9, wall: '#f0dfc0', label: 'Crumb’s Bakery', region: 'fernwater', hint: 'Warm bread, and Maudie behind the counter.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
     const counter = wall(13, 2.3, 1.6, 0, 1.15, -1.6, mat('#8a6438')); wall(13.6, 0.2, 2, 0, 2.4, -1.6, mat('#ffffff', { map: plankTex })); solids.push({ x: -4.5, z: -1.6, r: 2.2 }, { x: 0, z: -1.6, r: 2.2 }, { x: 4.5, z: -1.6, r: 2.2 });
@@ -3404,14 +3515,14 @@
   function cloudSoon() { if (!session) return; cloudDirty = true; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudPush, 3000); }
   async function cloudPush() {
     if (!session || cloudBusy || !cloudDirty) return; cloudBusy = true; cloudDirty = false;
-    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, bike: !!save.bike, name: save.name || '', look: save.look || null } }); acctRefresh('Saved to the cloud.', 'ok'); }
+    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null } }); acctRefresh('Saved to the cloud.', 'ok'); }
     catch (e) { cloudDirty = true; acctRefresh('Cloud save failed, kept locally. ' + e.message, 'err'); }
     cloudBusy = false;
   }
   function progressOf(sv) { return (sv.done ? sv.done.length : 0) * 1000 + (sv.coins || 0) + (sv.started ? 1 : 0); }
   async function cloudPull() {
     const c = await rpc('game_load_progress'); if (!c) return 'empty';
-    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null };
+    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), lay: (c.blob && c.blob.lay) || 0, name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null };
     // a bike granted on the account is kept whichever save wins
     if (cloud.bike || save.bike) { cloud.bike = true; save.bike = true; bikeOwned = true; }
     if (progressOf(cloud) >= progressOf(save)) { save = cloud; persist(); if (typeof applyLook === 'function') { applyLook(save.look); refreshTitle(); } return 'cloud'; }
@@ -6125,6 +6236,7 @@
     // the shop wall is a ring with a doorway
     const dx = p.x - SHOP.x, dz = p.z - SHOP.z, d = Math.hypot(dx, dz), ang = Math.atan2(dx, dz);
     const inGap = Math.abs(ang) < GAP - 0.06;
+    if (where === 'village' && inGap && Math.abs(d - R) < 1.0) { const wasIn = Math.hypot(prev.x - SHOP.x, prev.z - SHOP.z) < R; p.x = prev.x; p.z = prev.z; if (!fading) storeDoor(!wasIn); return; }
     if (where === 'village' && !inGap && Math.abs(d - R) < 1.0 && d > 0.001) {
       const wasInside = Math.hypot(prev.x - SHOP.x, prev.z - SHOP.z) < R;
       const target = wasInside ? R - 1.0 : R + 1.0;
@@ -6686,13 +6798,14 @@
   // insets: the real layout of each built region, drawn from the same numbers the world uses
   const INSET = {
     village(w, h) {
-      const X = x => (x + 46) / 92 * w, Z = z => (z + 20) / 126 * h, out = [];
+      const X = x => (x + 68) / 136 * w, Z = z => (z + 28) / 186 * h, out = [];
       out.push(`<rect x="${X(FENCE.x0)}" y="${Z(FENCE.z0)}" width="${X(FENCE.x1) - X(FENCE.x0)}" height="${Z(FENCE.z1) - Z(FENCE.z0)}" fill="none" stroke="#8a6438" stroke-width="1.5" stroke-dasharray="3 2"/>`);
-      out.push(`<line x1="${X(0)}" y1="${Z(13)}" x2="${X(0)}" y2="${Z(104)}" stroke="#b08a52" stroke-width="5" stroke-linecap="round"/>`);
+      out.push(`<line x1="${X(0)}" y1="${Z(13)}" x2="${X(0)}" y2="${Z(GATE.z)}" stroke="#b08a52" stroke-width="5" stroke-linecap="round"/>`);
       pathEnds.slice(1).forEach(([a, b]) => out.push(`<line x1="${X(a.x)}" y1="${Z(a.z)}" x2="${X(b.x)}" y2="${Z(b.z)}" stroke="#b08a52" stroke-width="2.5" stroke-linecap="round"/>`));
       const spot = (x, z, r, fill, label) => `<circle cx="${X(x)}" cy="${Z(z)}" r="${r}" fill="${fill}" stroke="#3a2a18" stroke-width="1"/><text x="${X(x)}" y="${Z(z) + r + 9}" text-anchor="middle" font-size="8" fill="#3a2a18">${label}</text>`;
       out.push(spot(0, 0, 11, '#8a6438', 'Shop'), spot(NURS.x, NURS.z, 14, '#6f9a3a', 'Nursery'), spot(WOOD.x, WOOD.z, 8, '#c9a06a', 'Woodshop'), spot(FEN.x, FEN.z, 5, '#c8384a', 'Stall'), spot(BUSH.x, BUSH.z, 5, '#2c5527', 'Bush'), spot(OAK.x, OAK.z, 10, '#3e6b2b', 'Old Oak'));
-      out.push(`<rect x="${X(-5)}" y="${Z(102)}" width="${X(5) - X(-5)}" height="4" fill="#6b4a2b"/><text x="${X(0)}" y="${Z(104) + 12}" text-anchor="middle" font-size="8" fill="#3a2a18">Gate</text>`);
+      HOMES.forEach(h => out.push(`<rect x="${X(h.x - 7)}" y="${Z(h.z - 5)}" width="${X(7) - X(-7)}" height="${Z(5) - Z(-5)}" fill="${h.wall}" stroke="#3a2a18" stroke-width="1"/><text x="${X(h.x)}" y="${Z(h.z + 5) + 9}" text-anchor="middle" font-size="7" fill="#3a2a18">${h.sign}</text>`));
+      out.push(`<rect x="${X(-5)}" y="${Z(GATE.z - 2)}" width="${X(5) - X(-5)}" height="4" fill="#6b4a2b"/><text x="${X(0)}" y="${Z(GATE.z) + 12}" text-anchor="middle" font-size="8" fill="#3a2a18">Gate</text>`);
       return { svg: out.join(''), X, Z };
     },
     skyhaven(w, h) {
@@ -6782,7 +6895,7 @@
     // the player's spot on the parchment
     if (where === 'in') { const saved = where, px = player.position.x, pz = player.position.z; where = interior.region; player.position.x = interior.door.x; player.position.z = interior.door.z; const r = youAreHere(); where = saved; player.position.x = px; player.position.z = pz; return r; }
     if (where === 'wild') { const r = roadNear(player.position.x, player.position.z); if (!r) return MAPPOS[nearestTown()]; const RD = ROADS[r.road], t = r.i / (RD.pts.length - 1), a = MAPPOS[RD.ai], b = MAPPOS[RD.bi]; return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
-    if (where === 'village') { const [cx, cy] = MAPPOS[0]; return [cx + player.position.x * 0.25, cy + (player.position.z - 45) * 0.2]; }
+    if (where === 'village') { const [cx, cy] = MAPPOS[0]; return [cx + player.position.x * 0.17, cy + (player.position.z - 64) * 0.14]; }
     if (where === 'orchards') { const [cx, cy] = MAPPOS[1]; return [cx + player.position.x * 0.2, cy - (player.position.z - 55) * 0.22]; }
     if (where === 'fernwater') { const [cx, cy] = MAPPOS[2]; return [cx + player.position.x * 0.2, cy - (player.position.z - 60) * 0.2]; }
     if (where === 'skyhaven') { const [cx, cy] = MAPPOS[7]; return [cx + player.position.x * 0.12, cy - (player.position.z - 60) * 0.12]; }
@@ -6865,6 +6978,7 @@
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false;
     kid.satchel.visible = save.done.length > 0; setCoins(save.coins || 0); phase = 'free'; bikeOwned = !!save.bike || save.done.includes('cog-10');
     if (save.beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(save.pos[0] - 2, 0, save.pos[2] - 2); }
+    if (save.lay !== 2) { if (save.where === 'village' && Math.hypot(save.pos[0], save.pos[2]) > R) { save.pos = [0, 0, 17]; save.yaw = 0; } save.lay = 2; }   // the Hollow was smaller once
     const place = () => { player.position.set(save.pos[0], 0, save.pos[2]); py = 0; bodyYaw = camYaw = save.yaw || 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(player.position.x - 2, 0, player.position.z - 2); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); };
     if (save.where === 'road') { goToRoad(); }
     else if (save.where === 'wild') { enterWild(save.pos[0], save.pos[2], save.yaw || 0, 'The Long Road.'); }
@@ -6967,6 +7081,4 @@
   else { drawMap(); showTitle(); }
 })();
 </script>
-
-</body>
-</html>
+</body></html>

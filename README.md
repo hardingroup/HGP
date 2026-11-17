@@ -72,6 +72,10 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - In the Hollow, straight-sided things (garden beds, rail fences, the potting shed) are box colliders in `hollowBoxes`: you slide along them and cannot pass through. A box with an `id` is a building entered at its door.
 - Fernsby's nursery is a 32 by 28 unit yard with its beds, cold frame, barrel and bench spread apart, a solid rail fence on three sides, and a potting shed you can walk into.
 - The spiral stair round Aldric's tree is climbable: 28 steps wind once round outside the platform and land on its rim, 21 units up. The stair passes over itself, so the game picks the step nearest your own height. Above 2.6 units you are clear of furniture and fences; the trunk still blocks. Stepping off is a real fall.
+- Thistledown Hollow is 128 by 176 units inside its fence (it was 88 by 122). The street runs 138 units from the yard to the gate. The gate stands where it always did in the wider world; the Hollow grew north and sideways. A save made in the smaller Hollow, outdoors, starts again in the yard.
+- Each of the four who work in the Hollow has a cottage with a path from the street: Bramblewick (north-east of the Stores), Marigold Fernsby (north of her nursery), Aldric Bough (south of the woodshop) and Fen Dewberry (west of her stall). They are listed in `HOMES`; each is a 14 by 10 unit cottage outside and a 26 by 20 unit room inside, with a hearth, bed, table and its owner's things. Nobody is at home: they are all at work.
+- The Village Stores works as a room: the door is shut until you come near, walking through it fades you in or out, and it shuts behind you. The inside is still built at the same spot as the stump, so the ten Hollow lessons did not have to move.
+- Doors inside rooms now swing outward, so the leaf never lands on furniture. The potting shed is 24 by 18 units inside.
 - Animals that get stuck pick a new direction. They are only ever moved to a clear spot when more than 140 units from you, so you never see one jump.
 
 ## Title screen and your elf
