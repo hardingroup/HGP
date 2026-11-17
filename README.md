@@ -57,6 +57,11 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Currents.** The Fernwater river carries you downstream while you swim; the Lanternreach sea pushes you gently toward the cove. Swim against them or use them.
 - **Jump** stays generous, and carries a little of your run with it. Hit a wall, a tree or a fence and you stop: whatever the world pushes back against is lost.
 
+## The bike
+
+- The bike goes where it points. W pedals, A and D steer, S brakes, and letting go coasts. It turns more slowly the faster it goes, and the camera swings round behind it.
+- The elf sits on the saddle with hands on the bars; each foot follows its pedal, the wheels turn with the ground speed, and the bike leans into turns.
+
 ## Settings
 
 **Settings** on the map screen (or `P` in play, Select on a controller) opens the settings screen, saved per device:
