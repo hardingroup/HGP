@@ -89,6 +89,10 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
   - Fire: every hearth, the Stores stove, the bakery oven and the Emberdeep furnaces burn with moving flames, embers and sparks (`makeFire`), and crackle only when you stand near them.
 - The bike: hold Run while pedalling to pedal hard. It is faster, drains stamina, and builds stamina over time like running does. Coasting with Run held costs nothing.
 - Lanternreach pier: six ladders (three each side), all climbable. The boardwalk down to the cove can be walked back up. The sky-lift gateway is two posts and a beam across the pier; the old cable and the second set of Pillar Rocks are gone.
+- The hint is a small note in the top right corner, under the task list. It shows for a few seconds and then folds away to a "?" button; tap that to read it again.
+- "How fast you look around" in Settings is one sensitivity for the mouse, a finger on the screen and a controller stick, sideways and up-and-down alike, from 0.4x to 4x. (Before, it only changed up-and-down.)
+- The tree-house in the Hollow has a handrail all the way up the stair and round the platform, open only where the stair arrives. From up there, no step may drop you more than a stair or two.
+- Skyhaven's ropes hold: you cannot walk or jump off the side of a bridge or the rim of an island.
 - Animals that get stuck pick a new direction. They are only ever moved to a clear spot when more than 140 units from you, so you never see one jump.
 
 ## Title screen and your elf

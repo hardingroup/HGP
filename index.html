@@ -60,10 +60,14 @@
   .chip svg { width: 18px; height: 18px; }
 
   .hint {
-    margin-top: 10px;
-    background: rgba(15,26,18,.85); border: 1px solid var(--panel-edge);
-    border-radius: 999px; padding: 6px 16px; color: var(--ink); font-size: 15px; text-align: center;
+    max-width: min(250px, 46vw); margin-left: auto;
+    background: rgba(15,26,18,.72); border: 1px solid var(--panel-edge);
+    border-radius: 10px; padding: 5px 10px; color: var(--ink); font-size: 12.5px; line-height: 1.35; text-align: left;
+    transition: opacity .5s;
   }
+  .hint.rest { display: none; }
+  .hintq { pointer-events: auto; margin-left: auto; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--panel-edge); background: rgba(15,26,18,.6); color: var(--ink); font: 600 14px/1 inherit; cursor: pointer; opacity: .75; padding: 0; }
+  @media (max-width: 640px) { .hint { font-size: 11.5px; max-width: 42vw; padding: 4px 8px; } }
 
   .bottom { display: flex; flex-direction: column; align-items: center; gap: 10px; }
   .dialog {
@@ -223,8 +227,10 @@
         <div class="row"><button class="btn small" id="bindreset">Reset to defaults</button></div>
         <h2>Mouse</h2>
         <div class="row"><label class="opt" id="invertopt">Inverted look (push up to look down)</label></div>
-        <div class="row"><span>Sensitivity</span><input type="range" id="sens" min="40" max="220" step="10"><span id="sensval"></span></div>
       </div>
+      <h2>Looking around</h2>
+      <div class="row"><span>How fast you look around</span><input type="range" id="sens" min="40" max="400" step="10"><span id="sensval"></span></div>
+      <p class="note">This works the same for the mouse, a finger on the screen and a controller stick.</p>
       <div id="gpsection">
         <h2>Controller</h2>
         <p class="note">Left stick walks, right stick looks. A jump &middot; B run &middot; X pick up / talk / sit &middot; Y flip view &middot; bumpers zoom &middot; Start map &middot; Select settings.</p>
@@ -303,9 +309,11 @@
       <div class="right">
         <div class="chip gold" id="coins" hidden></div>
         <div class="tasks" id="tasks"></div>
+        <span style="flex-basis:100%;height:0"></span>
+        <div class="hint" id="hint" hidden></div>
+        <button class="hintq" id="hintq" hidden aria-label="Show the last hint again" title="Show the last hint again">?</button>
       </div>
     </div>
-    <div style="display:flex;justify-content:center"><div class="hint" id="hint" hidden></div></div>
   </div>
   <div class="bottom">
     <div class="stam hp" id="hp"><div class="fill" id="hpfill"></div></div>
@@ -1128,11 +1136,16 @@
       const a = STAIR.a0 + k * STAIR.da, y = STAIR.rise * (k + 1);
       const step = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.3, 2.0), lightWood); step.position.set(Math.cos(a) * STAIR.r, y - 0.15, -6 + Math.sin(a) * STAIR.r); step.rotation.y = -a; step.castShadow = true; step.receiveShadow = true; woodshop.add(step);
       const arm = new THREE.Mesh(new THREE.BoxGeometry(STAIR.r - 1.6, 0.22, 0.26), darkWood); arm.position.set(Math.cos(a) * (STAIR.r - 1) / 2 * 1.25, y - 0.42, -6 + Math.sin(a) * (STAIR.r - 1) / 2 * 1.25); arm.rotation.y = -a; woodshop.add(arm);
-      if (k % 2 === 0) { const bal = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 1.9, 6), darkWood); bal.position.set(Math.cos(a) * (STAIR.r + 1.15), y + 0.95, -6 + Math.sin(a) * (STAIR.r + 1.15)); woodshop.add(bal); }
+      { const bal = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 1.9, 6), darkWood); bal.position.set(Math.cos(a) * (STAIR.r + 1.15), y + 0.95, -6 + Math.sin(a) * (STAIR.r + 1.15)); woodshop.add(bal);
+        // the handrail: one length from this post to the next, and a lower rope under it
+        const a2 = a + STAIR.da, y2 = y + (k < STAIR.n - 1 ? STAIR.rise : 0), R1 = STAIR.r + 1.15, A = new THREE.Vector3(Math.cos(a) * R1, y + 1.9, -6 + Math.sin(a) * R1), B = new THREE.Vector3(Math.cos(a2) * R1, y2 + 1.9, -6 + Math.sin(a2) * R1);
+        if (k < STAIR.n - 1) [[0, 0.11, darkWood], [-0.95, 0.05, mat('#b89a6a')]].forEach(([dy, rr, m]) => { const seg = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, A.distanceTo(B) + 0.1, 6), m); seg.position.copy(A).add(B).multiplyScalar(0.5); seg.position.y += dy; seg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize()); woodshop.add(seg); }); }
     }
     const platform = new THREE.Mesh(new THREE.CylinderGeometry(6, 5, 0.6, 24), mat('#ffffff', { map: plankTex })); platform.position.set(0, 21, -6); woodshop.add(platform);
-    const prail = new THREE.Mesh(new THREE.TorusGeometry(6, 0.15, 8, 40), darkWood); prail.position.set(0, 22.4, -6); prail.rotation.x = Math.PI / 2; woodshop.add(prail);
-    for (let k = 0; k < 12; k++) { const bal = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.4, 6), darkWood); const a = k / 12 * Math.PI * 2; bal.position.set(Math.cos(a) * 6, 21.9, -6 + Math.sin(a) * 6); woodshop.add(bal); }
+    // the platform rail, open only where the stair arrives
+    const aTop = STAIR.a0 + (STAIR.n - 1) * STAIR.da, gapA = 0.36;
+    [[23.2, 0.15, darkWood], [22.3, 0.06, mat('#b89a6a')]].forEach(([y, rr, m]) => { const prail = new THREE.Mesh(new THREE.TorusGeometry(6, rr, 8, 40, Math.PI * 2 - gapA * 2), m); prail.position.set(0, y, -6); prail.rotation.x = Math.PI / 2; prail.rotation.z = aTop + gapA; woodshop.add(prail); });
+    for (let k = 0; k < 16; k++) { const a = aTop + gapA + k / 15 * (Math.PI * 2 - gapA * 2), bal = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 2.0, 6), darkWood); bal.position.set(Math.cos(a) * 6, 22.3, -6 + Math.sin(a) * 6); woodshop.add(bal); }
     const canopy = new THREE.Mesh(new THREE.IcosahedronGeometry(7, 1), mat('#4a7a31', { flatShading: true })); canopy.position.set(0, 36, -6); woodshop.add(canopy);
     solids.push({ x: WOOD.x, z: WOOD.z - 6, r: 4.2, tall: true });
     // the open workshop: a plank floor, a sawhorse, a work table, a lathe, hanging curved beams
@@ -3617,9 +3630,11 @@
   const stamEl = $('stam'), stamFill = $('stamfill'), fadeEl = $('fade');
   const talking = () => !dialog.hidden;
   function showDialog(on) { dialog.hidden = !on; pad.style.visibility = on ? 'hidden' : 'visible'; if (on && document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} } }
-  function hint(t) { t = devText(t); hintEl.textContent = t || ''; hintEl.hidden = !t; hint.current = t || ''; }
+  // The hint is a small note in the top right corner. It shows for a few seconds and then folds away to a "?" you can tap to read it again.
+  function hint(t) { t = devText(t) || ''; const same = t === hint.current; hintEl.textContent = t; hintEl.hidden = !t; hint.current = t; if (!t) { $('hintq').hidden = true; clearTimeout(hint.timer); return; } if (same) return; hintShow(); }
+  function hintShow() { hintEl.classList.remove('rest'); $('hintq').hidden = true; clearTimeout(hint.timer); hint.timer = setTimeout(() => { if (!hint.current) return; hintEl.classList.add('rest'); $('hintq').hidden = false; }, 6500 + Math.min(6000, hint.current.length * 45)); }
   let flashTimer = null;
-  function flash(t) { const back = flashTimer ? flash.back : hint.current; flash.back = back; clearTimeout(flashTimer); hintEl.textContent = t; hintEl.hidden = false; flashTimer = setTimeout(() => { flashTimer = null; hint(back); }, 1100); }
+  function flash(t) { const back = flashTimer ? flash.back : hint.current; flash.back = back; clearTimeout(flashTimer); hintEl.textContent = t; hintEl.hidden = false; hintEl.classList.remove('rest'); $('hintq').hidden = true; flashTimer = setTimeout(() => { flashTimer = null; hint(back); if (back) hintShow(); }, 1100); }
   function clearDialog() { actions.innerHTML = ''; visual.hidden = true; visual.innerHTML = ''; }
   const speakerEl = $('speaker');
   // When somebody stops you as you walk up, the first thing they say comes with a "Not now". The talk keeps: walk away, and it starts again when you come back.
@@ -6383,6 +6398,7 @@
     el.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; e.preventDefault(); fire(e); });
     el.addEventListener('click', fire); }
   tapButton($('grab'), pickNearest);
+  tapButton($('hintq'), () => hintShow());
   { const rb = $('runbtn'); const on = e => { e.preventDefault(); keys.run = true; }, off = () => { keys.run = false; }; rb.addEventListener('pointerdown', on); rb.addEventListener('pointerup', off); rb.addEventListener('pointerleave', off); rb.addEventListener('pointercancel', off); }
   tapButton($('jumpbtn'), () => { wantJump = true; });
   tapButton($('viewbtn'), toggleView);
@@ -6431,8 +6447,9 @@
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
   document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === canvas; const lh = $('lockhint'); if (lh) lh.textContent = locked ? 'Mouse grabbed. Press Esc to let go.' : 'Click the game to grab the mouse, Esc to let go.'; });
   function look(dx, dy) {
-    if (view === 'front') bodyYaw -= dx * SENS; else camYaw -= dx * SENS;
-    pitch = clamp(pitch + dy * SENS * (settings.sens / 100) * (settings.invert ? 1 : -1), -0.45, 0.75); // inverted by default: push up to look down
+    const k = SENS * (settings.sens / 100);   // one sensitivity for mouse, finger and controller stick, sideways and up-and-down alike
+    if (view === 'front') bodyYaw -= dx * k; else camYaw -= dx * k;
+    pitch = clamp(pitch + dy * k * (settings.invert ? 1 : -1), -0.45, 0.75); // inverted by default: push up to look down
   }
   document.addEventListener('mousemove', e => { if (locked && !talking()) look(e.movementX, e.movementY); });
   const toNdc = e => { const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); };
@@ -6492,6 +6509,8 @@
     const p = player.position;
     if (where === 'wild') { collideWild(p, prev); return; }
     if (where === 'village' && lastGY + py < 2.6) for (const bx of hollowBoxes) { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (bx.id && Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } }
+    // the tree-house: handrails up the stair and round the platform. From up there, no step may drop you more than a stair or two.
+    if (where === 'village') { const hh = lastGY + py, g0 = stairH(prev.x, prev.z, hh); if (g0 > 2.4) { const ok = (x, z) => stairH(x, z, hh) >= g0 - 1.3; if (!ok(p.x, p.z)) { if (ok(p.x, prev.z)) p.z = prev.z; else if (ok(prev.x, p.z)) p.x = prev.x; else { p.x = prev.x; p.z = prev.z; } } } }
     if (where === 'village') for (const q of realHouses) {
       const m = 0.6, dx = p.x - q.x, dz = p.z - q.z, pdx = prev.x - q.x, pdz = prev.z - q.z;
       if (Math.abs(pdx) < q.hw && Math.abs(pdz) < q.hd) {   // you were indoors: the walls hold you, the doorway lets you out
@@ -6579,8 +6598,8 @@
     if (where === 'flight') { p.x = flier.position.x; p.z = flier.position.z; }
     if (where === 'skyhaven') {
       skySolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      // the rope fences hold you at the rim; the bridges have none, and the air past them is just air
-      if (!onIsland(p.x, p.z) && !onBridge(p.x, p.z) && !(p.z < 4 && Math.abs(p.x) < 6) && ISLANDS.some(i => Math.hypot(prev.x - i.x, prev.z - i.z) < i.r - 1.2) && !onBridge(prev.x, prev.z)) { if (onIsland(p.x, prev.z)) p.z = prev.z; else if (onIsland(prev.x, p.z)) p.x = prev.x; else { p.x = prev.x; p.z = prev.z; } }
+      // the ropes hold you: at the rim of every island and along both sides of every bridge. Jumping does not get you over them.
+      { const firm = (x, z) => onIsland(x, z) || onBridge(x, z) || (z < 4 && Math.abs(x) < 6); if (!firm(p.x, p.z) && firm(prev.x, prev.z)) { if (firm(p.x, prev.z)) p.z = prev.z; else if (firm(prev.x, p.z)) p.x = prev.x; else { p.x = prev.x; p.z = prev.z; } } }
       if (p.z < 0.5 && Math.abs(p.x) < 3 && !fading) goToLiftDown(); else if (p.z < -1) p.z = -1;
       skyBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
     }
