@@ -239,6 +239,8 @@
       </div>
       <p class="note" id="gfxnote"></p>
       <h2>Sound</h2>
+      <div class="row"><label class="opt" id="musicopt">Music</label><input type="range" id="musicvol" min="0" max="100" step="5"><span id="musicval"></span></div>
+      <div class="row"><label class="opt" id="soundopt">Voices and the sounds of each place</label><input type="range" id="soundvol" min="0" max="100" step="5"><span id="soundval"></span></div>
       <div class="row"><label class="opt" id="birdopt">Birdsong</label></div>
       <h2>Help</h2>
       <div class="row"><label class="opt" id="keysopt">Show the controls panel while playing</label></div>
@@ -464,7 +466,7 @@
   const HOMES = [
     { id: 'bwhome', x: 30, z: 4, from: [7, 16], sign: 'Bramblewick', wall: '#e9dcc3', trim: '#5a3d22', roof: '#4f7a33', door: '#5b3a1e', flower: '#f4d35e' },
     { id: 'marihome', x: -40, z: 10, from: [-7, 16], sign: 'Fernsby', wall: '#e6dfc6', trim: '#3e6b52', roof: '#6f9a3a', door: '#3e6b52', flower: '#e68fb0' },
-    { id: 'aldhome', x: 48, z: 70, hw: 12, hd: 9, real: true, from: [0, 82.4], sign: 'Bough', wall: '#d8c9a4', trim: '#4a3420', roof: '#8a6a3c', door: '#6b4a2b', flower: '#9fb7f0' },
+    { id: 'aldhome', x: 46, z: 72, from: [0, 80.4], sign: 'Bough', wall: '#d8c9a4', trim: '#4a3420', roof: '#8a6a3c', door: '#6b4a2b', flower: '#9fb7f0' },
     { id: 'fenhome', x: -46, z: 76, from: [0, 80], sign: 'Dewberry', wall: '#f0e2d8', trim: '#8a3a4a', roof: '#a8563a', door: '#8a3a4a', flower: '#d23b4e' }
   ];
   const nearHome = (x, z, pad = 0) => HOMES.some(h => Math.abs(x - h.x) < (h.hw || 7) + 1.5 + pad && Math.abs(z - h.z) < (h.hd || 5) + 2.5 + pad);
@@ -610,6 +612,32 @@
 
   // ---------- benches and stools you can sit on ----------
   const seats = [], roomSeats = [], realHouses = [];
+  // A fire: layered flames that lick and lean, embers under them, sparks rising, and its light flickering with it.
+  const fires = [];
+  function makeFire(parent, sc, x, y, z, size = 1, light = null) {
+    const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(size); parent.add(g);
+    const flames = [['#ff4e1a', 0.62, 1.45, 0, 0], ['#ff7d24', 0.5, 1.8, 0.2, 0.08], ['#ffa92e', 0.4, 1.5, -0.22, -0.06], ['#ffe27a', 0.25, 1.15, 0.03, 0.06], ['#ff6a1e', 0.34, 1.25, -0.34, 0.14], ['#ffc04a', 0.3, 1.3, 0.36, -0.1]].map(([c, r, h, ox, oz], i) => {
+      const geo = new THREE.ConeGeometry(r, h, 7, 1, true); geo.translate(0, h / 2, 0);
+      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: i === 3 ? 0.95 : 0.8, depthWrite: false, side: THREE.DoubleSide })); m.position.set(ox, 0, oz); m.renderOrder = 3; g.add(m);
+      return { m, ph: i * 1.9 + Math.random() * 6, sp: 5.5 + i * 1.4, ox, oz };
+    });
+    const ember = new THREE.Mesh(new THREE.CircleGeometry(0.85, 14), new THREE.MeshBasicMaterial({ color: '#ff5a14' })); ember.rotation.x = -Math.PI / 2; ember.position.y = 0.03; g.add(ember);
+    [[0.5, 0.5], [-0.4, -0.7]].forEach(([a, ry]) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.7, 6), new THREE.MeshBasicMaterial({ color: '#2a1508' })); lg.rotation.set(Math.PI / 2, 0, ry); lg.position.set(0, 0.16, a * 0.2); g.add(lg); });
+    const N = 10, pos = new Float32Array(N * 3), st = []; for (let i = 0; i < N; i++) st.push({ y: Math.random() * 2.4, x: 0, z: 0, v: 1 + Math.random() * 1.4, a: Math.random() * 6 });
+    const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const sparks = new THREE.Points(pg, new THREE.PointsMaterial({ color: '#ffd27a', size: 0.11 * size, transparent: true, opacity: 0.9, depthWrite: false })); sparks.frustumCulled = false; g.add(sparks);
+    const f = { g, sc, flames, ember, sparks, st, light, base: light ? light.intensity : 0, wp: null }; fires.push(f); return f;
+  }
+  function fireTick(dt, t) {
+    const sc = curScene();
+    for (const f of fires) {
+      if (f.sc !== sc) continue;
+      f.flames.forEach(q => { const a = t * q.sp + q.ph, k = 1 + 0.26 * Math.sin(a) + 0.14 * Math.sin(a * 2.3 + 1) + 0.08 * Math.sin(a * 5.1); q.m.scale.set(1 - 0.12 * Math.sin(a * 1.3), k, 1 - 0.12 * Math.cos(a * 1.7)); q.m.rotation.z = 0.16 * Math.sin(a * 0.7); q.m.rotation.x = 0.12 * Math.sin(a * 0.9 + 2); q.m.position.x = q.ox + 0.05 * Math.sin(a * 1.9); });
+      const fl = 0.84 + 0.1 * Math.sin(t * 11.3 + f.flames[0].ph) + 0.06 * Math.sin(t * 23.7) + 0.05 * Math.sin(t * 5.1 + 1);
+      f.ember.material.color.setRGB(1, 0.3 + 0.12 * fl, 0.06); if (f.light) f.light.intensity = f.base * fl;
+      const p = f.sparks.geometry.attributes.position; f.st.forEach((q, i) => { q.y += dt * q.v; if (q.y > 2.6) { q.y = 0.3; q.a = Math.random() * 6.3; q.v = 1 + Math.random() * 1.4; } p.setXYZ(i, Math.sin(q.a + q.y * 2) * 0.35 * (0.3 + q.y * 0.4), q.y, Math.cos(q.a * 1.3 + q.y) * 0.25); }); p.needsUpdate = true;
+    }
+  }
   // a seat that is only a spot: the chair or stool it belongs to is already standing there
   function seatSpot(sc, world, x, z, yaw, top, label) { const o = new THREE.Object3D(); o.position.set(x, 0, z); sc.add(o); o.userData = { pickable: true, kind: 'seat', yaw, seatTop: top, label, world }; roomSeats.push(o); seats.push(o); return o; }
   function makeBench(withBack) {
@@ -789,7 +817,6 @@
     const dTop = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.5, 0.25, 24, 1, false, 0, Math.PI), doorM); dTop.rotation.x = Math.PI / 2; dTop.rotation.z = 0; dTop.position.set(2.5, 3.5, 0); hinge.add(dTop);
     for (let k = 0; k < 5; k++) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 5.6, 0.28), mat('#3e2812')); pl.position.set(0.5 + k * 1, 2.8, 0); hinge.add(pl); }
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), mat('#e8b64c', { metalness: 0.6, roughness: 0.3 })); knob.position.set(4.4, 2.8, 0.2); hinge.add(knob);
-    solids.push({ x: -2.8, z: 12, r: 1.1 }, { x: -3.4, z: 14.3, r: 1.1 });
     [[0, 0.22, 4.4], [0, 0.5, 3.4]].forEach(([x, y, r]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.45, 24, 1, false, -Math.PI / 2, Math.PI), mat('#8a7458')); st.position.set(x, y, dz + 0.1); shop.add(st); });
     // round windows, lit from inside and glowing outside
     [0.8, -0.8, 2.0, -2.0].forEach(th => {
@@ -884,6 +911,7 @@
     const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 9, 10), mat('#3b3b3b')); sp.position.set(0, 7, 0); stove.add(sp);
     const kettle = new THREE.Mesh(new THREE.SphereGeometry(0.55, 14, 10), mat('#8a7a5a', { metalness: 0.6, roughness: 0.4 })); kettle.position.y = 3; stove.add(kettle);
     const sGlow = new THREE.PointLight('#ff7a30', 0.8, 12); sGlow.position.set(-1.6, 1.3, 0); stove.add(sGlow);
+    makeFire(stove, scene, -1.34, 0.72, 0, 0.36, sGlow);
     for (let k = 0; k < 6; k++) { const log = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 2, 8), mat('#ffffff', { map: barkTex })); log.position.set(0.4 + (k % 3) * 0.65, 0.3 + Math.floor(k / 3) * 0.55, -2.6); log.rotation.x = Math.PI / 2; stove.add(log); }
     solids.push({ x: R - 2.4, z: 0, r: 1.5 }, { x: R - 1.6, z: -2.6, r: 1.2 });
     // baskets of berries and a sack by the door, inside
@@ -1357,21 +1385,21 @@
   // hang a building's painted door on a hinge so it can swing: a dark doorway is left behind it
   function hingeDoor(door, g, open) {
     const w = door.geometry.parameters.width, h = door.geometry.parameters.height, p = door.position.clone();
-    if (!open) { const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: '#0e0906' })); back.position.set(p.x, p.y, p.z - 0.12); g.add(back); }
+    if (!open) { const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: '#ffc870' })); back.position.set(p.x, p.y, p.z - 0.12); g.add(back); }   // lamplight: all you see through the crack
     const hinge = new THREE.Group(); hinge.position.set(p.x - w / 2, p.y, p.z); g.remove(door); door.position.set(w / 2, 0, 0); hinge.add(door); g.add(hinge);
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), mat('#d8b24a', { metalness: 0.6, roughness: 0.3 })); knob.position.set(w - 0.4, -0.2, 0.22); hinge.add(knob);
-    extDoors.push({ hinge, w, a: 0, scene: null, wp: null });
+    extDoors.push({ hinge, w, a: 0, scene: null, wp: null, real: !!open });
   }
   function doorsTick(dt) {
-    if (where === 'in') { const it = interior, open = player.position.z > it.d / 2 - 7.5 ? 1 : 0; it.doorA += (open - it.doorA) * Math.min(1, dt * 4.5); it.hinge.rotation.y = -it.doorA * 1.75; return; }
+    if (where === 'in') { const it = interior, open = player.position.z > it.d / 2 - 7.5 ? 1 : 0; it.doorA += (open - it.doorA) * Math.min(1, dt * 4.5); it.hinge.rotation.y = -it.doorA * 0.2; return; }
     const sc = curScene(), px = player.position.x, pz = player.position.z;
     { const rn = where === 'village' ? realIn(px, pz) : null; if (rn !== realNow) { if (!rn && realNow && hint.current === realNow.hint) hint(''); realNow = rn; if (rn && !talking()) hint(rn.hint); } }
-    if (where === 'village') { const ins = Math.hypot(px, pz) < R, open = Math.hypot(px, pz - R) < (ins ? 5.5 : 8) ? 1 : 0; storeDoorA += (open - storeDoorA) * Math.min(1, dt * 4.5); shop.userData.hinge.rotation.y = -1.8 * storeDoorA; }
+    if (where === 'village') { const ins = Math.hypot(px, pz) < R, open = Math.hypot(px, pz - R) < (ins ? 5.5 : 8) ? 1 : 0; storeDoorA += (open - storeDoorA) * Math.min(1, dt * 4.5); shop.userData.hinge.rotation.y = -0.22 * storeDoorA; }
     for (const d of extDoors) {
       if (!d.scene) { const v = new THREE.Vector3(d.w / 2, 0, 0); let o = d.hinge; while (o && !o.isScene) { o.updateMatrix(); v.applyMatrix4(o.matrix); o = o.parent; } if (!o) continue; d.scene = o; d.wp = v; }
       if (d.scene !== sc) continue;
       const open = Math.hypot(px - d.wp.x, pz - d.wp.z) < 8 ? 1 : 0; if (open === 0 && d.a < 0.002) continue;
-      d.a += (open - d.a) * Math.min(1, dt * 4.5); d.hinge.rotation.y = -d.a * 1.65;
+      d.a += (open - d.a) * Math.min(1, dt * 4.5); d.hinge.rotation.y = -d.a * (d.real ? 1.65 : 0.2);   // a real room behind it swings wide; a pocket room unlatches a crack, then you fade in
     }
   }
   function fadeTo(text, mid, after) {
@@ -1980,8 +2008,8 @@
     const { wall, W, D, H, trimM } = k;
     const wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 });
     wall(6.4, 5.4, 1.6, 0, 2.7, -D / 2 + 0.8, stone); wall(3.2, 2.6, 0.3, 0, 1.5, -D / 2 + 1.62, mat('#1a1410')); wall(7.2, 0.3, 2.1, 0, 5.5, -D / 2 + 1.05, top);
-    const fire = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.5, 7), new THREE.MeshBasicMaterial({ color: '#ff9a3a' })); fire.position.set(0, 0.95, -D / 2 + 1.8); sc.add(fire);
-    const fl = new THREE.PointLight('#ff8a3a', 0.9, 28); fl.position.set(0, 2, -D / 2 + 3.2); sc.add(fl);
+    const fl = new THREE.PointLight('#ff8a3a', 0.95, 28); fl.position.set(0, 2, -D / 2 + 3.2); sc.add(fl);
+    makeFire(sc, sc.isScene ? sc : scene, 0, 0.22, -D / 2 + 2.05, 1.45, fl);
     [-2.2, 0, 2.2].forEach(x => solids.push({ x, z: -D / 2 + 0.9, r: 1.5 }));
     const rug = new THREE.Mesh(new THREE.CircleGeometry(3.8, 28), mat(o.rug, { roughness: 1 })); rug.rotation.x = -Math.PI / 2; rug.position.set(0, 0.03, -1.5); sc.add(rug);
     const bx = -W / 2 + 2.7, bz = -D / 2 + 4.6;
@@ -2056,7 +2084,7 @@
     loc.forEach(q => solids.push({ x: h.x + q.x, z: h.z + q.z, r: q.r }));
     realHouses.push({ id, x: h.x, z: h.z, hw: W / 2, hd: D / 2, dw: dg - 0.55, h: H, label: o.label, hint: o.hint });
   }
-  realHome('aldhome', { h: 9, wall: '#d8c9a4', trim: '#4a3420', label: 'Bough’s House', region: 'village', hint: 'Everything in here is curved, and he made all of it.', decorate: (sc, solids, k) => {
+  makeRoom('aldhome', { w: 26, d: 20, h: 9, wall: '#d8c9a4', trim: '#4a3420', label: 'Bough’s House', region: 'village', hint: 'Everything in here is curved, and he made all of it.', decorate: (sc, solids, k) => {
     const { wall, W, D } = k, { top, dark, wood, tx, tz } = homeKit(sc, solids, k, { rug: '#8a6a3c', quilt: '#2f4f7a' });
     wall(2.4, 0.3, 8, W / 2 - 1.4, 2.25, -4.5, top); [[-0.9, -3.7], [0.9, -3.7], [-0.9, 3.7], [0.9, 3.7]].forEach(([x, z]) => wall(0.3, 2.1, 0.3, W / 2 - 1.4 + x, 1.05, -4.5 + z, dark));
     for (let z = -7.5; z <= -1.5; z += 2) solids.push({ x: W / 2 - 1.4, z, r: 1.5 });
@@ -2105,6 +2133,7 @@
     const oven = new THREE.Mesh(new THREE.SphereGeometry(3, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat('#9b7a62')); oven.position.set(-6, 0, -5.2); oven.scale.y = 0.85; sc.add(oven); solids.push({ x: -6, z: -5.2, r: 3 });
     const mouth = new THREE.Mesh(new THREE.CircleGeometry(1, 16, 0, Math.PI), mat('#ff8a2a', { emissive: '#ff6a10', emissiveIntensity: 1.5 })); mouth.position.set(-6, 0.3, -2.2); sc.add(mouth);
     const glow = new THREE.PointLight('#ff7a30', 1.0, 14); glow.position.set(-6, 1.2, -1.5); sc.add(glow);
+    makeFire(sc, sc, -6, 0.3, -2.02, 0.62, glow);
     const flue = wall(1.6, H - 2.5, 1.6, -6, H / 2 + 1.3, -6.5, mat('#8d7a66'));
     [2.6, 4.2, 5.8].forEach(y => { wall(6, 0.15, 1, 5.5, y, -D / 2 + 0.6, mat('#ffffff', { map: plankTex })); for (let k = 0; k < 6; k++) { const loaf = new THREE.Mesh(new THREE.SphereGeometry(0.45, 10, 8), mat(pick(['#c9a06a', '#b8864a', '#d9b57a']))); loaf.scale.set(1.5, 0.8, 0.9); loaf.position.set(3 + k * 1, y + 0.35, -D / 2 + 0.6); sc.add(loaf); } });
     const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.9, 2, 14), mat('#8a6438')); barrel.position.set(-8.5, 1, 0); sc.add(barrel); solids.push({ x: -8.5, z: 0, r: 1.1 }); const flour = new THREE.Mesh(new THREE.CircleGeometry(0.9, 14), mat('#f5f0e6')); flour.rotation.x = -Math.PI / 2; flour.position.set(-8.5, 2.02, 0); sc.add(flour); solids.push({ x: -8.5, z: 0, r: 1 });
@@ -2717,7 +2746,7 @@
     for (let z = 0; z < 130; z += 32) { const l = new THREE.PointLight('#ff6a20', 1.6, 70); l.position.set(LAVA_X + 10, 6, z); embScene.add(l); embLights.push(l); }
     const lsign = signBoard('Lava. Mind your boots.', 6, 1, '#1b1b1b', '#ff9a40'); lsign.position.set(LAVA_X - 4, 3.2, 20); lsign.rotation.y = -Math.PI / 2; embScene.add(lsign);
     // the great furnaces, the anvils, and hammers the size of houses
-    function furnace(x, z, ry) { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; embScene.add(g); const body = new THREE.Mesh(new THREE.BoxGeometry(10, 12, 8), mat('#5a4a44', { roughness: 1 })); body.position.y = 6; body.castShadow = true; g.add(body); const mouth = new THREE.Mesh(new THREE.PlaneGeometry(5, 4), mat('#ff8a2a', { emissive: '#ff6a10', emissiveIntensity: 1.8 })); mouth.position.set(0, 3.5, 4.05); g.add(mouth); const chimney = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.8, 30, 10), ironM); chimney.position.set(0, 27, -1); g.add(chimney); const glow = new THREE.PointLight('#ff7a30', 1.3, 30); glow.position.set(0, 4, 7); g.add(glow); embLights.push(glow); const gauge = signBoard('800 – 1200', 3.4, 0.9, '#1b1b1b', '#ff9a40'); gauge.position.set(0, 8, 4.2); g.add(gauge); embSolids.push({ x, z, r: 6.5 }); return g; }
+    function furnace(x, z, ry) { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; embScene.add(g); const body = new THREE.Mesh(new THREE.BoxGeometry(10, 12, 8), mat('#5a4a44', { roughness: 1 })); body.position.y = 6; body.castShadow = true; g.add(body); const mouth = new THREE.Mesh(new THREE.PlaneGeometry(5, 4), mat('#ff8a2a', { emissive: '#ff6a10', emissiveIntensity: 1.8 })); mouth.position.set(0, 3.5, 4.05); g.add(mouth); const chimney = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.8, 30, 10), ironM); chimney.position.set(0, 27, -1); g.add(chimney); const glow = new THREE.PointLight('#ff7a30', 1.3, 30); glow.position.set(0, 4, 7); g.add(glow); embLights.push(glow); makeFire(g, embScene, 0, 1.55, 4.35, 2.3, null); const gauge = signBoard('800 – 1200', 3.4, 0.9, '#1b1b1b', '#ff9a40'); gauge.position.set(0, 8, 4.2); g.add(gauge); embSolids.push({ x, z, r: 6.5 }); return g; }
     furnace(-50, 30, Math.PI / 2); furnace(-50, 90, Math.PI / 2);
     function anvil(x, z) { const g = new THREE.Group(); g.position.set(x, 0, z); embScene.add(g); const base = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.8, 2.2, 10), mat('#5a3d22')); base.position.y = 1.1; g.add(base); const top = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 1.6), ironM); top.position.y = 2.8; top.castShadow = true; g.add(top); const horn = new THREE.Mesh(new THREE.ConeGeometry(0.7, 2.2, 8), ironM); horn.rotation.z = Math.PI / 2; horn.position.set(3, 2.8, 0); g.add(horn); embSolids.push({ x, z, r: 2.2 }); return g; }
     anvil(-6, 46); anvil(4, 60); anvil(-20, 60);
@@ -2767,8 +2796,10 @@
     if (x > edge) { const d = x - edge; h -= Math.min(d * Math.max(0.48, 3.5 - 3.02 * cove), 30); }
     return Math.max(h, SEA_Y - 4);
   }
-  const PIER_LADDERS = [[78, 1], [78, -1], [117, 1], [117, -1]];
+  const PIER_LADDERS = [[78, 1], [78, -1], [92, 1], [92, -1], [105, 1], [105, -1]];
   function atLadder(x, z) { return PIER_LADDERS.some(([lx, sd]) => Math.abs(x - lx) < 1.7 && Math.abs(z - (PIER.z + sd * 2.6)) < 1.6); }
+  // the boardwalk down to the cove is cleated like a ship's gangway: it is steep, but your feet hold on it
+  function onCovePath(x, z) { return where === 'lantern' && Math.abs(z - PIER.z) < 2.6 && x > 34 && x < PIER.x0 + 1; }
   function onPier(x, z) { return Math.abs(z - PIER.z) < 2.4 && x > PIER.x0 - 1 && x < PIER.x1 + 1; }
   const lantScene = new THREE.Scene();
   lantScene.fog = new THREE.Fog('#1b2a44', 80, 420); lantScene.background = new THREE.Color('#0f1a30');
@@ -2896,10 +2927,11 @@
       [[86, PIER.z + 6], [100, PIER.z - 6], [112, PIER.z + 6.5]].forEach(([x, z]) => [-2.2, 0, 2.2].forEach(o => lantSolids.push({ x: x + o, z, r: 1.5 }))); lantSolids.push({ x: 150, z: 86, r: 1.8 });
       lantScene.userData.boats = [boat(86, PIER.z + 6, 0, '#2a3a5a', true), boat(100, PIER.z - 6, 0.2, '#7a2e2e', false), boat(112, PIER.z + 6.5, -0.1, '#3f6f4a', true)];
       buoy = new THREE.Group(); buoy.position.set(150, SEA_Y, 86); lantScene.add(buoy); const bb = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.2, 1.8, 12), redM); bb.position.y = 0.6; buoy.add(bb); const frame = new THREE.Mesh(new THREE.ConeGeometry(1.4, 4, 4, 1, true), new THREE.MeshStandardMaterial({ color: '#3a3a3a', wireframe: true })); frame.position.y = 3.5; buoy.add(frame); const bell = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.9, 10), brassM); bell.position.y = 3.2; buoy.add(bell); const bl = new THREE.PointLight('#ff4040', 0.9, 60); bl.position.y = 5.6; buoy.add(bl); const blm = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), mat('#ff4040', { emissive: '#ff2020', emissiveIntensity: 2 })); blm.position.y = 5.6; buoy.add(blm); buoy.userData.light = bl;
-      // the Pillar Rocks far out: where the sky-lifts anchor, one day
-      [[300, 40, 12, 60], [330, 70, 10, 48], [280, 110, 14, 70]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r, h, 9), mat('#4e4a44', { flatShading: true, roughness: 1 })); st.position.set(x, SEA_Y + h / 2 - 6, z); lantScene.add(st); const top = new THREE.PointLight('#8fd0ff', 1.2, 90); top.position.set(x, SEA_Y + h - 4, z); lantScene.add(top); });
-      { const st = new THREE.Mesh(new THREE.BoxGeometry(2, 16, 2), ironM); st.position.set(PIER.x1 - 1, PIER.y + 8, PIER.z - 3); lantScene.add(st); const st2 = st.clone(); st2.position.z = PIER.z + 3; lantScene.add(st2); const arm = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 8), ironM); arm.position.set(PIER.x1 - 1, PIER.y + 16, PIER.z); lantScene.add(arm); const lsg = signBoard('The sky-lift', 4.4, 1, '#1f3a5a', '#f6e7c2'); lsg.position.set(PIER.x1 - 1, PIER.y + 12, PIER.z); lsg.rotation.y = -Math.PI / 2; lantScene.add(lsg); lantSolids.push({ x: PIER.x1 - 1, z: PIER.z - 3, r: 1.4 }, { x: PIER.x1 - 1, z: PIER.z + 3, r: 1.4 }); const cab = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 400, 5), ironM); cab.position.set(PIER.x1 + 150, PIER.y + 16 + 130, PIER.z); cab.rotation.z = -1.0; lantScene.add(cab); }
-      const psign = signBoard('The Pillar Rocks \u2192', 4.6, 0.9, '#1f3a5a', '#f6e7c2'); psign.position.set(PIER.x1 - 1, PIER.y + 2.6, PIER.z - 2.6); psign.rotation.y = -Math.PI / 2; lantScene.add(psign);
+      // the gateway to the sky-lift: two posts and a beam across the pier, with the sign hung under it. (The pylon, the cable and the Pillar Rocks belong to the lift itself, further out.)
+      { const gx = PIER.x1 - 8; [-2.5, 2.5].forEach(o => { const st = new THREE.Mesh(new THREE.BoxGeometry(0.7, 9.4, 0.7), ironM); st.position.set(gx, PIER.y + 4.1, PIER.z + o); st.castShadow = true; lantScene.add(st); lantSolids.push({ x: gx, z: PIER.z + o, r: 0.5 }); const lm = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 8), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1.4 })); lm.position.set(gx, PIER.y + 9.2, PIER.z + o); lantScene.add(lm); });
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 6.4), ironM); beam.position.set(gx, PIER.y + 8.4, PIER.z); lantScene.add(beam);
+        const lsg = signBoard('The sky-lift', 4.2, 1, '#1f3a5a', '#f6e7c2'); lsg.position.set(gx - 0.1, PIER.y + 7.3, PIER.z); lsg.rotation.y = -Math.PI / 2; lantScene.add(lsg); }
+      const psign = signBoard('The Pillar Rocks \u2192', 4.6, 0.9, '#1f3a5a', '#f6e7c2'); psign.position.set(PIER.x1 - 8.1, PIER.y + 5.9, PIER.z); psign.rotation.y = -Math.PI / 2; lantScene.add(psign);
       // a few sea stacks and a reef
       [[120, 20, 8, 22], [170, 160, 9, 26]].forEach(([x, z, r, h]) => { lantSolids.push({ x, z, r: r * 0.95 }); const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.7, r, h, 9), mat('#6e6a62', { flatShading: true, roughness: 1 })); st.position.set(x, SEA_Y + h / 2 - 5, z); lantScene.add(st); }); }
     [[-230, 60, 200, 110, 180, '#303a4a'], [-260, 260, 220, 130, 200, '#303a4a']].forEach(([ox, oz, rx, h, rz, c]) => mound(lantScene, ox, oz, rx, h, rz, c));
@@ -2928,7 +2960,7 @@
       const moon = new THREE.Mesh(new THREE.SphereGeometry(18, 16, 12), new THREE.MeshBasicMaterial({ color: '#f4efd8', fog: false })); moon.position.set(420, 200, 380); liftScene.add(moon); }
     const sea = seaPlane(liftScene, 200, 0, 1600, 1600, SEA_Y); sea.material.color.set('#3a5f86'); liftScene.userData.sea = sea;
     // the pier end, the Pillar Rocks with the upper pylon, and the cable
-    const pierEnd = new THREE.Mesh(new THREE.BoxGeometry(24, 0.6, 4.4), mat('#ffffff', { map: plankTex })); pierEnd.position.set(-8, PIER.y - 0.3, 0); liftScene.add(pierEnd);
+    const pierEnd = new THREE.Mesh(new THREE.BoxGeometry(24, 0.6, 4.4), mat('#ffffff', { map: plankTex })); pierEnd.position.set(-8, PIER.y - 0.36, 0); pierEnd.scale.z = 0.97; liftScene.add(pierEnd);   // a hair under Lanternreach's own pier, which runs over the same spot
     const pylon = (x, z, h) => { const p = new THREE.Mesh(new THREE.BoxGeometry(3, h, 3), mat('#3a3a3a', { metalness: 0.5 })); p.position.set(x, SEA_Y + h / 2, z); liftScene.add(p); const arm = new THREE.Mesh(new THREE.BoxGeometry(8, 1, 1), mat('#3a3a3a', { metalness: 0.5 })); arm.position.set(x, SEA_Y + h, z); liftScene.add(arm); return SEA_Y + h; };
     const y0 = pylon(0, 3, 24);
     [[300, 40, 12, 60], [330, 70, 10, 48], [280, 110, 14, 70]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r, h, 9), mat('#4e4a44', { flatShading: true, roughness: 1 })); st.position.set(x - 70, SEA_Y + h / 2 - 6, z - 40); liftScene.add(st); const top = new THREE.PointLight('#8fd0ff', 1.4, 90); top.position.set(x - 70, SEA_Y + h - 4, z - 40); liftScene.add(top); });
@@ -3425,12 +3457,124 @@
   let audioCtx = null, nextChirp = 2;
   function chirp(ctx) {
     const now = ctx.currentTime, n = 1 + Math.floor(rnd(1, 4)), base = rnd(2200, 3600), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; const out = ctx.createGain(); out.gain.value = 0.05 + Math.random() * 0.03;
-    if (pan) { pan.pan.value = rnd(-0.8, 0.8); out.connect(pan); pan.connect(ctx.destination); } else out.connect(ctx.destination);
+    const dest = snd.on ? snd.fx : ctx.destination; if (pan) { pan.pan.value = rnd(-0.8, 0.8); out.connect(pan); pan.connect(dest); } else out.connect(dest);
     for (let k = 0; k < n; k++) { const t0 = now + k * rnd(0.1, 0.18); const osc = ctx.createOscillator(), g = ctx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(base * rnd(0.9, 1.1), t0); osc.frequency.exponentialRampToValueAtTime(base * rnd(1.15, 1.5), t0 + 0.05); osc.frequency.exponentialRampToValueAtTime(base * rnd(0.8, 1.0), t0 + 0.11); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(1, t0 + 0.015); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.13); osc.connect(g); g.connect(out); osc.start(t0); osc.stop(t0 + 0.14); }
   }
-  function startAudio() { if (audioCtx) return; try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audioCtx = null; } }
+  function startAudio() { if (audioCtx) return; try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); sndInit(); } catch (e) { audioCtx = null; } }
   window.addEventListener('pointerdown', startAudio, { once: true }); window.addEventListener('keydown', startAudio, { once: true });
-  function songTick(dt) { if (!audioCtx || !settings.birds || where === 'in' || document.hidden) return; if (audioCtx.state === 'suspended') { audioCtx.resume(); return; } nextChirp -= dt; if (nextChirp <= 0) { chirp(audioCtx); nextChirp = rnd(1.5, 6); } }
+  // where you are, for the ear: 'room' (any indoors, the Stores included), 'cave' (Emberdeep under the mountain) or 'out'
+  function earPlace() { if (where === 'in' || (where === 'village' && Math.hypot(player.position.x, player.position.z) < R)) return 'room'; return where === 'emberdeep' ? 'cave' : 'out'; }
+  function songTick(dt) { if (!audioCtx || !settings.birds || !settings.sounds || document.hidden || earPlace() !== 'out' || where === 'lantern' || where === 'lift') return; if (audioCtx.state === 'suspended') { audioCtx.resume(); return; } nextChirp -= dt; if (nextChirp <= 0) { chirp(audioCtx); nextChirp = rnd(1.5, 6); } }
+
+  // ---------- sound: music, the voices of the people, and the sound of each place. All of it is made here, in the browser; there are no sound files. ----------
+  const snd = { on: false };
+  function sndInit() {
+    const c = audioCtx; if (!c || snd.on) return; snd.on = true;
+    snd.master = c.createGain(); snd.master.connect(c.destination);
+    snd.music = c.createGain(); snd.music.gain.value = 0; snd.music.connect(snd.master);
+    snd.fx = c.createGain(); snd.fx.gain.value = 0; snd.fx.connect(snd.master);
+    const nb = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; snd.noise = nb;
+    const loop = (type, freq, q) => { const src = c.createBufferSource(); src.buffer = nb; src.loop = true; const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = c.createGain(); g.gain.value = 0; src.connect(f); f.connect(g); g.connect(snd.fx); src.start(); return { f, g }; };
+    snd.wind = loop('lowpass', 380, 0.4); snd.river = loop('bandpass', 1150, 0.5); snd.sea = loop('lowpass', 520, 0.3); snd.fire = loop('bandpass', 1500, 0.7); snd.room = loop('lowpass', 150, 0.5);
+    snd.hum = c.createGain(); snd.hum.gain.value = 0; snd.hum.connect(snd.fx); [55, 82.6, 110.4].forEach((f, i) => { const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = c.createGain(); g.gain.value = [1, 0.5, 0.22][i]; o.connect(g); g.connect(snd.hum); o.start(); });
+    snd.next = { pop: 0, gull: 6, drip: 2, ring: 5 };
+  }
+  const sndSet = (node, v, tc = 0.4) => node.gain.setTargetAtTime(v, audioCtx.currentTime, tc);
+  // a short burst of noise: a spark popping in the fire
+  function sndPop(vol) { const c = audioCtx, t = c.currentTime, src = c.createBufferSource(); src.buffer = snd.noise; const f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = rnd(1400, 3800); const g = c.createGain(); g.gain.setValueAtTime(vol * rnd(0.4, 1), t); g.gain.exponentialRampToValueAtTime(0.0008, t + rnd(0.02, 0.07)); src.connect(f); f.connect(g); g.connect(snd.fx); src.start(t, Math.random() * 1.8); src.stop(t + 0.09); }
+  // one plain note with a shaped loudness; everything small is built from this
+  function sndNote(dest, type, f0, f1, t, dur, vol, att = 0.01) { const c = audioCtx, o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(0.0006, t + dur); o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.03); return o; }
+  function sndTick(dt, t) {
+    if (!snd.on || document.hidden) return; const c = audioCtx; if (c.state === 'suspended') { c.resume(); return; }
+    const ear = earPlace(), fxOn = settings.sounds && !titleUp;
+    sndSet(snd.fx, fxOn ? settings.soundVol / 100 : 0, 0.3); sndSet(snd.music, settings.music ? settings.musicVol / 100 * (ear === 'out' ? 1.7 : 1.25) : 0, 0.6);
+    musicTick();
+    if (!fxOn) return;
+    const p = player.position, out = ear === 'out';
+    // wind: only out of doors, more of it on the open road, the highlands and up in the sky
+    const windy = !out ? 0 : where === 'skyhaven' || where === 'lift' ? 0.8 : where === 'cairnhold' ? 0.65 : where === 'wild' ? 0.5 : 0.26;
+    sndSet(snd.wind.g, windy * (0.65 + 0.35 * Math.sin(t * 0.23) * Math.sin(t * 0.071 + 1)), 0.5); snd.wind.f.frequency.setTargetAtTime(330 + 170 * Math.sin(t * 0.13), c.currentTime, 0.5);
+    // the Fern: loud on its banks, gone a little way off
+    let rv = 0, sea = 0;
+    if (out && (where === 'fernwater' || where === 'wild')) { const [wx, wz] = playerWorldXZ(), l = toLocal(tileF, wx, wz), dd = Math.max(0, Math.abs(l[1] - RIVER.z) - RIVER.hw); rv = 0.6 * Math.pow(clamp(1 - dd / 70, 0, 1), 2); }
+    sndSet(snd.river.g, rv, 0.5);
+    // the sea: a slow swell near the Lanternreach shore, with a gull now and then
+    if (out && (where === 'lantern' || where === 'wild' || where === 'lift')) { const [wx, wz] = playerWorldXZ(), l = toLocal(tileL, wx, wz), dd = Math.max(0, 52 - l[0]); sea = 0.9 * Math.pow(clamp(1 - dd / 220, 0, 1), 2) * (where === 'lift' ? 1 - liftT : 1); }
+    sndSet(snd.sea.g, sea * (0.45 + 0.55 * Math.pow(Math.sin(t * 0.42), 2)), 0.4); snd.sea.f.frequency.setTargetAtTime(380 + 300 * Math.pow(Math.sin(t * 0.42), 2), c.currentTime, 0.4);
+    snd.next.gull -= dt; if (snd.next.gull <= 0) { snd.next.gull = rnd(7, 18); if (sea > 0.3) { const t0 = c.currentTime, f = rnd(1300, 1700), n = 2 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) sndNote(snd.fx, 'sawtooth', f * 1.15, f * 0.72, t0 + k * 0.3, 0.24, 0.05 * (1 - k * 0.15), 0.03); } }
+    // indoors: the quiet of a room. Under the mountain: a low hum, water dripping, a hammer somewhere
+    sndSet(snd.room.g, ear === 'room' ? 0.3 : 0, 0.4); sndSet(snd.hum, ear === 'cave' ? 0.06 : 0, 0.8);
+    if (ear === 'cave') {
+      snd.next.drip -= dt; if (snd.next.drip <= 0) { snd.next.drip = rnd(1.5, 6); const t0 = c.currentTime, f = rnd(1100, 1900); sndNote(snd.fx, 'sine', f, f * 0.62, t0, 0.09, 0.07, 0.004); sndNote(snd.fx, 'sine', f, f * 0.62, t0 + 0.21, 0.09, 0.025, 0.004); sndNote(snd.fx, 'sine', f, f * 0.62, t0 + 0.42, 0.09, 0.009, 0.004); }
+      snd.next.ring -= dt; if (snd.next.ring <= 0) { snd.next.ring = rnd(4, 11); const t0 = c.currentTime, f = rnd(1500, 2100), n = 1 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) { sndNote(snd.fx, 'triangle', f, f, t0 + k * 0.42, 0.7, 0.04, 0.003); sndNote(snd.fx, 'sine', f * 2.76, f * 2.76, t0 + k * 0.42, 0.35, 0.02, 0.003); } }
+    }
+    // fire: it crackles where it burns, and you hear it only when you stand near
+    let fv = 0; const sc = curScene(); for (const f of fires) { if (f.sc !== sc) continue; if (!f.wp) { f.g.updateWorldMatrix(true, false); f.wp = f.g.getWorldPosition(new THREE.Vector3()); } const dd = Math.hypot(p.x - f.wp.x, p.z - f.wp.z), reach = 9 + 5 * f.g.scale.x; fv = Math.max(fv, Math.pow(clamp(1 - dd / reach, 0, 1), 2)); }
+    sndSet(snd.fire.g, fv * 0.2 * (0.8 + 0.2 * Math.sin(t * 7.3)), 0.15);
+    if (fv > 0.01) { snd.next.pop -= dt; if (snd.next.pop <= 0) { snd.next.pop = rnd(0.03, 0.34); sndPop(0.3 * fv); } }
+  }
+
+  // ---- music: a harp and a flute. Each town has its own key, pace and tune, made up once from the town's name so it is always the same tune there.
+  const TUNES = { village: [60, 0, 92], orchards: [67, 0, 100], fernwater: [62, 0, 84], cairnhold: [57, 1, 76], cogsworth: [65, 0, 108], emberdeep: [50, 1, 68], lantern: [64, 1, 78], skyhaven: [69, 0, 72], wild: [62, 0, 80] };
+  const tuneCache = {}, mu = { key: null, tune: null, step: 0, next: 0 };
+  function buildTune(key) {
+    if (tuneCache[key]) return tuneCache[key];
+    const [root, minor, bpm] = TUNES[key]; let seed = 7; for (const ch of key) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+    const R2 = () => { seed = (seed + 0x6D2B79F5) >>> 0; let x = seed; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+    const prog = minor ? [[0, 1], [8, 0], [3, 0], [10, 0], [0, 1], [5, 1], [8, 0], [7, 0]] : [[0, 0], [9, 1], [5, 0], [7, 0], [0, 0], [5, 0], [2, 1], [7, 0]];
+    const pent = minor ? [0, 3, 5, 7, 10] : [0, 2, 4, 7, 9], ladder = []; for (let o = 0; o < 2; o++) pent.forEach(q => ladder.push(root + 12 + o * 12 + q)); ladder.push(root + 36);
+    const shapes = [[[0, 3], [3, 1], [4, 4]], [[0, 2], [2, 2], [4, 2], [6, 2]], [[0, 4], [4, 2], [6, 2]], [[0, 1], [1, 1], [2, 2], [4, 4]], [[0, 6], [6, 2]], [[0, 2], [2, 1], [3, 1], [4, 4]]];
+    let idx = 4 + Math.floor(R2() * 3); const bars = [];
+    const bar = b => { const [cr, cm] = prog[b % 8], tones = [cr, cr + (cm ? 3 : 4), cr + 7].map(q => q % 12), end = b % 4 === 3;
+      const shape = end ? (b % 8 === 7 ? [[0, 6]] : [[0, 8]]) : shapes[Math.floor(R2() * shapes.length)];
+      return shape.map(([st, len], n) => { idx = clamp(idx + [-2, -1, -1, 0, 1, 1, 2][Math.floor(R2() * 7)], 1, ladder.length - 2);
+        if (n === 0 || end) { let best = idx, bd = 99; ladder.forEach((m, q) => { if (tones.includes((m - root) % 12) && Math.abs(q - idx) < bd) { bd = Math.abs(q - idx); best = q; } }); idx = best; }
+        return [st, len, ladder[idx]]; }); };
+    for (let b = 0; b < 8; b++) bars.push(bar(b)); for (let b = 8; b < 12; b++) bars.push(bars[b - 8]); for (let b = 12; b < 16; b++) bars.push(bar(b));
+    return tuneCache[key] = { root, minor, bpm, prog, bars };
+  }
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  function harp(t, midi, vol) { const c = audioCtx, f = mtof(midi), g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.5); g.connect(snd.music); [['triangle', 1, 1], ['sine', 2, 0.28], ['sine', 3, 0.08]].forEach(([ty, h, a]) => { const o = c.createOscillator(), og = c.createGain(); o.type = ty; o.frequency.value = f * h; og.gain.value = a; o.connect(og); og.connect(g); o.start(t); o.stop(t + 1.55); }); }
+  function flute(t, midi, dur, vol) { const c = audioCtx, f = mtof(midi), o = c.createOscillator(), o2 = c.createOscillator(), g2 = c.createGain(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(); o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = f; o2.frequency.value = f * 2; g2.gain.value = 0.12; lfo.frequency.value = 5.2; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.007, t + Math.min(dur, 0.35)); lfo.connect(lg); lg.connect(o.frequency); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.07); g.gain.setValueAtTime(vol, t + Math.max(0.08, dur - 0.1)); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.06); o.connect(g); o2.connect(g2); g2.connect(g); g.connect(snd.music); [o, o2, lfo].forEach(q => { q.start(t); q.stop(t + dur + 0.1); }); }
+  function musicTick() {
+    const c = audioCtx; if (!settings.music) { mu.next = 0; return; }
+    const want = where === 'in' ? (TUNES[interior.region] ? interior.region : 'village') : where === 'lift' ? 'skyhaven' : TUNES[where] ? where : 'wild';
+    if (!mu.tune) { mu.key = want; mu.tune = buildTune(want); mu.step = 0; mu.next = 0; }
+    if (mu.next < c.currentTime - 0.05) { if (mu.next < c.currentTime - 2) mu.step -= mu.step % 8; mu.next = c.currentTime + 0.15; }   // fell behind (a slow frame, or the tab was away): pick up from here, never pile notes up
+    let guard = 0;
+    while (mu.next < c.currentTime + 0.5 && guard++ < 16) {
+      const s8 = mu.step % 8; let b = Math.floor(mu.step / 8) % 20;
+      if (s8 === 0 && want !== mu.key) { mu.key = want; mu.tune = buildTune(want); mu.step = 0; b = 0; }   // a new place: its tune starts on the next bar
+      const T = mu.tune, [cr, cm] = T.prog[b % 8], r = T.root + cr - 12, third = r + (cm ? 3 : 4), fifth = r + 7, t = mu.next, quiet = b >= 16 || mu.key === 'wild';
+      const arp = [r, fifth, third + 12, fifth, r + 12, fifth, third + 12, fifth + 12][s8];
+      if (!quiet || s8 % 2 === 0) harp(t, arp, (s8 % 4 === 0 ? 0.11 : 0.07) * (quiet ? 0.8 : 1));
+      if (s8 === 0) sndNote(snd.music, 'sine', mtof(r - 12), mtof(r - 12), t, 60 / T.bpm * 2, 0.1, 0.03);
+      if (b < 16) T.bars[b].forEach(([st, len, m]) => { if (st === s8) flute(t, m, len * 30 / T.bpm * 0.92, 0.085); });
+      mu.next += 30 / T.bpm; mu.step++;
+    }
+  }
+
+  // ---- voices: nobody speaks words yet, but everybody has a voice. A small "oh", "ah" or "hm" when they start, and a murmur with each line after.
+  const VOICES = { 'Old Bramblewick': [132, 0.85, 1], 'Fen Dewberry': [335, 1.2, 0], 'Aldric Bough': [98, 0.8, 0], 'Marigold Fernsby': [240, 1, 0] };
+  const VOWELS = { a: [820, 1250], o: [480, 880], e: [520, 1850], i: [310, 2250], u: [340, 780], m: [240, 1000] };
+  function voiceOf(who) { if (VOICES[who]) return VOICES[who]; let h = 0; for (const ch of String(who)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return VOICES[who] = [105 + (h % 10) * 26, 0.85 + ((h >> 5) % 5) * 0.08, (h >> 9) % 4 === 0 ? 1 : 0]; }
+  function syll(t, f0, f1, dur, vowel, vol, wob) {
+    const c = audioCtx, o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + dur);
+    if (wob) { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = 6.5; lg.gain.value = f0 * 0.045; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t + dur + 0.05); }
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.018); g.gain.setValueAtTime(vol, t + Math.max(0.02, dur - 0.04)); g.gain.linearRampToValueAtTime(0.0001, t + dur);
+    VOWELS[vowel].forEach((fq, k) => { const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = fq; f.Q.value = vowel === 'm' ? 3 : 7; const fg = c.createGain(); fg.gain.value = k ? 0.55 : 1; o.connect(f); f.connect(fg); fg.connect(g); });
+    const vg = c.createGain(); vg.gain.value = 8 * clamp(260 / f0, 0.8, 2.6);   // low voices carry less, so they get more g.connect(vg); vg.connect(snd.fx); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function voiceLine(who, text, first) {
+    if (!snd.on || !settings.sounds || audioCtx.state !== 'running') return;
+    const [f0, rate, wob] = voiceOf(who), plain = String(text).replace(/<[^>]*>/g, ''), words = plain.split(/\s+/).length, asks = /\?\s*$/.test(plain); let t = audioCtx.currentTime + 0.04, h = 0; for (const ch of plain.slice(0, 24)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    if (first) { const kind = /^(Oh|Ah|Ooh)/.test(plain) ? 0 : /^(Hm|Well|Now|So)/.test(plain) ? 2 : h % 3;
+      if (kind === 0) syll(t, f0 * 1.28, f0 * 0.9, 0.26, 'o', 0.2, wob); else if (kind === 1) syll(t, f0 * 0.95, f0 * 1.2, 0.26, 'a', 0.2, wob); else syll(t, f0 * 0.92, f0 * 1.1, 0.3, 'm', 0.34, wob);
+      t += 0.4; }
+    const n = clamp(Math.round(words / 2.4), 2, first ? 4 : 6), keys = 'aoeiu';
+    for (let k = 0; k < n; k++) { const last = k === n - 1, d = rnd(0.07, 0.11) / rate, p = f0 * (1.12 - k * 0.03 + rnd(-0.07, 0.09)); syll(t, p, last ? p * (asks ? 1.3 : 0.82) : p * rnd(0.95, 1.06), last ? d * 1.5 : d, keys[(h + k * 7 + Math.floor(Math.random() * 2)) % 5], 0.15, wob); t += d + rnd(0.015, 0.04) / rate; }
+  }
+
 
   // ---------- pickables ----------
   const pickables = []; roomSeats.forEach(o => pickables.push(o));
@@ -3485,7 +3629,7 @@
     const canWait = offerFlag; offerFlag = false;
     let i = 0; showDialog(true); hint(''); speakerEl.textContent = who;
     const show = () => {
-      clearDialog(); line.innerHTML = devText(lines[i]);
+      clearDialog(); line.innerHTML = devText(lines[i]); voiceLine(who, lines[i], i === 0);
       const b = document.createElement('button'); b.className = 'btn primary';
       b.textContent = i < lines.length - 1 ? 'Next' : 'Okay!';
       b.onclick = () => { i++; if (i < lines.length) show(); else { showDialog(false); then && then(); } };
@@ -6157,7 +6301,7 @@
   const SET_KEY = 'long-road-settings-v1';
   const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', ride: 'KeyR', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', keys: 'KeyH', settings: 'KeyP' };
   const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', ride: 'Ride / get off the bicycle', view: 'Flip view', zoom: 'Zoom', map: 'World map', keys: 'Show / hide controls', settings: 'Settings' };
-  const settings = { input: null, binds: Object.assign({}, DEFAULT_BINDS), invert: true, sens: 100, birds: true, showKeys: true };
+  const settings = { input: null, binds: Object.assign({}, DEFAULT_BINDS), invert: true, sens: 100, birds: true, music: true, musicVol: 60, sounds: true, soundVol: 70, showKeys: true };
   try { const sv = JSON.parse(localStorage.getItem(SET_KEY) || '{}'); Object.assign(settings, sv); settings.binds = Object.assign({}, DEFAULT_BINDS, sv.binds || {}); } catch (e) {}
   function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) {} }
   if (!settings.input) settings.input = matchMedia('(hover: none) and (pointer: coarse)').matches ? 'touch' : 'keyboard';
@@ -6330,7 +6474,7 @@
     if (where === 'cairnhold') return (z > GORGE.z0 && z < GORGE.z1 && !(bridgeBuilt && Math.abs(x) < 3.5)) ? -GORGE.depth : 0;
     if (where === 'cogsworth') return cogH(x, z);
     if (where === 'village') return stairH(x, z, lastGY + py);
-    if (where === 'lantern') return onPier(x, z) ? PIER.y : inRiver(x, z) ? SEA_Y - 1.45 : lantH(x, z);
+    if (where === 'lantern') return onPier(x, z) ? PIER.y : Math.max(lantH(x, z), SEA_Y - 1.45);   // you float at swimming depth, and the seabed lifts you out smoothly where it shoals
     if (where === 'lift') return gondola.position.y;
     if (where === 'flight') return flier.position.y + 0.9;
     if (where === 'skyhaven') return (onIsland(x, z) || onBridge(x, z) || (z < 4 && Math.abs(x) < 6)) ? skyH(x, z) : -600;
@@ -6422,9 +6566,9 @@
       lantSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       if ((p.x < -56 || p.x > 230 || p.z < -0.5 || p.z > 200) && !fading) { switchFrame('wild', prev); return; }
       const dh = groundAt(p.x, p.z) - groundAt(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
-      if (run > 0.001 && dh / run > 1.0 && !onPier(p.x, p.z)) { p.x = prev.x; p.z = prev.z; }
-      // from the water you climb onto the pier only at the ramp
-      if (inRiver(prev.x, prev.z) && onPier(p.x, p.z) && p.x > PIER.x0 + 2 && !atLadder(prev.x, prev.z)) { p.x = prev.x; p.z = prev.z; }
+      if (run > 0.001 && dh / run > 1.0 && !onPier(p.x, p.z) && !(onPier(prev.x, prev.z) && dh < 1.6)) { p.x = prev.x; p.z = prev.z; }   // stepping off the foot of the pier onto the path is a step, not a cliff
+      // from the water or the sand below, you get onto the pier only at a ladder
+      if (onPier(p.x, p.z) && !onPier(prev.x, prev.z) && groundAt(prev.x, prev.z) + py < PIER.y - 0.9 && !atLadder(prev.x, prev.z)) { p.x = prev.x; p.z = prev.z; }
       if (onPier(p.x, p.z) && p.x > PIER.x1 - 2.5 && !fading) goToLift(false);
       if (Math.hypot(p.x - (-34), p.z - (32 + 7.4)) < 2.6 && !fading) enterInterior('observatory');
       lantBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
@@ -6532,6 +6676,7 @@
     $('invertopt').classList.toggle('on', settings.invert); $('gpinvertopt').classList.toggle('on', settings.invert);
     $('sens').value = settings.sens; $('sensval').textContent = (settings.sens / 100).toFixed(1) + '×';
     $('birdopt').classList.toggle('on', settings.birds); $('keysopt').classList.toggle('on', settings.showKeys);
+    $('musicopt').classList.toggle('on', settings.music); $('soundopt').classList.toggle('on', settings.sounds); $('musicvol').value = settings.musicVol; $('soundvol').value = settings.soundVol; $('musicval').textContent = settings.musicVol + '%'; $('soundval').textContent = settings.soundVol + '%';
     $('gfxq').value = gfx.quality; $('gfxd').value = gfx.distance;
   }
   document.querySelectorAll('#inputrow .opt').forEach(l => l.addEventListener('click', () => { if (l.classList.contains('off')) return; settings.input = l.dataset.v; renderSettings(); }));
@@ -6539,6 +6684,10 @@
   $('gpinvertopt').addEventListener('click', () => { settings.invert = !settings.invert; renderSettings(); });
   $('sens').addEventListener('input', e => { settings.sens = +e.target.value; $('sensval').textContent = (settings.sens / 100).toFixed(1) + '×'; });
   $('birdopt').addEventListener('click', () => { settings.birds = !settings.birds; renderSettings(); });
+  $('musicopt').addEventListener('click', () => { settings.music = !settings.music; renderSettings(); saveSettings(); });
+  $('soundopt').addEventListener('click', () => { settings.sounds = !settings.sounds; renderSettings(); saveSettings(); });
+  $('musicvol').addEventListener('input', e => { settings.musicVol = +e.target.value; $('musicval').textContent = settings.musicVol + '%'; saveSettings(); });
+  $('soundvol').addEventListener('input', e => { settings.soundVol = +e.target.value; $('soundval').textContent = settings.soundVol + '%'; saveSettings(); });
   $('keysopt').addEventListener('click', () => { settings.showKeys = !settings.showKeys; renderSettings(); });
   $('bindreset').addEventListener('click', () => { settings.binds = Object.assign({}, DEFAULT_BINDS); listening = null; renderSettings(); });
   window.addEventListener('keydown', e => {
@@ -6586,12 +6735,12 @@
     const moving = mag > 0.05 && !sitting;
     if (!stamInit) { stamInit = true; stamMax = Math.max(100, save.stamMax || 100); stamina = stamMax; stamTen = Math.floor(stamMax / 10); }
     const inWater = inRiver(player.position.x, player.position.z) && where !== 'in';
-    const wantRun = (keys.run || gp.run) && moving && stamina > 0 && !inWater;
+    const wantRun = (keys.run || gp.run) && moving && stamina > 0 && !inWater && (!riding || mz > 0.1);   // on the bike, Run is pedalling hard
     running = wantRun && (running || stamina > 15);
     if (running) stamina -= dt * 22; else if (inWater) stamina -= dt * (moving ? 4 : 2.5); else stamina += dt * (moving ? 10 : 20);
     stamina = clamp(stamina, 0, stamMax);
-    // stamina grows only from your own effort: running, swimming and climbing (never from riding)
-    if (!riding && moving && (running || inWater)) growStam(dt * (inWater ? 0.035 : 0.025));
+    // stamina grows from your own effort: running, swimming, climbing, and pedalling hard (never from coasting)
+    if (moving && (running || inWater)) growStam(dt * (inWater ? 0.035 : riding ? 0.02 : 0.025));
     // out of breath in the water: you start to drown
     if (inWater && stamina <= 0 && !dead) { if (!drowning) { drowning = true; flash('Out of breath. Get to shore, a ladder, or the beach!'); } if (hp - dt * 10 <= 0) die('You drowned.'); else hurt(dt * 10); } else drowning = false;
     if (stamina <= 0) running = false;
@@ -6601,11 +6750,11 @@
       const bspd = vel.length(), dir = riding ? bodyYaw + mx * dt * 2.3 * clamp(bspd / 4, 0, 1) / (1 + bspd / 26) : base + Math.atan2(mx, mz);
       fwd.set(Math.sin(dir), 0, Math.cos(dir));
       const grade = where === 'cogsworth' ? (cogH(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - cogH(player.position.x, player.position.z)) / 1.5 : where === 'lantern' || where === 'wild' ? (groundAt(player.position.x + fwd.x * 1.5, player.position.z + fwd.z * 1.5) - groundAt(player.position.x, player.position.z)) / 1.5 : 0;
-      const slopeK = grade > 0 ? 1 / (1 + grade * 2.2) : Math.min(1.25, 1 - grade * 0.4);
+      const slopeK = onCovePath(player.position.x, player.position.z) ? 0.85 : grade > 0 ? 1 / (1 + grade * 2.2) : Math.min(1.25, 1 - grade * 0.4);
       if (grade > 0.25 && running) stamina = Math.max(0, stamina - dt * 20 * grade);
       const swimming = inRiver(player.position.x, player.position.z);
       if (riding && (swimming || where === 'in')) setRiding(false);
-      const speed = riding ? (mz > 0.1 ? 17.5 * Math.pow(slopeK, 1.6) : 0) : (swimming ? 3.6 : running ? 14 : 7.5) * mag * (mz < 0 && Math.abs(mx) < 0.2 ? 0.65 : 1) * slopeK;
+      const speed = riding ? (mz > 0.1 ? (running ? 25 : 17.5) * Math.pow(slopeK, running ? 1.3 : 1.6) : 0) : (swimming ? 3.6 : running ? 14 : 7.5) * mag * (mz < 0 && Math.abs(mx) < 0.2 ? 0.65 : 1) * slopeK;
       targetV.copy(fwd).multiplyScalar(speed);
       const face = view === 'front' ? bodyYaw : dir;
       if (riding) { bodyYaw = dir; if (view !== 'front') camYaw += wrap(bodyYaw - camYaw) * Math.min(1, dt * 2.2); } else bodyYaw += wrap(face - bodyYaw) * Math.min(1, dt * 10);
@@ -6621,7 +6770,7 @@
       // slopes push: downhill speeds you up and is hard to stop, uphill drags; you only slide when standing on something steep
       if (!swimNow && !airborne && where !== 'in' && where !== 'village') {
         const gx = groundAt(player.position.x + 0.6, player.position.z) - groundAt(player.position.x - 0.6, player.position.z), gz = groundAt(player.position.x, player.position.z + 0.6) - groundAt(player.position.x, player.position.z - 0.6);
-        const g = Math.hypot(gx, gz) / 1.2; if (g > (moving ? 0.06 : 0.42) && g < 1.6) { const push = (riding ? 34 : 26) * dt; vel.x -= gx / 1.2 * push; vel.z -= gz / 1.2 * push; }
+        const g = Math.hypot(gx, gz) / 1.2; if (g > (moving ? 0.06 : 0.42) && g < 1.6 && !onCovePath(player.position.x, player.position.z)) { const push = (riding ? 34 : 26) * dt; vel.x -= gx / 1.2 * push; vel.z -= gz / 1.2 * push; }
       }
       if (swimNow) { const c = currentAt(player.position.x, player.position.z); vel.addScaledVector(c, Math.min(1, dt * 2)); }
       if (vel.length() > 24) vel.setLength(24);
@@ -6750,7 +6899,8 @@
     if (riding) {
       const sp = vel.length(), pedalling = mz > 0.1;
       bike.userData.wheels.forEach(w => (w.rotation.x += sp * dt / 1.1));
-      if (pedalling && sp > 0.3) bike.userData.crank.rotation.x += dt * Math.min(9, 2 + sp * 0.45);
+      if (pedalling && sp > 0.3) bike.userData.crank.rotation.x += dt * Math.min(running ? 14 : 9, 2 + sp * (running ? 0.55 : 0.45));
+      kid.body.rotation.x += ((running && pedalling ? 0.5 : 0.3) - kid.body.rotation.x) * Math.min(1, dt * 5);   // head down when you pedal hard
       // each foot follows its pedal round; hands stay on the bars; lean into the turn
       const ca = bike.userData.crank.rotation.x;
       [-1, 1].forEach((d, k) => { const py2 = 1.1 + d * 0.32 * Math.cos(ca), pz2 = d * 0.32 * Math.sin(ca), hy = 2.08, hz = -0.36; kid.legs[k].rotation.x = -Math.atan2(pz2 - hz, hy - py2) - 0.3; });
@@ -6799,7 +6949,7 @@
     if (where === 'in' && interior.id === 'mill') { const u = interior.scene.userData; u.runner.rotation.y += dt * wheelSpeed * 1.5; u.shaft.rotation.y += dt * wheelSpeed * 1.5; u.gear.rotation.y += dt * wheelSpeed * 1.5; u.axle.rotation.x += dt * wheelSpeed; }
     if (gameStarted && !mapOpen && keysShown < 99) { keysShown += dt; if (keysShown > 9) { keysEl.classList.add('gone'); keysShown = 99; } }
     if (canvas.clientWidth !== shownW || canvas.clientHeight !== shownH) resize();
-    ambientTick(dt, t); wildLifeTick(dt); doorsTick(dt); songTick(dt); cullTimer += dt; if (cullTimer > 0.5) { cullTimer = 0; cullFar(); }
+    ambientTick(dt, t); wildLifeTick(dt); doorsTick(dt); fireTick(dt, t); songTick(dt); sndTick(dt, t); cullTimer += dt; if (cullTimer > 0.5) { cullTimer = 0; cullFar(); }
     // your beetle trots along behind you
     if (beetle && inRiver(beetle.position.x, beetle.position.z)) { if (where === 'lantern') { beetle.position.set(40, lantH(40, COVE.z), COVE.z); } else if (where === 'wild' && wildSea(beetle.position.x, beetle.position.z)) { const [bx, bz] = toWorld(tileL, 40, 112); beetle.position.set(bx, worldH(bx, bz), bz); } else if (where === 'wild') { const [, lx, lz] = riverD(beetle.position.x, beetle.position.z), [bx, bz] = toWorld(tileF, lx, lz < 78 ? 52 : 104); beetle.position.set(bx, worldH(bx, bz), bz); } else { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; } }
     if (beetle && beetle.userData.follow && !inRiver(player.position.x, player.position.z)) {
