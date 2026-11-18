@@ -464,10 +464,10 @@
   const HOMES = [
     { id: 'bwhome', x: 30, z: 4, from: [7, 16], sign: 'Bramblewick', wall: '#e9dcc3', trim: '#5a3d22', roof: '#4f7a33', door: '#5b3a1e', flower: '#f4d35e' },
     { id: 'marihome', x: -40, z: 10, from: [-7, 16], sign: 'Fernsby', wall: '#e6dfc6', trim: '#3e6b52', roof: '#6f9a3a', door: '#3e6b52', flower: '#e68fb0' },
-    { id: 'aldhome', x: 46, z: 72, from: [0, 80.4], sign: 'Bough', wall: '#d8c9a4', trim: '#4a3420', roof: '#8a6a3c', door: '#6b4a2b', flower: '#9fb7f0' },
+    { id: 'aldhome', x: 48, z: 70, hw: 12, hd: 9, real: true, from: [0, 82.4], sign: 'Bough', wall: '#d8c9a4', trim: '#4a3420', roof: '#8a6a3c', door: '#6b4a2b', flower: '#9fb7f0' },
     { id: 'fenhome', x: -46, z: 76, from: [0, 80], sign: 'Dewberry', wall: '#f0e2d8', trim: '#8a3a4a', roof: '#a8563a', door: '#8a3a4a', flower: '#d23b4e' }
   ];
-  const nearHome = (x, z, pad = 0) => HOMES.some(h => Math.abs(x - h.x) < 8.5 + pad && Math.abs(z - h.z) < 7.5 + pad);
+  const nearHome = (x, z, pad = 0) => HOMES.some(h => Math.abs(x - h.x) < (h.hw || 7) + 1.5 + pad && Math.abs(z - h.z) < (h.hd || 5) + 2.5 + pad);
   const YARD = new THREE.Vector3(0, 0, 17);
   const DOOR = new THREE.Vector3(0, 0, R + 1.5);
   const GATE = new THREE.Vector3(0, 0, 152);
@@ -486,7 +486,7 @@
     [STREET0, STREET1, 0, 8],
     [new THREE.Vector3(0, 0, NURS.z), NURS, 15.5, 4], [new THREE.Vector3(0, 0, WOOD.z), WOOD, 9, 4],
     [new THREE.Vector3(0, 0, FEN.z), FEN, 6, 4], [new THREE.Vector3(0, 0, BUSH.z), BUSH, 6, 4], [new THREE.Vector3(0, 0, OAK.z), OAK, 9, 4],
-    ...HOMES.map(h => [new THREE.Vector3(h.from[0], 0, h.from[1]), new THREE.Vector3(h.x, 0, h.z + 8.4), 0, 3])
+    ...HOMES.map(h => [new THREE.Vector3(h.from[0], 0, h.from[1]), new THREE.Vector3(h.x, 0, h.z + (h.hd || 5) + 3.4), 0, 3])
   ];
   const onPath = (x, z, pad) => pathEnds.some(([a, b, , w]) => distSeg(x, z, a.x, a.z, b.x, b.z) < w / 2 + pad);
   const nearBig = (x, z, pad) => Math.hypot(x - SHOP.x, z - SHOP.z) < R + 2 + pad || Math.hypot(x - OAK.x, z - OAK.z) < 9 + pad || Math.hypot(x - BUSH.x, z - BUSH.z) < 6 + pad || Math.hypot(x - YARD.x, z - YARD.z) < 9 + pad || Math.hypot(x - FEN.x, z - FEN.z) < 9 + pad || Math.hypot(x - NURS.x, z - NURS.z) < 21 + pad || Math.hypot(x - WOOD.x, z - WOOD.z) < 11 + pad || nearHome(x, z, pad);
@@ -609,7 +609,9 @@
   });
 
   // ---------- benches and stools you can sit on ----------
-  const seats = [];
+  const seats = [], roomSeats = [], realHouses = [];
+  // a seat that is only a spot: the chair or stool it belongs to is already standing there
+  function seatSpot(sc, world, x, z, yaw, top, label) { const o = new THREE.Object3D(); o.position.set(x, 0, z); sc.add(o); o.userData = { pickable: true, kind: 'seat', yaw, seatTop: top, label, world }; roomSeats.push(o); seats.push(o); return o; }
   function makeBench(withBack) {
     const g = new THREE.Group(); const w = mat('#8a6438'), d = mat('#5a3d22');
     const seat = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.22, 1.1), w); seat.position.y = 1.4; g.add(seat);
@@ -628,10 +630,11 @@
     const prof = [];
     for (let i = 0; i <= 16; i++) { const y = i / 16 * 46; prof.push(new THREE.Vector2(3.8 + 4 * Math.exp(-y / 3.5) + Math.sin(y * 0.4) * 0.12, y)); }
     oak.add(new THREE.Mesh(new THREE.LatheGeometry(prof, 28), mat('#ffffff', { map: barkTex })));
-    const knot = new THREE.Mesh(new THREE.CircleGeometry(1.1, 18), mat('#2c1d10')); knot.scale.y = 1.5;
-    knot.position.set(2.5, 9, 3.6); knot.lookAt(new THREE.Vector3(8, 9, 12)); oak.add(knot);
-    const knotRim = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.3, 8, 20), mat('#ffffff', { map: barkTex }));
-    knotRim.scale.y = 1.5; knotRim.position.copy(knot.position); knotRim.quaternion.copy(knot.quaternion); oak.add(knotRim);
+    // the knothole: a dark hollow with a thick bark lip, both set into the trunk so no gap shows from the side
+    const kg = new THREE.Group(); kg.rotation.y = Math.atan2(2.5, 3.6); oak.add(kg);
+    const kt = new THREE.Group(); kt.position.set(0, 9, 4.0); kt.rotation.x = -0.13; kg.add(kt);
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 14), new THREE.MeshBasicMaterial({ color: '#170e07' })); knot.scale.set(1.15, 1.9, 1.0); knot.position.z = -0.65; kt.add(knot);
+    const knotRim = new THREE.Mesh(new THREE.TorusGeometry(1.08, 0.44, 10, 24), mat('#ffffff', { map: barkTex })); knotRim.scale.y = 1.5; kt.add(knotRim);
     for (let i = 0; i < 8; i++) {
       const a = i / 8 * Math.PI * 2 + 0.3, len = rnd(6, 10);
       const root = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 1.6, len, 9), mat('#ffffff', { map: barkTex }));
@@ -1182,6 +1185,7 @@
 
   // ---------- a home for each of the four: cottages with a door you can walk through ----------
   HOMES.forEach(h => {
+    if (h.real) return;   // built further down, inside and out together
     const g = new THREE.Group(); g.position.set(h.x, 0, h.z); scene.add(g);
     const W = 14, D = 10, H = 6.6, wallM = mat(h.wall, { roughness: 1 }), trimM = mat(h.trim), stone = mat('#8d8676', { roughness: 1 });
     const box = (w, hh, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m); b.position.set(x, y, z); g.add(b); return b; };
@@ -1351,9 +1355,9 @@
   let where = 'village', fading = false, mapOpen = true, gameStarted = false, selRegion = 0, interior = null, titleUp = false, creatorUp = false;
   const interiors = {}, fernBoxes = [];
   // hang a building's painted door on a hinge so it can swing: a dark doorway is left behind it
-  function hingeDoor(door, g) {
+  function hingeDoor(door, g, open) {
     const w = door.geometry.parameters.width, h = door.geometry.parameters.height, p = door.position.clone();
-    const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: '#0e0906' })); back.position.set(p.x, p.y, p.z - 0.12); g.add(back);
+    if (!open) { const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: '#0e0906' })); back.position.set(p.x, p.y, p.z - 0.12); g.add(back); }
     const hinge = new THREE.Group(); hinge.position.set(p.x - w / 2, p.y, p.z); g.remove(door); door.position.set(w / 2, 0, 0); hinge.add(door); g.add(hinge);
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), mat('#d8b24a', { metalness: 0.6, roughness: 0.3 })); knob.position.set(w - 0.4, -0.2, 0.22); hinge.add(knob);
     extDoors.push({ hinge, w, a: 0, scene: null, wp: null });
@@ -1361,6 +1365,7 @@
   function doorsTick(dt) {
     if (where === 'in') { const it = interior, open = player.position.z > it.d / 2 - 7.5 ? 1 : 0; it.doorA += (open - it.doorA) * Math.min(1, dt * 4.5); it.hinge.rotation.y = -it.doorA * 1.75; return; }
     const sc = curScene(), px = player.position.x, pz = player.position.z;
+    { const rn = where === 'village' ? realIn(px, pz) : null; if (rn !== realNow) { if (!rn && realNow && hint.current === realNow.hint) hint(''); realNow = rn; if (rn && !talking()) hint(rn.hint); } }
     if (where === 'village') { const ins = Math.hypot(px, pz) < R, open = Math.hypot(px, pz - R) < (ins ? 5.5 : 8) ? 1 : 0; storeDoorA += (open - storeDoorA) * Math.min(1, dt * 4.5); shop.userData.hinge.rotation.y = -1.8 * storeDoorA; }
     for (const d of extDoors) {
       if (!d.scene) { const v = new THREE.Vector3(d.w / 2, 0, 0); let o = d.hinge; while (o && !o.isScene) { o.updateMatrix(); v.applyMatrix4(o.matrix); o = o.parent; } if (!o) continue; d.scene = o; d.wp = v; }
@@ -1935,7 +1940,7 @@
     // windows along the side walls
     [-1, 1].forEach(d => { for (let z = -D / 2 + 4; z < D / 2 - 2; z += 6) { const w = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), mat('#fff0c8', { emissive: '#ffd27a', emissiveIntensity: 0.8, side: THREE.DoubleSide })); w.position.set(d * (W / 2 - 0.05), H * 0.55, z); w.rotation.y = -d * Math.PI / 2; sc.add(w); [[0, 0, 3, 0.2], [0, 0, 0.2, 3]].forEach(([ox, oy, ww, hh]) => { const fr = new THREE.Mesh(new THREE.BoxGeometry(0.25, hh, ww), trimM); fr.position.set(d * (W / 2 - 0.1), H * 0.55 + oy, z + ox); sc.add(fr); }); } });
     const it = { id, scene: sc, w: W, d: D, h: H, solids: [], label: o.label, region: o.region, hint: o.hint || '', door: null, hinge, doorA: 0 };
-    o.decorate && o.decorate(sc, it.solids, { wall, W, D, H, trimM });
+    o.decorate && o.decorate(sc, it.solids, { wall, W, D, H, trimM, id, seat: (x, z, yaw, top, label) => seatSpot(sc, 'in:' + id, x, z, yaw, top, label) });
     sc.traverse(m => { if (m.isMesh && m !== outside && m !== floor) { m.castShadow = true; m.receiveShadow = true; } });
     interiors[id] = it; return it;
   }
@@ -1971,7 +1976,8 @@
   } });
   interiors.potting.door = { x: NURS.x, z: NURS.z - 7.5 + 4.5, yaw: 0 };
   // the four homes: every one has a hearth, a bed, a table, and clear floor from the door to the fire
-  function homeKit(sc, solids, { wall, W, D, H, trimM }, o) {
+  function homeKit(sc, solids, k, o) {
+    const { wall, W, D, H, trimM } = k;
     const wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 });
     wall(6.4, 5.4, 1.6, 0, 2.7, -D / 2 + 0.8, stone); wall(3.2, 2.6, 0.3, 0, 1.5, -D / 2 + 1.62, mat('#1a1410')); wall(7.2, 0.3, 2.1, 0, 5.5, -D / 2 + 1.05, top);
     const fire = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.5, 7), new THREE.MeshBasicMaterial({ color: '#ff9a3a' })); fire.position.set(0, 0.95, -D / 2 + 1.8); sc.add(fire);
@@ -1983,7 +1989,7 @@
     solids.push({ x: bx, z: bz - 2, r: 2.3 }, { x: bx, z: bz + 1.7, r: 2.3 });
     const tx = W / 2 - 7, tz = 3.2;
     wall(4.4, 0.3, 3, tx, 2.25, tz, top); [[-1.9, -1.2], [1.9, -1.2], [-1.9, 1.2], [1.9, 1.2]].forEach(([x, z]) => wall(0.28, 2.1, 0.28, tx + x, 1.05, tz + z, dark)); solids.push({ x: tx - 1, z: tz, r: 1.7 }, { x: tx + 1, z: tz, r: 1.7 });
-    [[tx - 3.5, tz], [tx + 0.4, tz + 2.8]].forEach(([x, z]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.55, 1.4, 12), wood); st.position.set(x, 0.7, z); sc.add(st); solids.push({ x, z, r: 0.7 }); });
+    [[tx - 3.5, tz, Math.PI / 2], [tx + 0.4, tz + 2.8, Math.PI]].forEach(([x, z, yaw]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.55, 1.4, 12), wood); st.position.set(x, 0.7, z); sc.add(st); solids.push({ x, z, r: 0.7 }); k.seat(x, z, yaw, 1.4, 'stool'); });
     const c = candle(true); c.position.set(tx - 1.2, 2.4, tz - 0.4); sc.add(c);
     return { wood, dark, top, tx, tz };
   }
@@ -1998,7 +2004,7 @@
     [1.1, 2.9, 4.7, 6.5].forEach((y, r) => { wall(1.3, 0.18, 9, W / 2 - 0.8, y, -4.5, top); for (let z = -8.7; z < -0.5; z += 0.42) { if (Math.random() < 0.12) continue; const hh = rnd(0.9, 1.4); wall(0.8, hh, 0.34, W / 2 - 0.85, y + 0.09 + hh / 2, z, mat(pick(['#7a3e2a', '#3e6b52', '#2f4f7a', '#8a6a3c', '#5a3d5a', '#b08a3a']))); } });
     for (let z = -8; z <= -1; z += 2.3) solids.push({ x: W / 2 - 0.9, z, r: 1.3 });
     const ax = 4.8, az = -D / 2 + 5.2, red = mat('#7a3e2a', { roughness: 1 });
-    wall(2.6, 1.1, 2.4, ax, 0.85, az, red); wall(2.6, 2.8, 0.6, ax, 2.2, az - 1.2, red); wall(0.5, 1.2, 2.4, ax - 1.4, 1.7, az, red); wall(0.5, 1.2, 2.4, ax + 1.4, 1.7, az, red); solids.push({ x: ax, z: az - 0.2, r: 1.7 });
+    wall(2.6, 1.1, 2.4, ax, 0.85, az, red); wall(2.6, 2.8, 0.6, ax, 2.2, az - 1.2, red); wall(0.5, 1.2, 2.4, ax - 1.4, 1.7, az, red); wall(0.5, 1.2, 2.4, ax + 1.4, 1.7, az, red); solids.push({ x: ax, z: az - 0.2, r: 1.7 }); k.seat(ax, az + 0.1, 0, 1.4, 'armchair');
     const kettle = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 10), mat('#8a7a5a', { metalness: 0.6, roughness: 0.4 })); kettle.position.set(-1.6, 5.95, -D / 2 + 1.2); sc.add(kettle);
     const led = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.2, 1), mat('#efe3c8')); led.position.set(tx + 0.8, 2.5, tz + 0.2); led.rotation.y = 0.3; sc.add(led);
     [acornPerson('#3a6bd0'), acornTop(), acornCart()].forEach((t, i) => { t.position.set(0.8 + i * 0.9, 5.66, -D / 2 + 1.1); sc.add(t); });
@@ -2015,7 +2021,42 @@
     solids.push({ x: -W / 2 + 2, z: D / 2 - 3, r: 1.3 });
     [0, 1, 2].forEach(i => { const j = jar(['#8fbf4a', '#d9a33f', '#b08ac0'][i], 0.6); j.position.set(-1.4 + i * 1.4, 5.66, -D / 2 + 1.1); sc.add(j); });
   } });
-  makeRoom('aldhome', { w: 26, d: 20, h: 9, wall: '#d8c9a4', trim: '#4a3420', label: 'Bough’s House', region: 'village', hint: 'Everything in here is curved, and he made all of it.', decorate: (sc, solids, k) => {
+  // A real house: the room is built inside its own walls, out in the Hollow. The door opens onto it, the windows are holes, and nothing fades.
+  function realHome(id, o) {
+    const h = HOMES.find(q => q.id === id), W = h.hw * 2, D = h.hd * 2, H = o.h, T = 0.5, g = new THREE.Group(); g.position.set(h.x, 0, h.z); scene.add(g);
+    const wallM = mat(h.wall, { roughness: 1 }), trimM = mat(h.trim), stone = mat('#8d8676', { roughness: 1 }), plank = mat('#ffffff', { map: plankTex });
+    const box = (w, hh, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; g.add(b); return b; };
+    box(W + 0.6, 0.5, D + 0.6, 0, -0.19, 0, stone); box(W - T, 0.1, D - T, 0, 0.02, 0, plank);
+    box(W, H, T, 0, H / 2, -D / 2, wallM);
+    const y0 = 2.9, y1 = 5.7, sw = 2.6;   // window sill, window head, half the side window's width
+    [-1, 1].forEach(sx => { const x = sx * W / 2; box(T, y0, D, x, y0 / 2, 0, wallM); box(T, H - y1, D, x, (H + y1) / 2, 0, wallM); [-1, 1].forEach(sz => box(T, y1 - y0, D / 2 - sw, x, (y0 + y1) / 2, sz * (D / 2 + sw) / 2, wallM)); });
+    const dg = 1.55, wa = 5, wb = 8.6, z = D / 2;   // half the doorway, and where the front windows start and stop
+    [-1, 1].forEach(sx => { box(W / 2 - dg, y0, T, sx * (W / 2 + dg) / 2, y0 / 2, z, wallM); box(wa - dg, y1 - y0, T, sx * (wa + dg) / 2, (y0 + y1) / 2, z, wallM); box(W / 2 - wb, y1 - y0, T, sx * (W / 2 + wb) / 2, (y0 + y1) / 2, z, wallM); });
+    box(W, H - y1, T, 0, (H + y1) / 2, z, wallM); box(dg * 2, y1 - 5, T, 0, (5 + y1) / 2, z, wallM);
+    // window frames, with a pane you can see through
+    const glass = new THREE.MeshStandardMaterial({ color: '#cfe6f0', transparent: true, opacity: 0.16, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false });
+    const win = (x, zz, len, side) => { const cy = (y0 + y1) / 2, hh = y1 - y0;
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(len, hh), glass); p.position.set(x, cy, zz); if (side) p.rotation.y = Math.PI / 2; g.add(p);
+      [[len + 0.4, 0.22, 0, hh / 2], [len + 0.4, 0.22, 0, -hh / 2], [0.16, hh, 0, 0], [len, 0.12, 0, 0], [0.22, hh, -len / 2, 0], [0.22, hh, len / 2, 0]].forEach(([w, q, u, v]) => side ? box(T + 0.16, q, w, x, cy + v, zz + u, trimM) : box(w, q, T + 0.16, x + u, cy + v, zz, trimM)); };
+    [-1, 1].forEach(sx => { win(sx * W / 2, 0, sw * 2, true); win(sx * (wa + wb) / 2, z, wb - wa, false); });
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => box(0.7, H, 0.7, sx * W / 2, H / 2, sz * D / 2, trimM));
+    [-1, 1].forEach(sx => { box(0.3, y1, T + 0.2, sx * (dg + 0.15), y1 / 2, z, trimM); }); box(dg * 2 + 0.6, 0.35, T + 0.2, 0, 5.15, z, trimM);
+    // ceiling and beams, then the roof over it
+    box(W, 0.2, D, 0, H + 0.1, 0, mat('#efe6d2', { roughness: 1 })); for (let x = -W / 2 + 4; x < W / 2; x += 4) box(0.5, 0.5, D - T, x, H - 0.25, 0, trimM);
+    const rg = new THREE.Group(); rg.position.y = H + 3; rg.scale.z = (D + 2.6) / (W + 2.6); g.add(rg);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry((W / 2 + 1.3) * Math.SQRT2, 5.6, 4), mat(h.roof, { roughness: 1 })); roof.rotation.y = Math.PI / 4; roof.castShadow = true; rg.add(roof);
+    box(1.8, 6, 1.8, 0, H + 3, -D / 2 + 1.4, stone); box(2.2, 0.4, 2.2, 0, H + 6.1, -D / 2 + 1.4, stone);
+    box(4.2, 0.25, 1.6, 0, -0.02, z + 0.95, stone);
+    { const door = new THREE.Mesh(new THREE.BoxGeometry(dg * 2 - 0.1, 4.95, 0.26), mat(h.door)); door.position.set(0, 2.5, z); door.castShadow = true; g.add(door); hingeDoor(door, g, true); }
+    [-1, 1].forEach(sx => { box(wb - wa + 0.2, 0.5, 0.8, sx * (wa + wb) / 2, y0 - 0.45, z + 0.6, trimM); for (let q = 0; q < 6; q++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(0.26, 8, 6), mat(h.flower)); fl.position.set(sx * (wa + wb) / 2 - 1.4 + q * 0.56, y0 - 0.02 + (q % 2) * 0.12, z + 0.66); g.add(fl); } });
+    const sg = signBoard(h.sign, 4.6, 0.95, h.trim, '#f6e7c2'); sg.position.set(0, 6.5, z + 0.36); g.add(sg);
+    // the things inside, set out exactly as in any other room
+    const loc = [], W2 = W - T, D2 = D - T;
+    o.decorate(g, loc, { wall: box, W: W2, D: D2, H, trimM, id, seat: (x, zz, yaw, top, label) => seatSpot(scene, 'village', h.x + x, h.z + zz, yaw, top, label) });
+    loc.forEach(q => solids.push({ x: h.x + q.x, z: h.z + q.z, r: q.r }));
+    realHouses.push({ id, x: h.x, z: h.z, hw: W / 2, hd: D / 2, dw: dg - 0.55, h: H, label: o.label, hint: o.hint });
+  }
+  realHome('aldhome', { h: 9, wall: '#d8c9a4', trim: '#4a3420', label: 'Bough’s House', region: 'village', hint: 'Everything in here is curved, and he made all of it.', decorate: (sc, solids, k) => {
     const { wall, W, D } = k, { top, dark, wood, tx, tz } = homeKit(sc, solids, k, { rug: '#8a6a3c', quilt: '#2f4f7a' });
     wall(2.4, 0.3, 8, W / 2 - 1.4, 2.25, -4.5, top); [[-0.9, -3.7], [0.9, -3.7], [-0.9, 3.7], [0.9, 3.7]].forEach(([x, z]) => wall(0.3, 2.1, 0.3, W / 2 - 1.4 + x, 1.05, -4.5 + z, dark));
     for (let z = -7.5; z <= -1.5; z += 2) solids.push({ x: W / 2 - 1.4, z, r: 1.5 });
@@ -2030,7 +2071,7 @@
     const mc = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6, 0), mat('#4a7a31', { flatShading: true })); mc.position.y = 2; model.add(mc);
     const rx = -4.6, rz = -D / 2 + 5.4;
     [-0.9, 0.9].forEach(d => { const rk = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.1, 6, 16, 1.5), dark); rk.position.set(rx + d, 1.75, rz); rk.rotation.set(0, Math.PI / 2, -Math.PI / 2 - 0.75); sc.add(rk); });
-    wall(2, 0.2, 1.8, rx, 1.3, rz, wood); wall(2, 2.4, 0.2, rx, 2.4, rz - 0.9, wood); solids.push({ x: rx, z: rz, r: 1.5 });
+    wall(2, 0.2, 1.8, rx, 1.3, rz, wood); wall(2, 2.4, 0.2, rx, 2.4, rz - 0.9, wood); solids.push({ x: rx, z: rz, r: 1.5 }); k.seat(rx, rz + 0.1, 0, 1.4, 'rocking chair');
   } });
   makeRoom('fenhome', { w: 26, d: 20, h: 9, wall: '#f0e2d8', trim: '#8a3a4a', label: 'Dewberry Cottage', region: 'village', hint: 'Jam jars to the ceiling. It smells of berries and sugar.', decorate: (sc, solids, k) => {
     const { wall, W, D } = k, { tx, tz } = homeKit(sc, solids, k, { rug: '#c8384a', quilt: '#f4d35e' });
@@ -2045,7 +2086,9 @@
     [paintPot('#d23b4e'), paintPot('#7a3d9a'), paintPot('#3a6bd0')].forEach((p, i) => { p.position.set(tx + 0.4 + i * 0.6, 2.4, tz + 0.5); sc.add(p); });
     [0, 1, 2, 3].forEach(i => { const j = jar(cols[i], 0.8); j.position.set(-2 + i * 1.3, 5.66, -D / 2 + 1.1); sc.add(j); });
   } });
-  HOMES.forEach(h => { interiors[h.id].door = { x: h.x, z: h.z + 5.2 + 4.5, yaw: 0 }; });
+  HOMES.forEach(h => { if (!h.real) interiors[h.id].door = { x: h.x, z: h.z + 5.2 + 4.5, yaw: 0 }; });
+  const realIn = (x, z) => realHouses.find(q => Math.abs(x - q.x) < q.hw && Math.abs(z - q.z) < q.hd) || null;
+  let realNow = null;
   // the Village Stores is a room too: its door shuts behind you, and the Hollow waits outside
   let storeDoorA = 0;
   function storeDoor(inward) {
@@ -2056,7 +2099,8 @@
     });
   }
   // Fernwater's four shops
-  makeRoom('bakery', { w: 20, d: 16, h: 9, wall: '#f0dfc0', label: 'Crumb’s Bakery', region: 'fernwater', hint: 'Warm bread, and Maudie behind the counter.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+  makeRoom('bakery', { w: 20, d: 16, h: 9, wall: '#f0dfc0', label: 'Crumb’s Bakery', region: 'fernwater', hint: 'Warm bread, and Maudie behind the counter.', decorate: (sc, solids, k) => {
+    const { wall, W, D, H, trimM } = k;
     const counter = wall(13, 2.3, 1.6, 0, 1.15, -1.6, mat('#8a6438')); wall(13.6, 0.2, 2, 0, 2.4, -1.6, mat('#ffffff', { map: plankTex })); solids.push({ x: -4.5, z: -1.6, r: 2.2 }, { x: 0, z: -1.6, r: 2.2 }, { x: 4.5, z: -1.6, r: 2.2 });
     const oven = new THREE.Mesh(new THREE.SphereGeometry(3, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat('#9b7a62')); oven.position.set(-6, 0, -5.2); oven.scale.y = 0.85; sc.add(oven); solids.push({ x: -6, z: -5.2, r: 3 });
     const mouth = new THREE.Mesh(new THREE.CircleGeometry(1, 16, 0, Math.PI), mat('#ff8a2a', { emissive: '#ff6a10', emissiveIntensity: 1.5 })); mouth.position.set(-6, 0.3, -2.2); sc.add(mouth);
@@ -2066,7 +2110,7 @@
     const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.9, 2, 14), mat('#8a6438')); barrel.position.set(-8.5, 1, 0); sc.add(barrel); solids.push({ x: -8.5, z: 0, r: 1.1 }); const flour = new THREE.Mesh(new THREE.CircleGeometry(0.9, 14), mat('#f5f0e6')); flour.rotation.x = -Math.PI / 2; flour.position.set(-8.5, 2.02, 0); sc.add(flour); solids.push({ x: -8.5, z: 0, r: 1 });
     const peel = new THREE.Mesh(new THREE.BoxGeometry(0.15, 6, 0.7), mat('#c9a06a')); peel.position.set(-9.3, 3.2, -1); peel.rotation.z = 0.2; sc.add(peel);
     // two little tables with stools, for eating a slice
-    [[6.5, 3.5], [-5.5, 5.5]].forEach(([x, z]) => { const top = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.2, 16), mat('#a07a44')); top.position.set(x, 1.9, z); sc.add(top); const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.9, 8), trimM); leg.position.set(x, 0.95, z); sc.add(leg); solids.push({ x, z, r: 1.6 }); [[2.4, 0], [-2.4, 0]].forEach(([ox, oz]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.5, 1.2, 10), trimM); st.position.set(x + ox, 0.6, z + oz); sc.add(st); solids.push({ x: x + ox, z: z + oz, r: 0.6 }); }); });
+    [[6.5, 3.5], [-5.5, 5.5]].forEach(([x, z]) => { const top = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.2, 16), mat('#a07a44')); top.position.set(x, 1.9, z); sc.add(top); const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.9, 8), trimM); leg.position.set(x, 0.95, z); sc.add(leg); solids.push({ x, z, r: 1.6 }); [[2.4, 0], [-2.4, 0]].forEach(([ox, oz]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.5, 1.2, 10), trimM); st.position.set(x + ox, 0.6, z + oz); sc.add(st); solids.push({ x: x + ox, z: z + oz, r: 0.6 }); k.seat(x + ox, z + oz, ox > 0 ? -Math.PI / 2 : Math.PI / 2, 1.2, 'stool'); }); });
   } });
   makeRoom('changer', { w: 16, d: 14, h: 9, wall: '#d8d4e6', label: 'The Money-Changer', region: 'fernwater', hint: 'Coins, leaves and rings change hands here. Nobody is at the counter yet.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
     wall(11, 2.4, 1.6, 0, 1.2, -2, mat('#6b4a2b')); wall(11.6, 0.2, 2, 0, 2.5, -2, mat('#ffffff', { map: plankTex })); solids.push({ x: -3.5, z: -2, r: 2.3 }, { x: 0, z: -2, r: 2.3 }, { x: 3.5, z: -2, r: 2.3 });
@@ -2101,6 +2145,26 @@
     [[-1, -2.5], [3, -2.5]].forEach(([x, z]) => { const basket = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.85, 1.1, 14, 1, true), mat('#a07a44', { side: THREE.DoubleSide })); basket.position.set(x, 2.95, z); sc.add(basket); for (let k = 0; k < 5; k++) { const fish = new THREE.Mesh(new THREE.SphereGeometry(0.34, 8, 6), mat(pick(['#8fb9c9', '#a9c4b0', '#7f9fb8']), { metalness: 0.4, roughness: 0.3 })); fish.scale.set(1.8, 0.6, 0.8); fish.position.set(x + rnd(-0.5, 0.5), 3.4 + k * 0.1, z + rnd(-0.4, 0.4)); fish.rotation.y = rnd(0, 3); sc.add(fish); } });
     const anchor = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.18, 8, 20, Math.PI), mat('#4b4b4b', { metalness: 0.6 })); anchor.position.set(6, 1.1, 4); anchor.rotation.z = Math.PI; sc.add(anchor); const shank = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3.2, 0.25), mat('#4b4b4b', { metalness: 0.6 })); shank.position.set(6, 2.2, 4); sc.add(shank); solids.push({ x: 6, z: 4, r: 1.3 });
     for (let k = 0; k < 3; k++) { const crate = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 1.6), mat('#ffffff', { map: plankTex })); crate.position.set(-6 + k * 0.3, 0.6 + k * 1.2, 4 + (k % 2) * 0.3); crate.rotation.y = k * 0.3; sc.add(crate); } solids.push({ x: -6, z: 4, r: 1.3 });
+  } });
+  makeRoom('ferryoffice', { w: 20, d: 15, h: 8.5, wall: '#dfe6e8', trim: '#2f4a6a', label: 'The Ferry Office', region: 'fernwater', hint: 'Tickets, tide tables, and a bench to wait on.', decorate: (sc, solids, k) => {
+    const { wall, W, D, H, trimM } = k, top = mat('#ffffff', { map: plankTex }), wood = mat('#8a6438'), dark = mat('#5a3d22');
+    // the ticket counter across the back, with a brass grille and a bell
+    wall(11, 2.4, 1.6, -3, 1.2, -D / 2 + 4, wood); wall(11.4, 0.2, 2, -3, 2.5, -D / 2 + 4, top); [-7, -3, 1].forEach(x => solids.push({ x, z: -D / 2 + 4, r: 2 }));
+    for (let x = -8; x <= 2; x += 1) wall(0.08, 2.2, 0.08, x, 3.7, -D / 2 + 4.6, mat('#c9a440', { metalness: 0.7, roughness: 0.3 })); wall(10.4, 0.14, 0.14, -3, 4.8, -D / 2 + 4.6, mat('#c9a440', { metalness: 0.7, roughness: 0.3 }));
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#d8b24a', { metalness: 0.8, roughness: 0.25 })); bell.position.set(-0.4, 2.6, -D / 2 + 4.9); sc.add(bell);
+    // pigeonholes of rolled tickets on the back wall, and the boards
+    for (let r = 0; r < 3; r++) { wall(8, 0.14, 1, -4.5, 4 + r * 1.1, -D / 2 + 0.6, top); for (let q = 0; q < 9; q++) { if ((q + r) % 4 === 0) continue; const sl = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.8, 8), mat(pick(['#f2e6c8', '#e8d9a8', '#d9c69a']))); sl.rotation.x = Math.PI / 2; sl.position.set(-8 + q * 0.9, 4.25 + r * 1.1, -D / 2 + 0.7); sc.add(sl); } }
+    [['Crossings: dawn, noon, dusk', 5.6], ['Fare: 2 acorn coins', 4.4], ['River today: 4 marks', 3.2]].forEach(([tx, y]) => { const sb = signBoard(tx, 5.4, 0.95, '#f2e6c8', '#3a2a18'); sb.position.set(5.6, y, -D / 2 + 0.2); sc.add(sb); });
+    // a chart of the river on the west wall
+    const chart = new THREE.Mesh(new THREE.PlaneGeometry(6, 3.4), mat('#e8dcb8')); chart.position.set(-W / 2 + 0.12, 4.6, 1); chart.rotation.y = Math.PI / 2; sc.add(chart);
+    const rv = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 0.7), mat('#6fa3c8')); rv.position.set(-W / 2 + 0.14, 4.5, 1); rv.rotation.y = Math.PI / 2; rv.rotation.x = 0.12; sc.add(rv);
+    const brg = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 1.3), mat('#6b4a2b')); brg.position.set(-W / 2 + 0.16, 4.5, 0.2); brg.rotation.y = Math.PI / 2; sc.add(brg);
+    // the waiting bench along the east wall, and the ferryman's things
+    const bn = makeBench(true); bn.position.set(W / 2 - 1.5, 0, 2.5); bn.rotation.y = -Math.PI / 2; sc.add(bn); solids.push({ x: W / 2 - 1.5, z: 1.6, r: 1.3 }, { x: W / 2 - 1.5, z: 3.4, r: 1.3 }); k.seat(W / 2 - 1.5, 2.5, -Math.PI / 2, 1.51, 'waiting bench');
+    [[-7.5, 4.5], [-6.3, 5.4]].forEach(([x, z], i) => { const rc = ropeCoil(); rc.scale.setScalar(2.2); rc.rotation.x = Math.PI / 2; rc.position.set(x, 0.3 + i * 0.05, z); sc.add(rc); solids.push({ x, z, r: 1 }); });
+    const oar = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 6.5, 6), mat('#c9a06a')); oar.position.set(-W / 2 + 0.5, 3.4, -4.2); oar.rotation.x = 0.14; sc.add(oar); const blade = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 0.7), mat('#c9a06a')); blade.position.set(-W / 2 + 0.5, 6.6, -3.75); blade.rotation.x = 0.14; sc.add(blade);
+    [[6.5, -1.5, 1.4], [7.6, -0.2, 1.1], [6.6, -0.4, 0.9]].forEach(([x, z, sz], i) => { const c = crate(sz); c.position.set(x, sz / 2 + (i === 2 ? 1.4 : 0), z + (i === 2 ? -1 : 0)); sc.add(c); }); solids.push({ x: 7, z: -1, r: 1.7 });
+    const lc = candle(true); lc.position.set(-6.5, 2.6, -D / 2 + 4); sc.add(lc);
   } });
   // Quern Mill: a round stone room with the millstones and the gearing that the wheel outside turns
   makeRoom('mill', { w: 15, d: 15, h: 11, wall: '#9b9789', trim: '#5a4027', label: 'Quern Mill', region: 'orchards', hint: 'Inside the mill. The stones turn when the mice run.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
@@ -2175,7 +2239,6 @@
       // the front: a door with steps, a lamp, two big windows and the sign
       const door = new THREE.Mesh(new THREE.BoxGeometry(3.6, 6, 0.3), mat('#3e2812')); door.position.set(0, 4, D / 2 + 0.1); g.add(door); hingeDoor(door, g);
       const dframe = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.5, 0.7), trimM); dframe.position.set(0, 7.2, D / 2 + 0.1); g.add(dframe);
-      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), mat('#e8b64c', { metalness: 0.7 })); knob.position.set(1.2, 3.8, D / 2 + 0.3); g.add(knob);
       const steps = new THREE.Mesh(new THREE.BoxGeometry(6, 0.5, 2.4), mat('#8a7458')); steps.position.set(0, 0.25, D / 2 + 1.5); g.add(steps);
       [-1, 1].forEach(d => { const w = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.55 })); w.position.set(d * 5.5, 6, D / 2 + 0.02); g.add(w); [[0, 0, 3.6, 0.2], [0, 0, 0.2, 3.6]].forEach(([ox, oy, ww, hh]) => { const fr = new THREE.Mesh(new THREE.BoxGeometry(ww, hh, 0.25), trimM); fr.position.set(d * 5.5 + ox, 6 + oy, D / 2 + 0.1); g.add(fr); }); const sill = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.3, 0.6), trimM); sill.position.set(d * 5.5, 4.2, D / 2 + 0.2); g.add(sill); const box = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.6, 0.6), mat('#6b4a2b')); box.position.set(d * 5.5, 4.0, D / 2 + 0.5); g.add(box); for (let k = 0; k < 5; k++) { const fl = makeFlower(pick(flowerColors)); fl.scale.setScalar(0.22); fl.position.set(d * 5.5 - 1.3 + k * 0.65, 4.3, D / 2 + 0.5 + rnd(-0.15, 0.15)); g.add(fl); } });
       const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.9, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(-2.8, 7.4, D / 2 + 0.6); g.add(lamp);
@@ -2200,19 +2263,27 @@
     shopExterior('nets', 30, 40, -Math.PI / 2, '#d9a33f', 'Nets & Lines');
     [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(o, 3.5, FERN_LEN); fernScene.add(gp); fernSolids.push({ x: o, z: FERN_LEN, r: 1 }); });
     { const lin = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lin.position.set(0, 7.3, FERN_LEN); fernScene.add(lin); const sg = signBoard('To Cairnhold', 5.4, 1.3, '#6e6a62', '#f6e7c2'); sg.position.set(0, 8.6, FERN_LEN - 0.2); sg.rotation.y = Math.PI; fernScene.add(sg); const farPath = new THREE.Mesh(new THREE.PlaneGeometry(7, FERN_LEN - 104), mat('#ffffff', { map: dirtTex })); farPath.rotation.x = -Math.PI / 2; farPath.position.set(0, 0.03, (104 + FERN_LEN) / 2); fernScene.add(farPath); }
-    // Oriel's ferry office on the dock: a hut with a timetable
-    const office = new THREE.Group(); office.position.set(22, 1.65, 58); office.rotation.y = -Math.PI / 2; fernScene.add(office);
-    const ow = new THREE.Mesh(new THREE.BoxGeometry(5, 4.5, 4.5), mat('#2f4a6a')); ow.position.y = 2.25; office.add(ow);
-    const orf = new THREE.Mesh(new THREE.ConeGeometry(4, 2.4, 4), mat('#5a3d22')); orf.position.y = 5.7; orf.rotation.y = Math.PI / 4; office.add(orf);
-    const od = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 3), mat('#3e2812')); od.position.set(0, 1.5, 2.26); office.add(od);
-    const owin = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.2), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.6 })); owin.position.set(1.6, 2.8, 2.26); office.add(owin);
-    const osign = signBoard('Ferry Office', 4.2, 1, '#2f4a6a', '#f6e7c2'); osign.position.set(0, 4.9, 2.5); office.add(osign);
-    const tt = signBoard('Crossings: dawn, noon, dusk', 4.4, 1, '#f2e6c8', '#3a2a18'); tt.position.set(-1.2, 1.8, 2.3); tt.rotation.y = 0.1; office.add(tt);
-    fernSolids.push({ x: 22, z: 58, r: 3.2 });
+    // Oriel's ferry office: a proper building on the bank beside the dock, with a door you walk through
+    { const fx = 31.5, fz = 54.2, W = 7.4, D = 11, H = 6.4, g = new THREE.Group(); g.position.set(fx, 0, fz); g.rotation.y = -Math.PI / 2; fernScene.add(g);
+      const blue = mat('#2f4a6a'), trimM = mat('#5a3d22'), cream = mat('#f2e6c8'), bx = (w, h, d, x, y, z, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = true; q.receiveShadow = true; g.add(q); return q; };
+      bx(W + 0.5, 0.8, D + 0.5, 0, 0.4, 0, mat('#8d7a66')); bx(W, H, D, 0, H / 2 + 0.6, 0, blue);
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => bx(0.5, H + 0.4, 0.5, sx * W / 2, H / 2 + 0.6, sz * D / 2, cream));
+      bx(W + 0.3, 0.4, 0.3, 0, H + 0.5, D / 2 + 0.05, cream); bx(W + 0.3, 0.4, 0.3, 0, 0.95, D / 2 + 0.05, cream);
+      const rg = new THREE.Group(); rg.position.y = H + 0.6 + 1.9; rg.scale.z = (D + 2.2) / (W + 2.2); g.add(rg);
+      const roof = new THREE.Mesh(new THREE.ConeGeometry((W / 2 + 1.1) * Math.SQRT2, 3.8, 4), mat('#5a3d22', { roughness: 1 })); roof.rotation.y = Math.PI / 4; roof.castShadow = true; rg.add(roof);
+      { const door = new THREE.Mesh(new THREE.BoxGeometry(2.6, 4.8, 0.3), mat('#3e2812')); door.position.set(-0.6, 3.2, D / 2 + 0.1); g.add(door); hingeDoor(door, g); }
+      bx(3.4, 0.4, 0.5, -0.6, 5.85, D / 2 + 0.1, cream); bx(4, 0.8, 1.8, -0.6, 0.4, D / 2 + 0.9, mat('#8a7458'));
+      const wn = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.8), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.55 })); wn.position.set(2.4, 3.9, D / 2 + 0.03); g.add(wn); bx(1.9, 0.2, 0.2, 2.4, 4.9, D / 2 + 0.08, cream); bx(1.9, 0.2, 0.2, 2.4, 2.9, D / 2 + 0.08, cream); bx(0.14, 2, 0.14, 2.4, 3.9, D / 2 + 0.08, cream);
+      const osign = signBoard('Ferry Office', 5.2, 1.1, '#f2e6c8', '#2f4a6a'); osign.position.set(0, 6.3, D / 2 + 0.3); g.add(osign);
+      const tt = signBoard('Crossings: dawn, noon, dusk', 6.4, 1.1, '#f2e6c8', '#3a2a18'); tt.position.set(W / 2 + 0.12, 3.6, 0); tt.rotation.y = Math.PI / 2; g.add(tt);
+      const lampO = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.8, 0.5), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lampO.position.set(-2.9, 5.2, D / 2 + 0.5); g.add(lampO);
+      fernBoxes.push({ id: 'ferryoffice', x: fx, z: fz, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: fx - D / 2, z: fz - 0.6 } });
+      interiors.ferryoffice.door = { x: fx - D / 2 - 4.5, z: fz - 0.6, yaw: -Math.PI / 2 };
+    }
     // bakery goods: cakes on the counter, cut into slices
-    const bakery = new THREE.Group(); bakery.position.set(-2.5, 2.8, -1.6); interiors.bakery.scene.add(bakery);
-    [[0, 0, 6], [0, -2.2, 4], [0, 2.2, 8]].forEach(([x, z, n]) => { for (let k = 0; k < n; k++) { const slice = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.6, 12, 1, false, k * Math.PI * 2 / n + 0.04, Math.PI * 2 / n - 0.08), mat(pick(['#e8b64c', '#d9a0a0', '#c9a06a']))); slice.position.set(x + 2.3, 0.3, z); bakery.add(slice); } });
-    for (let k = 0; k < 12; k++) { const bun = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), mat('#c9a06a')); bun.position.set(2.0 + (k % 4) * 0.5 - 0.7, 0.4, -3.8 + Math.floor(k / 4) * 0.5); bakery.add(bun); }
+    const bakery = new THREE.Group(); bakery.position.set(-2.5, 2.5, -1.6); interiors.bakery.scene.add(bakery);
+    [[-3.8, 0, 6], [-1.1, 0, 4], [1.6, 0, 8]].forEach(([x, z, n]) => { for (let k = 0; k < n; k++) { const slice = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.6, 12, 1, false, k * Math.PI * 2 / n + 0.04, Math.PI * 2 / n - 0.08), mat(pick(['#e8b64c', '#d9a0a0', '#c9a06a']))); slice.position.set(x + 2.3, 0.3, z); bakery.add(slice); } });
+    for (let k = 0; k < 12; k++) { const bun = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), mat('#c9a06a')); bun.position.set(6.6 + (k % 4) * 0.55, 0.32, -0.5 + Math.floor(k / 4) * 0.5); bakery.add(bun); }
     // the rope-walk: a long frame with ropes stretched along it, and knots
     const ropeWalk = new THREE.Group(); ropeWalk.position.set(-16, 0, 20); fernScene.add(ropeWalk);
     [-7, 7].forEach(z => { const post = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4, 0.5), mat('#5a3d22')); post.position.set(0, 2, z); ropeWalk.add(post); });
@@ -2228,11 +2299,13 @@
     const croof = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.3, 4.6), mat('#3e2812')); croof.position.set(-3, 4.6, 0); ferry.add(croof);
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 9, 6), mat('#c9a06a')); pole.position.set(4, 4, 2.4); pole.rotation.z = 0.3; ferry.add(pole);
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(5.5, 3.2, 0); ferry.add(lamp);
-    for (let k = 0; k < 6; k++) { const c = crate(0.7); c.position.set(1 + (k % 3) * 1.6, 2.1 + Math.floor(k / 3) * 0.9, -1.5); ferry.add(c); }
+    for (let k = 0; k < 6; k++) { const c = crate(0.7); c.position.set(1 + (k % 3) * 1.6, 2.1 + Math.floor(k / 3) * 0.9, 1.7); ferry.add(c); }
     // ferry rope to the far bank, snapped (for the first lesson): two frayed ends
     const ropeA = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10, 6), mat('#c7b386')); ropeA.rotation.x = Math.PI / 2; ropeA.position.set(16, 2.2, 72); fernScene.add(ropeA); fernScene.userData.ropeA = ropeA;
     const ropeB = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10, 6), mat('#c7b386')); ropeB.rotation.x = Math.PI / 2; ropeB.position.set(16, 2.2, 94); fernScene.add(ropeB);
-    fernSolids.push({ x: 14, z: 58, r: 7 });
+    { const ramp = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.3, 3.96), mat('#ffffff', { map: plankTex })); ramp.position.set(17, 0.69, 53.2); ramp.rotation.x = -0.43; ramp.receiveShadow = true; fernScene.add(ramp);
+      const plank = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 2.8), mat('#ffffff', { map: plankTex })); plank.position.set(16, 1.57, 62.1); fernScene.add(plank);
+      fernSolids.push({ x: 13, z: 66, r: 2.5 }, { x: 18.7, z: 67.7, r: 1.5 }); }
     // the river gauge: a tall post with marks, by the dock
     const gauge = new THREE.Group(); gauge.position.set(6, 0, 62); fernScene.add(gauge);
     const gpost = new THREE.Mesh(new THREE.BoxGeometry(0.6, 8, 0.6), mat('#efe6d2')); gpost.position.y = 4; gauge.add(gpost);
@@ -2276,7 +2349,7 @@
     fernScene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o !== g && o !== water) { o.castShadow = true; o.receiveShadow = true; } });
   }
   // Captain Oriel Tideknot: brisk, weathered, a long coat and a knotted scarf
-  const ori = new THREE.Group(); ori.position.copy(ORIPOS); fernScene.add(ori);
+  const ori = new THREE.Group(); ori.position.copy(ORIPOS); ori.position.y = 1.65; fernScene.add(ori);   // he stands on his dock
   const oriHead = new THREE.Group();
   {
     const skinO = mat('#c9956a'), coatO = mat('#2f4a6a');
@@ -2381,7 +2454,7 @@
       for (let k = 0; k < 5; k++) { const coil = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.12, 8, 24), mat('#8a8a8a', { metalness: 0.7, roughness: 0.4 })); coil.position.set(3 + k * 1.6, 5.4, -D / 2 + 0.5); sc.add(coil); const peg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8, 6), trimM); peg.rotation.x = Math.PI / 2; peg.position.set(3 + k * 1.6, 6.2, -D / 2 + 0.45); sc.add(peg); }
       const big = signBoard('The Long Road — all eight lands', 8, 1.2, '#efe3c4', '#4a3420'); big.position.set(W / 2 - 0.3, 5.5, 1); big.rotation.y = -Math.PI / 2; sc.add(big);
       const prot = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.6, 24, 1, 0, Math.PI), mat('#e8dcc0', { side: THREE.DoubleSide })); prot.position.set(-W / 2 + 0.3, 5.5, 2); prot.rotation.y = Math.PI / 2; sc.add(prot);
-      const desk = wall(4, 2.2, 2, 6, 1.1, 4, mat('#8a6438')); solids.push({ x: 6, z: 4, r: 2.2 }); const stool = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.5, 1.2, 10), trimM); stool.position.set(6, 0.6, 6.2); sc.add(stool); solids.push({ x: 6, z: 6.2, r: 0.7 });
+      const desk = wall(4, 2.2, 2, 6, 1.1, 4, mat('#8a6438')); solids.push({ x: 6, z: 4, r: 2.2 }); const stool = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.5, 1.2, 10), trimM); stool.position.set(6, 0.6, 6.2); sc.add(stool); solids.push({ x: 6, z: 6.2, r: 0.7 }); seatSpot(sc, 'in:lodge', 6, 6.2, Math.PI, 1.2, 'stool');
     } });
     stoneBuilding('lodge', -30, 32, Math.PI / 2, 'Surveyors’ Lodge', 22, 16, 9, true);
     // the stone yard: cut blocks, a half-built wall with a square corner, and a crooked one
@@ -3197,10 +3270,20 @@
   function makeDuck() { const g = new THREE.Group(), m = mat(pick(['#8a6a3a', '#5a4a3a'])); blob(g, sph(1.5), m, 0, 0.6, 0, 1, 0.8, 1.6); blob(g, sph(0.8), pick([mat('#2e6b3a'), m]), 0, 2.6, 1.8); blob(g, new THREE.BoxGeometry(0.7, 0.3, 1.1), mat('#e0b23c'), 0, 2.4, 2.8); blob(g, sph(0.5), m, 0, 1.2, -2, 0.6, 0.6, 1).rotation.x = -0.5; return g; }
   function makeFrog() { const g = new THREE.Group(), m = mat('#5f9a3a'); blob(g, sph(0.7), m, 0, 0.5, 0, 1, 0.7, 1.2); [-1, 1].forEach(d => { blob(g, sph(0.22), mat('#f4c53a'), d * 0.35, 0.95, 0.4); blob(g, sph(0.1), mat('#1b1b1b'), d * 0.35, 1.0, 0.55); blob(g, sph(0.3), m, d * 0.7, 0.3, -0.5, 1.6, 0.6, 0.8); }); return g; }
   function makeDog() { const g = new THREE.Group(); g.scale.setScalar(0.66); const m = mat(pick(['#c9a06a', '#3a2a1e', '#e6dcc2'])); blob(g, sph(2.2), m, 0, 5.4, 0, 1, 0.9, 2.2); blob(g, new THREE.CylinderGeometry(1.1, 1.5, 3.2, 8), m, 0, 6.5, 3.6).rotation.x = 0.75; const head = blob(g, sph(1.5), m, 0, 7.2, 5, 1, 0.9, 1.3); blob(g, sph(0.9), m, 0, 6.6, 6.8, 0.8, 0.7, 1.3); blob(g, sph(0.3), mat('#1b1b1b'), 0, 6.8, 7.9); [-1, 1].forEach(d => { blob(g, sph(0.2), mat('#1b1b1b'), d * 0.6, 7.6, 6.1); blob(g, sph(0.6), m, d * 1.4, 7.6, 4.6, 0.6, 1.4, 0.8).rotation.z = -d * 0.5; }); const tail = blob(g, new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5), m, 0, 6.6, -5.2); tail.rotation.x = -1.1; g.userData.tail = tail; g.userData.legs = legSet(g, m, [[-1.2, 3], [1.2, 3], [-1.2, -3], [1.2, -3]], 4.2, 0.4); return g; }
-  function makeCrow() { const b = makeBird(true); b.scale.setScalar(2.4); return b; }
+  function makeCrow() {
+    const g = new THREE.Group(), m = mat('#17161c', { roughness: 0.42, metalness: 0.3 }), m2 = mat('#22212b', { roughness: 0.5, metalness: 0.25, side: THREE.DoubleSide }), grey = mat('#2e2c2a', { roughness: 0.6 });
+    blob(g, sph(0.9, 12, 10), m, 0, 1.55, -0.1, 0.8, 0.82, 1.55).rotation.x = -0.3;
+    blob(g, sph(0.52, 12, 10), m, 0, 2.5, 1.0); blob(g, sph(0.4, 10, 8), m, 0, 2.15, 0.75, 1, 1.2, 1);
+    blob(g, new THREE.ConeGeometry(0.2, 1.0, 8), grey, 0, 2.44, 1.9).rotation.x = Math.PI / 2 + 0.12;
+    [-1, 1].forEach(d => { blob(g, sph(0.07, 6, 5), mat('#c9c9d6', { roughness: 0.2 }), d * 0.36, 2.62, 1.3); const leg = blob(g, new THREE.CylinderGeometry(0.06, 0.06, 0.9, 5), grey, d * 0.3, 0.45, 0.05); blob(g, new THREE.BoxGeometry(0.16, 0.06, 0.6), grey, d * 0.3, 0.03, 0.2); });
+    [-0.35, 0, 0.35].forEach(x => { const tl = blob(g, new THREE.BoxGeometry(0.34, 0.06, 1.7), m2, x, 1.0, -1.95); tl.rotation.x = 0.42; tl.rotation.y = x * 0.35; });
+    const folded = [-1, 1].map(d => { const f = blob(g, sph(0.7, 10, 8), m2, d * 0.66, 1.5, -0.45, 0.24, 0.62, 1.6); f.rotation.x = -0.34; return f; });
+    const wings = [-1, 1].map(d => { const piv = new THREE.Group(); piv.position.set(d * 0.5, 1.75, -0.1); const w = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.5), m2); w.position.set(d * 1.6, 0, 0); w.rotation.x = -Math.PI / 2; piv.add(w); const tip = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.0), m2); tip.position.set(d * 3.7, 0, -0.2); tip.rotation.x = -Math.PI / 2; piv.add(tip); piv.visible = false; g.add(piv); return piv; });
+    g.userData.wings = wings; g.userData.folded = folded; g.scale.setScalar(1.25); return g;
+  }
   function solidsFor(key) { return key === 'wild' ? wildSol : key === 'orchards' ? orchSolids : key === 'fernwater' ? fernSolids : key === 'lantern' ? lantSolids : key === 'skyhaven' ? skySolids : hollowSolids(); }
   // for the animals, each box in the Hollow is a row of small rounds
-  let _hs = null; function hollowSolids() { if (_hs && _hs.n === hollowBoxes.length) return _hs.list; const list = solids.slice(); hollowBoxes.forEach(b => { const r = Math.max(0.6, Math.min(b.hw, b.hd)), long = b.hw > b.hd, L = long ? b.hw : b.hd, n = Math.max(1, Math.ceil(L / r)); for (let k = 0; k < n; k++) { const t = n === 1 ? 0 : -L + r + (2 * (L - r)) * k / (n - 1); list.push({ x: b.x + (long ? t : 0), z: b.z + (long ? 0 : t), r }); } }); _hs = { n: hollowBoxes.length, list }; return list; }
+  let _hs = null; function hollowSolids() { if (_hs && _hs.n === hollowBoxes.length) return _hs.list; const list = solids.slice(); hollowBoxes.concat(realHouses).forEach(b => { const r = Math.max(0.6, Math.min(b.hw, b.hd)), long = b.hw > b.hd, L = long ? b.hw : b.hd, n = Math.max(1, Math.ceil(L / r)); for (let k = 0; k < n; k++) { const t = n === 1 ? 0 : -L + r + (2 * (L - r)) * k / (n - 1); list.push({ x: b.x + (long ? t : 0), z: b.z + (long ? 0 : t), r }); } }); _hs = { n: hollowBoxes.length, list }; return list; }
   function clearOf(key, x, z, pad) { return !solidsFor(key).some(s => Math.hypot(s.x - x, s.z - z) < s.r + pad); }
   // push a point out of any solid it overlaps; returns how far it had to move
   function pushClear(key, o, pad) { let moved = 0; solidsFor(key).forEach(s => { const dx = o.position.x - s.x, dz = o.position.z - s.z, d = Math.hypot(dx, dz), min = s.r + pad; if (d < min) { const k = d > 0.001 ? min / d : 1; o.position.x = s.x + (d > 0.001 ? dx * k : min); o.position.z = s.z + (d > 0.001 ? dz * k : 0); moved += min - d; } }); return moved; }
@@ -3222,7 +3305,7 @@
   // dogs: one in the Hollow, one in Fernwater; they come and say hello
   [[scene, 6, 40, 'village', (nx, nz) => inFence(nx, nz, 3) && Math.hypot(nx, nz) > 14], [fernScene, 0, 24, 'fernwater', (nx, nz) => Math.abs(nx) < 14 && nz > 3 && nz < 50], [lantScene, -8, 80, 'lantern', (nx, nz) => Math.abs(nx) < 16 && nz > 4 && nz < 130]].forEach(([sc, x, z, key, okf]) => { const dg = makeDog(); dg.position.set(x, 0, z); sc.add(dg); wanderer(dg, { sceneKey: key, kind: 'dog', speed: 6, fleeSpeed: 11, flee: 0, radius: 30, ground: () => 0, bob: 0.25, gait: 10, ok: okf }); });
   // crows on the fences and gate posts; a hawk alone over the hills and the orchards
-  [[scene, 30, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 12, 'fernwater'], [orchScene, 48, 0, 70, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(); cr.position.set(x, y + 2.6, z); cr.rotation.y = rnd(0, 6.3); sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.6, z), state: 'perch', t: 0, a: 0 }); });
+  [[scene, 30, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 12, 'fernwater'], [orchScene, 48, 0, 70, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(), yaw = rnd(0, 6.3); cr.position.set(x, y + 2.42, z); cr.rotation.y = yaw; sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.42, z), yaw, state: 'perch', t: 0, a: 0 }); });
   addFlock(orchScene, 0, 50, 70, 80, 1, () => 0); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   function animalTick(c, dt, t) {
     const o = c.obj, dp = Math.hypot(player.position.x - o.position.x, player.position.z - o.position.z);
@@ -3243,7 +3326,22 @@
       return;
     }
     if (c.kind === 'frog') { c.timer -= dt; if (c.state === 'sit' && dp < 6) { c.state = 'jump'; c.timer = 0.6; c.from = o.position.clone(); } if (c.state === 'jump') { const k = 1 - c.timer / 0.6; o.position.set(c.from.x, c.from.y + Math.sin(k * Math.PI) * 2 - k * 1.6, c.from.z + (c.home.z < 70 ? 1 : -1) * k * 4); if (c.timer <= 0) { c.state = 'gone'; c.timer = rnd(8, 20); o.visible = false; } } else if (c.state === 'gone' && c.timer <= 0) { o.visible = true; o.position.copy(c.home); c.state = 'sit'; } else if (c.state === 'sit') o.scale.y = 1 + Math.sin(t * 3) * 0.06; return; }
-    if (c.kind === 'crow') { if (c.state === 'perch') { o.userData.wings.forEach((w, i) => w.rotation.z = 0); o.position.y = c.perch.y + Math.abs(Math.sin(t * 2.2 + c.a)) * 0.05; if (dp < 9) { c.state = 'fly'; c.t = 0; c.a = Math.atan2(o.position.x - c.perch.x + 0.1, 1); } } else { c.t += dt; const r = 10 + c.t * 2, ang = c.a + c.t * 1.2, y = c.perch.y + Math.min(14, c.t * 6); if (c.t < 9) { o.position.set(c.perch.x + Math.cos(ang) * r, y, c.perch.z + Math.sin(ang) * r); o.lookAt(c.perch.x + Math.cos(ang + 0.1) * r, y, c.perch.z + Math.sin(ang + 0.1) * r); } else { o.position.lerp(c.perch, dt * 1.5); o.lookAt(c.perch.x, c.perch.y, c.perch.z - 1); if (o.position.distanceTo(c.perch) < 0.3) c.state = 'perch'; } const fl = Math.sin(c.t * 14) * 0.7; o.userData.wings[0].rotation.z = fl; o.userData.wings[1].rotation.z = -fl; } return; }
+    if (c.kind === 'crow') {
+      // it sits with its wings folded; walk up and it lifts off in a widening circle, and it only comes down again once you have gone
+      const fly = c.state !== 'perch'; o.userData.wings.forEach(w => (w.visible = fly)); o.userData.folded.forEach(f => (f.visible = !fly));
+      if (!fly) { o.position.set(c.perch.x, c.perch.y + Math.abs(Math.sin(t * 2.2 + c.a)) * 0.04, c.perch.z); o.rotation.set(0, c.yaw + Math.sin(t * 0.6 + c.a) * 0.5, 0); if (dp < 9) { c.state = 'fly'; c.t = 0; c.a = Math.atan2(o.position.z - player.position.z, o.position.x - player.position.x); } return; }
+      c.t += dt; const fl = Math.sin(c.t * 13) * 0.75; o.userData.wings[0].rotation.z = fl; o.userData.wings[1].rotation.z = -fl;
+      if (c.state === 'fly') {
+        const r = 13 * (1 - Math.exp(-c.t * 0.7)), ang = c.a + c.t * 0.8, y = c.perch.y + 11 * (1 - Math.exp(-c.t * 0.6)), nx = c.perch.x + Math.cos(ang) * r, nz = c.perch.z + Math.sin(ang) * r;
+        o.lookAt(nx + (nx - o.position.x), y, nz + (nz - o.position.z)); o.position.set(nx, y, nz);
+        if (c.t > 7 && Math.hypot(player.position.x - c.perch.x, player.position.z - c.perch.z) > 15) c.state = 'land';
+      } else {
+        const to = c.perch.clone().sub(o.position), L = to.length(), stp = Math.min(L, dt * Math.max(2.5, Math.min(9, L * 1.6)));
+        if (L > 0.6) o.lookAt(c.perch.x, o.position.y, c.perch.z); if (L > 0.001) o.position.add(to.multiplyScalar(stp / L));
+        if (L < 0.08) { c.state = 'perch'; c.yaw = o.rotation.y; }
+      }
+      return;
+    }
     // pheasants burst into the air when startled, glide, and land further off
     if (c.kind === 'pheasant' && c.state === 'burst') { c.timer -= dt; const k = 1 - c.timer / 2.2; o.position.set(c.from.x + (c.target.x - c.from.x) * k, c.ground(o.position.x, o.position.z) + Math.sin(k * Math.PI) * 9, c.from.z + (c.target.z - c.from.z) * k); const fl = Math.sin(t * 30) * 0.9; o.userData.wings[0].rotation.z = fl; o.userData.wings[1].rotation.z = -fl; if (c.timer <= 0) { c.state = 'idle'; c.timer = 3; o.userData.wings.forEach(w => w.rotation.z = 0); } return; }
     if (c.kind === 'pheasant' && dp < c.flee && c.state !== 'burst') { c.state = 'burst'; c.timer = 2.2; c.from = o.position.clone(); const ang = Math.atan2(o.position.x - player.position.x, o.position.z - player.position.z) + rnd(-0.6, 0.6); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 28, 0, o.position.z + Math.cos(ang) * 28); if (!c.ok(c.target.x, c.target.z) || !clearOf(c.sceneKey, c.target.x, c.target.z, 3)) c.target.set(o.position.x - Math.sin(ang) * 10, 0, o.position.z - Math.cos(ang) * 10); o.rotation.y = ang; return; }
@@ -3335,7 +3433,7 @@
   function songTick(dt) { if (!audioCtx || !settings.birds || where === 'in' || document.hidden) return; if (audioCtx.state === 'suspended') { audioCtx.resume(); return; } nextChirp -= dt; if (nextChirp <= 0) { chirp(audioCtx); nextChirp = rnd(1.5, 6); } }
 
   // ---------- pickables ----------
-  const pickables = [];
+  const pickables = []; roomSeats.forEach(o => pickables.push(o));
   pickables.push(orchScene.userData.bench); pickables.push(fernScene.userData.bench);
   addSeat(makeBench(true), 5.5, R + 3.2, 0, 1.51, 'bench by the shop');
   addSeat(makeBench(false), FEN.x + 6.5, FEN.z - 5.5, -Math.PI / 2, 1.51, 'bench at the stall');
@@ -3380,7 +3478,11 @@
   function flash(t) { const back = flashTimer ? flash.back : hint.current; flash.back = back; clearTimeout(flashTimer); hintEl.textContent = t; hintEl.hidden = false; flashTimer = setTimeout(() => { flashTimer = null; hint(back); }, 1100); }
   function clearDialog() { actions.innerHTML = ''; visual.hidden = true; visual.innerHTML = ''; }
   const speakerEl = $('speaker');
+  // When somebody stops you as you walk up, the first thing they say comes with a "Not now". The talk keeps: walk away, and it starts again when you come back.
+  let offerFlag = false, pendingTalk = null;
+  function offer(fn) { if (pendingTalk) return; offerFlag = true; try { fn(); } finally { offerFlag = false; } }
   function say(lines, then, who = 'Old Bramblewick') {
+    const canWait = offerFlag; offerFlag = false;
     let i = 0; showDialog(true); hint(''); speakerEl.textContent = who;
     const show = () => {
       clearDialog(); line.innerHTML = devText(lines[i]);
@@ -3388,8 +3490,14 @@
       b.textContent = i < lines.length - 1 ? 'Next' : 'Okay!';
       b.onclick = () => { i++; if (i < lines.length) show(); else { showDialog(false); then && then(); } };
       actions.appendChild(b); b.focus({ preventScroll: true });
+      if (canWait && i === 0) { const n = document.createElement('button'); n.className = 'btn'; n.textContent = 'Not now'; n.onclick = () => { showDialog(false); if (then) pendingTalk = { lines, then, who, where, room: where === 'in' ? interior.id : '', x: player.position.x, z: player.position.z, away: false }; hint(then ? `No hurry. ${who} will be here when you are ready.` : ''); }; actions.appendChild(n); }
     };
     show();
+  }
+  function pendingTick() {
+    const q = pendingTalk; if (!q || talking() || fading) return;
+    const here = q.where === where && (where !== 'in' || interior.id === q.room), d = here ? Math.hypot(player.position.x - q.x, player.position.z - q.z) : 99;
+    if (d > 9) q.away = true; else if (q.away && d < 4.5) { pendingTalk = null; offerFlag = true; say(q.lines, q.then, q.who); }
   }
   function ask(question, choices, correct, showAnotherWay, then, who = 'Old Bramblewick') {
     showDialog(true); hint(''); clearDialog(); line.innerHTML = question; speakerEl.textContent = who;
@@ -3613,7 +3721,7 @@
   }
   function canPick(o) {
     const k = o.userData.kind;
-    if ((o.userData.world || 'village') !== where) return false;
+    if ((o.userData.world || 'village') !== (where === 'in' ? 'in:' + interior.id : where)) return false;
     if (k === 'spill') return phase === 'spill' && !(o.userData.fall && o.userData.fall.t < 1);
     if (k === 'acorn' || k === 'berry') return phase === 'errand';
     if (k === 'fresh') return phase === 'fresh';
@@ -6207,7 +6315,15 @@
   canvas.addEventListener('pointercancel', () => { down = null; dragged = false; });
 
   // ---------- movement and collisions ----------
-  function inRiver(x, z) { if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; if (where === 'wild') return wildRiver(x, z) || wildSea(x, z); return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2; }
+  function inRiver(x, z) { if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; if (where === 'wild') return wildRiver(x, z) || wildSea(x, z); return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2 && fernDeck(x, z) === null; }
+  // places to stand by the water at Fernwater: the ramp, the dock, the gangplank and the deck of the barge
+  function fernDeck(x, z) {
+    if (x > 14.6 && x < 19.4 && z >= 51.4 && z < 55) return 1.65 * (z - 51.4) / 3.6;
+    if (x > 7 && x < 21 && z >= 55 && z <= 61) return 1.65;
+    if (x > 14.6 && x < 17.4 && z > 61 && z < 63.2) return 1.65;
+    if (x > 10.2 && x < 21.8 && z >= 63.2 && z < 68.8) return (fernScene.userData.ferry ? fernScene.userData.ferry.position.y : 0.1) + 1.6;
+    return null;
+  }
   function groundAt(x, z) {
     if (where === 'in') return 0;
     if (where === 'wild') return wildRiver(x, z) ? Math.min(worldH(x, z), -1.45) : wildSea(x, z) ? SEA_L - 1.45 : worldH(x, z);
@@ -6219,6 +6335,7 @@
     if (where === 'flight') return flier.position.y + 0.9;
     if (where === 'skyhaven') return (onIsland(x, z) || onBridge(x, z) || (z < 4 && Math.abs(x) < 6)) ? skyH(x, z) : -600;
     if (where !== 'fernwater') return 0;
+    { const dk = fernDeck(x, z); if (dk !== null) return dk; }
     if (inRiver(x, z)) return -1.45;
     if (Math.abs(x) > 5.2) return 0;
     const top = 1.85;
@@ -6231,6 +6348,16 @@
     const p = player.position;
     if (where === 'wild') { collideWild(p, prev); return; }
     if (where === 'village' && lastGY + py < 2.6) for (const bx of hollowBoxes) { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (bx.id && Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } }
+    if (where === 'village') for (const q of realHouses) {
+      const m = 0.6, dx = p.x - q.x, dz = p.z - q.z, pdx = prev.x - q.x, pdz = prev.z - q.z;
+      if (Math.abs(pdx) < q.hw && Math.abs(pdz) < q.hd) {   // you were indoors: the walls hold you, the doorway lets you out
+        p.x = q.x + clamp(dx, -q.hw + m, q.hw - m); if (dz < -q.hd + m) p.z = q.z - q.hd + m;
+        if (dz > q.hd - m) { if (Math.abs(pdx) < q.dw + 0.05) p.x = q.x + clamp(dx, -q.dw, q.dw); else p.z = q.z + q.hd - m; }
+      } else if (Math.abs(dx) < q.hw + m && Math.abs(dz) < q.hd + m) {
+        if (pdz >= q.hd && Math.abs(pdx) < q.dw + 0.05) p.x = q.x + clamp(dx, -q.dw, q.dw);   // coming in at the door
+        else { const ox = q.hw + m - Math.abs(dx), oz = q.hd + m - Math.abs(dz); if (ox < oz) p.x = q.x + (dx < 0 ? -1 : 1) * (q.hw + m); else p.z = q.z + (dz < 0 ? -1 : 1) * (q.hd + m); }
+      }
+    }
     if (where === 'village') solids.forEach(s => { if (!s.tall && lastGY + py > 2.6) return;   // up on the stair you are above the benches and barrels
       const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
     // the shop wall is a ring with a doorway
@@ -6262,6 +6389,10 @@
       if ((Math.abs(p.x) > 46 || p.z < -0.5 || p.z > FERN_LEN + 0.5) && !fading) { switchFrame('wild', prev); return; }
       // you can swim under the bridge, but you climb onto it only at the ramps
       if (inRiver(prev.x, prev.z) && Math.abs(p.x) <= 5.2 && p.z > 56.5 && p.z < 99.5) p.x = prev.x;
+      // the bridge rails are solid: you leave the bridge at its ends
+      if (Math.abs(prev.x) <= 5.2 && prev.z > 56 && prev.z < 100 && p.z > 56 && p.z < 100) p.x = clamp(p.x, -4.05, 4.05);
+      // the dock, its ramp and the barge: you get up by the ramp (or a good jump), and you can step off any edge
+      { const dk = fernDeck(p.x, p.z); if (dk !== null) { const pk = fernDeck(prev.x, prev.z), from = pk !== null ? pk : (inRiver(prev.x, prev.z) ? -1.45 : 0) + py; if (dk - from > 0.8) { p.x = prev.x; p.z = prev.z; } } }
       // the shop buildings: solid boxes, except at the door, which takes you inside
       fernBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } });
     }
@@ -6342,7 +6473,8 @@
   const ZOOMS = [1, 1.7, 2.6]; let zoom = 0;
   function setZoom(z) { const nz = clamp(z, 0, ZOOMS.length - 1); if (nz === zoom) return; zoom = nz; flash(['Close view', 'Mid view', 'Wide view'][zoom]); }
   function camTarget() {
-    const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' ? 0.62 : ZOOMS[zoom]), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
+    const rh = where === 'village' ? realIn(player.position.x, player.position.z) : null;
+    const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' || rh ? 0.62 : ZOOMS[zoom]), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
     const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4;
     // when ground or a wall is in the way, the camera comes closer; it never climbs, so your view keeps the tilt you chose
     const floorY = where === 'wild' ? (toLocal(tileL, player.position.x, player.position.z)[0] > 30 ? SEA_L : -1000) : where === 'lantern' || where === 'sea' ? SEA_Y : where === 'cairnhold' ? -GORGE.depth : where === 'skyhaven' ? -600 : -0.1; // the lowest the camera may go: water, or the bottom of what you fell into
@@ -6355,6 +6487,7 @@
     }
     pos.y = Math.max(pos.y, Math.max(groundAt(pos.x, pos.z), floorY) + 0.5);
     if (where === 'in') { pos.x = clamp(pos.x, -interior.w / 2 + 0.6, interior.w / 2 - 0.6); pos.z = clamp(pos.z, -interior.d / 2 + 0.6, interior.d / 2 - 0.6); pos.y = Math.min(pos.y, interior.h - 0.6); }
+    if (rh) { pos.x = clamp(pos.x, rh.x - rh.hw + 0.9, rh.x + rh.hw - 0.9); pos.z = clamp(pos.z, rh.z - rh.hd + 0.9, rh.z + rh.hd - 0.9); pos.y = Math.min(pos.y, rh.h - 0.6); }
     const look = view === 'front' ? base.clone() : base.clone().add(new THREE.Vector3(Math.sin(camYaw) * Math.cos(pitch) * 3, -Math.sin(pitch) * 3, Math.cos(camYaw) * Math.cos(pitch) * 3));
     return [pos, look];
   }
@@ -6546,29 +6679,30 @@
     const inShop = inV && Math.hypot(player.position.x, player.position.z) < R;
     if (inShop) bw.lookAt(player.position.x, bw.position.y, player.position.z); else bw.lookAt(BWPOS.x, 0, BWPOS.z + 20);
     if (tipT >= 0 && tipT < 1) { tipT += dt * 1.3; basket.rotation.x = Math.sin(Math.min(tipT, 1) * Math.PI) * 1.5; armsBW.forEach(a => (a.rotation.x = -0.95 - Math.sin(Math.min(tipT, 1) * Math.PI) * 0.5)); }
+    pendingTick();
     const dBW = Math.hypot(player.position.x - BWPOS.x, player.position.z - BWPOS.z);
-    if (dBW < 6.5 && inShop && !nearBW && !talking()) { nearBW = true; reachBramblewick(); }
+    if (dBW < 6.5 && inShop && !nearBW && !talking()) { nearBW = true; offer(reachBramblewick); }
     if (dBW > 9) nearBW = false;
 
     // Fen watches the lane, and talks when you walk up
     const dFen = Math.hypot(player.position.x - FENPOS.x, player.position.z - FENPOS.z);
     if (dFen < 30) fen.lookAt(player.position.x, 0, player.position.z); else fen.lookAt(FENPOS.x, 0, FENPOS.z - 20);
     if (!reduce) fenHead.rotation.z = Math.sin(t * 1.1 + 1) * 0.05;
-    if (inV && dFen < 7 && !nearFen && !talking() && ['tofen', 'sort', 'sorted', 'tobw2', 'sacks'].includes(phase)) { nearFen = true; reachFen(); }
+    if (inV && dFen < 7 && !nearFen && !talking() && ['tofen', 'sort', 'sorted', 'tobw2', 'sacks'].includes(phase)) { nearFen = true; offer(reachFen); }
     if (dFen > 10) nearFen = false;
 
     // Marigold tends her beds, and talks when you walk up
     const dMari = Math.hypot(player.position.x - MARIPOS.x, player.position.z - MARIPOS.z);
     if (dMari < 30) mari.lookAt(player.position.x, 0, player.position.z); else mari.lookAt(MARIPOS.x, 0, MARIPOS.z + 20);
     if (!reduce) { mariHead.rotation.z = Math.sin(t * 0.8) * 0.05; mari.position.y = Math.sin(t * 1.4 + 2) * 0.05; }
-    if (inV && dMari < 7 && !nearMari && !talking() && ['tonursery', 'plantA', 'plantB', 'water', 'sacks', 'tograb', 'getgrub'].includes(phase)) { nearMari = true; reachMarigold(); }
+    if (inV && dMari < 7 && !nearMari && !talking() && ['tonursery', 'plantA', 'plantB', 'water', 'sacks', 'tograb', 'getgrub'].includes(phase)) { nearMari = true; offer(reachMarigold); }
     if (dMari > 10) nearMari = false;
 
     // Aldric looks up from his bench when you come near
     const dAld = Math.hypot(player.position.x - ALDPOS.x, player.position.z - ALDPOS.z);
     if (dAld < 30) ald.lookAt(player.position.x, 0, player.position.z); else ald.lookAt(ALDPOS.x, 0, ALDPOS.z - 20);
     if (!reduce) aldHead.rotation.x = Math.sin(t * 0.7) * 0.04;
-    if (inV && dAld < 7.5 && !nearAld && !talking() && ['towood', 'sortshapes', 'sacks'].includes(phase)) { nearAld = true; reachAldric(); }
+    if (inV && dAld < 7.5 && !nearAld && !talking() && ['towood', 'sortshapes', 'sacks'].includes(phase)) { nearAld = true; offer(reachAldric); }
     if (dAld > 10.5) nearAld = false;
     grown.forEach(s => { const tg = s.userData.target; if (s.scale.x < tg) { s.scale.setScalar(Math.min(tg, s.scale.x + dt * 0.8)); } });
 
@@ -6576,11 +6710,11 @@
     if (where === 'orchards') {
       const dHol = Math.hypot(player.position.x - HOLPOS.x, player.position.z - HOLPOS.z);
       if (dHol < 30) hol.lookAt(player.position.x, 0, player.position.z); if (!reduce) { holHead.rotation.z = Math.sin(t * 1.6) * 0.06; hol.position.y = Math.abs(Math.sin(t * 3.2)) * 0.05; }
-      if (dHol < 7.5 && !nearHol && !talking() && ['tomill', 'toorch', 'orows', 'apples', 'o5go'].includes(phase)) { nearHol = true; reachHollis(); }
+      if (dHol < 7.5 && !nearHol && !talking() && ['tomill', 'toorch', 'orows', 'apples', 'o5go'].includes(phase)) { nearHol = true; offer(reachHollis); }
       if (dHol > 10.5) nearHol = false;
       const dPip = Math.hypot(player.position.x - PIPPOS.x, player.position.z - PIPPOS.z);
       if (dPip < 20) pip.lookAt(player.position.x, 0, player.position.z); else pip.lookAt(PIPPOS.x + 5, 0, PIPPOS.z + 14);
-      if (dPip < 6 && !nearPip && !talking() && ['opip', 'orows', 'tomill', 'toorch', 'o5go'].includes(phase)) { nearPip = true; reachPip(); }
+      if (dPip < 6 && !nearPip && !talking() && ['opip', 'orows', 'tomill', 'toorch', 'o5go'].includes(phase)) { nearPip = true; offer(reachPip); }
       if (dPip > 9) nearPip = false;
       const mg = orchScene.children.find(o => o.userData && o.userData.wheel); if (mg) { mg.userData.wheel.rotation.x += dt * wheelSpeed; mg.userData.mice.forEach((m, i) => { m.position.y = 1.2 + Math.abs(Math.sin(t * 6 * wheelSpeed / 0.9 + i)) * 0.25; m.rotation.z = Math.sin(t * 6 + i) * 0.08; }); }
       const prG = orchScene.children.find(o => o.userData && o.userData.press); if (prG) { const target = 2.8 - prG.userData.squeeze * 0.45; prG.userData.plate.position.y += (target - prG.userData.plate.position.y) * Math.min(1, dt * 3); prG.userData.screw.position.y = prG.userData.plate.position.y + 2; prG.userData.screw.rotation.y += dt * prG.userData.squeeze; }
@@ -6589,24 +6723,24 @@
     // Fernwater: Oriel at the dock, Maudie at the bakery, the ferry rocking, the water moving
     if (where === 'fernwater') {
       const dOri = Math.hypot(player.position.x - ORIPOS.x, player.position.z - ORIPOS.z);
-      if (dOri < 30) ori.lookAt(player.position.x, 0, player.position.z); if (!reduce) oriHead.rotation.y = Math.sin(t * 0.7) * 0.1;
-      if (dOri < 7.5 && !nearOri && !talking() && ['todock', 'tofern', 'tomaud', 'f4go', 'f5go'].includes(phase)) { nearOri = true; reachOriel(); }
+      if (dOri < 30) ori.lookAt(player.position.x, 1.65, player.position.z); if (!reduce) oriHead.rotation.y = Math.sin(t * 0.7) * 0.1;
+      if (dOri < 7.5 && !nearOri && !talking() && ['todock', 'tofern', 'tomaud', 'f4go', 'f5go'].includes(phase)) { nearOri = true; offer(reachOriel); }
       if (dOri > 10.5) nearOri = false;
       const fy = fernScene.userData.ferry; if (fy && !reduce) { fy.position.y = 0.1 + Math.sin(t * 1.1) * 0.12; fy.rotation.z = Math.sin(t * 0.9) * 0.02; fy.rotation.x = Math.sin(t * 0.7) * 0.015; }
       if (water) water.material.map.offset.x += dt * 0.02;
       const rA = fernScene.userData.ropeA; if (rA) rA.visible = !(['todock', 'tofern', 'ori1'].includes(phase));
-      if (fen2) { const dF2 = Math.hypot(player.position.x - FEN2POS.x, player.position.z - FEN2POS.z); if (dF2 < 30) fen2.lookAt(player.position.x, 0, player.position.z); if (dF2 < 7.5 && !nearFen2 && !talking() && phase === 'tofen2') { nearFen2 = true; reachFen2(); } if (dF2 > 10.5) nearFen2 = false; }
+      if (fen2) { const dF2 = Math.hypot(player.position.x - FEN2POS.x, player.position.z - FEN2POS.z); if (dF2 < 30) fen2.lookAt(player.position.x, 0, player.position.z); if (dF2 < 7.5 && !nearFen2 && !talking() && phase === 'tofen2') { nearFen2 = true; offer(reachFen2); } if (dF2 > 10.5) nearFen2 = false; }
     }
     if (where === 'in' && interior.id === 'bakery') {
       const dMaud = Math.hypot(player.position.x - (MAUDPOS.x - 3.2), player.position.z - MAUDPOS.z);
       maud.lookAt(player.position.x, 0, player.position.z); if (!reduce) { maudHead.rotation.z = Math.sin(t * 1.4) * 0.06; maud.position.y = Math.abs(Math.sin(t * 2.4)) * 0.06; }
-      if (dMaud < 8 && !nearMaud && !talking() && ['tomaud', 'todock', 'tofern'].includes(phase)) { nearMaud = true; reachMaudie(); }
+      if (dMaud < 8 && !nearMaud && !talking() && ['tomaud', 'todock', 'tofern'].includes(phase)) { nearMaud = true; offer(reachMaudie); }
       if (dMaud > 10.5) nearMaud = false;
     }
     if (where === 'cairnhold') {
       const dW = Math.hypot(player.position.x - WRENPOS.x, player.position.z - WRENPOS.z);
       if (dW < 30) wren.lookAt(player.position.x, 0, player.position.z); if (!reduce) { wren.userData.head.rotation.z = Math.sin(t * 1.1) * 0.05; wren.userData.arms[0].rotation.x = -0.4 + Math.sin(t * 2.2) * 0.25; }
-      if (dW < 7.5 && !nearWren && !talking() && ['towren', 'tocairn'].includes(phase)) { nearWren = true; reachWren(); }
+      if (dW < 7.5 && !nearWren && !talking() && ['towren', 'tocairn'].includes(phase)) { nearWren = true; offer(reachWren); }
       if (dW > 10.5) nearWren = false;
       const dP = Math.hypot(player.position.x - PIP2POS.x, player.position.z - PIP2POS.z); if (dP < 20) pip2.lookAt(player.position.x, 0, player.position.z); if (!reduce) pip2.position.y = Math.abs(Math.sin(t * 3)) * 0.08;
       if (phase === 'c10cross' && player.position.z > GORGE.z1 + 4 && !talking()) { wren.position.set(-6, 0, GORGE.z1 + 8); wren.lookAt(player.position.x, 0, player.position.z); finishCairn(); }
@@ -6626,7 +6760,7 @@
     if (where === 'cogsworth') {
       const dT = Math.hypot(player.position.x - TAMPOS.x, player.position.z - TAMPOS.z);
       if (dT < 30) tam.lookAt(player.position.x, 0, player.position.z); if (!reduce) { tam.userData.head.rotation.z = Math.sin(t * 2.6) * 0.08; tam.position.y = Math.abs(Math.sin(t * 4)) * 0.08; }
-      if (dT < 7.5 && !nearTam && !talking() && ['totam', 'tocog'].includes(phase)) { nearTam = true; reachTamsin(); }
+      if (dT < 7.5 && !nearTam && !talking() && ['totam', 'tocog'].includes(phase)) { nearTam = true; offer(reachTamsin); }
       if (dT > 10.5) nearTam = false;
       const sc = cogScene.children.find(o => o.userData && o.userData.water); if (sc) { const wd = sc.userData.drop; wd.position.y = 11 - ((t * 3) % 1) * 5.6; sc.userData.water.scale.y = 0.8 + ((t * 0.02) % 0.4); }
       const cage = cogScene.children.find(o => o.userData && o.userData.cage); if (cage) cage.userData.cage.position.y = 0.3 + (Math.sin(t * 0.25) + 1) * 13;
@@ -6635,7 +6769,7 @@
     if (where === 'emberdeep') {
       const dD = Math.hypot(player.position.x - DURPOS.x, player.position.z - DURPOS.z);
       if (dD < 30) durna.lookAt(player.position.x, 0, player.position.z); if (!reduce) { durna.userData.arms[1].rotation.x = -0.9 + Math.sin(t * 5) * 0.5; durna.userData.head.rotation.z = Math.sin(t * 1.4) * 0.05; }
-      if (dD < 7.5 && !nearDur && !talking() && ['todurna', 'toemb'].includes(phase)) { nearDur = true; reachDurna(); }
+      if (dD < 7.5 && !nearDur && !talking() && ['todurna', 'toemb'].includes(phase)) { nearDur = true; offer(reachDurna); }
       if (dD > 10.5) nearDur = false;
       if (tam2 && tam2.visible) tam2.lookAt(player.position.x, 0, player.position.z);
       const ud = embScene.userData; if (ud.lava) ud.lava.material.emissiveIntensity = 1.3 + Math.sin(t * 0.8) * 0.3; if (ud.bellows) ud.bellows.scale.y = 1 + Math.abs(Math.sin(t * 1.5)) * 0.25; if (ud.scale) ud.scale.userData.beam.rotation.z = Math.sin(t * 0.5) * 0.08; embLights.forEach((l, k) => l.intensity = 1.2 + Math.sin(t * 2 + k) * 0.3);
@@ -6644,7 +6778,7 @@
       const dA = Math.hypot(player.position.x - ASTPOS.x, player.position.z - ASTPOS.z);
       if (dA < 30) astra.lookAt(player.position.x, 0, player.position.z); else if (!reduce) astra.rotation.y = 2.4 + Math.sin(t * 0.3) * 0.3;
       if (!reduce) { astra.userData.arms[0].rotation.x = -0.4 + Math.sin(t * 0.9) * 0.15; astra.userData.head.rotation.x = dA < 30 ? 0 : -0.5 + Math.sin(t * 0.5) * 0.1; }
-      if (dA < 7.5 && !nearAst && !talking() && ['toastra', 'tolant'].includes(phase)) { nearAst = true; reachAstra(); }
+      if (dA < 7.5 && !nearAst && !talking() && ['toastra', 'tolant'].includes(phase)) { nearAst = true; offer(reachAstra); }
       if (dA > 10.5) nearAst = false;
       if (beam) beam.rotation.y = -t * (Math.PI * 2 / 12);
       const ud = lantScene.userData; (ud.boats || []).forEach(b => { b.position.y = SEA_Y + 0.3 + Math.sin(t * 0.8 + b.userData.bob) * 0.25; b.rotation.z = Math.sin(t * 0.6 + b.userData.bob) * 0.04; });
@@ -6656,7 +6790,7 @@
     if (where === 'skyhaven') {
       const dI = Math.hypot(player.position.x - ILSPOS.x, player.position.z - ILSPOS.z);
       if (dI < 30) ilsa.lookAt(player.position.x, 0, player.position.z); if (!reduce) { ilsa.userData.scarf.rotation.x = 0.5 + Math.sin(t * 3) * 0.3; ilsa.userData.arms[0].rotation.x = -0.3 + Math.sin(t * 1.1) * 0.2; }
-      if (dI < 7.5 && !nearIls && !talking() && ['toilsa', 'tosky'].includes(phase)) { nearIls = true; reachIlsa(); }
+      if (dI < 7.5 && !nearIls && !talking() && ['toilsa', 'tosky'].includes(phase)) { nearIls = true; offer(reachIlsa); }
       if (dI > 10.5) nearIls = false;
       if (windFan) windFan.rotation.x += dt * 6; spinnersSky.forEach(o => { if (o.userData.sock) o.rotation.y = Math.sin(t * 0.7) * 0.4; else o.position.y += Math.sin(t * 0.6 + o.userData.bob) * dt * 0.4; });
       if (glider && glider.userData.prop.visible) glider.userData.prop.rotation.z += dt * 12;
@@ -6775,7 +6909,23 @@
   ];
   const startEl = $('start'), mapSvgEl = $('mapsvg'), mapPanel = $('mappanel'), mapClose = $('mapclose');
   // where each region sits on the parchment, and a glyph for it
-  const MAPPOS = [[150, 540], [330, 468], [505, 548], [630, 392], [470, 262], [705, 196], [862, 336], [884, 96]];
+  // the map is drawn from the land itself: every town, road and river sits where it really is
+  const MAPW = { x0: 4600, z0: 1802, s: 36.4 }, mapXY = (wx, wz) => [(wx - MAPW.x0) / MAPW.s, (wz - MAPW.z0) / MAPW.s];
+  const MAPPOS = [HOLLOW_AT, ORCH_AT, FERN_AT, CAIRN_AT, COG_AT, EMBER_AT, LANT_AT].map(a => mapXY(a[0], a[1]).map(Math.round)); MAPPOS.push([MAPPOS[6][0] + 40, MAPPOS[6][1] - 78]);   // Skyhaven hangs in the air above the far end of the sky-lift
+  let mapTerrain = null;
+  function mapTerrainURL() {
+    if (mapTerrain) return mapTerrain;
+    const W = 250, H = 160, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'), im = g.createImageData(W, H), hs = new Float32Array((W + 1) * (H + 1));
+    for (let j = 0; j <= H; j++) for (let i = 0; i <= W; i++) hs[j * (W + 1) + i] = worldH(MAPW.x0 + (i + 0.5) * 4 * MAPW.s, MAPW.z0 + (j + 0.5) * 4 * MAPW.s, true);
+    const stops = [[-40, [170, 190, 122]], [-6, [196, 205, 140]], [10, [214, 206, 150]], [34, [205, 186, 132]], [70, [176, 160, 122]], [130, [150, 146, 132]], [200, [236, 236, 232]]];
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const h = hs[j * (W + 1) + i], o = (j * W + i) * 4; let c;
+      if (h < SEA_L + 1.5 && MAPW.x0 + (i + 0.5) * 4 * MAPW.s > tileL.ox + 40) c = [143, 185, 201];
+      else { let k = 0; while (k < stops.length - 2 && h > stops[k + 1][0]) k++; const a = stops[k], b = stops[k + 1], t = clamp((h - a[0]) / (b[0] - a[0]), 0, 1); c = a[1].map((v, q) => v + (b[1][q] - v) * t); const sh = clamp(1 + (h - hs[(j + 1) * (W + 1) + i + 1]) * 0.012, 0.72, 1.22); c = c.map(v => v * sh); }
+      im.data[o] = c[0]; im.data[o + 1] = c[1]; im.data[o + 2] = c[2]; im.data[o + 3] = 255;
+    }
+    g.putImageData(im, 0, 0); return mapTerrain = cv.toDataURL();
+  }
   const GLYPH = [
     '<ellipse cx="0" cy="3" rx="7" ry="9" fill="#b06b2c"/><path d="M-9 -3 Q0 -12 9 -3 Q0 0 -9 -3Z" fill="#6b4a2b"/>',
     '<circle cx="0" cy="0" r="9" fill="none" stroke="#6b4a2b" stroke-width="2.5"/><line x1="-9" y1="0" x2="9" y2="0" stroke="#6b4a2b" stroke-width="2"/><line x1="0" y1="-9" x2="0" y2="9" stroke="#6b4a2b" stroke-width="2"/><circle cx="0" cy="0" r="2.5" fill="#c4362e"/>',
@@ -6804,7 +6954,7 @@
       pathEnds.slice(1).forEach(([a, b]) => out.push(`<line x1="${X(a.x)}" y1="${Z(a.z)}" x2="${X(b.x)}" y2="${Z(b.z)}" stroke="#b08a52" stroke-width="2.5" stroke-linecap="round"/>`));
       const spot = (x, z, r, fill, label) => `<circle cx="${X(x)}" cy="${Z(z)}" r="${r}" fill="${fill}" stroke="#3a2a18" stroke-width="1"/><text x="${X(x)}" y="${Z(z) + r + 9}" text-anchor="middle" font-size="8" fill="#3a2a18">${label}</text>`;
       out.push(spot(0, 0, 11, '#8a6438', 'Shop'), spot(NURS.x, NURS.z, 14, '#6f9a3a', 'Nursery'), spot(WOOD.x, WOOD.z, 8, '#c9a06a', 'Woodshop'), spot(FEN.x, FEN.z, 5, '#c8384a', 'Stall'), spot(BUSH.x, BUSH.z, 5, '#2c5527', 'Bush'), spot(OAK.x, OAK.z, 10, '#3e6b2b', 'Old Oak'));
-      HOMES.forEach(h => out.push(`<rect x="${X(h.x - 7)}" y="${Z(h.z - 5)}" width="${X(7) - X(-7)}" height="${Z(5) - Z(-5)}" fill="${h.wall}" stroke="#3a2a18" stroke-width="1"/><text x="${X(h.x)}" y="${Z(h.z + 5) + 9}" text-anchor="middle" font-size="7" fill="#3a2a18">${h.sign}</text>`));
+      HOMES.forEach(h => out.push(`<rect x="${X(h.x - (h.hw || 7))}" y="${Z(h.z - (h.hd || 5))}" width="${X(h.hw || 7) - X(-(h.hw || 7))}" height="${Z(h.hd || 5) - Z(-(h.hd || 5))}" fill="${h.wall}" stroke="#3a2a18" stroke-width="1"/><text x="${X(h.x)}" y="${Z(h.z + (h.hd || 5)) + 9}" text-anchor="middle" font-size="7" fill="#3a2a18">${h.sign}</text>`));
       out.push(`<rect x="${X(-5)}" y="${Z(GATE.z - 2)}" width="${X(5) - X(-5)}" height="4" fill="#6b4a2b"/><text x="${X(0)}" y="${Z(GATE.z) + 12}" text-anchor="middle" font-size="8" fill="#3a2a18">Gate</text>`);
       return { svg: out.join(''), X, Z };
     },
@@ -6894,36 +7044,33 @@
   function youAreHere() {
     // the player's spot on the parchment
     if (where === 'in') { const saved = where, px = player.position.x, pz = player.position.z; where = interior.region; player.position.x = interior.door.x; player.position.z = interior.door.z; const r = youAreHere(); where = saved; player.position.x = px; player.position.z = pz; return r; }
-    if (where === 'wild') { const r = roadNear(player.position.x, player.position.z); if (!r) return MAPPOS[nearestTown()]; const RD = ROADS[r.road], t = r.i / (RD.pts.length - 1), a = MAPPOS[RD.ai], b = MAPPOS[RD.bi]; return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
-    if (where === 'village') { const [cx, cy] = MAPPOS[0]; return [cx + player.position.x * 0.17, cy + (player.position.z - 64) * 0.14]; }
-    if (where === 'orchards') { const [cx, cy] = MAPPOS[1]; return [cx + player.position.x * 0.2, cy - (player.position.z - 55) * 0.22]; }
-    if (where === 'fernwater') { const [cx, cy] = MAPPOS[2]; return [cx + player.position.x * 0.2, cy - (player.position.z - 60) * 0.2]; }
-    if (where === 'skyhaven') { const [cx, cy] = MAPPOS[7]; return [cx + player.position.x * 0.12, cy - (player.position.z - 60) * 0.12]; }
+    if (where === 'skyhaven') { const [cx, cy] = MAPPOS[7]; return [cx + player.position.x * 0.1, cy - (player.position.z - 60) * 0.1]; }
     if (where === 'lift' || where === 'flight') { const tt = where === 'lift' ? liftT : 1 - flightT, a = MAPPOS[6], b = MAPPOS[7]; if (where === 'flight') { const h = MAPPOS[0]; return [b[0] + (h[0] - b[0]) * flightT, b[1] + (h[1] - b[1]) * flightT]; } return [a[0] + (b[0] - a[0]) * tt, a[1] + (b[1] - a[1]) * tt]; }
-    if (where === 'lantern') { const [cx, cy] = MAPPOS[6]; return [cx + player.position.x * 0.14, cy - (player.position.z - 70) * 0.14]; }
-    if (where === 'emberdeep') { const [cx, cy] = MAPPOS[5]; return [cx + player.position.x * 0.16, cy - (player.position.z - 60) * 0.16]; }
-    if (where === 'cogsworth') { const [cx, cy] = MAPPOS[4]; return [cx + player.position.x * 0.16, cy - (player.position.z - 50) * 0.16]; }
-    if (where === 'cairnhold') { const [cx, cy] = MAPPOS[3]; return [cx + player.position.x * 0.18, cy - (player.position.z - 60) * 0.18]; }
-    return MAPPOS[0];
+    { const [wx, wz] = playerWorldXZ(), [x, y] = mapXY(wx, wz); if (x > 0 && x < 1000 && y > 0 && y < 640) return [x, y]; }
+    return MAPPOS[currentRegionIndex()];
   }
   function drawMap() {
-    const road = roadPath(MAPPOS);
+    const road = ROADS.map(R => 'M' + R.pts.filter((_, i) => i % 40 === 0 || i === R.pts.length - 1).map(q => mapXY(q.x, q.z).map(v => v.toFixed(1)).join(' ')).join(' L')).join(' ');
+    const ln = (t, a, b) => { const [x1, y1] = mapXY(...toWorld(t, a[0], a[1])), [x2, y2] = mapXY(...toWorld(t, b[0], b[1])); return `M${x1.toFixed(1)} ${y1.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}`; };
+    const fern = ln(tileF, [-40000, RIVER.z], [40000, RIVER.z]), gorge = ln(tileC, [-GW.half, GW.zc], [GW.half, GW.zc]), [fx, fy] = mapXY(...toWorld(tileF, 2600, RIVER.z)), [gx, gy] = mapXY(...toWorld(tileC, -1500, GW.zc)), [sx, sy] = MAPPOS[7], [lx, ly] = MAPPOS[6];
     let svg = `<svg viewBox="0 0 1000 640" role="img" aria-label="Map of the Long Road from Thistledown Hollow to Skyhaven">
       <defs><filter id="parch" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="3" seed="7"/><feColorMatrix values="0 0 0 0 .86  0 0 0 0 .78  0 0 0 0 .60  0 0 0 .5 .55"/><feComposite in2="SourceGraphic" operator="in"/></filter>
       <radialGradient id="vig" cx="50%" cy="50%" r="72%"><stop offset="70%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#3a2a18" stop-opacity=".45"/></radialGradient></defs>
       <rect width="1000" height="640" fill="#e4d2a4"/><rect width="1000" height="640" filter="url(#parch)"/>
-      <!-- the sea, the river, the hills -->
-      <path d="M905 0 Q880 160 930 300 Q900 440 960 640 L1000 640 L1000 0Z" fill="#8fb9c9" opacity=".85"/>
-      <path d="M905 0 Q880 160 930 300 Q900 440 960 640" stroke="#5f8fa8" stroke-width="3" fill="none"/>
-      ${[0,1,2,3,4].map(k => `<path d="M${925 + k*12} ${120 + k*95} q8 -6 16 0 q8 6 16 0" stroke="#dff0f6" stroke-width="2" fill="none" opacity=".8"/>`).join('')}
-      <path d="M560 0 Q540 120 505 230 Q470 330 500 440 Q520 500 505 548 Q490 600 530 640" stroke="#4a7fb8" stroke-width="7" fill="none" opacity=".75" stroke-linecap="round"/>
-      <path d="M560 0 Q540 120 505 230 Q470 330 500 440 Q520 500 505 548 Q490 600 530 640" stroke="#9fc3e8" stroke-width="2.5" fill="none"/>
-      ${[[600,330],[650,300],[690,350],[560,360],[740,230],[780,170],[660,150],[720,120]].map(([x,y]) => `<path d="M${x-26} ${y+16} L${x-8} ${y-18} L${x+2} ${y-2} L${x+10} ${y-14} L${x+28} ${y+16}Z" fill="#9a9484" stroke="#5a564c" stroke-width="1.5"/><path d="M${x-13} ${y-8} L${x-8} ${y-18} L${x-3} ${y-9}Z" fill="#fff"/>`).join('')}
-      ${[[820,60],[930,50],[760,40],[870,150]].map(([x,y]) => `<path d="M${x-22} ${y+8} q0 -12 12 -12 q4 -12 16 -8 q12 -4 16 8 q10 0 8 12z" fill="#fff" stroke="#c7d6ee" stroke-width="1.5"/>`).join('')}
-      ${[[60,120],[120,80],[200,160],[80,300],[260,250],[380,120],[160,420],[400,600]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="${14}" fill="#5f8a3a"/><circle cx="${x+10}" cy="${y+6}" r="10" fill="#4a7a31"/><rect x="${x-2}" y="${y+10}" width="4" height="9" fill="#5a4027"/>`).join('')}
+      <image href="${mapTerrainURL()}" x="0" y="0" width="1000" height="640" preserveAspectRatio="none" opacity=".82"/>
+      <rect width="1000" height="640" fill="url(#vig)"/>
+      ${[0,1,2,3].map(k => `<path d="M${955 + (k % 2) * 14} ${90 + k*140} q8 -6 16 0 q8 6 16 0" stroke="#dff0f6" stroke-width="2" fill="none" opacity=".8"/>`).join('')}
+      <path d="${fern}" stroke="#4a7fb8" stroke-width="5" fill="none" opacity=".75" stroke-linecap="round"/><path d="${fern}" stroke="#9fc3e8" stroke-width="1.8" fill="none"/>
+      <path d="${gorge}" stroke="#5a4a3a" stroke-width="4" fill="none" opacity=".7" stroke-linecap="round"/><path d="${gorge}" stroke="#2f261c" stroke-width="1.2" fill="none"/>
+      <text x="${fx}" y="${fy - 8}" font-size="11" font-style="italic" fill="#2f4a6a" text-anchor="middle">the Fern</text>
+      <text x="${gx}" y="${gy - 7}" font-size="10" font-style="italic" fill="#3a2a18" text-anchor="middle">Cairn Gorge</text>
+      <text x="972" y="560" font-size="11" font-style="italic" fill="#2f4a6a" text-anchor="middle" transform="rotate(90 972 560)">the sea</text>
+      <path d="M${lx} ${ly} L${sx} ${sy}" stroke="#7a5a30" stroke-width="2" stroke-dasharray="3 5" fill="none"/>
+      <path d="M${sx - 34} ${sy + 30} q0 -14 14 -14 q5 -14 20 -9 q15 -5 20 9 q12 0 10 14z" fill="#fff" stroke="#c7d6ee" stroke-width="1.5" opacity=".9"/>
+      <g transform="translate(60 112)"><circle r="22" fill="none" stroke="#5a3d22" stroke-width="1.2" opacity=".6"/><path d="M0 -28 L5 0 L0 28 L-5 0Z" fill="#5a3d22" opacity=".75"/><path d="M-28 0 L0 -4 L28 0 L0 4Z" fill="#5a3d22" opacity=".4"/><text y="-32" text-anchor="middle" font-size="12" fill="#5a3d22">N</text></g>
       <!-- the Long Road -->
-      <path d="${road}" stroke="#7a5a30" stroke-width="9" fill="none" stroke-linecap="round" opacity=".55"/>
-      <path d="${road}" stroke="#c9a06a" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="14 8"/>
+      <path d="${road}" stroke="#7a5a30" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+      <path d="${road}" stroke="#e9cf9a" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="9 5"/>
       <text x="28" y="620" font-family="Uncial Antiqua, Georgia, serif" font-size="28" fill="#5a3d22" opacity=".85">The Long Road</text>
       <text x="28" y="40" font-size="13" fill="#5a3d22" opacity=".8">One, many, part, shape, balance, unknown, change, and home.</text>`;
     REGIONS.forEach((r, i) => {
