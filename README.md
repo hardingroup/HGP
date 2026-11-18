@@ -93,6 +93,11 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - "How fast you look around" in Settings is one sensitivity for the mouse, a finger on the screen and a controller stick, sideways and up-and-down alike, from 0.4x to 4x. (Before, it only changed up-and-down.)
 - The tree-house in the Hollow has a handrail all the way up the stair and round the platform, open only where the stair arrives. From up there, no step may drop you more than a stair or two.
 - Skyhaven's ropes hold: you cannot walk or jump off the side of a bridge or the rim of an island.
+- Hearthmoor, the capital (first slice). It is built straight into the open land, not as a town in its own frame, so walking in and out needs no gate switch. It stands on the south shore of Hearthmere, a lake made by widening the Fern (`riverHW`), about 3,400 units east of Fernwater. A branch road leaves the Orchards road just south of Fernwater and runs to the West Gate. The city's own frame is `frameH` (x east along the river, z south from the middle of the water); everything about it is in `CITY` and `buildCity()`.
+  - Inside the walls it is 900 by 437 units, with three gates (West, East, South), the High Street and Lake Street crossing at the Market Square, and side streets.
+  - Built so far: walls, towers and gates; the quay and five piers on the lake, two barges, four warehouses; the Market Square with a fountain, eight stalls and eight trade halls (one named for each town); the University's four colleges and the Library Tower; Lakeside park and its three big houses; the Guildhall and Bank; Old Town, Tailors' Row, Makers' Row and Southgate as streets of houses; fenced Garden Lots; a few townsfolk.
+  - Not built yet: nothing in the city has an inside, nothing is for sale, the townsfolk do not talk, and no road leaves the East or South Gate.
+  - The in-game map shows Hearthmoor; tapping it there takes you to the West Gate.
 - Animals that get stuck pick a new direction. They are only ever moved to a clear spot when more than 140 units from you, so you never see one jump.
 
 ## Title screen and your elf
