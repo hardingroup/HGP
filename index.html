@@ -148,6 +148,10 @@
   .bottom { position: relative; flex: none; }
   .hud > div:first-child { flex: 0 1 auto; min-height: 0; }   /* on a short screen the top may overlap; the controls must never be pushed off the bottom */
   .prompt { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 8px; white-space: nowrap; max-width: 94vw; overflow: hidden; text-overflow: ellipsis; background: rgba(15,26,18,.8); border: 1px solid var(--panel-edge); border-radius: 999px; padding: 4px 14px; font-size: 14px; }
+  .bigword { font-size: 58px; font-weight: 700; letter-spacing: 6px; text-align: center; color: var(--gold); line-height: 1.15; margin: 0 0 6px; font-family: Georgia, 'Times New Roman', serif; }
+  .note { font-size: 26px; line-height: 1.5; background: #f6efd9; color: #2a2118; border-radius: 10px; padding: 12px 16px; margin: 8px 0 2px; font-family: Georgia, 'Times New Roman', serif; }
+  .btn.readopt { font-size: 40px; min-width: 84px; padding: 8px 14px; line-height: 1.1; }
+  .btn.readopt.txt { font-size: 30px; font-family: Georgia, 'Times New Roman', serif; letter-spacing: 2px; }
   .prompt kbd { background: var(--bg); border: 1px solid var(--panel-edge); border-radius: 6px; padding: 0 6px; font-family: inherit; }
   #bagchip, #coins { pointer-events: auto; cursor: pointer; font: inherit; font-weight: 600; color: var(--ink); }
   #coins { color: var(--gold); }
@@ -4495,7 +4499,7 @@
     let text = '', word = 'Pick up';
     if (!talking() && !bagOpen && !mapOpen && !fading && !sitting) { const [b0, d0] = nearestPick(0); if (b0 && d0 <= REACH && b0.userData.kind === 'sci') { text = 'Look at ' + b0.userData.label; word = 'Look'; }
       if (!(b0 && d0 <= REACH)) for (let tier = 1; tier < 5 && !text; tier++) { const [b, d] = nearestPick(tier); if (!b || d > REACH) continue; const u = b.userData;
-        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { text = 'Trade at ' + SHOPS[u.shop].n; word = 'Trade'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
+        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'readteach') { text = 'Speak to Fen Dewberry'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { text = 'Trade at ' + SHOPS[u.shop].n; word = 'Trade'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
     if (text !== promptText) { promptText = text; const p = $('prompt'); p.hidden = !text; if (text) p.innerHTML = settings.input === 'touch' ? text : `<kbd>${settings.input === 'gamepad' ? 'X' : keyLabel(settings.binds.pick)}</kbd> ${text}`; $('grab').textContent = word; }
   }
 
@@ -4629,6 +4633,7 @@
   function canPick(o) {
     const k = o.userData.kind;
     if (k === 'sci') return where === 'village' && phase === 'sci' && !!sciActive && sciActive.left.has(o.userData.id) && !talking();
+    if (k === 'readteach') return where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
     if (k === 'sciteach') return where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
     if (k === 'teacher') return TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
     if (k === 'quest') return where === 'village' && phase === 'free' && !save.beetle && !beetle && !parked;
@@ -4677,6 +4682,7 @@
     else if (d.kind === 'teacher') teacherMenu(d.i);
     else if (d.kind === 'sci') sciPick(obj);
     else if (d.kind === 'sciteach') sciMenu();
+    else if (d.kind === 'readteach') readMenu();
     else if (d.kind === 'quest') grubQuest();
     else if (d.kind === 'ferry') ferryStart(d.dir);
     else if (d.kind === 'orow') countRowOfTrees(obj);
@@ -4705,7 +4711,7 @@
     player.position.add(new THREE.Vector3(Math.sin(yaw) * 1.4, 0, Math.cos(yaw) * 1.4)); hint('');
   }
   // tier 0: whatever the lesson in hand wants picked; 1: things lying about; 2: a counter to trade at; 3: a seat
-  const PICK_TIER = { find: 1, shop: 2, teacher: 2, sciteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
+  const PICK_TIER = { find: 1, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
   function nearestPick(tier) { let best = null, bd = Infinity; pickables.forEach(o => { if ((PICK_TIER[o.userData.kind] || 0) !== tier || !canPick(o)) return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } }); return [best, bd]; }
   function pickNearest() {
     let [best, bd] = nearestPick(0);
@@ -7773,7 +7779,7 @@
     pickables.forEach(o => {
       const f = o.userData.fall;
       if (f && f.t < 1) { f.t = Math.min(1, f.t + dt * 1.2); const kk = Math.max(0, f.t); o.position.lerpVectors(f.from, f.to, kk); o.position.y += Math.sin(kk * Math.PI) * 3.5; o.rotation.x += dt * 7; }
-      if (!{ follower: 1, teacher: 1, quest: 1, sciteach: 1 }[o.userData.kind] && canPick(o) && !reduce) { const near = flatDist(o) <= REACH; o.scale.setScalar(near ? 1.15 + Math.sin(t * 6) * 0.06 : (o.userData.kind === 'fresh' ? 1.2 : 1)); }
+      if (!{ follower: 1, teacher: 1, quest: 1, sciteach: 1, readteach: 1 }[o.userData.kind] && canPick(o) && !reduce) { const near = flatDist(o) <= REACH; o.scale.setScalar(near ? 1.15 + Math.sin(t * 6) * 0.06 : (o.userData.kind === 'fresh' ? 1.2 : 1)); }
     });
     for (let i = flying.length - 1; i >= 0; i--) {
       const f = flying[i]; f.t += dt * 2.6;
@@ -8062,6 +8068,105 @@
       choose(MARI, left.length ? 'Arithmetic is Bramblewick’s. I teach the other half: how the living world works, and how to find things out by looking. Shall we?' : 'You have had all my science. Come and go over any of it.', opts); };
     var sciPick = sciTouch;
     var sciTick = dt => { const A = sciAnim; if (!A) return; A.t += dt; const u = Math.min(1, A.t / 2.4), e = 1 - (1 - u) * (1 - u); cart.g.position.z = cart.z0 + A.d * e; cart.g.children.forEach(c => { if (c.geometry && c.geometry.type === 'CylinderGeometry' && c.rotation.z) c.rotation.x = cart.g.position.z * 1.8; }); if (u >= 1) { sciAnim = null; setTimeout(A.next, 500); } };
+    // =====================================================================================================
+    // READING IN THE HOLLOW: eight lessons with Fen Dewberry, in the order the science of reading sets out:
+    // hearing the sounds in words, letters for sounds, blending, more letters, two-letter sounds, the silent e,
+    // sentences, and a story to understand. Everything a child who cannot yet read needs to know is SPOKEN.
+    //
+    // Sound comes from one place, sayOut(file, words). It plays audio/<file>.mp3 if that file exists beside the
+    // game, and otherwise falls back to the browser's own voice reading `words`. So recordings (or an AI voice)
+    // can be dropped in later, one file at a time, with no change here. The list of names is in audio/README.md.
+    // =====================================================================================================
+    const FENW = 'Fen Dewberry', AUD = { base: 'audio/', miss: {}, tok: 0, el: null };
+    // the 44 sounds of English, each with the word the stand-in voice uses until its recording exists
+    const PH = { s: 'sun', a: 'apple', t: 'tap', p: 'pin', i: 'in', n: 'net', m: 'moon', d: 'dog', g: 'gate', o: 'octopus', c: 'cat', k: 'kite', e: 'egg', u: 'up', r: 'red', h: 'hat', b: 'bed', f: 'fish', l: 'leg', j: 'jam', v: 'van', w: 'wet', x: 'the end of fox', y: 'yes', z: 'zip', qu: 'queen',
+      sh: 'ship', ch: 'chip', th: 'thin', th_v: 'this', ng: 'the end of ring', zh: 'the middle of treasure', ai: 'rain', ee: 'see', igh: 'night', oa: 'boat', oo: 'moon', oo_short: 'book', ar: 'car', or: 'fork', ur: 'fur', ow: 'cow', oi: 'coin', air: 'chair', ear: 'near', ure: 'sure', er: 'the end of butter' };
+    const strip = t => String(t).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(), waitMs = ms => new Promise(r => setTimeout(r, ms));
+    const clipPlay = name => new Promise(res => { if (!name || AUD.miss[name]) return res(false); let done = false; const fin = ok => { if (!done) { done = true; res(ok); } };
+      try { const a = new Audio(AUD.base + name + '.mp3'); AUD.el = a; a.volume = clamp((settings.soundVol === undefined ? 80 : settings.soundVol) / 100, 0, 1); a.onended = () => fin(true); a.onerror = () => { AUD.miss[name] = 1; fin(false); }; const pr = a.play(); if (pr && pr.catch) pr.catch(() => { AUD.miss[name] = 1; fin(false); }); setTimeout(() => fin(true), 9000); } catch (e) { AUD.miss[name] = 1; fin(false); } });
+    const ttsSay = text => new Promise(res => { let done = false; const fin = () => { if (!done) { done = true; res(); } }; try { if (!('speechSynthesis' in window) || !text) return fin(); const u = new SpeechSynthesisUtterance(text); u.rate = 0.82; u.pitch = 1.05; u.onend = fin; u.onerror = fin; speechSynthesis.speak(u); setTimeout(fin, 900 + text.length * 95); } catch (e) { fin(); } });
+    const hush = () => { AUD.tok++; try { if (AUD.el) AUD.el.pause(); } catch (e) {} try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} };
+    const sayOut = (name, text) => settings.sounds === false ? Promise.resolve() : clipPlay(name).then(ok => (ok ? null : ttsSay(text)));
+    // a list of [file, words] spoken one after another; starting a new list cuts off the last
+    const seq = (list, gap) => { hush(); const id = AUD.tok; let p = Promise.resolve(); list.forEach(([n, t]) => { p = p.then(() => (AUD.tok === id ? sayOut(n, t) : null)).then(() => waitMs(gap || 220)); }); return p; };
+    const ph = k => ['ph_' + k, /^the (end|middle)/.test(PH[k]) ? 'the sound at ' + PH[k] : 'the first sound in ' + PH[k]], wd = w => ['w_' + w, w];
+    // one question: the teacher's words are shown and spoken, then any sounds are played; the answers are big buttons
+    const round = (c, next) => { showDialog(true); hint(''); clearDialog(); speakerEl.textContent = FENW;
+      line.innerHTML = (c.big ? `<div class="bigword">${c.big}</div>` : '') + c.say; const lead = [[c.id || null, strip(c.say)]].concat(c.clips || []); seq(lead, 300);
+      const tool = (label, fn) => { const b = document.createElement('button'); b.className = 'btn small'; b.textContent = label; b.onclick = fn; actions.appendChild(b); return b; };
+      if (c.clips) tool('🔊 Again', () => seq(c.clips, 300)); if (c.sound) tool('Sound it out', () => seq(c.sound.map(ph), 420));
+      (c.keep ? c.opts : shuf(c.opts.slice())).forEach(o => { const b = document.createElement('button'); b.className = 'btn choice readopt' + (/^[a-z’' ]+$/i.test(o[0]) ? ' txt' : ''); b.textContent = o[0];
+        b.onclick = () => { if (o[1]) { const yes = c.yes || 'Yes.'; clearDialog(); line.innerHTML = (c.big ? `<div class="bigword">${c.big}</div>` : '') + yes; seq([[null, strip(yes)]].concat(c.then || [])); const n = document.createElement('button'); n.className = 'btn primary'; n.textContent = 'Next'; n.onclick = () => { hush(); next(); }; actions.appendChild(n); n.focus({ preventScroll: true }); }
+          else { b.disabled = true; b.classList.add('wrong'); const no = o[2] || c.no || 'Not that one. Listen again.'; seq([[null, strip(no)]].concat(c.clips || []), 300); const f = actions.querySelector('.readopt:not(:disabled)'); if (f) f.focus({ preventScroll: true }); } };
+        actions.appendChild(b); if (o[3]) { const sp = tool('🔊', () => seq([wd(o[3])])); sp.title = 'Hear its name'; sp.style.marginLeft = '-6px'; } });
+      const f = actions.querySelector('.readopt'); if (f) f.focus({ preventScroll: true }); };
+    const RQ = c => next => round(c, next), tell = lines => lines.map(l => next => { seq([[null, strip(l)]]); say([l], () => { hush(); next(); }, FENW); });
+    const finishR = (n, lines) => next => { markDone('read-' + n); setCoins(coins + 2); const all = lines.concat([`That is reading lesson ${n} of 8. Here are <b>2 coins</b>.`]), each = i => { if (i < all.length) { seq([[null, strip(all[i])]]); say([all[i]], () => each(i + 1), FENW); } else { hush(); phase = 'free'; sciActive = null; setTasks([]); hint(n < 8 ? 'Speak to Fen at her stall when you want the next one.' : 'You can read. Every sign in the Hollow is yours now.'); next(); } }; each(0); };
+    // pictures: [emoji, word]
+    const PIC = { sock: '🧦', apple: '🍎', fish: '🐟', moon: '🌙', dog: '🐕', sun: '☀️', tent: '⛺', cow: '🐄', pie: '🥧', bell: '🔔', cap: '🧢', egg: '🥚', orange: '🍊', pin: '📌', tap: '🚰', pan: '🍳', tin: '🥫', ant: '🐜', nap: '😴', cat: '🐈', hen: '🐔', bed: '🛏️', map: '🗺️', cup: '🥤', leg: '🦵', bug: '🐛', pig: '🐖', hat: '🎩', net: '🥅', ship: '🚢', shop: '🏪', chip: '🍟', bath: '🛁', chop: '🪓', shell: '🐚', chick: '🐤', kite: '🪁', kit: '🧰', pine: '🌲', cube: '🧊', cub: '🐻', cane: '🦯', cake: '🍰', bone: '🦴', nose: '👃', rope: '🪢', jam: '🍯', nut: '🌰', log: '🪵', fox: '🦊', mud: '🟫', insect: '🐞', goat: '🐐', umbrella: '☂️', can: '🥫' };
+    const pic = (w, right, no) => [PIC[w], right, no, w];
+    const firstSound = (k, right, wrongs) => RQ({ say: `Listen. Which one <b>starts</b> with this sound?`, clips: [ph(k)], opts: [pic(right, true)].concat(wrongs.map(w => pic(w, false, `No. Say it slowly: ${w}. That is not the sound at the start.`))), yes: `Yes. <b>${right}</b> starts with that sound.`, then: [ph(k), wd(right)] });
+    const whichLetter = (k, others) => RQ({ say: 'Listen. Which <b>letter</b> makes this sound?', clips: [ph(k)], opts: [[k, true]].concat(others.map(o => [o, false, 'Not that letter. Listen again.'])), yes: `Yes. That letter makes this sound.`, then: [ph(k)] });
+    const meet = (k, w) => RQ({ big: k, say: `This letter makes the first sound in <b>${w}</b>. Tap the picture that starts with it.`, clips: [ph(k)], opts: [pic(w, true)], yes: `${PIC[w]} Good.`, then: [ph(k), wd(w)] });
+    const readWord = (w, sounds, wrongs) => RQ({ big: w, say: 'Read the word on the jar. Which picture is it?', sound: sounds, opts: [pic(w, true)].concat(wrongs.map(x => pic(x, false, 'Not that one. Sound it out: say each sound, then push them together.'))), yes: `Yes. It says <b>${w}</b>.`, then: [wd(w)] });
+    const hearWord = (w, others) => RQ({ say: 'Listen to the word. Which jar has that word on it?', clips: [wd(w)], opts: [[w, true]].concat(others.map(o => [o, false, 'Not that one. Listen to the middle sound.'])), yes: `Yes: <b>${w}</b>.`, then: [wd(w)] });
+    const READ_TITLES = ['The sounds at the start', 'Six letters: s a t p i n', 'Pushing sounds together', 'More letters, more words', 'Two letters, one sound', 'The silent e', 'Letters to deliver', 'The fox and the jam'];
+    const POSTS = [['bw', 'I am in the shop. I sell nuts and pots.', 'Old Bramblewick', 'That’s me, and no mistake. Nuts and pots! Thank you.'], ['mari', 'I dig and plant. I am at the shed with the pots.', 'Marigold Fernsby', 'Digging and planting: mine. Well read.'], ['ald', 'I chop logs and cut them up. I made the bench.', 'Aldric Bough', 'Chop, cut, bench. That’s for me. Good.'], ['oak', 'I am big. I am not an elf. Nuts drop from me.', 'The Old Oak', 'You tuck the note into a crack in the bark. It was for the oak all along.']];
+    [['bw', BWPOS.x, BWPOS.z], ['mari', MARIPOS.x, MARIPOS.z], ['ald', ALDPOS.x, ALDPOS.z], ['oak', OAK.x + 9.5, OAK.z - 3]].forEach(([id, x, z]) => spot('post_' + id, id === 'oak' ? 'the Old Oak' : POSTS.find(q => q[0] === id)[2], new THREE.Object3D(), x, z, 0));
+    const deliver = k => next => { const [id, text, who, thanks] = POSTS[k], all = POSTS.map(q => 'post_' + q[0]); showDialog(true); clearDialog(); speakerEl.textContent = FENW; line.innerHTML = `<small style="color:var(--ink-soft)">Letter ${k + 1} of 4. Read it, then take it to whoever it is for.</small><div class="note">${text}</div>`;
+      const go = document.createElement('button'); go.className = 'btn primary'; go.textContent = 'I’ll take it'; go.onclick = () => { showDialog(false); setTasks([{ id: 'sci', icon: 'basket', label: 'Letters delivered', have: k, need: 4 }]); hint(`The letter says: “${text}”`);
+        sciActive = { left: new Set(all), next, fn: sp => { if (sp.userData.id === 'post_' + id) { sciActive = null; setTasks([]); hint(''); say([thanks], next, who); } else say(['Not for me, I think. Read it again: who does it sound like?'], null, sp.userData.label.replace(/^the /, 'The ')); } }; }; actions.appendChild(go); go.focus({ preventScroll: true }); };
+    const story = ['A fox came to the shop. The fox had a red cape.', 'He had no cash. He hid a pot of jam in his cape.', 'Fen ran up the lane. “Stop, fox!”', 'The fox fell in the mud. The jam pot broke. Jam was on his nose.', 'The fox felt bad. He made Fen a bench. Then Fen was glad.'];
+    const page = k => next => { showDialog(true); clearDialog(); speakerEl.textContent = 'The fox and the jam'; line.innerHTML = `<small style="color:var(--ink-soft)">Page ${k + 1} of ${story.length}. Read it yourself first.</small><div class="note">${story[k]}</div>`; const rd = document.createElement('button'); rd.className = 'btn small'; rd.textContent = '🔊 Read it to me'; rd.onclick = () => seq([['story_' + (k + 1), story[k]]]); const n = document.createElement('button'); n.className = 'btn primary'; n.textContent = k < story.length - 1 ? 'Turn the page' : 'The end'; n.onclick = () => { hush(); next(); }; actions.append(rd, n); n.focus({ preventScroll: true }); };
+    const ask3 = (q, opts) => RQ({ say: q, opts: opts.map(([t, r, no]) => [t, r, no || 'Look back at the story. What did it say?']), yes: 'Yes. You understood it.' });
+    const RLESSON = [
+      () => [...tell(['Before letters, ears. Every word is made of sounds, and you can hear them one at a time if you say the word slowly.', 'I shall make a sound. You find me the thing on my stall that <b>starts</b> with it.']),
+        firstSound('s', 'sock', ['apple', 'fish']), firstSound('m', 'moon', ['dog', 'sun']), firstSound('f', 'fish', ['moon', 'bell']), firstSound('t', 'tent', ['sock', 'cow']), firstSound('p', 'pie', ['bell', 'cap']), firstSound('a', 'apple', ['egg', 'orange']),
+        RQ({ say: 'Now two words. Do <b>sun</b> and <b>sock</b> start with the <b>same</b> sound?', clips: [wd('sun'), wd('sock')], keep: true, opts: [['👍', true], ['👎', false, 'Say them slowly. Sun. Sock. Listen to the very start.']], yes: 'Yes, the same.', then: [ph('s')] }),
+        RQ({ say: 'Do <b>moon</b> and <b>fish</b> start with the <b>same</b> sound?', clips: [wd('moon'), wd('fish')], keep: true, opts: [['👍', false, 'Say them slowly. Moon. Fish. Listen to the very start.'], ['👎', true]], yes: 'No, they are different.', then: [ph('m'), ph('f')] }),
+        finishR(1, ['You can hear the first sound in a word. That is where reading starts.'])],
+      () => [...tell(['Now the marks. A letter is a picture of a sound. Six to begin with, and with six you can already make a lot of words.']),
+        meet('s', 'sun'), meet('a', 'apple'), meet('t', 'tent'), meet('p', 'pie'), meet('i', 'insect'), meet('n', 'net'),
+        ...tell(['Now the other way round. I make the sound, you find me the letter.']),
+        whichLetter('s', ['t', 'n']), whichLetter('a', ['i', 'p']), whichLetter('t', ['s', 'p']), whichLetter('p', ['t', 'a']), whichLetter('i', ['a', 'n']), whichLetter('n', ['s', 'i']),
+        finishR(2, ['Six letters, six sounds: s, a, t, p, i, n.'])],
+      () => [...tell(['Here is the trick of reading. Say each sound in turn, then push them together until they are one word.', 'My jars have labels. Read them for me. If you are stuck, press <b>Sound it out</b>.']),
+        readWord('pin', ['p', 'i', 'n'], ['pan', 'tap']), readWord('tap', ['t', 'a', 'p'], ['pan', 'tin']), readWord('pan', ['p', 'a', 'n'], ['pin', 'nap']), readWord('tin', ['t', 'i', 'n'], ['tap', 'ant']), readWord('ant', ['a', 'n', 't'], ['pan', 'tin']), readWord('nap', ['n', 'a', 'p'], ['pan', 'pin']),
+        ...tell(['Now I say a word, and you find its label.']),
+        hearWord('pin', ['pan', 'pit']), hearWord('tap', ['tip', 'top']), hearWord('sat', ['sit', 'sap']),
+        finishR(3, ['Sound by sound, then all together. That is called <b>blending</b>, and it is how every new word gets read.'])],
+      () => [...tell(['More letters. I shall not make a fuss of each one: tap it, hear it, and then we read.']),
+        ...[['m', 'moon'], ['d', 'dog'], ['g', 'goat'], ['o', 'orange'], ['c', 'cat'], ['e', 'egg'], ['u', 'umbrella'], ['h', 'hat'], ['b', 'bed'], ['l', 'leg'], ['f', 'fish'], ['r', 'rope']].map(([k, w]) => meet(k, w)),
+        readWord('dog', ['d', 'o', 'g'], ['pig', 'bug']), readWord('cat', ['c', 'a', 't'], ['cup', 'hat']), readWord('hen', ['h', 'e', 'n'], ['hat', 'net']), readWord('sun', ['s', 'u', 'n'], ['sock', 'nut']), readWord('bed', ['b', 'e', 'd'], ['bug', 'leg']), readWord('map', ['m', 'a', 'p'], ['moon', 'cap']), readWord('cup', ['c', 'u', 'p'], ['cap', 'cat']), readWord('pig', ['p', 'i', 'g'], ['pin', 'dog']),
+        hearWord('cat', ['cot', 'cut']), hearWord('bed', ['bad', 'bud']), hearWord('pig', ['peg', 'pug']),
+        finishR(4, ['Any word of three sounds is yours now.'])],
+      () => [...tell(['Sometimes two letters stand side by side and make <b>one</b> sound between them. Three of those today.']),
+        RQ({ big: 'sh', say: 'These two together make the first sound in <b>ship</b>. Tap the ship.', clips: [ph('sh')], opts: [pic('ship', true)], yes: '🚢 Good.', then: [ph('sh'), wd('ship')] }), RQ({ big: 'ch', say: 'These two together make the first sound in <b>chip</b>. Tap the chips.', clips: [ph('ch')], opts: [pic('chip', true)], yes: '🍟 Good.', then: [ph('ch'), wd('chip')] }), RQ({ big: 'th', say: 'These two together make the last sound in <b>bath</b>. Tap the bath.', clips: [ph('th')], opts: [pic('bath', true)], yes: '🛁 Good.', then: [ph('th'), wd('bath')] }),
+        readWord('ship', ['sh', 'i', 'p'], ['shop', 'chip']), readWord('fish', ['f', 'i', 'sh'], ['ship', 'pig']), readWord('shop', ['sh', 'o', 'p'], ['ship', 'chop']), readWord('chip', ['ch', 'i', 'p'], ['ship', 'chop']), readWord('bath', ['b', 'a', 'th'], ['bed', 'hat']), readWord('chop', ['ch', 'o', 'p'], ['shop', 'chip']),
+        RQ({ say: 'Listen: <b>shop</b>. Which two letters does it start with?', clips: [wd('shop')], opts: [['sh', true], ['ch', false], ['th', false]], yes: 'Yes: sh.', then: [ph('sh')] }), RQ({ say: 'Listen: <b>chin</b>. Which two letters does it start with?', clips: [wd('chin')], opts: [['ch', true], ['sh', false], ['th', false]], yes: 'Yes: ch.', then: [ph('ch')] }), RQ({ say: 'Listen: <b>moth</b>. Which two letters does it <b>end</b> with?', clips: [wd('moth')], opts: [['th', true], ['sh', false], ['ch', false]], yes: 'Yes: th.', then: [ph('th')] }),
+        finishR(5, ['sh, ch, th. Two letters, one sound.'])],
+      () => { const pair = (a, b, show) => RQ({ big: show, say: 'Read the word. Which picture is it?', opts: [pic(show, true), pic(show === a ? b : a, false, show === b ? 'Look at the end. There is an e, so the middle letter says its name.' : 'Look at the end. No e this time, so the middle sound is short.')], yes: `Yes. It says <b>${show}</b>.`, then: [wd(show)] });
+        return [...tell(['One last trick, and it is a strange one. An <b>e</b> on the end of a word says nothing at all. But it reaches back over one letter and makes the vowel <b>say its own name</b>.', 'Watch: <b>kit</b>. Add an e: <b>kite</b>.']),
+          pair('kit', 'kite', 'kite'), pair('kit', 'kite', 'kit'), pair('pin', 'pine', 'pine'), pair('cub', 'cube', 'cube'), pair('pin', 'pine', 'pin'), pair('can', 'cane', 'cane'), pair('cub', 'cube', 'cub'),
+          readWord('cake', ['c', 'ai', 'k'], ['cat', 'cap']), readWord('bone', ['b', 'oa', 'n'], ['bed', 'bug']), readWord('nose', ['n', 'oa', 'z'], ['net', 'nut']), readWord('rope', ['r', 'oa', 'p'], ['map', 'pie']),
+          finishR(6, ['The silent e. It says nothing, and changes everything.'])]; },
+      () => [...tell(['You can read words. Now read whole lines of them, and do what they say.', 'I have four letters with no name on the front. Each one says who it is for. Read it, and take it to them.']), deliver(0), deliver(1), deliver(2), deliver(3), finishR(7, ['Four letters, four doors. You read every word of them yourself.'])],
+      () => [...tell(['A story to finish. It happened at this very stall. Read each page yourself; press the button only if you are stuck.']), page(0), page(1), page(2), page(3), page(4),
+        ...tell(['Now, did you understand it? Reading is not saying the words. It is knowing what happened.']),
+        ask3('Who took the jam?', [['The fox', true], ['Fen', false], ['A hen', false]]), ask3('Where did he hide it?', [['In his cape', true], ['In the mud', false], ['In the shop', false]]), ask3('What happened to the jam pot?', [['It broke', true], ['Fen got it back', false], ['The fox sold it', false]]),
+        ask3('The story does not say <b>why</b> the fox made a bench. Why do you think he did?', [['He was sorry about the jam', true], ['He liked making benches', false, 'It says he felt bad. What about?'], ['Fen gave him cash', false, 'It says he felt bad. What about?']]),
+        finishR(8, ['You read a whole story and you knew what it meant. That is reading.'])]
+    ];
+    var readStart = n => { if (where !== 'village') return; phase = 'sci'; sciActive = null; setTasks([]); run(RLESSON[n - 1]()); };
+    var readMenu = () => { if (talking() || bagOpen) return;
+      if (phase === 'sci') { choose(FENW, 'Carry on, or leave the lesson for another day?', [['Carry on', null], ['Stop for now', () => { hush(); phase = 'free'; sciActive = null; setTasks([]); hint('Speak to Fen when you want to take it up again.'); }]]); return; }
+      const left = READ_TITLES.map((t, i) => i + 1).filter(n => !isDone('read-' + n)), opts = []; seq([[null, 'Shall we read?']]);
+      if (left.length) opts.push([`📖 Reading ${left[0]}: ${READ_TITLES[left[0] - 1]}`, () => readStart(left[0])]);
+      if (left.length < 8) opts.push(['A lesson again', () => choose(FENW, 'Which one shall we do again?', READ_TITLES.map((t, i) => [`${i + 1}: ${t}`, () => readStart(i + 1)]).filter((_, i) => isDone('read-' + (i + 1))).concat([['Never mind', null]]))]);
+      opts.push(['Never mind', null]);
+      choose(FENW, left.length ? 'Every jar on this stall has a label, and somebody has to read them. I teach reading: sounds first, then letters, then words. Shall we?' : 'You have had all my reading lessons. Come and go over any of them.', opts); };
+    var READ_TITLES_ = READ_TITLES;
+    { const o = new THREE.Object3D(); o.position.set(FENPOS.x, 0, FENPOS.z); scene.add(o); o.userData = { pickable: true, kind: 'readteach', world: 'village' }; pickables.push(o); }
     { const o = new THREE.Object3D(); o.position.set(MARIPOS.x, 0, MARIPOS.z); scene.add(o); o.userData = { pickable: true, kind: 'sciteach', world: 'village' }; pickables.push(o); }
   }
   // ---------- what lies about ----------
@@ -8304,7 +8409,8 @@
     if (r.lessons) {
       const list = document.createElement('div'); list.className = 'lessons';
       r.lessons.forEach(([label, key]) => { const b = document.createElement('button'); b.className = 'btn small ' + (isDone(key) ? '' : 'primary'); b.textContent = (isDone(key) ? '\u2713 ' : '') + label; b.title = isDone(key) ? 'Finished. Play it again any time.' : ''; if (master) b.onclick = () => { if (gameStarted) jump(key); else launch(key); }; else { b.disabled = true; b.style.opacity = isDone(key) ? '0.75' : '0.55'; b.style.cursor = 'default'; } list.appendChild(b); });
-      if (selRegion === 0) { const sh = document.createElement('div'); sh.className = 'math'; sh.style.marginTop = '10px'; sh.textContent = 'Science, with Marigold Fernsby at the nursery'; mapPanel.appendChild(sh); const sl = document.createElement('div'); sl.className = 'lessons'; SCI_TITLES.forEach((t, i) => { const b = document.createElement('button'); b.className = 'btn small'; b.disabled = true; b.style.opacity = isDone('sci-' + (i + 1)) ? '0.75' : '0.55'; b.style.cursor = 'default'; b.innerHTML = `Science ${i + 1}: ${t}` + (isDone('sci-' + (i + 1)) ? ' <span class="tick">✓</span>' : ''); sl.appendChild(b); }); mapPanel.appendChild(sl); }
+      if (selRegion === 0) { const sh = document.createElement('div'); sh.className = 'math'; sh.style.marginTop = '10px'; sh.textContent = 'Science, with Marigold Fernsby at the nursery'; mapPanel.appendChild(sh); const sl = document.createElement('div'); sl.className = 'lessons'; SCI_TITLES.forEach((t, i) => { const b = document.createElement('button'); b.className = 'btn small'; b.disabled = true; b.style.opacity = isDone('sci-' + (i + 1)) ? '0.75' : '0.55'; b.style.cursor = 'default'; b.innerHTML = `Science ${i + 1}: ${t}` + (isDone('sci-' + (i + 1)) ? ' <span class="tick">✓</span>' : ''); sl.appendChild(b); }); mapPanel.appendChild(sl);
+        const rh = document.createElement('div'); rh.className = 'math'; rh.style.marginTop = '10px'; rh.textContent = 'Reading, with Fen Dewberry at her stall'; mapPanel.appendChild(rh); const rl = document.createElement('div'); rl.className = 'lessons'; READ_TITLES_.forEach((t, i) => { const b = document.createElement('button'); b.className = 'btn small'; b.disabled = true; b.style.opacity = isDone('read-' + (i + 1)) ? '0.75' : '0.55'; b.style.cursor = 'default'; b.innerHTML = `Reading ${i + 1}: ${t}` + (isDone('read-' + (i + 1)) ? ' <span class="tick">✓</span>' : ''); rl.appendChild(b); }); mapPanel.appendChild(rl); }
       if (!master) { const nt = document.createElement('div'); nt.className = 'math'; nt.textContent = `Lessons begin with the teacher. Walk to ${r.name} and speak to ${TEACH[selRegion] ? TEACH[selRegion].n : 'the teacher there'}, who will also test you if you know it already.`; mapPanel.appendChild(nt); }
       const doneN = r.lessons.filter(([, k]) => isDone(k)).length; if (doneN) { const dn = document.createElement('div'); dn.className = 'math'; dn.textContent = `${doneN} of ${r.lessons.length} finished`; mapPanel.appendChild(dn); }
       mapPanel.appendChild(list);

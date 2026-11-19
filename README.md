@@ -159,6 +159,24 @@ Marigold Fernsby teaches it, at the nursery. Speak to her between lessons. Each 
 - The props stand in the Hollow all the time (a pond in the south-east, a weather station by the south fence, a test bench south of the woodshop, a cart lane in the north-east corner, and so on). Each was placed by a search for clear ground, off the paths and away from houses.
 - Not built yet: no placement test for science, no science past the Hollow, and the science list on the map only shows what is done.
 
+### Reading in the Hollow
+
+Fen Dewberry teaches it, at her stall. The eight lessons follow the order the science of reading sets out: hear the sounds, learn letters for them, blend, then read for meaning. Nothing asks a child to guess a word from a picture; the pictures are the answers, and the word is what gets read.
+
+1. **The sounds at the start.** Ears only: hear a sound, pick the thing that starts with it. Then: do these two words start the same?
+2. **Six letters: s a t p i n.** Meet each letter with its sound, then hear a sound and find its letter.
+3. **Pushing sounds together.** Read jar labels (pin, tap, pan, tin, ant, nap) and pick the picture. "Sound it out" plays the sounds one by one. Then hear a word and find its label among near-misses (pin, pan, pit).
+4. **More letters, more words.** Twelve more letters, then three-sound words with every short vowel.
+5. **Two letters, one sound.** sh, ch, th.
+6. **The silent e.** kit and kite, pin and pine, cub and cube.
+7. **Letters to deliver.** Four unsigned letters. Read each and carry it to whoever it describes: Bramblewick, Marigold, Aldric, or the Old Oak.
+8. **The fox and the jam.** A five-page story to read alone ("Read it to me" is there if needed), then four questions on what happened and why.
+
+- **Everything is spoken.** A child who cannot read yet hears every instruction, every answer's name (the small speaker beside each picture), and what was wrong with a wrong answer.
+- **Sound comes through one door.** The game plays `audio/<name>.mp3` if that file sits beside `index.html`, and otherwise uses the browser's own voice. So recordings, or an AI voice, can be added one file at a time with no code change. `audio/README.md` lists every name: 47 files covering the 44 sounds, the optional words, the story pages.
+- Until the sound recordings exist, a single sound is spoken as "the first sound in sun". That is a stand-in, not good phonics; the lessons are not ready for a real child until at least the 25 sound files used here are recorded.
+- Not built yet: the child is never asked to read aloud (no listening), there is no handwriting or spelling, and no reading past the Hollow.
+
 ### Things anyone can earn
 
 - **The beetle.** A grub lies in the compost heap at the far corner of the nursery. Bring it 3 field mushrooms and 2 pine cones (both lie beside the paths and roads), and it pupates, hatches and is yours to name. Lesson 10 still gives one too.
