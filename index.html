@@ -537,6 +537,7 @@
   const OAK = new THREE.Vector3(-38, 0, 126);
   // a home for each of the four who work here, on Lantern Lane, well away from where they work. [x, z] is the middle of the house; one that faces 0 looks south onto the lane, one that faces π looks north onto it.
   const LANE = { z: 34, x1: 262, w: 10, r: 14 };
+  const INN = { id: 'inn', inn: true, x: 44, z: -35, hw: 26, hd: 16, face: 0, sign: 'The Sleepy Beetle', wall: '#ead9b8', trim: '#4a3320', roof: '#7a4a2e', door: '#2f5a4a', flower: '#f4a340' };
   const HOMES = [
     { id: 'bwhome', no: 1, x: 116, face: 0, yard: 'hive', sign: 'Bramblewick', wall: '#e9dcc3', trim: '#5a3d22', roof: '#4f7a33', door: '#5b3a1e', flower: '#f4d35e' },
     { id: 'marihome', no: 2, x: 116, face: Math.PI, yard: 'frame', sign: 'Fernsby', wall: '#e6dfc6', trim: '#3e6b52', roof: '#6f9a3a', door: '#3e6b52', flower: '#e68fb0' },
@@ -544,7 +545,7 @@
     { id: 'fenhome', no: 4, x: 210, face: Math.PI, yard: 'berries', sign: 'Dewberry', wall: '#f0e2d8', trim: '#8a3a4a', roof: '#a8563a', door: '#8a3a4a', flower: '#d23b4e' }
   ];
   HOMES.forEach(h => { h.hw = 26; h.hd = 16; h.sg = h.face ? -1 : 1; h.z = LANE.z - h.sg * 38; });
-  const nearHome = (x, z, pad = 0) => HOMES.some(h => Math.abs(x - h.x) < h.hw + 4 + pad && Math.abs(z - h.z) < h.hd + 7 + pad);
+  const nearHome = (x, z, pad = 0) => [...HOMES, INN].some(h => Math.abs(x - h.x) < h.hw + 4 + pad && Math.abs(z - h.z) < h.hd + 7 + pad);
   const inLot = (x, z, pad = 0) => HOMES.some(h => Math.abs(x - h.x) < 41 + pad && Math.abs(z - (h.z - h.sg * 6)) < 37 + pad);   // the whole plot: house, front garden and back
   const YARD = new THREE.Vector3(0, 0, 17);
   const DOOR = new THREE.Vector3(0, 0, R + 1.5);
@@ -565,6 +566,7 @@
     [new THREE.Vector3(0, 0, NURS.z), NURS, 15.5, 4], [new THREE.Vector3(0, 0, WOOD.z), WOOD, 9, 4],
     [new THREE.Vector3(0, 0, FEN.z), FEN, 6, 4], [new THREE.Vector3(0, 0, BUSH.z), BUSH, 6, 4], [new THREE.Vector3(0, 0, OAK.z), OAK, 9, 4],
     [new THREE.Vector3(0, 0, LANE.z), new THREE.Vector3(LANE.x1, 0, LANE.z), 0, LANE.w],
+    [new THREE.Vector3(INN.x, 0, LANE.z - LANE.w / 2 + 0.5), new THREE.Vector3(INN.x, 0, INN.z + INN.hd + 5.5), 0, 4],
     ...HOMES.map(h => [new THREE.Vector3(h.x, 0, LANE.z - h.sg * (LANE.w / 2 - 0.5)), new THREE.Vector3(h.x, 0, h.z + h.sg * (h.hd + 5.5)), 0, 4])
   ];
   const onPath = (x, z, pad) => pathEnds.some(([a, b, , w]) => distSeg(x, z, a.x, a.z, b.x, b.z) < w / 2 + pad) || Math.hypot(x - LANE.x1, z - LANE.z) < LANE.r + pad;
@@ -1327,15 +1329,15 @@
   const poolM = new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }), haloM = new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
   NIGHT_GLOW.push(n => { lampGlass.emissiveIntensity = 0.15 + 2 * n; poolM.opacity = 0.5 * n; haloM.opacity = 0.75 * n; poolM.visible = haloM.visible = n > 0.02; });
   // a street lamp: an iron post with a glass lantern on top. By day it is only a post; after dark it throws a pool of light on the ground.
-  function lampPost(g, x, z, tall = 10, pool = 26) {
-    const add = (geo, m, px, py, pz) => { const q = new THREE.Mesh(geo, m); q.position.set(x + px, py, z + pz); g.add(q); return q; };
+  function lampPost(g, x, z, tall = 10, pool = 26, sol = solids, y0 = 0) {
+    const add = (geo, m, px, py, pz) => { const q = new THREE.Mesh(geo, m); q.position.set(x + px, py + y0, z + pz); g.add(q); return q; };
     add(new THREE.CylinderGeometry(0.5, 0.62, 0.9, 10), ironM, 0, 0.45, 0); add(new THREE.CylinderGeometry(0.17, 0.24, tall, 8), ironM, 0, tall / 2, 0);
     add(new THREE.BoxGeometry(1.6, 0.14, 0.14), ironM, 0, tall - 1.3, 0); add(new THREE.BoxGeometry(1.25, 0.14, 1.25), ironM, 0, tall, 0);
     add(new THREE.BoxGeometry(1.0, 1.4, 1.0), lampGlass, 0, tall + 0.75, 0);
     [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => add(new THREE.BoxGeometry(0.1, 1.5, 0.1), ironM, a * 0.5, tall + 0.75, b * 0.5));
     add(new THREE.ConeGeometry(0.98, 0.85, 4), ironM, 0, tall + 1.9, 0).rotation.y = Math.PI / 4;
-    if (pool) { add(new THREE.PlaneGeometry(pool, pool), poolM, 0, 0.09, 0).rotation.x = -Math.PI / 2; const halo = new THREE.Sprite(haloM); halo.position.set(x, tall + 0.75, z); halo.scale.setScalar(7); g.add(halo); }
-    solids.push({ x: g.position.x + x, z: g.position.z + z, r: 0.6 });
+    if (pool) { add(new THREE.PlaneGeometry(pool, pool), poolM, 0, 0.09, 0).rotation.x = -Math.PI / 2; const halo = new THREE.Sprite(haloM); halo.position.set(x, tall + 0.75 + y0, z); halo.scale.setScalar(7); g.add(halo); }
+    sol.push({ x: g.position.x + x, z: g.position.z + z, r: 0.6 });
   }
   const gStem = mat('#4f7a2f'), gLeaf = mat('#5d8a35'), gCtr = mat('#f2c13a'), gSoil = mat('#5a4430', { roughness: 1 }), gBushA = mat('#3f7a35', { roughness: 1, flatShading: true }), gBushB = mat('#5e9a44', { roughness: 1, flatShading: true }), gBark = mat('#6b4a2b', { roughness: 1 }), gCream = mat('#f1e9d6', { roughness: 0.9 }), gStone = mat('#8d8676', { roughness: 1 });
   function bloom(g, x, y, z, hgt, petalM) {
@@ -1387,6 +1389,7 @@
       const door = new THREE.Mesh(new THREE.BoxGeometry(4.4, 8.9, 0.3), shutM); door.position.set(0, 4.67, D / 2 + 0.12); g.add(door); hingeDoor(door, g); extDoors[extDoors.length - 1].hinge.userData.keep = true;
       box(0.7, 1, 0.7, 3.6, 7.3, D / 2 + 0.5, lampGlass); box(0.9, 0.14, 0.9, 3.6, 7.9, D / 2 + 0.5, ironM); box(0.9, 0.14, 0.9, 3.6, 6.75, D / 2 + 0.5, ironM); }
     hollowBoxes.push({ id: h.id, x: h.x, z: h.z, hw: h.hw + 0.2, hd: h.hd + 0.2, door: { x: h.x, z: wz(h.hd + 0.2) } }, { x: wx(-W / 2 - 1.3), z: h.z, hw: 2.2, hd: 2.2 });
+    if (h.inn) { g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(g); return; }
     // ---- the plot: a white fence all round, a gate with a rose arch on the lane, and a gate each side of the house through to the back garden ----
     const LW = 40, FZ = D / 2 + 14, BZ = -D / 2 - 26;
     const fence = (x0, z0, x1, z1) => { const dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz), ax = Math.abs(dx) > Math.abs(dz), n = Math.max(1, Math.round(len / 6)), np = Math.round(len / 0.95);
@@ -1438,14 +1441,33 @@
   { const tg = new THREE.Group(); scene.add(tg);
     const put = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); tg.add(q); return q; };
     const tree = (x, z, s) => { put(new THREE.CylinderGeometry(1.1 * s, 1.6 * s, 12 * s, 9), gBark, x, 6 * s, z); [[0, 17, 0, 8.5], [-5.5, 14, 2.5, 6], [6, 14.5, -2, 6.5], [1, 13.5, 6, 5.5], [-1, 21, -1, 5.5]].forEach(([a, y, b, r], q) => put(new THREE.IcosahedronGeometry(r * s, 1), q % 2 ? gBushB : gBushA, x + a * s, y * s, z + b * s)); solids.push({ x, z, r: 1.8 * s }); };
-    [[-40, -42, 1], [-8, -46, 0.8], [26, -42, 1.1], [56, -30, 0.9], [20, 6, 0.8], [90, 136, 1], [150, 130, 1.15], [202, 140, 0.9], [258, 128, 1], [274, -22, 1.05], [163, 132, 0.7]].forEach(([x, z, s]) => tree(x, z, s));
-    const wx = 40, wz = -8, roofM = mat('#a8563a', { roughness: 1 });
+    [[-40, -42, 1], [-8, -46, 0.8], [10, -40, 1], [64, 4, 0.8], [90, 136, 1], [150, 130, 1.15], [202, 140, 0.9], [258, 128, 1], [274, -22, 1.05], [163, 132, 0.7]].forEach(([x, z, s]) => tree(x, z, s));
+    const wx = 28, wz = 8, roofM = mat('#a8563a', { roughness: 1 });
     put(new THREE.CylinderGeometry(3.2, 3.4, 2.6, 18), gStone, wx, 1.3, wz); put(new THREE.CylinderGeometry(2.5, 2.5, 2.7, 18), mat('#2a3a4a', { roughness: 0.3 }), wx, 1.3, wz); put(new THREE.CylinderGeometry(3.5, 3.5, 0.3, 18), gStone, wx, 2.7, wz); put(new THREE.CylinderGeometry(2.45, 2.45, 0.34, 18), mat('#3a6a8a', { roughness: 0.2 }), wx, 2.56, wz);
     [-1, 1].forEach(s => put(new THREE.BoxGeometry(0.5, 8, 0.5), gBark, wx + s * 3, 4, wz)); put(new THREE.CylinderGeometry(0.25, 0.25, 6.4, 8), gBark, wx, 6.6, wz).rotation.z = Math.PI / 2;
     [-1, 1].forEach(s => { const r = put(new THREE.BoxGeometry(8, 0.35, 3.9), roofM, wx, 9, wz + s * 1.6); r.rotation.x = s * 0.6; });
     put(new THREE.BoxGeometry(0.06, 3, 0.06), ironM, wx + 0.6, 5.1, wz); put(new THREE.CylinderGeometry(0.6, 0.48, 0.9, 10), gBark, wx + 0.6, 3.3, wz); solids.push({ x: wx, z: wz, r: 3.7 });
     gardenBenches.push([wx - 8, wz, Math.PI / 2], [wx, wz + 8, Math.PI]);
     tg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(tg); }
+
+  // ---------- The Sleepy Beetle: the inn on the green. Somebody is always awake here, so there is always somewhere to go and something to eat after the shops have shut. ----------
+  // the beetle himself, asleep: carved for the sign outside and again over the mantel
+  function sleepyBeetle(parent, x, y, z, s, ry) {
+    const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(s); g.rotation.y = ry || 0; parent.add(g);
+    const shell = mat('#3f6a48', { roughness: 0.35, metalness: 0.2 }), darkM = mat('#2a2018'), put = (geo, m, px, py, pz, sx, sy, sz) => { const q = new THREE.Mesh(geo, m); q.position.set(px, py, pz); if (sx) q.scale.set(sx, sy, sz); g.add(q); return q; };
+    put(new THREE.SphereGeometry(1, 16, 12), shell, 0, 0, 0, 1.25, 0.8, 0.5); put(new THREE.SphereGeometry(0.5, 12, 10), darkM, 1.45, -0.1, 0, 1, 0.9, 0.7); put(new THREE.BoxGeometry(0.05, 1.5, 0.06), darkM, 0.1, 0.05, 0.5).rotation.z = Math.PI / 2;
+    [-1, 1].forEach(sd => { for (let q = 0; q < 3; q++) put(new THREE.BoxGeometry(0.12, 0.6, 0.12), darkM, -0.7 + q * 0.7, -0.75, sd * 0.25).rotation.z = (q - 1) * 0.35; put(new THREE.BoxGeometry(0.22, 0.05, 0.05), mat('#e8dcc0'), 1.6, 0, sd * 0.33); put(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 5), darkM, 1.95, 0.3, sd * 0.2).rotation.z = -0.9; });
+    return g;
+  }
+  { const h = INN; h.hw = 26; h.hd = 16; h.sg = 1; buildHouse(h);
+    const sg2 = new THREE.Group(); scene.add(sg2); const px = h.x + 10.5, pz = h.z + h.hd + 7.5, put = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); sg2.add(q); return q; }, darkW = mat('#4a3320');
+    put(new THREE.BoxGeometry(0.6, 12, 0.6), darkW, px, 6, pz); put(new THREE.BoxGeometry(4.6, 0.4, 0.4), darkW, px - 2, 11.2, pz); put(new THREE.BoxGeometry(0.4, 0.4, 2.6), darkW, px - 0.9, 10.2, pz).rotation.set(0, Math.PI / 2, 0.8);
+    [-3.4, -1.2].forEach(dx => put(new THREE.BoxGeometry(0.06, 0.9, 0.06), ironM, px + dx, 10.6, pz));
+    put(new THREE.BoxGeometry(3.6, 2.7, 0.3), mat('#e9dcc3'), px - 2.3, 8.8, pz); put(new THREE.BoxGeometry(3.9, 0.3, 0.4), darkW, px - 2.3, 10.2, pz); put(new THREE.BoxGeometry(3.9, 0.3, 0.4), darkW, px - 2.3, 7.4, pz);
+    sleepyBeetle(sg2, px - 2.5, 8.9, pz + 0.3, 0.95, 0); sleepyBeetle(sg2, px - 2.1, 8.9, pz - 0.3, 0.95, Math.PI);
+    put(new THREE.BoxGeometry(0.06, 0.7, 0.06), ironM, px - 2.3, 6.9, pz); put(new THREE.BoxGeometry(0.8, 1, 0.8), lampGlass, px - 2.3, 6.1, pz); put(new THREE.BoxGeometry(0.96, 0.12, 0.96), ironM, px - 2.3, 6.66, pz); put(new THREE.BoxGeometry(0.96, 0.12, 0.96), ironM, px - 2.3, 5.56, pz);
+    const pool = put(new THREE.PlaneGeometry(22, 22), poolM, px - 2.3, 0.09, pz); pool.rotation.x = -Math.PI / 2; const halo = new THREE.Sprite(haloM); halo.position.set(px - 2.3, 6.1, pz); halo.scale.setScalar(6); sg2.add(halo);
+    solids.push({ x: px, z: pz, r: 0.6 }); sg2.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(sg2); }
 
   // ---------- Old Bramblewick ----------
   const bw = new THREE.Group();
@@ -1909,15 +1931,19 @@
   const ZONES = STITCHED.filter(t => !t.air).map(t => { const R = t.rect, [cx, cz] = toWorld(t, (R[0] + R[1]) / 2, (R[2] + R[3]) / 2); const r0 = Math.hypot(R[1] - R[0], R[3] - R[2]) / 2 + 22; return { t, cx, cz, r0, r1: r0 + (t.blend || 170), y: t.oy || 0 }; });
   // Hearthmoor, the capital. It is built straight into the open land (not a town in its own frame), on the south shore of Hearthmere, where the Fern widens into a lake.
   // Its frame: the origin is in the middle of the water, x runs east along the river, z runs south into the city.
-  const MERE = { lx: -3400, w: 78, flat: 380, out: 640 };
+  const MERE = { lx: -3400, w: 78, flat: 480, out: 740 };
   const frameH = (() => { const [ox, oz] = toWorld(tileF, MERE.lx, RIVER.z); return { yaw: yawF - Math.PI, ox, oz }; })();
   const riverHW = lx => RIVER.hw + MERE.w * ss(MERE.out, MERE.flat, Math.abs(lx - MERE.lx));   // half the river's width: wide at the lake, 19.6 everywhere else
-  const CITY = { x0: -450, x1: 450, z0: 92, z1: 545, y: 0.45, piers: [-350, -170, 0, 170, 350], gateZ: 330, boxes: [], solids: [] };
+  const CITY = { x0: -540, x1: 540, z0: 92, z1: 650, y: 0.45, piers: [-350, -170, 0, 170, 350], gateZ: 380, boxes: [], solids: [],
+    st: { wharf: [110, 134], north: [238, 262], high: [362, 398], south: [498, 522], lane: [630, 646], sx: 300 },   // the streets that run east and west, each from its north edge to its south; the cross streets are at -sx, 0 and sx
+    sq: { x0: -122, x1: 122, z0: 302, z1: 458 },   // the Market Square
+    hallAt: [[-70, 283, 80, 34, 0], [70, 283, 80, 34, 0], [70, 477, 80, 34, 1], [-70, 477, 80, 34, 1], [-141, 331, 34, 58, 2], [-141, 429, 34, 58, 2], [141, 331, 34, 58, 3], [141, 429, 34, 58, 3]],
+    stallAt: [[-80, 330], [-40, 330], [40, 330], [80, 330], [-80, 430], [-40, 430], [40, 430], [80, 430]] };
   // the paved ground inside the walls, the quay and the piers: places to stand that are not the land's own shape
-  function cityDeck(x, z) { const [lx, lz] = toLocal(frameH, x, z); if (lz < 50 || lz > CITY.z1 + 2.5 || Math.abs(lx) > 452.5) return null; if (lz >= CITY.z0) return CITY.y; return lz > 52 && CITY.piers.some(px => Math.abs(lx - px) < 4.5) ? CITY.y : null; }
-  const inCity = (x, z, m = 0) => { const [lx, lz] = toLocal(frameH, x, z); return Math.abs(lx) < 450 + m && lz > CITY.z0 - m && lz < CITY.z1 + m; };
+  function cityDeck(x, z) { const [lx, lz] = toLocal(frameH, x, z); if (lz < 50 || lz > CITY.z1 + 2.5 || Math.abs(lx) > CITY.x1 + 2.5) return null; if (lz >= CITY.z0) return CITY.y; return lz > 52 && CITY.piers.some(px => Math.abs(lx - px) < 4.5) ? CITY.y : null; }
+  const inCity = (x, z, m = 0) => { const [lx, lz] = toLocal(frameH, x, z); return Math.abs(lx) < CITY.x1 + m && lz > CITY.z0 - m && lz < CITY.z1 + m; };
   const walkH = (x, z) => { const d = cityDeck(x, z); return d !== null ? d : worldH(x, z); };
-  { const [cx, cz] = toWorld(frameH, 0, 318); CITY.cx = cx; CITY.cz = cz; ZONES.push({ t: { mapI: 2 }, cx, cz, r0: 520, r1: 700, y: 0.35 }); }
+  { const [cx, cz] = toWorld(frameH, 0, 371); CITY.cx = cx; CITY.cz = cz; ZONES.push({ t: { mapI: 2 }, cx, cz, r0: 640, r1: 820, y: 0.35 }); }
 
   // the land itself: rolling country, level around the towns and gentle along the road
   const bigH = (x, z) => 30 * vnoise(x / 820, z / 820, 11) + 10 * vnoise(x / 210, z / 210, 12);
@@ -1950,7 +1976,7 @@
       return { a: 'Emberdeep', b: 'Lanternreach', ai: 5, bi: 6, pts: buildRoad([toWorld(frameE, 0, 118), toWorld(frameE, 0, 165), A, [A[0] + dx / 3 - nx * 160, A[1] + dz / 3 - nz * 160], [A[0] + dx * 2 / 3 + nx * 140, A[1] + dz * 2 / 3 + nz * 140], B, toWorld(tileL, -10, -180), toWorld(tileL, 0, -34), toWorld(tileL, 0, 3)]) }; })(),
     { a: 'Mallow Orchards', b: 'Fernwater Crossing', ai: 1, bi: 2, pts: buildRoad([toWorld(tileO, 30, ORCH_LEN - 3), toWorld(tileO, 30, ORCH_LEN + 30), toWorld(tileO, 24, ORCH_LEN + 130), [13800, 16420], [15000, 15700], toWorld(tileF, -14, -150), toWorld(tileF, 0, -34), toWorld(tileF, 0, 3)]) },
   ];
-  ROADS.push({ a: 'Fernwater Crossing', b: 'Hearthmoor', ai: 2, bi: 2, lift: 0.03, pts: buildRoad([toWorld(tileF, -6, -38), toWorld(tileF, -60, -70), toWorld(tileF, -420, -170), toWorld(tileF, -1300, -250), toWorld(tileF, -2200, -210), toWorld(frameH, -620, CITY.gateZ + 6), toWorld(frameH, -500, CITY.gateZ), toWorld(frameH, -453.5, CITY.gateZ)]) });
+  ROADS.push({ a: 'Fernwater Crossing', b: 'Hearthmoor', ai: 2, bi: 2, lift: 0.03, pts: buildRoad([toWorld(tileF, -6, -38), toWorld(tileF, -60, -70), toWorld(tileF, -420, -170), toWorld(tileF, -1300, -250), toWorld(tileF, -2200, -210), toWorld(frameH, CITY.x0 - 170, CITY.gateZ + 6), toWorld(frameH, CITY.x0 - 50, CITY.gateZ), toWorld(frameH, CITY.x0 - 3.5, CITY.gateZ)]) });
   const roadPts = ROADS[0].pts;
   const ROAD_CELL = 32, roadGrid = new Map();
   ROADS.forEach((RD, ri) => RD.pts.forEach((s, i) => { s.i = i; s.road = ri; const k = Math.floor(s.x / ROAD_CELL) + ',' + Math.floor(s.z / ROAD_CELL); if (!roadGrid.has(k)) roadGrid.set(k, []); roadGrid.get(k).push(s); }));
@@ -2109,112 +2135,172 @@
   // ---------- Hearthmoor, the capital: walls, gates, streets, the wharf on Hearthmere and the Market Square with a trade hall for each town ----------
   function buildCity() {
     const G = new THREE.Group(); G.position.set(frameH.ox, 0, frameH.oz); G.rotation.y = frameH.yaw; worldScene.add(G); CITY.group = G;
-    const R = seeded(19, 13, 5), rr = (a, b) => a + R() * (b - a), pk = a => a[Math.floor(R() * a.length)], Y = CITY.y;
+    const R = seeded(19, 13, 5), rr = (a, b) => a + R() * (b - a), pk = a => a[Math.floor(R() * a.length)], Y = CITY.y, X0 = CITY.x0, X1 = CITY.x1, Z1 = CITY.z1;
     const add = (geo, m, x, y, z, shadow) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); if (shadow !== false) { q.castShadow = true; q.receiveShadow = true; } G.add(q); return q; };
-    const flat = (w, d, col, x, z, y, tex) => { const q = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(col, tex ? { map: tex, roughness: 1 } : { roughness: 1 })); q.rotation.x = -Math.PI / 2; q.position.set(x, y, z); q.receiveShadow = true; G.add(q); return q; };
+    const mc = {}, M = c => mc[c] || (mc[c] = mat(c, { roughness: 1 }));   // one material for each colour, so the whole city welds into a few meshes
     const cobble = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#b3aa98'; g.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { const x = Math.random() * w, y = Math.random() * h, r = 7 + Math.random() * 9; g.fillStyle = ['#a39a88', '#c2b9a6', '#978e7d', '#b9b09d'][i % 4]; g.beginPath(); g.ellipse(x, y, r, r * 0.8, Math.random() * 3, 0, 7); g.fill(); g.strokeStyle = 'rgba(60,54,44,.35)'; g.stroke(); } });
-    const tile = (w, d, rep) => { const t = cobble.clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w / rep, d / rep); return t; };
+    const lawnT = canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#7fa35e'; g.fillRect(0, 0, w, h); for (let i = 0; i < 500; i++) { g.fillStyle = ['#739857', '#8aae66', '#6c9150', '#86a862'][i % 4]; g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 3, 2 + Math.random() * 3); } });
+    const tiled = (src, w, d, rep) => { const t = src.clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w / rep, d / rep); return t; };
+    // every piece of ground is its own rectangle and no two overlap, so nothing flickers where they meet
+    const patch = (x0, x1, z0, z1, col, src, rep) => { const q = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), mat(col, src ? { map: tiled(src, x1 - x0, z1 - z0, rep), roughness: 1 } : { roughness: 1 })); q.rotation.x = -Math.PI / 2; q.position.set((x0 + x1) / 2, Y, (z0 + z1) / 2); q.receiveShadow = true; q.userData.keep = true; G.add(q); return q; };
     const stoneM = mat('#9a9486', { roughness: 1 }), darkStone = mat('#6d6657', { roughness: 1 }), woodM = mat('#6b4a2b'), plankM = mat('#ffffff', { map: plankTex });
-    // the ground: packed earth inside the walls, cobbles on the streets and the square, boards on the quay and piers
-    flat(900, CITY.z1 - 108, '#8f8463', 0, (108 + CITY.z1) / 2, Y - 0.03, null);
-    const street = (x0, x1, z0, z1) => flat(x1 - x0, z1 - z0, '#a9a294', (x0 + x1) / 2, (z0 + z1) / 2, Y, tile(x1 - x0, z1 - z0, 14));
-    street(-447, 447, 321, 339); street(-8, 8, 108, 545); street(-447, 447, 110, 124); street(-254, -246, 124, 541); street(246, 254, 124, 541); street(-447, 447, 211, 219); street(-447, 447, 441, 449);
-    flat(200, 120, '#ffffff', 0, 330, Y + 0.012, tile(200, 120, 11)).material.color.set('#bdb096');
-    add(new THREE.BoxGeometry(905, 2.6, 18), plankM, 0, Y - 1.3, 101); add(new THREE.BoxGeometry(905, 3.2, 1.2), darkStone, 0, Y - 1.6, 91.6);
+    const S = CITY.st, EW = [S.wharf, S.north, S.high, S.south, S.lane], NS = [[-S.sx - 12, -S.sx + 12], [-18, 18], [S.sx - 12, S.sx + 12]], SQ = CITY.sq;
+    const street = (x0, x1, z0, z1) => patch(x0, x1, z0, z1, '#a9a294', cobble, 6);
+    // the streets that run east and west go the whole way across; the High Street stops at the square
+    EW.forEach(([z0, z1], i) => { if (i === 2) { street(X0 + 3, SQ.x0, z0, z1); street(SQ.x1, X1 - 3, z0, z1); } else street(X0 + 3, X1 - 3, z0, z1); });
+    // the streets that run north and south are laid in the gaps between those
+    NS.forEach(([x0, x1], k) => { for (let i = 0; i < EW.length - 1; i++) { let z0 = EW[i][1], z1 = EW[i + 1][0]; if (k === 1 && i === 1) z1 = SQ.z0; if (k === 1 && i === 2) z0 = SQ.z1; street(x0, x1, z0, z1); } });
+    street(-18, 18, S.lane[1], Z1 - 3);
+    patch(SQ.x0, SQ.x1, SQ.z0, SQ.z1, '#bdb096', cobble, 5);
+    // the blocks between the streets: gardens behind the houses, yards in the makers' quarter
+    const XI = [[X0 + 3, -S.sx - 12], [-S.sx + 12, -18], [18, S.sx - 12], [S.sx + 12, X1 - 3]], ZI = EW.slice(0, 4).map((e, i) => [e[1], EW[i + 1][0]]);
+    const ground = (x0, x1, z0, z1, kind) => kind === 'yard' ? patch(x0, x1, z0, z1, '#7d7765', null) : patch(x0, x1, z0, z1, '#b4c49c', lawnT, 9);
+    XI.forEach(([x0, x1], bi) => ZI.forEach(([z0, z1], bj) => { const kind = bi >= 2 && (bj === 1 || bj === 2) ? 'yard' : 'lawn';
+      if ((bi === 1 || bi === 2) && (bj === 1 || bj === 2)) { const inner = bi === 1 ? [x0, SQ.x0] : [SQ.x1, x1], strip = bi === 1 ? [SQ.x0, x1] : [x0, SQ.x1]; ground(inner[0], inner[1], z0, z1, kind); if (bj === 1) ground(strip[0], strip[1], z0, SQ.z0, 'yard'); else ground(strip[0], strip[1], SQ.z1, z1, 'yard'); }
+      else ground(x0, x1, z0, z1, kind); }));
+    patch(X0 + 3, -18, S.lane[1], Z1 - 3, '#7d7765', null); patch(18, X1 - 3, S.lane[1], Z1 - 3, '#7d7765', null);
+    // the quay and the piers
+    add(new THREE.BoxGeometry(X1 - X0 + 5, 2.6, 18), plankM, 0, Y - 1.3, 101); add(new THREE.BoxGeometry(X1 - X0 + 5, 3.2, 1.2), darkStone, 0, Y - 1.6, 91.6);
     CITY.piers.forEach(px => { add(new THREE.BoxGeometry(9, 0.5, 42), plankM, px, Y - 0.25, 73); for (let z = 54; z < 92; z += 9) [-4.2, 4.2].forEach(o => { add(new THREE.CylinderGeometry(0.45, 0.5, 4.6, 8), woodM, px + o, Y - 1.4, z); }); [-3.6, 3.6].forEach(o => { add(new THREE.CylinderGeometry(0.4, 0.45, 1.4, 8), woodM, px + o, Y + 0.7, 54); CITY.solids.push({ x: px + o, z: 54, r: 0.5 }); }); });
-    // the lake itself
-    { const lake = new THREE.Mesh(new THREE.PlaneGeometry(1500, 215), new THREE.MeshStandardMaterial({ color: '#5f93c4', roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.93 })); lake.rotation.x = -Math.PI / 2; lake.position.set(0, 0.02, 0); G.add(lake); }
+    { const lake = new THREE.Mesh(new THREE.PlaneGeometry(1750, 215), new THREE.MeshStandardMaterial({ color: '#5f93c4', roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.93 })); lake.rotation.x = -Math.PI / 2; lake.position.set(0, 0.02, 0); lake.userData.keep = true; G.add(lake); }
     // the walls on three sides (the fourth side is the water), with towers and three gates
     const WH = 24, WT = 6, wallBox = (x0, x1, z0, z1) => { add(new THREE.BoxGeometry(x1 - x0, WH, z1 - z0), stoneM, (x0 + x1) / 2, Y + WH / 2, (z0 + z1) / 2); add(new THREE.BoxGeometry(x1 - x0 + 0.8, 1, z1 - z0 + 0.8), darkStone, (x0 + x1) / 2, Y + WH + 0.5, (z0 + z1) / 2); CITY.boxes.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hd: (z1 - z0) / 2 }); };
-    const gz = CITY.gateZ, gw = 8;
-    [-1, 1].forEach(sd => { const x = sd * 450; wallBox(x - WT / 2, x + WT / 2, 88, gz - gw); wallBox(x - WT / 2, x + WT / 2, gz + gw, CITY.z1); wallBox(sd < 0 ? -450 : gw, sd < 0 ? -gw : 450, CITY.z1 - WT / 2, CITY.z1 + WT / 2); });
-    const tower = (x, z, r, h, flag) => { add(new THREE.CylinderGeometry(r, r * 1.08, h, 14), stoneM, x, Y + h / 2, z); add(new THREE.ConeGeometry(r * 1.25, r * 1.5, 14), mat('#7a3e2a', { roughness: 1 }), x, Y + h + r * 0.75, z); CITY.solids.push({ x, z, r }); if (flag) { add(new THREE.CylinderGeometry(0.12, 0.12, 5, 5), woodM, x, Y + h + r * 1.5 + 2.5, z); add(new THREE.BoxGeometry(3.2, 1.8, 0.08), mat(flag), x + 1.7, Y + h + r * 1.5 + 4, z); } };
-    [[-450, CITY.z1], [450, CITY.z1], [-450, 88], [450, 88], [-225, CITY.z1], [225, CITY.z1], [-450, 168], [450, 168], [-450, 395], [450, 395]].forEach(([x, z]) => tower(x, z, 8, 33, null));
+    const gz = CITY.gateZ, gw = 10, roofRed = M('#7a3e2a');
+    [-1, 1].forEach(sd => { const x = sd * X1; wallBox(x - WT / 2, x + WT / 2, 88, gz - gw); wallBox(x - WT / 2, x + WT / 2, gz + gw, Z1); wallBox(sd < 0 ? X0 : gw, sd < 0 ? -gw : X1, Z1 - WT / 2, Z1 + WT / 2); });
+    const tower = (x, z, r, h, flag) => { add(new THREE.CylinderGeometry(r, r * 1.08, h, 14), stoneM, x, Y + h / 2, z); add(new THREE.ConeGeometry(r * 1.25, r * 1.5, 14), roofRed, x, Y + h + r * 0.75, z); CITY.solids.push({ x, z, r }); if (flag) { add(new THREE.CylinderGeometry(0.12, 0.12, 5, 5), woodM, x, Y + h + r * 1.5 + 2.5, z); add(new THREE.BoxGeometry(3.2, 1.8, 0.08), M(flag), x + 1.7, Y + h + r * 1.5 + 4, z); } };
+    [[X0, Z1], [X1, Z1], [X0, 88], [X1, 88], [X0 / 2, Z1], [X1 / 2, Z1], [X0, 215], [X1, 215], [X0, 520], [X1, 520]].forEach(([x, z]) => tower(x, z, 8, 33, null));
     const gate = (x, z, alongX, name, flag) => { [-1, 1].forEach(sd => tower(x + (alongX ? sd * (gw + 6) : 0), z + (alongX ? 0 : sd * (gw + 6)), 6.5, 40, flag));
       add(new THREE.BoxGeometry(alongX ? gw * 2 + 2 : WT + 1.5, 9, alongX ? WT + 1.5 : gw * 2 + 2), stoneM, x, Y + 21.5, z);
       const out = alongX ? [0, 1] : [Math.sign(x), 0];
       [1, -1].forEach(k => { const sg = signBoard(k > 0 ? 'Hearthmoor' : name, 15, 3.6, '#3a2a18', '#f6e7c2'); sg.position.set(x + out[0] * k * (WT / 2 + 0.95), Y + 21.5, z + out[1] * k * (WT / 2 + 0.95)); sg.rotation.y = alongX ? (k > 0 ? 0 : Math.PI) : (out[0] * k > 0 ? Math.PI / 2 : -Math.PI / 2); G.add(sg); }); };
-    gate(-450, gz, false, 'West Gate', '#3e8a52'); gate(450, gz, false, 'East Gate', '#b5562b'); gate(0, CITY.z1, true, 'South Gate', '#d9a33f');
+    gate(X0, gz, false, 'West Gate', '#3e8a52'); gate(X1, gz, false, 'East Gate', '#b5562b'); gate(0, Z1, true, 'South Gate', '#d9a33f');
 
-    // buildings, drawn in batches: one box for the walls of each, one roof, a door and windows on the side that faces the street
-    const H = [];   // { x, z, w, d, h, rh, wall, roof, face (0 south, 1 north, 2 east, 3 west), kind }
-    const HS = 1.9;   // grown elves stand about 7.5 units tall, so a storey is about 9 units and a house door 8.6
+    // ---- buildings ---- every one faces a street or the square: face 0 looks south, 1 north, 2 east, 3 west
+    const H = [], HS = 1.9;   // grown elves stand about 7.5 units tall, so a storey is about 9 units and a house door 8.6
     const house = (x, z, w, d, h, o = {}) => { h *= HS; if (o.rh) o.rh *= 1.5; const q = Object.assign({ x, z, w, d, h, rh: Math.min(w, d) * 0.42, wall: '#e6dcc4', roof: '#7a3e2a', face: 0 }, o); H.push(q); CITY.boxes.push({ x, z, hw: w / 2, hd: d / 2 }); return q; };
     const PAL = { warm: [['#e9dcc3', '#8a4a2a'], ['#e6cfa8', '#7a3e2a'], ['#dcc9a0', '#6b4a2b'], ['#f0e2d0', '#a8563a']], cool: [['#dfe6e8', '#3e5a6a'], ['#e2e6d6', '#4f6b52'], ['#e8e2d2', '#5a5a52']], bright: [['#f0dfc8', '#b5562b'], ['#ead0d8', '#8a3a4a'], ['#d8e4c8', '#3e8a52'], ['#e0d8ee', '#5a3d7a'], ['#f2e6b8', '#b08a3a']], work: [['#cfc6b4', '#4a4038'], ['#bdb5a4', '#5a3d22'], ['#d8d2c0', '#3a3a3a']] };
-    // fill a block with a row of houses along its north edge and a row along its south edge, facing outward to the streets
-    const fill = (x0, x1, z0, z1, pal, hMin, hMax, o = {}) => { const depth = Math.min(o.depth || 24, (z1 - z0) / 2 - 3);
-      [[z0 + depth / 2 + 1, 1], [z1 - depth / 2 - 1, 0]].forEach(([z, face]) => { let x = x0 + 1; while (x < x1 - 16) { const w = Math.min(rr(o.wMin || 20, o.wMax || 30), x1 - 1 - x), [wall, roof] = pk(PAL[pal]); if (w > 14) house(x + w / 2, z, w, depth - rr(0, 2.5), rr(hMin, hMax), { wall, roof, face }); x += w + rr(1.2, 3.2); } }); };
-    // Old Town and the streets of ordinary houses
-    fill(-442, -260, 226, 316, 'warm', 9, 13.5); fill(-442, -260, 344, 436, 'warm', 9, 13.5);
-    fill(-240, -152, 226, 316, 'bright', 8, 11); fill(152, 240, 226, 316, 'work', 8, 11); fill(152, 240, 344, 436, 'work', 8, 11); fill(260, 442, 226, 316, 'work', 8.5, 12, { wMin: 26, wMax: 38 }); fill(260, 442, 344, 436, 'work', 8.5, 12, { wMin: 26, wMax: 38 });
-    fill(-240, -14, 130, 206, 'warm', 9, 12.5, { wMin: 26, wMax: 38 });
-    fill(14, 240, 454, 536, 'cool', 7.5, 10); fill(260, 442, 454, 536, 'cool', 7.5, 10);
-    // workshops smoke: a chimney on each maker's shop
-    H.filter(q => PAL.work.some(c => c[0] === q.wall)).forEach(q => { add(new THREE.BoxGeometry(2.6, 8, 2.6), darkStone, q.x + q.w * 0.28, Y + q.h + q.rh * 0.6 + 1.5, q.z); });
-    // the eight trade halls round the Market Square, one for each town, two flanking each street
+    const trees = [], tree = (x, z, h) => { trees.push([x, z, h]); CITY.solids.push({ x, z, r: 1 }); };
+    // a block of terraces: a row along its north edge and a row along its south edge, each facing its own street, in runs of three or four houses with a passage through to the gardens between
+    const fill = (x0, x1, z0, z1, pal, hMin, hMax, o = {}) => { const depth = o.depth || 26;
+      [[z0 + depth / 2 + 1.5, 1], [z1 - depth / 2 - 1.5, 0]].forEach(([z, face]) => { if (o.rows && !o.rows.includes(face)) return; let x = x0 + 2, run = 0; while (x < x1 - 18) { const w = Math.min(rr(o.wMin || 22, o.wMax || 30), x1 - 2 - x), [wall, roof] = pk(PAL[pal]); if (w > 15) house(x + w / 2, z, w, depth - rr(0, 2), rr(hMin, hMax), { wall, roof, face, work: pal === 'work' }); x += w; if (++run >= (o.run || 3) + (R() < 0.4 ? 1 : 0)) { x += 7; run = 0; } } });
+      if (!o.bare) for (let k = 0, n = Math.round((x1 - x0) / 34); k < n; k++) tree(x0 + 12 + (x1 - x0 - 24) * (k + rr(0.2, 0.8)) / n, (z0 + z1) / 2 + rr(-10, 10), rr(15, 24)); };
+    const [zA0, zA1] = ZI[0], [zB0, zB1] = ZI[1], [zC0, zC1] = ZI[2], [zD0, zD1] = ZI[3], [x1a, x1b] = XI[0], [x2a, x2b] = XI[1], [x3a, x3b] = XI[2], [x4a, x4b] = XI[3];
+    // Old Town in the west, the makers in the east
+    fill(x1a, x1b, zB0, zB1, 'warm', 9, 13.5); fill(x1a, x1b, zC0, zC1, 'warm', 9, 13.5);
+    fill(x2a, SQ.x0 - 44, zB0, zB1, 'bright', 8, 11); fill(SQ.x1 + 44, x3b, zB0, zB1, 'work', 8, 11, { bare: true }); fill(SQ.x1 + 44, x3b, zC0, zC1, 'work', 8, 11, { bare: true });
+    fill(x4a, x4b, zB0, zB1, 'work', 8.5, 12, { wMin: 28, wMax: 38, bare: true }); fill(x4a, x4b, zC0, zC1, 'work', 8.5, 12, { wMin: 28, wMax: 38, bare: true });
+    fill(x2a, x2b, zA0, zA1, 'warm', 9, 12.5, { wMin: 26, wMax: 36 });
+    fill(150, x3b, zD0, zD1, 'cool', 7.5, 10); fill(x4a, x4b, zD0, zD1, 'cool', 7.5, 10, { rows: [0] });
+    // the eight trade halls round the Market Square, one for each town
     const HALLS = [['Thistledown Hollow', '#4f7a33', '#e9dcc3'], ['Mallow Orchards', '#b5562b', '#f0e2c0'], ['Fernwater Crossing', '#2f5f8a', '#dfe6e8'], ['Cairnhold', '#6d6657', '#d8d2c0'], ['Cogsworth', '#8a6a2a', '#d9cfa8'], ['Emberdeep', '#5a2a22', '#c9bdb0'], ['Lanternreach', '#1f3a5a', '#e2e6ee'], ['Skyhaven', '#5a8ac0', '#f2f4f8']];
-    const hallAt = [[-58, 247, 72, 34, 0], [58, 247, 72, 34, 0], [58, 413, 72, 34, 1], [-58, 413, 72, 34, 1], [-124, 288, 34, 60, 2], [-124, 372, 34, 60, 2], [124, 288, 34, 60, 3], [124, 372, 34, 60, 3]];
-    HALLS.forEach(([town, col, wall], i) => { const [x, z, w, d, face] = hallAt[i]; house(x, z, w, d, 13, { wall, roof: col, face, rh: 7, hall: true });
-      const sg = signBoard(town, face < 2 ? 34 : 30, 3.6, col, '#f6e7c2'), off = [[0, d / 2 + 0.3, 0], [0, -d / 2 - 0.3, Math.PI], [w / 2 + 0.3, 0, Math.PI / 2], [-w / 2 - 0.3, 0, -Math.PI / 2]][face]; sg.position.set(x + off[0], Y + 16.5, z + off[1]); sg.rotation.y = off[2]; G.add(sg);
-      // an awning and a trestle of goods in front of each
-      const ax = x + off[0] * (face >= 2 ? 1 : 0) + (face === 2 ? 5 : face === 3 ? -5 : 0), az = z + off[1] * (face < 2 ? 1 : 0) + (face === 0 ? 5 : face === 1 ? -5 : 0), aw = add(new THREE.BoxGeometry(face < 2 ? 40 : 10, 0.3, face < 2 ? 10 : 40), mat(col, { roughness: 1 }), ax, Y + 12.2, az); aw.rotation[face < 2 ? 'x' : 'z'] = (face === 0 || face === 3 ? 1 : -1) * 0.2;
+    const big = (name, x, z, w, d, h, face, wall, roof, o = {}) => { const q = house(x, z, w, d, h, Object.assign({ wall, roof, face, rh: o.rh || 8, hall: true, name }, o)); if (name && !o.nosign) { const sw = Math.min((face < 2 ? w : d) - 6, 10 + name.length * 1.5), sg = signBoard(name, sw, 3.2, roof, '#f6e7c2'), off = [[0, d / 2 + 0.3, 0], [0, -d / 2 - 0.3, Math.PI], [w / 2 + 0.3, 0, Math.PI / 2], [-w / 2 - 0.3, 0, -Math.PI / 2]][face]; sg.position.set(x + off[0], Y + 14.6, z + off[1]); sg.rotation.y = off[2]; G.add(sg); } return q; };
+    HALLS.forEach(([town, col, wall], i) => { const [x, z, w, d, face] = CITY.hallAt[i]; big(town, x, z, w, d, 13, face, wall, col, { rh: 7 });
+      const off = [[0, d / 2 + 0.3], [0, -d / 2 - 0.3], [w / 2 + 0.3, 0], [-w / 2 - 0.3, 0]][face];
+      // an awning on two posts in front of each
+      const ax = x + off[0] * (face >= 2 ? 1 : 0) + (face === 2 ? 5 : face === 3 ? -5 : 0), az = z + off[1] * (face < 2 ? 1 : 0) + (face === 0 ? 5 : face === 1 ? -5 : 0), aw = add(new THREE.BoxGeometry(face < 2 ? 40 : 10, 0.3, face < 2 ? 10 : 40), M(col), ax, Y + 12.2, az); aw.rotation[face < 2 ? 'x' : 'z'] = (face === 0 || face === 3 ? 1 : -1) * 0.2;
       [-1, 1].forEach(sd => { const px = ax + (face < 2 ? sd * 19 : (face === 2 ? 4.4 : -4.4)), pz = az + (face < 2 ? (face === 0 ? 4.4 : -4.4) : sd * 19); add(new THREE.CylinderGeometry(0.28, 0.28, 11.2, 6), woodM, px, Y + 5.6, pz); CITY.solids.push({ x: px, z: pz, r: 0.3 }); }); });
-    // the University: four colleges round two quads, and the Library Tower
-    [[60, 150, 46, 36, '#b5562b', 'College of Numbers'], [150, 150, 46, 36, '#5a3d7a', 'Alchemists’ Hall'], [322, 181, 46, 36, '#3e8a52', 'The Herbarium'], [412, 181, 34, 40, '#2f5f8a', 'Engineers’ Yard']].forEach(([x, z, w, d, col, name], i) => { house(x, z, w, d, 15, { wall: '#e8e0cc', roof: col, face: i === 3 ? 3 : 0, rh: 8, hall: true }); const sg = signBoard(name, 26, 3, col, '#f6e7c2'); if (i === 3) { sg.position.set(x - w / 2 - 0.3, Y + 17, z); sg.rotation.y = -Math.PI / 2; } else sg.position.set(x, Y + 17, z + d / 2 + 0.3); G.add(sg); });
-    flat(60, 34, '#6f9a52', 105, 190, Y + 0.02, null);
-    { const lx = 235, lz = 160; add(new THREE.CylinderGeometry(11, 12.5, 80, 16), mat('#d8d0bc', { roughness: 1 }), lx, Y + 40, lz); add(new THREE.ConeGeometry(14, 20, 16), mat('#5a3d7a', { roughness: 1 }), lx, Y + 90, lz); for (let k = 0; k < 7; k++) for (let a = 0; a < 6; a++) { const w = add(new THREE.PlaneGeometry(2.8, 4.6), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.5 }), lx + Math.sin(a * 1.047) * (12.3 - k * 0.17), Y + 15 + k * 9.5, lz + Math.cos(a * 1.047) * (12.3 - k * 0.17), false); w.rotation.y = a * 1.047; } CITY.solids.push({ x: lx, z: lz, r: 12.5 }); const sg = signBoard('The Library Tower', 20, 2.4, '#5a3d7a', '#f6e7c2'); sg.position.set(lx, Y + 10.5, lz + 12.9); G.add(sg); }
-    // Lakeside: a park by the water with three large houses
-    flat(180, 28, '#6f9a52', -350, 164, Y + 0.02, null);
-    [[-415, 193], [-350, 193], [-285, 193]].forEach(([x, z]) => house(x, z, 30, 22, 13, { wall: '#f0ead8', roof: '#3e5a6a', face: 1, rh: 9, hall: true }));
-    for (let i = 0; i < 16; i++) { const x = rr(-436, -264), z = rr(152, 176), h = rr(15, 26); add(new THREE.CylinderGeometry(0.6, 0.8, h * 0.45, 7), mat('#6b4a2b'), x, Y + h * 0.22, z); add(new THREE.IcosahedronGeometry(h * 0.33, 0), mat(pk(['#4f8a3a', '#5e9a44', '#3f7a35']), { flatShading: true }), x, Y + h * 0.62, z); CITY.solids.push({ x, z, r: 0.9 }); }
-    // Guildhall and Bank
-    house(-196, 372, 60, 40, 16, { wall: '#e8e2d2', roof: '#3a2a18', face: 0, rh: 9, hall: true }); house(-196, 424, 50, 20, 11, { wall: '#d8d2c0', roof: '#5a5a52', face: 0, hall: true });
-    [['The Guildhall', -196, 392.3, 26, 19], ['The Bank', -196, 434.3, 18, 14]].forEach(([t, x, z, w, y]) => { const sg = signBoard(t, w, 3, '#3a2a18', '#f6e7c2'); sg.position.set(x, Y + y, z); G.add(sg); });
-    // four long warehouses on the wharf
-    [-400, -320, 320, 400].forEach((x, i) => { house(x, 136, 56, 20, 11, { wall: '#bfae8c', roof: '#5a3d22', face: 1, rh: 6, hall: true, barn: true }); });
-    // Garden Lots: fenced plots waiting for somebody to build on them
-    for (let cx = -420; cx <= -40; cx += 47.5) [476, 518].forEach(z => { if (Math.abs(cx + 250) < 24) return; flat(40, 32, '#7fa35e', cx, z, Y + 0.02, null); [[cx, z - 16, 40, 0.3], [cx, z + 16, 40, 0.3], [cx - 20, z, 0.3, 32], [cx + 20, z, 0.3, 32]].forEach(([x, zz, w, d], k) => { if (k === (z < 500 ? 0 : 1)) { add(new THREE.BoxGeometry(15, 1.3, 0.3), woodM, x - 12.5, Y + 0.75, zz); add(new THREE.BoxGeometry(15, 1.3, 0.3), woodM, x + 12.5, Y + 0.75, zz); CITY.boxes.push({ x: x - 12.5, z: zz, hw: 7.5, hd: 0.2 }, { x: x + 12.5, z: zz, hw: 7.5, hd: 0.2 }); } else { add(new THREE.BoxGeometry(w, 1.3, d), woodM, x, Y + 0.75, zz); CITY.boxes.push({ x, z: zz, hw: w / 2, hd: d / 2 }); } });
-      const post = add(new THREE.CylinderGeometry(0.15, 0.15, 3.4, 6), woodM, cx - 14, Y + 1.7, z + (z < 500 ? -17.5 : 17.5)); const sg = signBoard('Lot for sale', 4.4, 1, '#f6e7c2', '#3a2a18'); sg.position.set(cx - 14, Y + 3.5, z + (z < 500 ? -17.6 : 17.6)); sg.rotation.y = z < 500 ? Math.PI : 0; G.add(sg); });
+    // the University, on the south side of its block, facing North Street: four colleges, the quad behind them, and the Library Tower
+    [[x3a + 48, 'College of Numbers', '#b5562b'], [x3a + 118, 'Alchemists’ Hall', '#5a3d7a'], [x4a + 60, 'The Herbarium', '#3e8a52'], [x4a + 150, 'Engineers’ Yard', '#2f5f8a']].forEach(([x, name, col]) => big(name, x, zA1 - 22, 56, 40, 15, 0, '#e8e0cc', col));
+    for (let k = 0; k < 9; k++) tree(x3a + 16 + k * 19 + rr(-3, 3), zA0 + rr(14, 46), rr(16, 26));
+    { const lx = x3b - 50, lz = zA1 - 36; add(new THREE.CylinderGeometry(11, 12.5, 80, 16), M('#d8d0bc'), lx, Y + 40, lz); add(new THREE.ConeGeometry(14, 20, 16), M('#5a3d7a'), lx, Y + 90, lz); CITY.towerWin = []; for (let k = 0; k < 7; k++) for (let a = 0; a < 6; a++) CITY.towerWin.push([lx + Math.sin(a * 1.047) * (12.3 - k * 0.17), Y + 15 + k * 9.5, lz + Math.cos(a * 1.047) * (12.3 - k * 0.17), a * 1.047]);
+      CITY.solids.push({ x: lx, z: lz, r: 12.5 }); const sg = signBoard('The Library Tower', 20, 2.4, '#5a3d7a', '#f6e7c2'); sg.position.set(lx, Y + 10.5, lz + 12.9); G.add(sg); add(new THREE.BoxGeometry(5, 9, 0.5), M('#3a2a18'), lx, Y + 4.5, lz + 12.3);
+      const fc = patch(lx - 9, lx + 9, lz + 12.6, zA1, '#bdb096', cobble, 5); fc.position.y = Y + 0.03; }
+    // Lakeside: a park by the water, and three large houses on North Street with the park behind them
+    [x1a + 44, x1a + 112, x1a + 180].forEach(x => big('', x, zA1 - 15, 46, 26, 13, 0, '#f0ead8', '#3e5a6a', { rh: 9, nosign: true }));
+    for (let i = 0; i < 26; i++) tree(rr(x1a + 8, x1b - 8), rr(zA0 + 8, zA1 - 38), rr(15, 27));
+    // the Guildhall on the High Street and the Bank on South Street, back to back
+    big('The Guildhall', (x2a + SQ.x0 - 44) / 2, zC0 + 23, 66, 42, 16, 1, '#e8e2d2', '#3a2a18', { rh: 9 }); big('The Bank', (x2a + SQ.x0 - 44) / 2, zC1 - 16, 54, 28, 11, 0, '#d8d2c0', '#5a5a52');
+    [-52, 52].forEach(dx => tree((x2a + SQ.x0 - 44) / 2 + dx, zC0 + 30, 22));
+    // four long warehouses on the Wharf Road
+    [28, 84, 140, 196].forEach(dx => big('', x4a + dx, zA0 + 14, 50, 24, 11, 1, '#bfae8c', '#5a3d22', { rh: 6, barn: true, nosign: true }));
+    // lodgings on South Street: three tall houses of rooms, for people who have come to the city to learn
+    [36, 108, 180].forEach((dx, i) => big(['Lodgings · Rowan House', 'Lodgings · Hazel House', 'Lodgings · Alder House'][i], x4a + dx, zD0 + 20, 62, 36, 14.5, 1, '#eadfc8', ['#8a3a4a', '#4f6b52', '#3e5a6a'][i], { rh: 8, lodge: i }));
+    // Garden Lots: fenced plots waiting for somebody to build on them. The north row opens on South Street, the south row on Garden Lane.
+    CITY.lots = [];
+    [[x1a, x1b], [x2a, x2b]].forEach(([a, b]) => { const n = Math.floor((b - a - 6) / 52), gap = (b - a - n * 46) / (n + 1); for (let k = 0; k < n; k++) [[zD0 + 26, -1], [zD1 - 26, 1]].forEach(([z, gs]) => { const cx = a + gap + 23 + k * (46 + gap), fenceM = M('#f1e9d6');
+      const rail = (x, zz, w, d) => { add(new THREE.BoxGeometry(w, 0.25, d), fenceM, x, Y + 1.9, zz); add(new THREE.BoxGeometry(w, 0.25, d), fenceM, x, Y + 0.9, zz); const along = w > d, len = along ? w : d, np = Math.round(len / 1.1); for (let q = 0; q < np; q++) { const t = (q + 0.5) / np - 0.5; add(new THREE.BoxGeometry(along ? 0.5 : 0.14, 2.6, along ? 0.14 : 0.5), fenceM, x + (along ? t * len : 0), Y + 1.3, zz + (along ? 0 : t * len)); } CITY.boxes.push({ x, z: zz, hw: w / 2 + 0.1, hd: d / 2 + 0.1 }); };
+      rail(cx, z - gs * 21, 46, 0.3); rail(cx - 23, z, 0.3, 42); rail(cx + 23, z, 0.3, 42); rail(cx - 13.5, z + gs * 21, 19, 0.3); rail(cx + 13.5, z + gs * 21, 19, 0.3);
+      [-4, 4].forEach(dx => add(new THREE.BoxGeometry(0.6, 4, 0.6), fenceM, cx + dx, Y + 2, z + gs * 21));
+      add(new THREE.CylinderGeometry(0.15, 0.15, 4, 6), woodM, cx - 8, Y + 2, z + gs * 22.6); const no = CITY.lots.length + 1, sg = signBoard(`Lot ${no} · for sale`, 5.6, 1.1, '#f6e7c2', '#3a2a18'); sg.position.set(cx - 8, Y + 4.2, z + gs * 22.7); sg.rotation.y = gs > 0 ? 0 : Math.PI; G.add(sg); CITY.solids.push({ x: cx - 8, z: z + gs * 22.6, r: 0.4 });
+      CITY.lots.push({ x: cx, z, no }); if (R() < 0.5) tree(cx + rr(-14, 14), z - gs * rr(4, 14), rr(14, 20)); }); });
     // Southgate: three granaries beside the carters' yard
-    [[40, 495], [72, 495], [104, 495]].forEach(([x, z]) => { add(new THREE.CylinderGeometry(10, 10, 28, 16), mat('#d9c9a0', { roughness: 1 }), x, Y + 14, z); add(new THREE.ConeGeometry(11.6, 11, 16), mat('#8a6a3c', { roughness: 1 }), x, Y + 33.5, z); CITY.solids.push({ x, z, r: 10 }); });
+    [[48, zD0 + 54], [80, zD0 + 54], [112, zD0 + 54]].forEach(([x, z]) => { add(new THREE.CylinderGeometry(10, 10, 28, 16), M('#d9c9a0'), x, Y + 14, z); add(new THREE.ConeGeometry(11.6, 11, 16), M('#8a6a3c'), x, Y + 33.5, z); CITY.solids.push({ x, z, r: 10 }); });
+    CITY.H = H;
 
-    // draw every building in four batches
-    { const n = H.length, m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), c = new THREE.Color(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), eu = new THREE.Euler();
-      const wallI = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ roughness: 1 }), n), rg = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); rg.rotateY(Math.PI / 4);
-      const roofI = new THREE.InstancedMesh(rg, new THREE.MeshStandardMaterial({ roughness: 1, flatShading: true }), n), doors = [], wins = [];
-      H.forEach((b, i) => { m4.compose(pv.set(b.x, Y + b.h / 2, b.z), q4.identity(), sv.set(b.w, b.h, b.d)); wallI.setMatrixAt(i, m4); wallI.setColorAt(i, c.set(b.wall));
-        m4.compose(pv.set(b.x, Y + b.h + b.rh / 2, b.z), q4.identity(), sv.set(b.w + 1.6, b.rh, b.d + 1.6)); roofI.setMatrixAt(i, m4); roofI.setColorAt(i, c.set(b.roof));
-        const fx = [0, 0, 1, -1][b.face], fz = [1, -1, 0, 0][b.face], half = b.face < 2 ? b.d / 2 : b.w / 2, span = b.face < 2 ? b.w : b.d, ry = [0, Math.PI, Math.PI / 2, -Math.PI / 2][b.face], tx = b.face < 2 ? 1 : 0, tz = b.face < 2 ? 0 : 1;
-        const at = (u, y, o) => [b.x + fx * (half + o) + tx * u, y, b.z + fz * (half + o) + tz * u, ry];
-        doors.push([...at(0, Y + (b.hall ? 5.5 : 4.3), 0.06), b.barn ? 12 : b.hall ? 7 : 4.4, b.hall ? 11 : 8.6, b.roof]);
-        const cols = Math.max(1, Math.floor((span - 8) / 9)), rows = Math.max(1, Math.floor((b.h - 2) / 9));
-        for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) { const u = (k - (cols - 1) / 2) * (span - 5) / cols; if (r === 0 && Math.abs(u) < (b.barn ? 8.5 : b.hall ? 6 : 4.8)) continue; wins.push(at(u, Y + 5.6 + r * 9, 0.05)); } });
-      wallI.castShadow = roofI.castShadow = true; wallI.receiveShadow = true; wallI.frustumCulled = roofI.frustumCulled = false; G.add(wallI, roofI);
-      const doorI = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 0.3), new THREE.MeshStandardMaterial({ roughness: 0.9 }), doors.length); doors.forEach(([x, y, z, ry, w, h, col], i) => { m4.compose(pv.set(x, y, z), q4.setFromEuler(eu.set(0, ry, 0)), sv.set(w, h, 1)); doorI.setMatrixAt(i, m4); doorI.setColorAt(i, c.set(col).multiplyScalar(0.55)); });
-      const winI = new THREE.InstancedMesh(new THREE.PlaneGeometry(3.4, 4.4), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.4 }), wins.length); wins.forEach(([x, y, z, ry], i) => { m4.compose(pv.set(x, y, z), q4.setFromEuler(eu.set(0, ry, 0)), sv.set(1, 1, 1)); winI.setMatrixAt(i, m4); });
-      doorI.frustumCulled = winI.frustumCulled = false; G.add(doorI, winI); CITY.count = n; }
+    // ---- draw every building in batches: walls, gables, roofs, footings, timber, chimneys, doors with frames and steps, windows with frames and shutters ----
+    { const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), c = new THREE.Color(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), eu = new THREE.Euler();
+      const tri = [[-0.5, 0, -0.5], [0.5, 0, -0.5], [0.5, 0, 0.5], [-0.5, 0, 0.5], [-0.5, 1, 0], [0.5, 1, 0]], geoOf = idx => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(idx.flatMap(i => tri[i])), 3)); g.computeVertexNormals(); return g; };
+      const slopeG = geoOf([3, 2, 5, 3, 5, 4, 1, 0, 4, 1, 4, 5]), gableG = geoOf([0, 3, 4, 2, 1, 5, 3, 2, 5, 3, 5, 4, 1, 0, 4, 1, 4, 5]), boxG = new THREE.BoxGeometry(1, 1, 1);
+      const lists = { wall: [], gable: [], roof: [], foot: [], timber: [], chim: [], door: [], frame: [], step: [], shut: [] }, wins = [];
+      const put = (L, x, y, z, ry, sx, sy, sz, col) => lists[L].push([x, y, z, ry, sx, sy, sz, col]);
+      H.forEach(b => { const along = b.face < 2 ? (b.w >= b.d * 0.8) : !(b.d >= b.w * 0.8), ry0 = along ? 0 : Math.PI / 2, rw = along ? b.w : b.d, rd = along ? b.d : b.w, trim = c.set(b.roof).multiplyScalar(0.5).getHexString(), tcol = b.work || b.barn ? '#4a4038' : '#' + trim;
+        put('wall', b.x, Y + b.h / 2, b.z, 0, b.w, b.h, b.d, b.wall); put('gable', b.x, Y + b.h, b.z, ry0, rw, b.rh * rd / (rd + 2.4), rd, b.wall); put('roof', b.x, Y + b.h + 0.05, b.z, ry0, rw + 2.4, b.rh, rd + 2.4, b.roof);
+        put('foot', b.x, Y + 0.7, b.z, 0, b.w + 0.7, 1.4, b.d + 0.7, '#8d8676');
+        const floors = Math.max(1, Math.round(b.h / 9)); for (let f = 1; f <= floors; f++) put('timber', b.x, Y + (f === floors ? b.h - 0.3 : f * b.h / floors), b.z, 0, b.w + 0.4, 0.6, b.d + 0.4, tcol);
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => put('timber', b.x + sx * b.w / 2, Y + b.h / 2, b.z + sz * b.d / 2, 0, 0.8, b.h, 0.8, tcol));
+        if (!b.barn) put('chim', b.x + (along ? b.w * 0.3 : 0), Y + b.h + b.rh * 0.55 + 1.6, b.z + (along ? 0 : b.d * 0.3), 0, 2.6, b.rh * 0.6 + 6, 2.6, b.work ? '#5a5248' : '#8d8676');
+        [b.face, b.face ^ 1].forEach((face, back) => { const fx = [0, 0, 1, -1][face], fz = [1, -1, 0, 0][face], half = face < 2 ? b.d / 2 : b.w / 2, span = face < 2 ? b.w : b.d, ry = [0, Math.PI, Math.PI / 2, -Math.PI / 2][face], tx = face < 2 ? 1 : 0, tz = face < 2 ? 0 : 1;
+          const at = (u, y, o) => [b.x + fx * (half + o) + tx * u, y, b.z + fz * (half + o) + tz * u, ry];
+          const dw = b.barn ? 12 : b.hall ? 7 : 4.4, dh = b.hall ? 11 : 8.6;
+          if (!back) { put('door', ...at(0, Y + dh / 2 + 0.2, 0.12), dw, dh, 0.3, '#' + trim); put('frame', ...at(0, Y + dh / 2 + 0.5, 0.06), dw + 1.2, dh + 0.9, 0.3, '#f1e9d6'); put('step', ...at(0, Y + 0.2, 1.4), dw + 2.4, 0.4, 2.8, '#9a9486'); b.door = at(0, Y, 0.6); }
+          const cols = Math.max(1, Math.floor((span - 8) / 9)), rows = Math.max(1, Math.round((b.h - 2) / 9));
+          for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) { const u = (k - (cols - 1) / 2) * (span - 5) / cols; if (!back && r === 0 && Math.abs(u) < dw / 2 + 3.4) continue; const y = Y + 5.6 + r * b.h / rows * (rows > 1 ? 0.98 : 1); wins.push(at(u, y, 0.1)); put('frame', ...at(u, y, 0.03), 4, 5, 0.12, '#f1e9d6'); if (!b.barn) [-1, 1].forEach(sd => put('shut', ...at(u + sd * 2.65, y, 0.06), 1.3, 4.6, 0.14, '#' + trim)); } }); });
+      const batch = (L, geo, o = {}) => { const a = lists[L], I = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial(Object.assign({ roughness: 1 }, o)), a.length); a.forEach(([x, y, z, ry, sx, sy, sz, col], i) => { m4.compose(pv.set(x, y, z), q4.setFromEuler(eu.set(0, ry, 0)), sv.set(sx, sy, sz)); I.setMatrixAt(i, m4); I.setColorAt(i, c.set(col)); }); I.castShadow = !o.noShadow; I.receiveShadow = true; I.frustumCulled = false; G.add(I); return I; };
+      batch('wall', boxG); batch('gable', gableG, { flatShading: true }); batch('roof', slopeG, { flatShading: true, side: THREE.DoubleSide }); batch('foot', boxG); batch('timber', boxG, { noShadow: true }); batch('chim', boxG); batch('door', boxG, { noShadow: true }); batch('frame', boxG, { noShadow: true }); batch('step', boxG, { noShadow: true }); batch('shut', boxG, { noShadow: true });
+      CITY.towerWin.forEach(q => wins.push(q));
+      const winM = mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.4 }), winI = new THREE.InstancedMesh(new THREE.PlaneGeometry(3.4, 4.4), winM, wins.length); wins.forEach(([x, y, z, ry], i) => { m4.compose(pv.set(x, y, z), q4.setFromEuler(eu.set(0, ry, 0)), sv.set(1, 1, 1)); winI.setMatrixAt(i, m4); }); winI.frustumCulled = false; G.add(winI);
+      NIGHT_GLOW.push(n => { winM.emissiveIntensity = 0.4 + 1.1 * n; }); CITY.count = H.length; }
 
-    // the Market Square: the fountain, open stalls, lamps
-    { add(new THREE.CylinderGeometry(7, 7.6, 1.6, 20), stoneM, 0, Y + 0.8, 330); add(new THREE.CylinderGeometry(6.3, 6.3, 0.2, 20), new THREE.MeshStandardMaterial({ color: '#6fa3d0', roughness: 0.25 }), 0, Y + 1.5, 330, false); add(new THREE.CylinderGeometry(0.9, 1.3, 5, 10), stoneM, 0, Y + 3, 330); add(new THREE.SphereGeometry(1.5, 12, 10), stoneM, 0, Y + 6.2, 330); CITY.solids.push({ x: 0, z: 330, r: 7.6 }); }
+    // ---- trees: along the High Street and Lake Avenue, in the gardens and the park ----
+    const byDoor = (x, z) => H.some(b => b.door && Math.hypot(b.door[0] - x, b.door[2] - z) < (b.hall ? 11 : 7.5));   // nothing is planted or posted in front of a door
+    for (let x = X0 + 40; x <= X1 - 40; x += 44) { if (Math.abs(x) < SQ.x1 + 16 || Math.abs(Math.abs(x) - S.sx) < 24) continue; [S.high[0] + 3.2, S.high[1] - 3.2].forEach(z => { if (!byDoor(x, z)) tree(x, z, 20); }); }
+    for (let z = S.wharf[1] + 20; z < Z1 - 20; z += 42) { if ((z > SQ.z0 - 16 && z < SQ.z1 + 16) || EW.some(e => z > e[0] - 12 && z < e[1] + 12)) continue; [-14.8, 14.8].forEach(x => tree(x, z, 20)); }
+    { const TG = new THREE.Group(); TG.userData.keep = true; G.add(TG); const leaf = ['#4f8a3a', '#5e9a44', '#3f7a35'].map(col => mat(col, { roughness: 1, flatShading: true })), bark = M('#6b4a2b');
+      trees.forEach(([x, z, h], i) => { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.85, h * 0.45, 7), bark); t.position.set(x, Y + h * 0.22, z); TG.add(t); [[0, 0.62, 0, 0.33], [0.2, 0.5, 0.12, 0.24], [-0.18, 0.54, -0.1, 0.22]].forEach(([a, y, b, r], q) => { const cn = new THREE.Mesh(new THREE.IcosahedronGeometry(h * r, 1), leaf[(i + q) % 3]); cn.position.set(x + a * h, Y + h * y, z + b * h); TG.add(cn); }); });
+      TG.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); TG.userData.keep = false; bake(TG); TG.userData.keep = true; }
+
+    // ---- the Market Square: the fountain, open stalls, benches ----
+    { const fx = 0, fz = (SQ.z0 + SQ.z1) / 2, FG = new THREE.Group(); FG.position.set(fx, Y, fz); FG.userData.keep = true; G.add(FG);
+      const fa = (geo, m, y) => { const q = new THREE.Mesh(geo, m); q.position.y = y; q.castShadow = true; q.receiveShadow = true; FG.add(q); return q; };
+      const waterT = canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#5f9fd0'; g.fillRect(0, 0, w, h); for (let i = 0; i < 46; i++) { g.strokeStyle = `rgba(255,255,255,${0.12 + Math.random() * 0.3})`; g.lineWidth = 1 + Math.random() * 2; g.beginPath(); const x = Math.random() * w, y = Math.random() * h; g.ellipse(x, y, 6 + Math.random() * 14, 2 + Math.random() * 4, 0, 0, 7); g.stroke(); } });
+      const fallT = canvasTex(64, 128, (g, w, h) => { g.clearRect(0, 0, w, h); for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(255,255,255,${0.25 + Math.random() * 0.5})`; g.fillRect(Math.random() * w, Math.random() * h, 1.5 + Math.random() * 2, 14 + Math.random() * 30); } });
+      fallT.repeat.set(6, 1); waterT.repeat.set(3, 3);
+      const waterM = new THREE.MeshStandardMaterial({ map: waterT, color: '#bfe0f4', roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.92 }), fallM = new THREE.MeshBasicMaterial({ map: fallT, color: '#dff1fb', transparent: true, opacity: 0.75, depthWrite: false, side: THREE.DoubleSide });
+      fa(new THREE.CylinderGeometry(12, 12.8, 2, 28), stoneM, 1); fa(new THREE.CylinderGeometry(12.6, 12.6, 0.4, 28), darkStone, 2.1); fa(new THREE.CylinderGeometry(11, 11, 0.3, 28), waterM, 1.95).castShadow = false;
+      fa(new THREE.CylinderGeometry(1.6, 2.4, 6, 12), stoneM, 4.2); fa(new THREE.CylinderGeometry(5.2, 2, 1.4, 20), stoneM, 7.6); fa(new THREE.CylinderGeometry(4.7, 4.7, 0.2, 20), waterM, 8.25).castShadow = false;
+      fa(new THREE.CylinderGeometry(0.9, 1.3, 4, 10), stoneM, 10.2); fa(new THREE.CylinderGeometry(2.4, 1, 0.9, 16), stoneM, 12.5); fa(new THREE.CylinderGeometry(2.1, 2.1, 0.16, 16), waterM, 12.92).castShadow = false; fa(new THREE.SphereGeometry(0.7, 10, 8), stoneM, 13.4);
+      const fall1 = fa(new THREE.CylinderGeometry(2.3, 2.9, 4.6, 20, 1, true), fallM, 10.6), fall2 = fa(new THREE.CylinderGeometry(5.1, 6, 6.2, 24, 1, true), fallM, 5.1); fall1.castShadow = fall2.castShadow = false;
+      const ringM = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.5, depthWrite: false }), rings = [0, 1, 2].map(i => { const r = fa(new THREE.RingGeometry(0.92, 1, 40), ringM.clone(), 2.13); r.rotation.x = -Math.PI / 2; r.castShadow = false; return r; });
+      const dropM = new THREE.MeshBasicMaterial({ color: '#e8f6ff', transparent: true, opacity: 0.85 }), drops = []; for (let i = 0; i < 18; i++) { const d = fa(new THREE.SphereGeometry(0.16, 6, 5), dropM, 13.6); d.castShadow = false; drops.push({ m: d, a: i / 18 * Math.PI * 2, ph: i / 18 }); }
+      CITY.solids.push({ x: fx, z: fz, r: 13 });
+      // the water never stops: it falls down the two tiers, ripples spread across the basin, and a spray of drops goes up from the top
+      CITY.tick = t => { fallT.offset.y = t * 0.9 % 1; waterT.offset.set(t * 0.02 % 1, t * 0.013 % 1); rings.forEach((r, i) => { const k = (t * 0.33 + i / 3) % 1; r.scale.setScalar(6.2 + k * 4.6); r.material.opacity = 0.5 * (1 - k); }); drops.forEach(d => { const k = (t * 0.8 + d.ph * 3) % 1, rad = 0.2 + k * 1.9; d.m.position.set(Math.cos(d.a) * rad, 13.5 + 2.6 * 4 * k * (1 - k) - k * 0.5, Math.sin(d.a) * rad); }); }; }
     const stall = (x, z, col, ry) => { const g = new THREE.Group(); g.position.set(x, Y, z); g.rotation.y = ry; g.scale.setScalar(1.5); G.add(g); const b = (geo, m, px, py, pz) => { const q = new THREE.Mesh(geo, m); q.position.set(px, py, pz); q.castShadow = true; g.add(q); return q; };
       b(new THREE.BoxGeometry(7, 0.3, 3), plankM, 0, 2.2, 0); [[-3.3, -1.3], [3.3, -1.3], [-3.3, 1.3], [3.3, 1.3]].forEach(([px, pz]) => b(new THREE.CylinderGeometry(0.14, 0.14, 5.6, 6), woodM, px, 2.8, pz));
-      for (let k = 0; k < 4; k++) b(new THREE.BoxGeometry(1.9, 0.14, 3.8), mat(k % 2 ? '#f6f1e3' : col, { roughness: 1 }), -2.85 + k * 1.9, 5.7, 0).rotation.x = 0.16;
-      for (let k = 0; k < 7; k++) b(new THREE.SphereGeometry(0.34, 8, 6), mat(pk(['#d23b4e', '#e8a33f', '#8fbf4a', '#f4d35e', '#7a3d9a'])), -2.6 + k * 0.85, 2.65, rr(-0.8, 0.8));
+      for (let k = 0; k < 4; k++) b(new THREE.BoxGeometry(1.9, 0.14, 3.8), M(k % 2 ? '#f6f1e3' : col), -2.85 + k * 1.9, 5.7, 0).rotation.x = 0.16;
+      for (let k = 0; k < 7; k++) b(new THREE.SphereGeometry(0.34, 8, 6), M(pk(['#d23b4e', '#e8a33f', '#8fbf4a', '#f4d35e', '#7a3d9a'])), -2.6 + k * 0.85, 2.65, rr(-0.8, 0.8));
       CITY.solids.push({ x: x - Math.cos(ry) * 3, z: z + Math.sin(ry) * 3, r: 2.6 }, { x: x + Math.cos(ry) * 3, z: z - Math.sin(ry) * 3, r: 2.6 }); };
-    [[-60, 300, '#b5562b', 0], [-30, 300, '#3e8a52', 0], [30, 300, '#2f5f8a', 0], [60, 300, '#d9a33f', 0], [-60, 360, '#7a3d9a', 0], [-30, 360, '#b5562b', 0], [30, 360, '#3e8a52', 0], [60, 360, '#8a3a4a', 0]].forEach(([x, z, c, ry]) => stall(x, z, c, ry));
-    const lamp = (x, z) => { add(new THREE.CylinderGeometry(0.2, 0.3, 11, 6), darkStone, x, Y + 5.5, z, false); add(new THREE.BoxGeometry(1.3, 1.6, 1.3), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 0.9 }), x, Y + 11.6, z, false); CITY.solids.push({ x, z, r: 0.3 }); };
-    for (let x = -420; x <= 420; x += 60) { if (Math.abs(x) < 110) continue; lamp(x, 319.5); lamp(x + 30, 340.5); } for (let z = 140; z <= 520; z += 55) { if (Math.abs(z - 330) < 70) continue; lamp(-9.5, z); lamp(9.5, z + 27); }
-    [[-100, 270], [100, 270], [-100, 390], [100, 390]].forEach(([x, z]) => lamp(x, z));
-    // the wharf: bollards, stacks of crates and barrels, two barges tied up
-    for (let x = -430; x <= 430; x += 43) { if (CITY.piers.some(px => Math.abs(x - px) < 8)) continue; add(new THREE.CylinderGeometry(0.5, 0.6, 1.3, 8), darkStone, x, Y + 0.65, 94); CITY.solids.push({ x, z: 94, r: 0.6 }); }
-    for (let i = 0; i < 26; i++) { const x = rr(-430, 430), z = rr(98, 108); if (CITY.piers.some(px => Math.abs(x - px) < 9)) continue; if (R() < 0.6) { const c = crate(rr(0.9, 1.5)); c.position.set(x, Y + 0.8, z); c.rotation.y = rr(0, 3); G.add(c); CITY.solids.push({ x, z, r: 1.4 }); } else { add(new THREE.CylinderGeometry(0.9, 0.9, 2.2, 12), mat('#8a6438'), x, Y + 1.1, z); CITY.solids.push({ x, z, r: 0.95 }); } }
-    [[-260, 70, '#6b4a2b'], [85, 66, '#4a5a3a']].forEach(([x, z, col]) => { add(new THREE.BoxGeometry(34, 2.6, 12), mat(col), x, 0.6, z); add(new THREE.BoxGeometry(34.6, 0.3, 12.6), plankM, x, 2, z); add(new THREE.BoxGeometry(8, 4.5, 8), mat('#c9b98f'), x - 10, 4.3, z); add(new THREE.CylinderGeometry(0.25, 0.3, 14, 6), woodM, x + 4, 9, z); for (let k = 0; k < 4; k++) { const c = crate(1.3); c.position.set(x + 6 + (k % 2) * 3.4, 3 + Math.floor(k / 2) * 1.75, z + (k % 2 ? 1.4 : -1.2)); G.add(c); } });
+    CITY.stallAt.forEach(([x, z], i) => stall(x, z, ['#b5562b', '#3e8a52', '#2f5f8a', '#d9a33f', '#7a3d9a', '#b5562b', '#3e8a52', '#8a3a4a'][i], 0));
+    // ---- lamps: iron posts that come on at dusk, down the High Street and Lake Avenue, round the square, and one at every other crossing ----
+    { const LG = new THREE.Group(); G.add(LG); let hi = 0; const lamp = (x, z, tall, pool) => { while (byDoor(x, z)) x += 4; lampPost(LG, x, z, tall || 12, pool === undefined ? 30 : pool, CITY.solids, Y); };
+      for (let x = X0 + 62; x <= X1 - 62; x += 44) { if (Math.abs(x) < SQ.x1 + 6 || Math.abs(Math.abs(x) - S.sx) < 18) continue; lamp(x, (hi++ % 2) ? S.high[0] + 3.2 : S.high[1] - 3.2); }
+      for (let z = S.wharf[1] + 41; z < Z1 - 20; z += 42) { if ((z > SQ.z0 - 6 && z < SQ.z1 + 6) || EW.some(e => z > e[0] - 8 && z < e[1] + 8)) continue; lamp((hi++ % 2) ? -14.8 : 14.8, z); }
+      [[SQ.x0 + 6, SQ.z0 + 6], [SQ.x1 - 6, SQ.z0 + 6], [SQ.x0 + 6, SQ.z1 - 6], [SQ.x1 - 6, SQ.z1 - 6], [-40, SQ.z0 + 6], [40, SQ.z0 + 6], [-40, SQ.z1 - 6], [40, SQ.z1 - 6], [SQ.x0 + 6, S.high[0] - 4], [SQ.x0 + 6, S.high[1] + 4], [SQ.x1 - 6, S.high[0] - 4], [SQ.x1 - 6, S.high[1] + 4]].forEach(([x, z]) => lamp(x, z, 13, 34));
+      [S.wharf, S.north, S.south, S.lane].forEach(([z0, z1], i) => { for (let x = X0 + 50; x <= X1 - 50; x += 70) { if (Math.abs(x) < 26 || Math.abs(Math.abs(x) - S.sx) < 18) continue; lamp(x, (Math.round(x / 70) + i) % 2 ? z0 + 2.4 : z1 - 2.4, 11, 26); } });
+      [-S.sx, S.sx].forEach(sx => { for (let z = S.wharf[1] + 30; z < S.lane[0]; z += 64) { if (EW.some(e => z > e[0] - 8 && z < e[1] + 8)) continue; lamp(sx + (Math.round(z / 64) % 2 ? 9.6 : -9.6), z, 11, 26); } });
+      LG.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(LG); LG.userData.keep = true; }
+    // ---- the wharf: bollards, stacks of crates and barrels, two barges tied up ----
+    for (let x = X0 + 20; x <= X1 - 20; x += 43) { if (CITY.piers.some(px => Math.abs(x - px) < 8)) continue; add(new THREE.CylinderGeometry(0.5, 0.6, 1.3, 8), darkStone, x, Y + 0.65, 94); CITY.solids.push({ x, z: 94, r: 0.6 }); }
+    { const barrelM = M('#8a6438'); for (let i = 0; i < 30; i++) { const x = rr(X0 + 20, X1 - 20), z = rr(98, 108); if (CITY.piers.some(px => Math.abs(x - px) < 9)) continue; if (R() < 0.6) { const c = crate(rr(0.9, 1.5)); c.position.set(x, Y + 0.8, z); c.rotation.y = rr(0, 3); c.userData.keep = true; G.add(c); CITY.solids.push({ x, z, r: 1.4 }); } else { add(new THREE.CylinderGeometry(0.9, 0.9, 2.2, 12), barrelM, x, Y + 1.1, z); CITY.solids.push({ x, z, r: 0.95 }); } } }
+    [[-260, 70, '#6b4a2b'], [85, 66, '#4a5a3a']].forEach(([x, z, col]) => { add(new THREE.BoxGeometry(34, 2.6, 12), M(col), x, 0.6, z); add(new THREE.BoxGeometry(34.6, 0.3, 12.6), plankM, x, 2, z); add(new THREE.BoxGeometry(8, 4.5, 8), M('#c9b98f'), x - 10, 4.3, z); add(new THREE.CylinderGeometry(0.25, 0.3, 14, 6), woodM, x + 4, 9, z); for (let k = 0; k < 4; k++) { const c = crate(1.3); c.position.set(x + 6 + (k % 2) * 3.4, 3 + Math.floor(k / 2) * 1.75, z + (k % 2 ? 1.4 : -1.2)); c.userData.keep = true; G.add(c); } });
     // a few townsfolk, standing where the work is. Nobody here has anything to say yet.
-    [[-58, 268, 0], [58, 268, 0], [58, 392, 3.14], [-58, 392, 3.14], [-103, 288, 1.57], [103, 372, -1.57], [-40, 304, 3.14], [40, 356, 0], [-170, 104, 0], [170, 104, 0], [-12, 200, 1.2], [-438, 318, 1.57], [438, 342, -1.57], [12, 520, -1.2]].forEach(([x, z, ry], i) => {
+    { const hz = (S.high[0] + S.high[1]) / 2; [[-70, SQ.z0 + 10, 0], [70, SQ.z0 + 10, 0], [70, SQ.z1 - 10, 3.14], [-70, SQ.z1 - 10, 3.14], [SQ.x0 + 10, 331, 1.57], [SQ.x1 - 10, 429, -1.57], [-46, 334, 3.14], [46, 426, 0], [-170, 104, 0], [170, 104, 0], [-12, 220, 1.2], [X0 + 12, hz - 12, 1.57], [X1 - 12, hz + 12, -1.57], [12, Z1 - 30, -1.2]].forEach(([x, z, ry], i) => {
       const n = makeElfNPC({ coat: pk(['#4a3a5a', '#2e6b3a', '#8a4a2a', '#2f4a6a', '#7a5a2a', '#6a2a3a']), skin: pk(['#d8b89a', '#c9956a', '#b98a63', '#e0c2a2']), hair: pk(['#2a2a2a', '#8a5a2a', '#c9a06a', '#5a4a3a', '#d8d8d8']), hat: pk(['cap', 'point', 'none', 'hood']), capColor: pk(['#5a3d22', '#2e6b3a', '#b5562b']), tall: rr(5.4, 6.4), wide: rr(1.15, 1.45) });
-      n.position.set(x, Y, z); n.rotation.y = ry; n.traverse(o => { if (o.isMesh) o.castShadow = true; }); G.add(n); CITY.solids.push({ x, z, r: 1.3 }); });
-    // street signs where the two main streets meet the square
-    [[-104, 318, 'West Gate · Old Town · Fernwater', -Math.PI / 2], [104, 342, 'East Gate · Makers’ Row', Math.PI / 2], [-11, 266, 'The Wharf · University', Math.PI], [11, 394, 'South Gate · Garden Lots', 0]].forEach(([x, z, t, ry]) => { add(new THREE.CylinderGeometry(0.25, 0.3, 9, 6), woodM, x, Y + 4.5, z); const sg = signBoard(t, 13, 1.7, '#8a6438', '#f6e7c2'); sg.position.set(x, Y + 9.6, z); sg.rotation.y = ry; G.add(sg); CITY.solids.push({ x, z, r: 0.35 }); });
+      n.position.set(x, Y, z); n.rotation.y = ry; n.traverse(o => { if (o.isMesh) o.castShadow = true; }); n.userData.keep = true; G.add(n); CITY.solids.push({ x, z, r: 1.3 }); }); }
+    // street signs where the streets meet the square, and the name of every street at its ends
+    [[SQ.x0 - 4, S.high[0] - 3, 'West Gate · Old Town · Fernwater', -Math.PI / 2], [SQ.x1 + 4, S.high[1] + 3, 'East Gate · Makers’ Row', Math.PI / 2], [-21, SQ.z0 - 8, 'The Wharf · University', Math.PI], [21, SQ.z1 + 8, 'South Gate · Lodgings · Garden Lots', 0]].forEach(([x, z, t, ry]) => { add(new THREE.CylinderGeometry(0.25, 0.3, 9, 6), woodM, x, Y + 4.5, z); const sg = signBoard(t, 14, 1.7, '#8a6438', '#f6e7c2'); sg.position.set(x, Y + 9.6, z); sg.rotation.y = ry; G.add(sg); CITY.solids.push({ x, z, r: 0.35 }); });
+    [['Wharf Road', S.wharf], ['North Street', S.north], ['High Street', S.high], ['South Street', S.south], ['Garden Lane', S.lane]].forEach(([name, [z0, z1]]) => [-S.sx + 10.5, S.sx - 10.5, 16.5].forEach(x => { if (name === 'High Street' && Math.abs(x) < 100) return; add(new THREE.CylinderGeometry(0.2, 0.25, 7, 6), woodM, x, Y + 3.5, z0 - 3); const sg = signBoard(name, 8, 1.3, '#f6e7c2', '#3a2a18'); sg.position.set(x, Y + 7.4, z0 - 3); G.add(sg); CITY.solids.push({ x, z: z0 - 3, r: 0.3 }); }));
+    bake(G);
   }
 
   // where you are when you're out in the open land
@@ -2223,9 +2309,16 @@
   const NIGHTC = { sky: new THREE.Color('#4a6a9a'), gnd: new THREE.Color('#1a1a22'), sun: new THREE.Color('#9fb8e8'), fog: new THREE.Color('#1b2a44'), dome: new THREE.Color('#1c2a4a'), hi: 0.75, si: 0.55 };
   const SKYC = { sky: new THREE.Color('#ffffff'), gnd: new THREE.Color('#6f8fb0'), sun: new THREE.Color('#fff8ec'), fog: new THREE.Color('#cfe0f2'), dome: new THREE.Color('#ffffff'), hi: 1.0, si: 1.1 };
   let nightNow = -1, altNow = -1; const _c1 = new THREE.Color();
-  // The day is twenty-four minutes from one sunrise to the next, the same for everyone who is playing, with about six minutes of night in it.
-  const DAY_LEN = 24 * 60; let clockFix = null, wasNight = null;
-  function clockNight() { const t = clockFix !== null ? clockFix : (Date.now() / 1000 % DAY_LEN) / DAY_LEN; return 0.9 * ss(0.66, 0.72, t) * (1 - ss(0.93, 0.99, t)); }
+  // The clock is the real one. This continent keeps Central time (each continent can have its own zone: it is the one line below), and everyone on it sees the same sun: up by seven, down by half past seven in the evening.
+  const ZONE = 'America/Chicago'; let zoneOff = null, zoneSet = 0, clockShift = 0, wasNight = null;
+  function daySecs() { const now = Date.now(); if (zoneOff === null || now - zoneSet > 600000) { zoneSet = now; try { const p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: ZONE, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(now).forEach(q => (p[q.type] = +q.value)); zoneOff = (p.hour * 3600 + p.minute * 60 + p.second) - Math.floor(now / 1000) % 86400; } catch (e) { zoneOff = -6 * 3600; } }
+    return (((now / 1000 + zoneOff + clockShift) % 86400) + 86400) % 86400; }
+  const clockHour = () => daySecs() / 3600;
+  function setClock(h) { clockShift = 0; if (h !== null && h !== undefined) clockShift = h * 3600 - daySecs(); nightNow = -1; }   // for testing: jump to an hour and let the clock run on from there
+  function clockWords() { const h = clockHour(), hh = Math.floor(h), m = Math.floor((h - hh) * 60); return `${hh % 12 || 12}:${String(m).padStart(2, '0')} ${hh < 5 ? 'at night' : hh < 12 ? 'in the morning' : hh < 17 ? 'in the afternoon' : hh < 21 ? 'in the evening' : 'at night'}`; }
+  // the Hollow's hours: shops open at seven and shut at nine; people are home from nine and set off for work a little before seven
+  const hollowAbed = () => { const h = clockHour(); return h >= 21 || h < 6.6; }, shopsShut = () => { const h = clockHour(); return h >= 21 || h < 7; };
+  function clockNight() { const h = clockHour(); return 0.9 * (1 - ss(5.75, 7, h) * (1 - ss(18.25, 19.5, h))); }
   // n: how far into the night it is, by the clock or because you are in Lanternreach, where it is always night; a: how far above the cloud you are, where it is always bright day
   function setNight(n, a) {
     n *= 1 - a; if (Math.abs(n - nightNow) < 0.004 && Math.abs(a - altNow) < 0.004) return; nightNow = n; altNow = a;
@@ -2279,7 +2372,7 @@
   // collision in the open world: trees and stones, the town fences (you go in only through a gate), and slopes too steep to climb
   // Hearthmoor's walls, buildings and street furniture, all in the city's own frame
   function cityCollide(p, prev) {
-    if (Math.hypot(p.x - CITY.cx, p.z - CITY.cz) > 640) return;
+    if (Math.hypot(p.x - CITY.cx, p.z - CITY.cz) > 760) return;
     let [lx, lz] = toLocal(frameH, p.x, p.z); const lx0 = lx, lz0 = lz, m = 0.6;
     for (const s of CITY.solids) { const dx = lx - s.x, dz = lz - s.z, d = Math.hypot(dx, dz), min = s.r + m; if (d < min && d > 0.001) { lx = s.x + dx / d * min; lz = s.z + dz / d * min; } }
     for (const b of CITY.boxes) { const dx = lx - b.x, dz = lz - b.z, ex = b.hw + m, ez = b.hd + m; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) lx = b.x + (dx < 0 ? -1 : 1) * ex; else lz = b.z + (dz < 0 ? -1 : 1) * ez; } }
@@ -2317,7 +2410,7 @@
     worldSky.position.set(wx, P ? P.oy || 0 : 0, wz); { const cn = clockNight(), ln = nightAt(wx, wz), isN = cn > 0.45; setNight(Math.max(ln, cn), ss(140, 250, player.position.y + (P ? P.oy || 0 : 0))); if (wasNight !== null && isN !== wasNight && gameStarted && ln < 0.3 && !talking()) flash(isN ? 'Night is falling. The lamps are lit.' : 'The sun is coming up.', 5000); wasNight = isN; } if (worldScene.userData.seaTex) worldScene.userData.seaTex.offset.x = (performance.now() * 0.000012) % 1; if (worldScene.userData.riverTex) worldScene.userData.riverTex.offset.x = (performance.now() * 0.00002) % 1;
     renderer.autoClear = false; renderer.clear();
     worldScene.matrixAutoUpdate = false; worldScene.matrix.copy(Pinv); worldScene.matrixWorldNeedsUpdate = true;
-    if (CITY.group) { CITY.group.visible = Math.hypot(wx - CITY.cx, wz - CITY.cz) < 1250; const here = where === 'wild' && inCity(wx, wz, 4); if (here !== CITY.here) { CITY.here = here; if (here && !talking()) hint('Hearthmoor, the capital. The wharf is on the lake to the north, the Market Square is in the middle.'); } }
+    if (CITY.group) { CITY.group.visible = Math.hypot(wx - CITY.cx, wz - CITY.cz) < 1400; if (CITY.group.visible && CITY.tick) CITY.tick(performance.now() / 1000); const here = where === 'wild' && inCity(wx, wz, 4); if (here !== CITY.here) { CITY.here = here; if (here && !talking()) hint('Hearthmoor, the capital. The wharf is on the lake to the north, the Market Square is in the middle.'); } }
     if (where !== 'wild') { worldSun.target.position.set(wx, 0, wz); worldSun.position.set(wx - 170, 330, wz + 160); }
     renderer.render(worldScene, camera);
     for (const t of STITCHED) {
@@ -2357,7 +2450,8 @@
   function makeRoom(id, o) {
     const sc = new THREE.Scene(); const W = o.w, D = o.d, H = o.h || 9, DH = o.doorH || clamp(H - 1.4, 6.4, 9);   // the way out is as tall as the room allows, up to a grown elf's door
     const night = o.region === 'lantern';   // it is always night outside in Lanternreach
-    sc.add(new THREE.Mesh(new THREE.SphereGeometry(200, 16, 12), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, color: night ? '#16223c' : '#ffffff' })));
+    const skyM = new THREE.Mesh(new THREE.SphereGeometry(200, 16, 12), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, color: night ? '#16223c' : '#ffffff' })); sc.add(skyM);
+    const winM = mat('#fff0c8', { emissive: '#ffd27a', emissiveIntensity: 0.8, side: THREE.DoubleSide });
     sc.add(new THREE.HemisphereLight('#fff3dc', '#6a5a48', 0.42));
     const lamp = new THREE.PointLight('#ffc46a', 0.75, 70); lamp.position.set(0, H - 1.6, 0); lamp.castShadow = true; lamp.shadow.mapSize.set(1024, 1024); lamp.shadow.bias = -0.002; sc.add(lamp);
     const dayl = new THREE.DirectionalLight(night ? '#9fb8e8' : '#fff4dc', night ? 0.08 : 0.25); dayl.position.set(4, 10, 12); sc.add(dayl);
@@ -2378,12 +2472,14 @@
     const leaf = new THREE.Mesh(new THREE.BoxGeometry(gap * 2, DH - 0.35, 0.2), mat('#3e2812')); leaf.position.set(gap, (DH - 0.35) / 2, 0); leaf.castShadow = true; hinge.add(leaf);
     { const knob = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), mat('#d8b24a', { metalness: 0.6, roughness: 0.3 })); knob.position.set(gap * 2 - 0.45, DH * 0.44, -0.24); hinge.add(knob); }
     // windows along the side walls
-    [-1, 1].forEach(d => { for (let z = -D / 2 + 4; z < D / 2 - 2; z += 6) { const w = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), mat('#fff0c8', { emissive: '#ffd27a', emissiveIntensity: 0.8, side: THREE.DoubleSide })); w.position.set(d * (W / 2 - 0.05), H * 0.55, z); w.rotation.y = -d * Math.PI / 2; sc.add(w); [[0, 0, 3, 0.2], [0, 0, 0.2, 3]].forEach(([ox, oy, ww, hh]) => { const fr = new THREE.Mesh(new THREE.BoxGeometry(0.25, hh, ww), trimM); fr.position.set(d * (W / 2 - 0.1), H * 0.55 + oy, z + ox); sc.add(fr); }); } });
-    const it = { id, scene: sc, w: W, d: D, h: H, solids: [], boxes: [], label: o.label, region: o.region, hint: o.hint || '', door: null, hinge, doorA: 0 };
+    [-1, 1].forEach(d => { for (let z = -D / 2 + 4; z < D / 2 - 2; z += 6) { const w = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), winM); w.position.set(d * (W / 2 - 0.05), H * 0.55, z); w.rotation.y = -d * Math.PI / 2; sc.add(w); [[0, 0, 3, 0.2], [0, 0, 0.2, 3]].forEach(([ox, oy, ww, hh]) => { const fr = new THREE.Mesh(new THREE.BoxGeometry(0.25, hh, ww), trimM); fr.position.set(d * (W / 2 - 0.1), H * 0.55 + oy, z + ox); sc.add(fr); }); } });
+    const it = { id, scene: sc, w: W, d: D, h: H, solids: [], boxes: [], label: o.label, region: o.region, hint: o.hint || '', door: null, hinge, doorA: 0, sky: skyM, win: winM, dayl, out: outside, nn: -1 };
     o.decorate && o.decorate(sc, it.solids, { wall, W, D, H, trimM, id, boxes: it.boxes, room: it, seat: (x, z, yaw, top, label, y0) => seatSpot(sc, 'in:' + id, x, z, yaw, top, label, y0) });
     sc.traverse(m => { if (m.isMesh && m !== outside && m !== floor) { m.castShadow = true; m.receiveShadow = true; } });
     interiors[id] = it; return it;
   }
+  // through a room's windows it is the same hour as it is outside
+  function roomNight(it) { if (it.region === 'lantern') return; const n = clockNight() / 0.9; if (Math.abs(n - it.nn) < 0.01) return; it.nn = n; it.sky.material.color.setRGB(1 - 0.9 * n, 1 - 0.86 * n, 1 - 0.7 * n); it.win.color.setRGB(1 - 0.84 * n, 0.94 - 0.72 * n, 0.78 - 0.44 * n); it.win.emissive.setRGB(1 - 0.9 * n, 0.82 - 0.66 * n, 0.48 - 0.2 * n); it.win.emissiveIntensity = 0.8 - 0.3 * n; it.dayl.intensity = 0.25 - 0.19 * n; it.out.material.color.setRGB(0.48 - 0.37 * n, 0.61 - 0.45 * n, 0.27 - 0.13 * n); }
   function sceneOf(region) { return region === 'wild' ? worldScene : region === 'village' ? scene : region === 'orchards' ? orchScene : region === 'fernwater' ? fernScene : region === 'cairnhold' ? cairnScene : region === 'cogsworth' ? cogScene : region === 'emberdeep' ? embScene : region === 'lantern' ? lantScene : region === 'lift' ? liftScene : region === 'skyhaven' ? skyScene : region === 'flight' ? flightScene : interior ? interior.scene : scene; }
   function curScene() { return where === 'in' ? interior.scene : sceneOf(where); }
   const REGION_LABEL = { wild: 'The Long Road', village: 'Thistledown Hollow', road: 'The Long Road', orchards: 'The Mallow Orchards', hills: 'The River Road', fernwater: 'Fernwater Crossing', high: 'The High Road', cairnhold: 'Cairnhold Highlands', cliff: 'The Cliff Road', cogsworth: 'Cogsworth', mtn: 'The Mountain Road', emberdeep: 'Emberdeep', sea: 'The Sea Road', lantern: 'Lanternreach', lift: 'The sky-lift', skyhaven: 'Skyhaven', flight: 'The flight home' };
@@ -2391,7 +2487,7 @@
     const it = interiors[id]; if (!it || fading) return;
     fadeTo(it.label, () => {
       const from = curScene(); from.remove(player); it.scene.add(player); if (beetle) { from.remove(beetle); it.scene.add(beetle); beetle.position.set(1.8, 0, it.d / 2 - 3.2); }
-      interior = it; where = 'in'; it.doorA = 1; player.position.set(0, 0, it.d / 2 - 5); py = 0; vy = 0; bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI;
+      interior = it; where = 'in'; roomNight(it); it.doorA = 1; player.position.set(0, 0, it.d / 2 - 5); py = 0; vy = 0; bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI;
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
     }, () => { hint(it.hint); then && then(); });
   }
@@ -2415,6 +2511,39 @@
     const can = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1, 12), mat('#5a7a8a', { metalness: 0.4 })); can.position.set(-5.5, 0.5, 3.6); sc.add(can); solids.push({ x: -5.5, z: 3.6, r: 0.8 });
   } });
   interiors.potting.door = { x: NURS.x, z: NURS.z - 7.5 + 4.5, yaw: 0 };
+  // inside The Sleepy Beetle: the great hearth, the bar, tables and stools, and whoever is in tonight
+  const INN_SEATS = {};   // where the keepers stand and the travellers sit, for the night life to fill
+  makeRoom('inn', { w: 72, d: 40, h: 16, doorH: 9.4, wall: '#ead9b8', trim: '#4a3320', label: 'The Sleepy Beetle', region: 'village', hint: 'A big fire, hot cocoa, and somebody always awake.', decorate: (sc, solids, k) => {
+    const { wall, W, D, H, trimM } = k, wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 }), cream = mat('#f2ead8'), black = mat('#1a1410'), N = -D / 2, E = W / 2, S = D / 2;
+    const so = (x, z, r) => solids.push({ x, z, r }), cyl = (r0, r1, hh, x, y, z, m, n) => { const q = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, hh, n || 14), m); q.position.set(x, y, z); sc.add(q); return q; };
+    // the great hearth, in the middle of the back wall, with the beetle asleep over the mantel
+    const hx = -8; [-6.5, 6.5].forEach(dx => { wall(3, 8, 3.2, hx + dx, 4, N + 1.6, stone); so(hx + dx, N + 1.6, 2.3); }); wall(16, 2.2, 3.4, hx, 9.1, N + 1.7, stone); wall(10, 8, 0.6, hx, 4, N + 0.4, black); wall(17.4, 0.6, 4, hx, 10.5, N + 2, dark); wall(11, H - 10.8, 2.4, hx, (H + 10.8) / 2, N + 1.2, stone);
+    wall(11, 0.5, 4.4, hx, 0.25, N + 2.2, stone); [-1.6, 0.2, 1.7].forEach((dx, q) => { cyl(0.5, 0.5, 4.4, hx + dx * 0.4, 0.95 + (q === 1 ? 0.7 : 0), N + 2 + q * 0.2, dark, 8).rotation.z = Math.PI / 2; });
+    const fl = new THREE.PointLight('#ff9a4a', 1.15, 70); fl.position.set(hx, 4.5, N + 6); sc.add(fl); makeFire(sc, sc, hx, 1.3, N + 2.1, 2.5, fl); [-3, 0, 3].forEach(dx => so(hx + dx, N + 1.6, 2.6));
+    sleepyBeetle(sc, hx, 12.9, N + 2.5, 1.7, 0);
+    // a settle each side of the fire, turned in to it
+    [hx - 6, hx + 6].forEach(x => { const z = N + 11, g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.PI; sc.add(g); const b = (w, hh, d, px, py, pz, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m); q.position.set(px, py, pz); g.add(q); };
+      b(8, 0.5, 2.8, 0, 2.5, 0, wood); b(8, 3.8, 0.4, 0, 4.6, -1.4, wood); [-1, 1].forEach(q => b(0.5, 4, 3, q * 4, 2, -0.1, dark)); b(7.4, 0.5, 2.4, 0, 2.95, 0.1, mat('#a8563a', { roughness: 1 }));
+      [-2.5, 0, 2.5].forEach(q => so(x + q, z + 0.3, 1.6)); [-1.9, 1.9].forEach(q => k.seat(x + q, z - 0.2, Math.PI, 3.2, 'settle by the fire')); });
+    // the bar along the east side: a counter, shelves of jugs and mugs behind it, two barrels, and the bell on a barrel of its own where a child can reach it
+    wall(3, 4, 20, 24, 2, -6, wood); wall(3.9, 0.4, 20.8, 24, 4.2, -6, top); for (let z = -15; z <= 3; z += 3) so(24, z, 2.1);
+    [6.5, 9.5].forEach(y => { wall(1.4, 0.3, 22, E - 0.9, y, -6, dark); for (let q = 0; q < 9; q++) { const z = -15.5 + q * 2.4; if ((q + (y > 7 ? 1 : 0)) % 2) cyl(0.5, 0.62, 1.3, E - 0.9, y + 0.8, z, mat(q % 3 ? '#b5653a' : '#6b7a8a'), 10); else [-0.5, 0.5].forEach(dz => cyl(0.32, 0.28, 0.7, E - 0.9, y + 0.5, z + dz, cream, 8)); } });
+    [[E - 4.5, 10], [E - 4.5, 15]].forEach(([x, z]) => { cyl(2.2, 2, 5, x, 2.5, z, wood, 16); [1.2, 3.8].forEach(y => { const hp = new THREE.Mesh(new THREE.TorusGeometry(2.18, 0.1, 6, 20), mat('#3a3a3a', { metalness: 0.5 })); hp.rotation.x = Math.PI / 2; hp.position.set(x, y, z); sc.add(hp); }); so(x, z, 2.4); });
+    [-12, -6, 0].forEach(z => { cyl(0.42, 0.36, 0.9, 24.6, 4.85, z, mat('#c9a06a'), 10); });
+    shopBell(sc, 'in:inn', 19.5, 2.4, 8, 'inn', { post: true, floor: 0 }); so(19.5, 8, 1);
+    INN_SEATS.keeper = [29.5, -6, -Math.PI / 2];
+    // four round tables. Some stools are kept for the travellers who are staying; the rest are for you
+    INN_SEATS.guest = [];
+    [[-26, -5, 1], [-13, 8, 0], [11, 9, 2], [-27, 11, -1]].forEach(([x, z, guest]) => { cyl(2.9, 2.9, 0.35, x, 3.5, z, top, 20); cyl(0.5, 0.9, 3.3, x, 1.65, z, dark, 10); so(x, z, 2.6);
+      cyl(0.36, 0.3, 0.8, x + 0.9, 4.05, z - 0.6, mat('#c9a06a'), 10); cyl(0.36, 0.3, 0.8, x - 1, 4.05, z + 0.7, mat('#c9a06a'), 10); cyl(0.9, 0.9, 0.12, x - 0.2, 3.74, z - 0.9, cream, 14);
+      [[0, -4.3, 0], [-4.3, 0, Math.PI / 2], [4.3, 0, -Math.PI / 2]].forEach(([a, b, yaw], q) => { cyl(1, 0.9, 2.5, x + a, 1.25, z + b, wood, 12); if (q === guest) { INN_SEATS.guest.push([x + a, z + b, yaw]); so(x + a, z + b, 1.3); return; } so(x + a, z + b, 1.1); k.seat(x + a, z + b, yaw, 2.5, 'stool'); }); });
+    // a wheel of candles, a rug inside the door, and hangings on the west wall
+    { const cy = 11, cxx = 2, flame = new THREE.MeshBasicMaterial({ color: '#ffd36a' }), ring = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.22, 8, 28), dark); ring.rotation.x = Math.PI / 2; ring.position.set(cxx, cy, 0); sc.add(ring); wall(7.2, 0.2, 0.2, cxx, cy, 0, dark); wall(0.2, 0.2, 7.2, cxx, cy, 0, dark); wall(0.12, H - cy, 0.12, cxx, (H + cy) / 2, 0, black);
+      for (let q = 0; q < 8; q++) { const a = q / 8 * Math.PI * 2, x = cxx + Math.cos(a) * 3.6, z = Math.sin(a) * 3.6; wall(0.22, 0.9, 0.22, x, cy + 0.6, z, cream); const f = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), flame); f.scale.y = 1.7; f.position.set(x, cy + 1.25, z); sc.add(f); } }
+    [[6.8, 11.8, '#d9c08a', 0.025], [6, 11, '#3f6a48', 0.035]].forEach(([w, d, c, y]) => { const rn = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(c, { roughness: 1 })); rn.rotation.x = -Math.PI / 2; rn.position.set(0, y, S - 7); sc.add(rn); });
+    [[-10, '#a8563a'], [2, '#3f6a48'], [12, '#d9a33f']].forEach(([z, c]) => { wall(0.12, 6, 5, -E + 0.4, 9.6, z, mat(c, { roughness: 1 })); wall(0.22, 0.22, 5.8, -E + 0.45, 12.7, z, dark); });
+  } });
+  interiors.inn.door = { x: INN.x, z: INN.z + 16.2 + 4.5, yaw: 0 };
   // the four homes: every one has a hearth, a bed, a table, and clear floor from the door to the fire
   // A family's house inside. The living room is the cottage's old single room, built at a grown elf's size (everything in it is 1.6 times what it was).
   // Off its west side is a wing of three rooms, each with its own doorway: the kitchen at the front, the child's room in the middle, the parents' room at the back.
@@ -4271,6 +4400,8 @@
     stick: { n: 'Walking stick', e: '🪵', v: 15, t: 0, c: 'tool', d: 'Carry it and you get your breath back sooner.' },
     pack: { n: 'Traveller’s pack', e: '🎒', v: 40, t: 0, w: 0, c: 'tool', d: 'Carry it and you have room for 20 more.' },
     apple: { n: 'Apple', e: '🍎', v: 1, t: 1, c: 'food', eat: 12, d: 'A Mallow windfall.' },
+    cocoa: { n: 'Hot cocoa', e: '☕', v: 3, t: 0, c: 'food', eat: 16, drink: true, d: 'From the Sleepy Beetle. Best by the fire.' },
+    stew: { n: 'Barley stew', e: '🍲', v: 5, t: 0, c: 'food', eat: 34, heal: 10, d: 'A bowl from the pot at the Sleepy Beetle.' },
     cider: { n: 'Sweet cider', e: '🧃', v: 4, t: 1, c: 'food', eat: 30, drink: true, d: 'Pressed at Quern Mill.' },
     flour: { n: 'Sack of flour', e: '🌾', v: 4, t: 1, w: 3, c: 'goods', d: 'Stone-ground. Bakers everywhere want it.' },
     bread: { n: 'Loaf of bread', e: '🍞', v: 3, t: 2, c: 'food', eat: 35, d: 'From Crumb’s oven.' },
@@ -4307,6 +4438,7 @@
     fen: { n: 'Dewberry’s stall', who: 'Fen Dewberry', t: 0, stock: ['jam', 'dyered', 'dyeblue', 'dyegreen', 'dyegold', 'dyeplum'] },
     nursery: { n: 'Fernsby’s Potting Shed', t: 0, stock: ['seeds', 'seedling', 'strawhat'] },
     wood: { n: 'Bough’s Woodshop', who: 'Aldric Bough', t: 0, stock: ['stick', 'whistle'] },
+    inn: { n: 'The Sleepy Beetle', get who() { const h = clockHour(); return h >= 7 && h < 19 ? 'Posy Underbough' : 'Moss Underbough'; }, t: 0, always: true, stock: ['cocoa', 'stew', 'bread', 'pie', 'cider', 'nutmix'] },
     mill: { n: 'Quern Mill', t: 1, stock: ['apple', 'cider', 'flour'] },
     bakery: { n: 'Crumb’s Bakery', who: 'Maudie Crumb', t: 2, stock: ['bread', 'cake', 'pie'] },
     nets: { n: 'Nets & Lines', t: 2, stock: ['fish'] },
@@ -4358,15 +4490,20 @@
   // ---------- the satchel, and the counter when you are at one ----------
   let bagOpen = false, bagShop = null, bagTab = 'all', bagMsg = '';
   const BIKE_PARTS = [['gear', 2], ['bell', 1], ['rope', 1]], BIKE_COINS = 30;
-  function openBag(shopId) {
+  function shopShut(id) { const sh = SHOPS[id]; return !!sh && sh.t === 0 && !sh.always && shopsShut() && phase === 'free'; }
+  const honestStock = sh => sh.stock.filter(q => ITEMS[q].c === 'food');
+  // a shop that has shut for the night still has its honesty box, if it sells anything to eat
+  function shopRing(id) { if (!shopShut(id)) return openBag(id); const sh = SHOPS[id]; if (honestStock(sh).length) openBag(id, true); else flash(`${sh.n} is shut. It opens at seven in the morning.`, 5000); }
+  let bagHonest = false;
+  function openBag(shopId, honest) {
     if (bagOpen || talking() || fading || mapOpen || !gameStarted || !$('settings').hidden) return;
-    bagShop = shopId ? SHOPS[shopId] : null; bagOpen = true; bagTab = 'all'; bagMsg = '';
+    bagShop = shopId ? SHOPS[shopId] : null; bagHonest = !!honest && !!bagShop; bagOpen = true; bagTab = 'all'; bagMsg = '';
     if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} }
     Object.keys(keys).forEach(k => (keys[k] = false)); stickV.x = stickV.y = 0;
     if (bagShop) chink(1760);
     $('bag').hidden = false; renderBag(); $('bag').scrollTop = 0;
   }
-  function closeBag() { bagOpen = false; bagShop = null; $('bag').hidden = true; }
+  function closeBag() { bagOpen = false; bagShop = null; bagHonest = false; $('bag').hidden = true; }
   const coinWord = n => `${n} coin${n === 1 ? '' : 's'}`;
   function itemNote(id) { const it = ITEMS[id], bits = [it.d]; if (it.eat) bits.push(`Stamina +${it.eat}${it.heal ? `, health +${it.heal}` : ''}.`); bits.push(it.t === undefined ? 'Grows wild.' : `Made in ${TOWN_NAME[it.t]}.`); if (roomOf(id) !== 1) bits.push(roomOf(id) ? `Takes the room of ${roomOf(id)}.` : 'Takes no room.'); return bits.join(' '); }
   function renderBag() {
@@ -4376,7 +4513,7 @@
     $('bagcoins').innerHTML = ICON.coin + `<span>${coinWord(coins)}</span>`;
     $('bagload').textContent = `Carrying ${used} of ${max}`;
     $('bagnote').textContent = shop
-      ? (shop.who ? `${shop.who} serves you. ` : 'Nobody is at the counter. Ring the bell, take what you need and leave your coins in the dish. ') + (shop.t === HUB ? 'Hearthmoor makes little and sells everything, at capital prices, and pays a steady price for whatever you bring.' : 'What is made here is cheap here. Carry it down the road and it is worth more with every town you pass.')
+      ? bagHonest ? 'Shut for the night, and open again at seven. The honesty box is by the door: take what you need to eat and leave your coins in it. Nobody is here to buy anything from you.' : (shop.who ? `${shop.who} serves you. ` : 'Nobody is at the counter. Ring the bell, take what you need and leave your coins in the dish. ') + (shop.t === HUB ? 'Hearthmoor makes little and sells everything, at capital prices, and pays a steady price for whatever you bring.' : 'What is made here is cheap here. Carry it down the road and it is worth more with every town you pass.')
       : (kid.satchel.visible ? 'Your satchel holds 20.' : 'Your pockets hold 6, until you have a satchel.') + ' A traveller’s pack holds 20 more, and a beetle that walks with you carries 20.';
     { const bp = $('bagpet'); bp.hidden = !save.beetle || !!bagShop; if (!bp.hidden) bp.innerHTML = `${beetleName} ${companionWhere()}.` + (parked && !parked.leave ? ' <button class="btn small" data-a="whistle" data-i="x">Whistle</button>' : ''); }
     $('bagtabs').innerHTML = CATS.map(([k, n]) => `<button class="btn small" data-a="tab" data-i="${k}" aria-pressed="${bagTab === k}">${n}</button>`).join('');
@@ -4384,14 +4521,14 @@
     const row = (id, count, small, btns) => `<div class="bagrow"><div class="em" aria-hidden="true">${ITEMS[id].e}</div><div class="nm"><b>${ITEMS[id].n}</b>${count ? ` <span class="ct">× ${count}</span>` : ''}<small>${small}</small></div><div class="do">${btns}</div></div>`;
     $('bagshopcol').hidden = !shop; if (!shop) $('bagshop').innerHTML = '';
     if (shop) {
-      const rows = shop.stock.filter(tabOK).map(id => { const p = buyPrice(shop, id), poor = coins < p, full = used + roomOf(id) > max; return row(id, 0, itemNote(id), `<button class="btn small primary" data-a="buy" data-i="${id}" ${poor || full ? 'disabled' : ''}>${poor ? 'Costs ' + p : full ? 'No room' : 'Buy · ' + coinWord(p)}</button>`); });
+      const rows = (bagHonest ? honestStock(shop) : shop.stock).filter(tabOK).map(id => { const p = buyPrice(shop, id), poor = coins < p, full = used + roomOf(id) > max; return row(id, 0, itemNote(id), `<button class="btn small primary" data-a="buy" data-i="${id}" ${poor || full ? 'disabled' : ''}>${poor ? 'Costs ' + p : full ? 'No room' : 'Buy · ' + coinWord(p)}</button>`); });
       if (shop === SHOPS.bikeworks && !bikeOwned) { const ok = BIKE_PARTS.every(([id, n]) => (v[id] || 0) >= n) && coins >= BIKE_COINS; rows.unshift(`<div class="bagrow"><div class="em" aria-hidden="true">🚲</div><div class="nm"><b>A bicycle, built for you</b><small>Bring ${BIKE_PARTS.map(([id, n]) => `${n} ${ITEMS[id].n.toLowerCase()}${n > 1 ? 's' : ''} (you have ${v[id] || 0})`).join(', ')} and ${BIKE_COINS} coins. Gears and bells are made here; rope comes from Fernwater.</small></div><div class="do"><button class="btn small primary" data-a="bike" data-i="x" ${ok ? '' : 'disabled'}>${ok ? 'Have it built' : 'Not yet'}</button></div></div>`); }
       $('bagshoph').textContent = 'For sale here'; $('bagshop').innerHTML = rows.join('') || '<div class="bagempty">Nothing of that kind here.</div>';
     }
     const order = { food: 0, wear: 1, tool: 2, goods: 3 }, mine = Object.keys(v).filter(id => ITEMS[id] && v[id] > 0 && tabOK(id)).sort((a, b) => order[ITEMS[a].c] - order[ITEMS[b].c] || ITEMS[a].n.localeCompare(ITEMS[b].n));
-    $('bagmineh').textContent = shop ? 'You are carrying (they will buy any of it)' : 'You are carrying';
+    $('bagmineh').textContent = shop ? (bagHonest ? 'You are carrying' : 'You are carrying (they will buy any of it)') : 'You are carrying';
     $('bagmine').innerHTML = mine.map(id => { const it = ITEMS[id]; let b = '';
-      if (shop) b = `<button class="btn small" data-a="sell" data-i="${id}">Sell · ${coinWord(sellPrice(shop, id))}</button>`;
+      if (shop && bagHonest) b = ''; else if (shop) b = `<button class="btn small" data-a="sell" data-i="${id}">Sell · ${coinWord(sellPrice(shop, id))}</button>`;
       else { if (it.eat) b += `<button class="btn small primary" data-a="eat" data-i="${id}">${it.drink ? 'Drink' : 'Eat'}</button>`;
         if (it.hat) b += `<button class="btn small primary" data-a="wear" data-i="${id}">${save.hatStyle === it.hat ? 'Take off' : 'Wear'}</button>`;
         if (it.dye) b += `<button class="btn small primary" data-a="dye" data-i="${id}">Dye my tunic</button>`;
@@ -4406,7 +4543,7 @@
   function bagAct(a, id) {
     const it = ITEMS[id]; if (!it) return;
     if (a === 'buy' && bagShop) { const p = buyPrice(bagShop, id); if (coins < p) { bagMsg = `That costs ${coinWord(p)}. You have ${coins}.`; return; } if (!addItem(id)) { bagMsg = 'You have no room for it.'; return; } setCoins(coins - p); chink(1320); bagMsg = `Bought: ${it.n}, for ${coinWord(p)}.`; }
-    else if (a === 'sell' && bagShop && has(id)) { const p = sellPrice(bagShop, id); removeItem(id); setCoins(coins + p); chink(1980); bagMsg = `Sold: ${it.n}, for ${coinWord(p)}.`; }
+    else if (a === 'sell' && bagShop && !bagHonest && has(id)) { const p = sellPrice(bagShop, id); removeItem(id); setCoins(coins + p); chink(1980); bagMsg = `Sold: ${it.n}, for ${coinWord(p)}.`; }
     else if (a === 'eat' && has(id)) { const needS = stamina < stamMax - 1, needH = it.heal && hp < 99.5; if (!needS && !needH) { bagMsg = 'You are not hungry. Your stamina is full.'; return; }
       removeItem(id); stamina = Math.min(stamMax, stamina + it.eat); if (it.heal) { hp = Math.min(100, hp + it.heal); hpFill.style.width = hp + '%'; hpEl.classList.toggle('low', hp < 30); hpEl.classList.toggle('show', hp < 99.5); }
       bagMsg = `${it.drink ? 'You drank' : 'You ate'} the ${it.n.toLowerCase()}. Stamina +${it.eat}${it.heal ? ', health +' + it.heal : ''}.`; }
@@ -4656,7 +4793,7 @@
     let text = '', word = 'Pick up';
     if (!talking() && !bagOpen && !mapOpen && !fading && !sitting) { const [b0, d0] = nearestPick(0); if (b0 && d0 <= REACH && b0.userData.kind === 'sci') { text = 'Look at ' + b0.userData.label; word = 'Look'; }
       if (!(b0 && d0 <= REACH)) for (let tier = 1; tier < 5 && !text; tier++) { const [b, d] = nearestPick(tier); if (!b || d > REACH) continue; const u = b.userData;
-        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'readteach') { text = 'Speak to Fen Dewberry'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { text = 'Trade at ' + SHOPS[u.shop].n; word = 'Trade'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
+        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'readteach') { text = 'Speak to Fen Dewberry'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { const sh = SHOPS[u.shop]; if (!shopShut(u.shop)) { text = 'Trade at ' + sh.n; word = 'Trade'; } else if (honestStock(sh).length) { text = 'Honesty box at ' + sh.n; word = 'Open'; } else { text = sh.n + ' is shut till seven'; word = 'Look'; } } else if (u.kind === 'folk') { text = 'Speak to ' + folk[u.fi].n; word = 'Speak'; } else if (u.kind === 'knock') { text = 'Knock at ' + FOLK[u.who].n + '’s door'; word = 'Knock'; } else if (u.kind === 'resident') { text = (FOLK[u.who].pose === 'bed' ? 'Wake ' : 'Speak to ') + FOLK[u.who].n; word = 'Speak'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
     if (text !== promptText) { promptText = text; const p = $('prompt'); p.hidden = !text; if (text) p.innerHTML = settings.input === 'touch' ? text : `<kbd>${settings.input === 'gamepad' ? 'X' : keyLabel(settings.binds.pick)}</kbd> ${text}`; $('grab').textContent = word; }
   }
 
@@ -4790,13 +4927,16 @@
   function canPick(o) {
     const k = o.userData.kind;
     if (k === 'sci') return where === 'village' && phase === 'sci' && !!sciActive && sciActive.left.has(o.userData.id) && !talking();
-    if (k === 'readteach') return where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
-    if (k === 'sciteach') return where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
-    if (k === 'teacher') return TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
+    if (k === 'readteach') return FOLK.fen.mode === 'post' && where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
+    if (k === 'sciteach') return FOLK.mari.mode === 'post' && where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
+    if (k === 'teacher') return (o.userData.i > 0 || FOLK.bw.mode === 'post') && TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
     if (k === 'quest') return where === 'village' && phase === 'free' && !save.beetle && !beetle && !parked;
     if (k === 'ferry') return o.userData.world === where && !ferryRide;
     if (k === 'follower') return (o === beetle && !!beetleName && beetle.userData.follow) || (!!parked && o === parked.obj && !parked.leave && parked.world === curWorld());
     if ((o.userData.world || 'village') !== (where === 'in' ? 'in:' + interior.id : where)) return false;
+    if (k === 'resident') return FOLK[o.userData.who].mode === 'home' && Math.abs(player.position.y - o.position.y) < 5 && !talking();
+    if (k === 'knock') return FOLK[o.userData.who].mode === 'home' && phase === 'free' && !talking();
+    if (k === 'folk') return o.visible && !talking();
     if (k === 'spill') return phase === 'spill' && !(o.userData.fall && o.userData.fall.t < 1);
     if (k === 'acorn' || k === 'berry') return phase === 'errand';
     if (k === 'fresh') return phase === 'fresh';
@@ -4834,7 +4974,9 @@
     else if (d.kind === 'shape') sortShape(obj);
     else if (d.kind === 'seat') sitDown(obj);
     else if (d.kind === 'find') takeFind(obj);
-    else if (d.kind === 'shop') openBag(d.shop);
+    else if (d.kind === 'shop') shopRing(d.shop);
+    else if (d.kind === 'resident' || d.kind === 'knock') residentTalk(d.who, d.kind === 'knock');
+    else if (d.kind === 'folk') { const F = folk[d.fi]; say([F.lines[F.k++ % F.lines.length]], null, F.n); }
     else if (d.kind === 'follower') companionMenu();
     else if (d.kind === 'teacher') teacherMenu(d.i);
     else if (d.kind === 'sci') sciPick(obj);
@@ -4868,7 +5010,7 @@
     player.position.add(new THREE.Vector3(Math.sin(yaw) * 1.4, 0, Math.cos(yaw) * 1.4)); hint('');
   }
   // tier 0: whatever the lesson in hand wants picked; 1: things lying about; 2: a counter to trade at; 3: a seat
-  const PICK_TIER = { find: 1, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
+  const PICK_TIER = { find: 1, resident: 2, knock: 2, folk: 2, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
   function nearestPick(tier) { let best = null, bd = Infinity; pickables.forEach(o => { if ((PICK_TIER[o.userData.kind] || 0) !== tier || !canPick(o)) return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } }); return [best, bd]; }
   function pickNearest() {
     let [best, bd] = nearestPick(0);
@@ -7800,7 +7942,7 @@
     if (tipT >= 0 && tipT < 1) { tipT += dt * 1.3; basket.rotation.x = Math.sin(Math.min(tipT, 1) * Math.PI) * 1.5; armsBW.forEach(a => (a.rotation.x = -0.95 - Math.sin(Math.min(tipT, 1) * Math.PI) * 0.5)); }
     pendingTick();
     const dBW = Math.hypot(player.position.x - BWPOS.x, player.position.z - BWPOS.z);
-    if (dBW < 6.5 && inShop && !nearBW && !talking()) { nearBW = true; offer(reachBramblewick); }
+    if (dBW < 6.5 && inShop && !nearBW && !talking() && FOLK.bw.mode === 'post') { nearBW = true; offer(reachBramblewick); }
     if (dBW > 9) nearBW = false;
 
     // Fen watches the lane, and talks when you walk up
@@ -7823,6 +7965,7 @@
     if (!reduce) aldHead.rotation.x = Math.sin(t * 0.7) * 0.04;
     if (inV && dAld < 7.5 && !nearAld && !talking() && ['towood', 'sortshapes', 'sacks'].includes(phase)) { nearAld = true; offer(reachAldric); }
     if (dAld > 10.5) nearAld = false;
+    nightLifeTick(dt, t);
     grown.forEach(s => { const tg = s.userData.target; if (s.scale.x < tg) { s.scale.setScalar(Math.min(tg, s.scale.x + dt * 0.8)); } });
 
     // the orchards: Hollis and Pip, the mill wheel and its mice, bouncing trees
@@ -8013,6 +8156,69 @@
   STITCHED.forEach(t => { t.scene.userData.fog0 = [150, 430]; t.scene.fog.near = 150 * worldDistK; t.scene.fog.far = 430 * worldDistK; });
   trimTowns();
   // ---------- teachers to speak to, the grub's heap, and the ferry bells ----------
+  // ---------- the Hollow by the clock: shops shut at nine, everyone walks home to bed, and anyone out after dark has a reason to be ----------
+  const FOLK = {
+    bw: { g: bw, hd: head, n: 'Old Bramblewick', post: BWPOS, home: 'bwhome', via: [[0, 3], [0, 14]] },
+    mari: { g: mari, hd: mariHead, n: 'Marigold Fernsby', post: MARIPOS, home: 'marihome', via: [[-24, 48], [-19, 46], [0, 46]] },
+    ald: { g: ald, hd: aldHead, n: 'Aldric Bough', post: ALDPOS, home: 'aldhome', via: [[24, 52], [4, 50]] },
+    fen: { g: fen, hd: fenHead, n: 'Fen Dewberry', post: FENPOS, home: 'fenhome', via: [[-28.6, 99], [-8, 99], [0, 92]] } };
+  const lyingQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0)));
+  const BED = { x: -38 + 7.2, z: -9.5, y: 10 };   // the grown elves' bed, upstairs in every house
+  Object.keys(FOLK).forEach((id, i) => { const f = FOLK[id], h = HOMES.find(q => q.id === f.home); f.id = id; f.h = h; f.i = i; f.mode = null; f.pose = null;
+    f.route = [[f.post.x, f.post.z], ...f.via, [3, LANE.z], [h.x, LANE.z], [h.x, h.z + h.sg * 30], [h.x, h.z + h.sg * 17]];
+    f.solid = solids.find(s => s.x === f.post.x && s.z === f.post.z);
+    const c = f.g.clone(true); c.visible = false; c.position.y = 0; interiors[f.home].scene.add(c); f.in = c; { const bg = new THREE.Group(); bg.visible = false; interiors[f.home].scene.add(bg); f.abed = bg; const hc = f.hd.clone(true); hc.position.set(BED.x - 4.1, BED.y + 3.5 + 0.55, BED.z); hc.quaternion.copy(lyingQ); bg.add(hc); const md = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), mat('#f2ead8', { roughness: 1 })); md.scale.set(4.3, 0.85, 2.3); md.position.set(BED.x + 0.3, BED.y + 2.95, BED.z); md.castShadow = true; bg.add(md); }   // the same figure again, for indoors
+    const sp = new THREE.Object3D(); interiors[f.home].scene.add(sp); sp.userData = { pickable: true, kind: 'resident', who: id, world: 'in:' + f.home }; pickables.push(sp); f.inSpot = sp;
+    const kn = new THREE.Object3D(); kn.position.set(h.x, 0, h.z + h.sg * 19.6); scene.add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: 'village' }; pickables.push(kn); });
+  const abedNow = () => hollowAbed() && phase === 'free';
+  function folkSettle(f, mode) { f.mode = mode; f.g.visible = mode === 'post'; f.g.rotation.z = 0; if (mode === 'post') { f.g.position.x = f.post.x; f.g.position.z = f.post.z; } if (f.solid) f.solid.x = mode === 'post' ? f.post.x : 1e6; }
+  // people who are not teachers: the two who keep the inn, the travellers staying in it, the lamplighter and the watchman. Each is only there at the hours they would be, and each will tell you why.
+  const folk = [];
+  function addFolk(sc, world, o, x, z, yaw, n, lines, on) { const g = makeElfNPC(o); g.position.set(x, o.sit ? -2.5 : 0, z); g.rotation.y = yaw; g.traverse(m => { if (m.isMesh) m.castShadow = true; }); sc.add(g); Object.assign(g.userData, { pickable: true, kind: 'folk', world, fi: folk.length }); pickables.push(g);
+    const F = { g, n, lines, on, k: 0, solid: o.sit || o.walks ? null : { x, z, r: 1.7 } }; if (F.solid) (world === 'village' ? solids : interiors[world.slice(3)].solids).push(F.solid); F.sx = x; folk.push(F); return F; }
+  const day = (a, b) => h => a < b ? h >= a && h < b : h >= a || h < b;
+  { const [kx, kz, ky] = INN_SEATS.keeper, isc = interiors.inn.scene;
+    addFolk(isc, 'in:inn', { coat: '#a8563a', skin: '#e8b890', hair: '#8a4a2a' }, kx, kz, ky, 'Posy Underbough', ['Posy Underbough. Welcome to the Sleepy Beetle. If you are hungry, ring the bell on the barrel.', 'I keep the day and my brother Moss keeps the night, so there is always somebody awake here.', 'The beetle over the mantel? My grandfather carved him. He has been asleep for sixty years and I have never once seen him wake.'], day(7, 19));
+    addFolk(isc, 'in:inn', { coat: '#3f6a48', skin: '#c9956a', hair: '#3a2a1e' }, kx, kz, ky, 'Moss Underbough', ['Moss Underbough. My sister Posy has the day and I have the night. I like it. It is quiet, and the fire is mine.', 'The shops in the Hollow shut at nine. After that, if you are hungry, you come to me.', 'Cocoa is three coins. It is worth four.'], day(19, 7));
+    const guests = [[{ coat: '#7a5a3a', skin: '#d9a070', hair: '#5a3d22' }, 'Tolly Brindle', ['Tolly Brindle, carter. I bring flour up from Quern Mill and take the Hollow’s jam back down.', 'My cart is in the yard and my beetle is fed. We leave at first light, so tonight I sleep here.', 'If you are ever on the Long Road at dawn and hear a rumbling, that is me.']],
+      [{ coat: '#4a5f8a', skin: '#f0c9a0', hair: '#c9b06a' }, 'Ivy Marchbank', ['Ivy Marchbank. I measure roads for the Surveyors’ Lodge at Cairnhold.', 'I am walking the Long Road from one end to the other with a chain and a notebook. Tonight I have got as far as the Hollow.', 'A road is always longer than it looks on the map. Always.']],
+      [{ coat: '#6a4a6a', skin: '#b98560', hair: '#dcdcdc' }, 'Fennel Rook', ['Fennel Rook, pedlar. Needles, ribbon and buttons. I am two days out of Hearthmoor.', 'I never sleep under a hedge when there is an inn with a fire in it. That is the whole of my wisdom.', 'I will be gone in the morning. I always am.']]];
+    guests.forEach(([o, n, lines], q) => { const [x, z, yaw] = INN_SEATS.guest[q]; o.sit = true; addFolk(isc, 'in:inn', o, x, z, yaw, n, lines, day(17, 23)); }); }
+  const WICK = addFolk(scene, 'village', { coat: '#4a4a5a', skin: '#d9a070', hair: '#8a8a8a', walks: true }, 12, LANE.z + 2, Math.PI / 2, 'Wick Tallow', ['Wick Tallow, lamplighter. I light the lane at dusk and put it out at dawn, and I walk it in between in case one blows out.', 'Ten lamps on the lane, three on the street, and the tall one at the round. I have counted them more often than you have counted anything.', 'I sleep by day, in the little room over the Beetle’s kitchen. It is the warmest bed in the Hollow.'], day(17.9, 7.1));
+  { const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 9, 6), mat('#5a3d22')); pole.position.set(1.9, 5.2, 0.9); WICK.g.add(pole); const tip = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), new THREE.MeshBasicMaterial({ color: '#ffd36a' })); tip.position.set(1.9, 9.8, 0.9); WICK.g.add(tip); WICK.dir = 1; }
+  const BRYN = addFolk(scene, 'village', { coat: '#5a3a2a', skin: '#c9956a', hair: '#2a2018' }, 7.5, GATE.z - 7, Math.PI, 'Bryn Ashlock', ['Bryn Ashlock. Somebody has to mind the gate while the Hollow sleeps. Tonight, and most nights, that is me.', 'Nothing comes up the Long Road at night but moths and the odd late carter. I let the carters in.', 'I go off at dawn, have my breakfast at the Beetle, and sleep till the afternoon.'], day(21, 6.6));
+  { const lt = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.7), lampGlass); lt.position.set(-1.7, 2.6, 0.5); BRYN.g.add(lt); const halo = new THREE.Sprite(haloM); halo.position.set(-1.7, 2.6, 0.5); halo.scale.setScalar(4); BRYN.g.add(halo); }
+  function residentTalk(who, knock) {
+    const f = FOLK[who], hr = clockHour(), asleep = hr >= 22 || hr < 6.6, pre = knock ? (asleep ? '<i>You knock. A lamp is lit upstairs, and after a while the door opens.</i> ' : '<i>You knock, and the door opens.</i> ') : '';
+    const L = { bw: asleep ? ['Mm? Who is… ah. It is you. I was asleep, but I had sooner teach than dream.', 'The Stores open at seven. Sums keep no hours.'] : ['Ah, it is you. The Stores are shut till seven, but sums keep no hours.'],
+      mari: asleep ? ['Oh! You gave me a start. No, no, come in. The garden is asleep, but I can be awake for a bit.'] : ['Hello, love. I have shut the shed for the night. Did you want a lesson? There is always time for a lesson.'],
+      fen: asleep ? ['Mmf. Is it morning? It is not morning. All right. I am up. For reading, I am always up.'] : ['Stall is shut, but I am still awake. Did you come to read?'],
+      ald: asleep ? ['It is the middle of the night. The shop opens at seven. Whatever it is will keep till then. Good night.'] : ['Shop opens at seven. If it is a whistle you are after, it will keep. Good night.'] }[who];
+    L[0] = pre + L[0];
+    say(L, () => { if (who === 'bw') teacherMenu(0); else if (who === 'mari') sciMenu(); else if (who === 'fen') readMenu(); }, f.n);
+  }
+  let shutNow = null;
+  function nightLifeTick(dt, t) {
+    const abed = abedNow(), hr = clockHour(), seen = where === 'village' && gameStarted && !titleUp, want = abed ? 'home' : 'post';
+    Object.values(FOLK).forEach(f => { const R = f.route;
+      if (f.mode === null || (f.mode !== want && !seen)) folkSettle(f, want);
+      else if ((f.mode === 'post' || f.mode === 'home') && f.mode !== want) { f.dir = want === 'home' ? 1 : -1; const k0 = f.dir > 0 ? 0 : R.length - 1; f.wx = R[k0][0]; f.wz = R[k0][1]; f.k = k0 + f.dir; f.wait = f.i * 3; f.yaw = f.g.rotation.y; f.mode = 'walk'; f.g.visible = true; if (f.solid) f.solid.x = 1e6; }
+      if (f.mode === 'walk') {
+        if ((f.dir > 0) !== (want === 'home')) { f.dir = -f.dir; f.k += f.dir; }
+        if (f.wait > 0) { f.wait -= dt; if (f.dir < 0) f.g.visible = f.wait <= 0; }
+        else { let step = 7.5 * dt; while (step > 0 && f.mode === 'walk') { const tx = R[f.k][0], tz = R[f.k][1], dx = tx - f.wx, dz = tz - f.wz, L = Math.hypot(dx, dz); if (L <= step) { f.wx = tx; f.wz = tz; step -= L; f.k += f.dir; if (f.k < 0 || f.k >= R.length) folkSettle(f, f.dir > 0 ? 'home' : 'post'); } else { f.wx += dx / L * step; f.wz += dz / L * step; let dy = Math.atan2(dx, dz) - f.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); f.yaw += dy * Math.min(1, dt * 8); step = 0; } }
+          if (f.mode === 'walk') { f.g.position.x = f.wx; f.g.position.z = f.wz; f.g.position.y = Math.abs(Math.sin(t * 7 + f.i)) * 0.12; f.g.rotation.set(0, f.yaw, Math.sin(t * 7 + f.i) * 0.05); } } }
+      // indoors: by the fire for the first hour, then upstairs in bed
+      const home = f.mode === 'home', pose = !home ? 'out' : (hr >= 22 || hr < 6.6) ? 'bed' : 'fire';
+      if (pose !== f.pose) { f.pose = pose; f.in.visible = pose === 'fire'; f.abed.visible = pose === 'bed';
+        if (pose === 'bed') { f.inSpot.position.set(BED.x - 0.5, BED.y, BED.z + 2.4); }
+        else if (pose === 'fire') { f.in.position.set(5, 0, -12.5); f.in.rotation.set(0, 0.5, 0); f.inSpot.position.set(5, 0, -12.5); } } });
+    // shutting-up time, said once as it happens
+    { const shut = abed; if (shutNow !== null && shut !== shutNow && seen && !talking()) { if (shut) flash('The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.', 6000); else if (hr >= 6 && hr < 8) flash('The Hollow is waking up. The shops open at seven.', 6000); } shutNow = shut; }
+    folk.forEach(F => { const on = F.on(hr); if (on !== F.g.visible) { F.g.visible = on; if (F.solid) F.solid.x = on ? F.sx : 1e6; } });
+    if (WICK.g.visible && seen) { const g = WICK.g; g.position.x += WICK.dir * 3.2 * dt; if (g.position.x > LANE.x1 - 18) WICK.dir = -1; else if (g.position.x < 10) WICK.dir = 1; g.rotation.y = WICK.dir * Math.PI / 2; g.position.y = Math.abs(Math.sin(t * 5)) * 0.1; }
+    if (where === 'in' && interior) roomNight(interior);
+  }
   var TEACH = [{ n: 'Old Bramblewick', sc: scene, w: 'village', p: BWPOS }, { n: 'Hollis Quern', sc: orchScene, w: 'orchards', p: HOLPOS }, { n: ORI, sc: fernScene, w: 'fernwater', p: ORIPOS }, { n: WREN, sc: cairnScene, w: 'cairnhold', p: WRENPOS },
     { n: TAM, sc: cogScene, w: 'cogsworth', p: TAMPOS }, { n: DUR, sc: embScene, w: 'emberdeep', p: DURPOS }, { n: AST, sc: lantScene, w: 'lantern', p: ASTPOS }, { n: ILS, sc: skyScene, w: 'skyhaven', p: ILSPOS }];
   {
@@ -8034,8 +8240,8 @@
     shopBell(embScene, 'emberdeep', DURPOS.x + 4.6, 2.3, DURPOS.z - 3, 'durna', { post: true }); embSolids.push({ x: DURPOS.x + 4.6, z: DURPOS.z - 3, r: 0.9 });
     // Hearthmoor: a barrel and bell before each trade hall, and a bell on each market stall
     const cityBell = (lx, lz, y, shop, post) => { const [wx, wz] = toWorld(frameH, lx, lz); shopBell(worldScene, 'wild', wx, CITY.y + y, wz, shop, post ? { post: true, floor: CITY.y } : {}); if (post) CITY.solids.push({ x: lx, z: lz, r: 0.9 }); };
-    [[-58, 247, 72, 34, 0], [58, 247, 72, 34, 0], [58, 413, 72, 34, 1], [-58, 413, 72, 34, 1], [-124, 288, 34, 60, 2], [-124, 372, 34, 60, 2], [124, 288, 34, 60, 3], [124, 372, 34, 60, 3]].forEach(([x, z, w, d, face], i) => { const p = [[x + 7, z + d / 2 + 3.2], [x + 7, z - d / 2 - 3.2], [x + w / 2 + 3.2, z + 7], [x - w / 2 - 3.2, z + 7]][face]; cityBell(p[0], p[1], 2.5, 'hall' + i, true); });
-    [[-60, 300], [-30, 300], [30, 300], [60, 300], [-60, 360], [-30, 360], [30, 360], [60, 360]].forEach(([x, z], i) => cityBell(x + 4.4, z, 3.55, 'stall' + i, false));
+    CITY.hallAt.forEach(([x, z, w, d, face], i) => { const p = [[x + 7, z + d / 2 + 3.2], [x + 7, z - d / 2 - 3.2], [x + w / 2 + 3.2, z + 7], [x - w / 2 - 3.2, z + 7]][face]; cityBell(p[0], p[1], 2.5, 'hall' + i, true); });
+    CITY.stallAt.forEach(([x, z], i) => cityBell(x + 4.4, z, 3.55, 'stall' + i, false));
     shopSpots.forEach(o => { if (!pickables.includes(o)) pickables.push(o); });
   }
   // =====================================================================================================
@@ -8049,7 +8255,7 @@
     const G = () => new THREE.Group(), M = (g, geo, col, x, y, z, o) => { const q = new THREE.Mesh(geo, mat(col, o || { roughness: 0.85 })); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; };
     const sph = (r, a, b) => new THREE.SphereGeometry(r, a || 10, b || 8), cyl = (a, b, h, n) => new THREE.CylinderGeometry(a, b, h, n || 10), bx = (w, h, d) => new THREE.BoxGeometry(w, h, d), cone = (r, h, n) => new THREE.ConeGeometry(r, h, n || 8);
     // somewhere clear to stand a thing: off the paths, away from houses, fences and whatever is already there
-    const freeAt = (x, z, pad) => x > FENCE.x0 + 4 && x < FENCE.x1 - 4 && z > FENCE.z0 + 4 && z < FENCE.z1 - 5 && !onPath(x, z, pad + 1.8) && !inLot(x, z, pad) && Math.hypot(x, z) > R + 4 + pad && Math.hypot(x - OAK.x, z - OAK.z) > 10 + pad && Math.hypot(x - BUSH.x, z - BUSH.z) > 6 + pad
+    const freeAt = (x, z, pad) => x > FENCE.x0 + 4 && x < FENCE.x1 - 4 && z > FENCE.z0 + 4 && z < FENCE.z1 - 5 && !onPath(x, z, pad + 1.8) && !inLot(x, z, pad) && !nearHome(x, z, pad) && Math.hypot(x, z) > R + 4 + pad && Math.hypot(x - OAK.x, z - OAK.z) > 10 + pad && Math.hypot(x - BUSH.x, z - BUSH.z) > 6 + pad
       && !(Math.abs(x - NURS.x) < 17.5 + pad && Math.abs(z - NURS.z) < 15.5 + pad) && !solids.some(s => Math.hypot(s.x - x, s.z - z) < s.r + pad) && !hollowBoxes.some(b => Math.abs(x - b.x) < b.hw + pad && Math.abs(z - b.z) < b.hd + pad);
     const place = (x, z, offs, pad) => { for (let r = 0; r < 26; r += 1.5) for (let a = 0; a < (r ? 12 : 1); a++) { const cx = x + Math.cos(a * 0.5236) * r, cz = z + Math.sin(a * 0.5236) * r; if (offs.every(([ox, oz]) => freeAt(cx + ox, cz + oz, pad))) return [cx, cz]; } return [x, z]; };
     const spot = (id, label, g, x, z, r) => { g.position.set(x, 0, z); scene.add(g); if (r) solids.push({ x, z, r }); g.userData = { pickable: true, kind: 'sci', id, label, world: 'village' }; pickables.push(g); SPOT[id] = g; return g; };
@@ -8411,7 +8617,7 @@
       const spot = (x, z, r0, fill, label, r = X(r0) - X(0)) => `<circle cx="${X(x)}" cy="${Z(z)}" r="${r}" fill="${fill}" stroke="#3a2a18" stroke-width="1"/><text x="${X(x)}" y="${Z(z) + r + 9}" text-anchor="middle" font-size="8" fill="#3a2a18">${label}</text>`;
       out.push(spot(0, 0, 11, '#8a6438', 'Shop'), spot(NURS.x, NURS.z, 14, '#6f9a3a', 'Nursery'), spot(WOOD.x, WOOD.z, 8, '#c9a06a', 'Woodshop'), spot(FEN.x, FEN.z, 5, '#c8384a', 'Stall'), spot(BUSH.x, BUSH.z, 5, '#2c5527', 'Bush'), spot(OAK.x, OAK.z, 10, '#3e6b2b', 'Old Oak'));
       HOMES.forEach(h => out.push(`<rect x="${X(h.x - (h.hw || 7))}" y="${Z(h.z - (h.hd || 5))}" width="${X(h.hw || 7) - X(-(h.hw || 7))}" height="${Z(h.hd || 5) - Z(-(h.hd || 5))}" fill="${h.wall}" stroke="#3a2a18" stroke-width="1"/><text x="${X(h.x)}" y="${Z(h.z + (h.hd || 5)) + 9}" text-anchor="middle" font-size="7" fill="#3a2a18">${h.sign}</text>`));
-      out.push(`<text x="${X(163)}" y="${Z(LANE.z) - 4}" text-anchor="middle" font-size="7" font-style="italic" fill="#3a2a18">Lantern Lane</text>`, spot(40, -8, 3.5, '#8d8676', 'Well'));
+      out.push(`<text x="${X(163)}" y="${Z(LANE.z) - 4}" text-anchor="middle" font-size="7" font-style="italic" fill="#3a2a18">Lantern Lane</text>`, spot(28, 8, 3.5, '#8d8676', 'Well'), `<rect x="${X(INN.x - 26)}" y="${Z(INN.z - 16)}" width="${X(52) - X(0)}" height="${Z(32) - Z(0)}" fill="#ead9b8" stroke="#3a2a18"/><text x="${X(INN.x)}" y="${Z(INN.z) + 3}" text-anchor="middle" font-size="7" fill="#3a2a18">The Sleepy Beetle</text>`);
       out.push(`<rect x="${X(-5)}" y="${Z(GATE.z - 2)}" width="${X(5) - X(-5)}" height="4" fill="#6b4a2b"/><text x="${X(0)}" y="${Z(GATE.z) + 12}" text-anchor="middle" font-size="8" fill="#3a2a18">Gate</text>`);
       return { svg: out.join(''), X, Z };
     },
@@ -8545,7 +8751,7 @@
     mapSvgEl.innerHTML = svg; refreshSaveButtons();
     if (!gameStarted && save.started) $('maphint').textContent = `Welcome back: ${save.coins} acorn coins and ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Continue, or pick any lesson.`;
     mapSvgEl.querySelectorAll('.mapmark').forEach(g => { g.addEventListener('click', () => selectRegion(parseInt(g.dataset.i, 10))); g.setAttribute('tabindex', '0'); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRegion(parseInt(g.dataset.i, 10)); } }); });
-    { const cm = mapSvgEl.querySelector('#capmark'), go = () => { if (!master) { $('maphint').textContent = 'Hearthmoor, the capital, on the lake. Take the ferry from Fernwater, or walk the branch road.'; return; } if (!gameStarted) { $('maphint').textContent = 'Start or continue the game first; then you can go to Hearthmoor from this map.'; return; } closeMap(); const [x, z] = toWorld(frameH, -474, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor, the capital.'); }; if (cm) { cm.addEventListener('click', go); cm.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); } }
+    { const cm = mapSvgEl.querySelector('#capmark'), go = () => { if (!master) { $('maphint').textContent = 'Hearthmoor, the capital, on the lake. Take the ferry from Fernwater, or walk the branch road.'; return; } if (!gameStarted) { $('maphint').textContent = 'Start or continue the game first; then you can go to Hearthmoor from this map.'; return; } closeMap(); const [x, z] = toWorld(frameH, CITY.x0 - 24, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor, the capital.'); }; if (cm) { cm.addEventListener('click', go); cm.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); } }
     drawPanel();
   }
   // the tester's ways round: straight to any town with no lesson begun, and everything in the satchel
@@ -8554,7 +8760,7 @@
     const run = () => { if (fading) { setTimeout(run, 300); return; }
       if (where === 'in') { openMap(); $('maphint').textContent = 'Step outside first, then travel.'; return; }
       closeMap(); phase = 'free'; pendingStart = null; setTasks([]); hint(''); if (riding) setRiding(false); if (sitting) standUp();
-      if (i === 'city') { const [x, z] = toWorld(frameH, -474, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor.'); }
+      if (i === 'city') { const [x, z] = toWorld(frameH, CITY.x0 - 24, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor.'); }
       else if (i === 'glider') startFlight();
       else if (i === 0) fadeTo('Thistledown Hollow', () => { moveCompany(curScene(), scene); where = 'village'; player.position.set(0, 0, 17); py = 0; vy = 0; bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 15); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }, () => hint('Thistledown Hollow.'));
       else [null, goToOrchards, goToFernwater, goToCairn, goToCogsworth, goToEmberdeep, goToLantern, goToSky][i](); };
@@ -8565,6 +8771,7 @@
     const r = REGIONS[selRegion]; mapPanel.innerHTML = '';
     const h2 = document.createElement('h2'); h2.textContent = r.name; mapPanel.appendChild(h2);
     const m = document.createElement('div'); m.className = 'math'; m.textContent = r.math; mapPanel.appendChild(m);
+    { const ck = document.createElement('div'); ck.className = 'math'; ck.textContent = `It is ${clockWords()}.` + (selRegion === 0 ? ' In the Hollow the shops open at 7 and shut at 9; the Sleepy Beetle never shuts.' : ''); mapPanel.appendChild(ck); }
     if (r.lessons) {
       const list = document.createElement('div'); list.className = 'lessons';
       r.lessons.forEach(([label, key]) => { const b = document.createElement('button'); b.className = 'btn small ' + (isDone(key) ? '' : 'primary'); b.textContent = (isDone(key) ? '\u2713 ' : '') + label; b.title = isDone(key) ? 'Finished. Play it again any time.' : ''; if (master) b.onclick = () => { if (gameStarted) jump(key); else launch(key); }; else { b.disabled = true; b.style.opacity = isDone(key) ? '0.75' : '0.55'; b.style.cursor = 'default'; } list.appendChild(b); });
@@ -8576,7 +8783,7 @@
     } else { const sn = document.createElement('div'); sn.className = 'soon'; sn.textContent = 'Not built yet. The road will reach it.'; mapPanel.appendChild(sn); }
     if (master) {
       const t = document.createElement('div'); t.className = 'here'; t.innerHTML = '<b>Tester</b> (this account only)<div class="lessons" style="margin-top:6px"></div>'; const box = t.lastChild;
-      [[`Go to ${r.name}, no lesson`, () => masterGo(selRegion)], ['Go to Hearthmoor', () => masterGo('city')], ['Fly the glider', () => masterGo('glider')], ['Bicycle, beetle, 200 coins and one of everything', () => masterGive()], ['Make it night', () => { clockFix = 0.82; }], ['Make it day', () => { clockFix = 0.3; }], ['Let the clock run', () => { clockFix = null; }]].forEach(([label, fn]) => { const b = document.createElement('button'); b.className = 'btn small'; b.textContent = label; b.onclick = fn; box.appendChild(b); });
+      [[`Go to ${r.name}, no lesson`, () => masterGo(selRegion)], ['Go to Hearthmoor', () => masterGo('city')], ['Fly the glider', () => masterGo('glider')], ['Bicycle, beetle, 200 coins and one of everything', () => masterGive()], ['Clock: 8:58 in the evening (closing time)', () => setClock(20.97)], ['Clock: midnight', () => setClock(0)], ['Clock: 6:35 in the morning', () => setClock(6.58)], ['Clock: noon', () => setClock(12)], ['Clock: the real time', () => setClock(null)]].forEach(([label, fn]) => { const b = document.createElement('button'); b.className = 'btn small'; b.textContent = label; b.onclick = fn; box.appendChild(b); });
       mapPanel.appendChild(t);
     }
     if (gameStarted) {
