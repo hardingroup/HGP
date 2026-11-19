@@ -107,7 +107,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
   - Buildings are drawn in a dozen batches (`batch`), and everything else in the city is welded into one mesh for each colour (`bake`).
   - Scale: Hearthmoor's buildings are sized for grown elves, who stand about 7.5 units tall (the player's elf is 3). A storey is about 9 units, a house door 8.6, houses are 20 to 38 wide and two or three storeys, the trade halls stand 25 to the eaves, the walls 24, the Library Tower 80. `HS` in `buildCity()` scales every building's height.
   - The eight trade halls and the eight market stalls trade (see **Things, coins and trade**).
-  - Not built yet: nothing in the city has an inside, the townsfolk do not talk or keep hours, the Lodgings and Lots cannot be taken, and no road leaves the East or South Gate.
+  - Not built yet: the townsfolk outdoors do not talk, nobody in the city keeps hours, the Garden Lots cannot be bought, the colleges are shut, and no road leaves the East or South Gate.
   - The in-game map shows Hearthmoor; tapping it there takes you to the West Gate.
 - The world is built for grown elves; the player's 7-inch elf is a small child in it. Grown elves stand about 7.5 units tall.
 - Character creator: besides name and colours you now choose a face (Cheerful, Wide-eyed, Sleepy, Determined) and a height, from 7 inches (a little one) to 17 inches (grown). Height is `look.height`, a scale from 1 to 2.45 applied to the whole elf, the bike included; the camera sits higher and further back for taller elves, and they walk a little faster. Face is `look.face`.
@@ -145,6 +145,38 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Anyone out at night has a reason,** and will tell you it. Wick Tallow the lamplighter walks the lane from dusk to dawn. Bryn Ashlock minds the gate from 9 until the Hollow wakes. Both sleep by day at the inn.
 - **Not yet:** only the Hollow keeps hours. The other towns' shops stay open and their people stay put until they have homes to go to (Hearthmoor is next). The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
 - How it works: `daySecs()` reads the clock in `ZONE`; `hollowAbed()` and `shopsShut()` are the hours. `FOLK` holds the four with their post, their home and the way between; `nightLifeTick` walks them, puts their indoor figures by the fire or in bed, and shows or hides everyone in `folk` (each has an `on(hour)` test). `shopShut(id)` and `shopRing(id)` decide between the shop, the honesty box and a shut door. `roomNight(room)` darkens a room's windows.
+
+## Inside Hearthmoor, your room, and storage
+
+- **Every door in the city opens.** Walk straight at a door and you go in (walking along a wall past one does nothing). Coming out puts you back on the step you went in by.
+  - **Rowan House** on South Street is the lodging house: a passage with three rooms off it, and **Room 2 is yours**. It has a bed, a desk under a window with a stool to sit at, a chest, a wardrobe and a bookshelf. It is sized so two children are comfortable and four are a crowd. Hesper Rowan keeps the house. The other two rooms are taken and shut, and Hazel House and Alder House next door tell you your room is in Rowan.
+  - **The eight trade halls** each have a counter, the town's goods on the shelves, crates and sacks, benches, a keeper who will talk, and the bell on a barrel. The bell outside each hall still works too.
+  - **The Guildhall** has the long table with a chair for each town (you can sit in any of them), their banners, and Odo Ledgerwood the clerk.
+  - **The Bank** has a counter behind a brass grille, the vault door, and a wall of strongboxes; the brass one is yours and holds 40.
+  - **The Library Tower** has books to the ceiling, four reading tables with stools, and Sage Inkwell the librarian. The books cannot be read yet, and she says so.
+  - **The Hearthstone** is the city's inn, on South Street: the same room as the Sleepy Beetle, kept by Bram Kettleby, selling supper.
+  - **The terrace houses** all open onto one of two shared house interiors (the Hollow's house plan, in two colourings), named for the street the door is on. Nobody is in.
+  - The four colleges and the warehouses give a reason at the door and stay shut.
+- **Storage.** A place to keep things is a `storeSpot`. Walk up to one and open it: the satchel panel shows what is in it on one side and what you carry on the other, with **Put in** and **Take**. What you leave stays there, on this device and in the cloud save.
+  - Yours: the chest (20), wardrobe (12, things to wear only), bookshelf (10) and desk drawer (6) in your room; the strongbox at the Bank (40); and a travellers' chest by the door of each inn, the Sleepy Beetle in the Hollow and the Hearthstone in the city (20 each). So there is somewhere to empty a full satchel at both ends of the road.
+  - Each of yours has a lock you can turn on and off. It is locked unless you unlock it. With only one player in the world the lock keeps nobody out yet; it is there for when rooms can have visitors.
+  - Other people's: the wardrobe and chest upstairs in each Hollow house and in the city houses belong to the family, and are locked. Looking at one tells you whose it is.
+- How it works: `CITY.doors` lists every door with the room it leads to (`inside`) or the reason it does not (`msg`); `cityCollide` notices you walking at one and `cityDoor` takes you in. City rooms are ordinary rooms (`makeRoom`) whose way out is set to whichever door you used. `openStore`, `storeOf(id)` and the `take`, `put` and `lock` actions are the storage; the contents are in `save.stores`.
+- Not yet: there is one room for one player (when there are many players each needs their own), the letter rack in Rowan House is waiting for the post, and nothing can be put on a table or a shelf where you can see it: storage is a list, not objects in the room.
+
+## Other players, the age question, and parental controls
+
+- **Seeing each other.** Players in the same place see each other's elves walk about, with the elf's name over its head and its own colours, hair, hat, face and height. "The same place" is a town, the open land, or the inside of one building. It is on unless switched off in Settings, and it works whether or not you are signed in.
+  - How to try it: open the game on two devices (or two browser windows), go to the same town on both, and walk. Settings, under **Other players**, says whether it is connected and how many others are here; if it cannot connect it says why.
+  - **This has not been run against the real server.** It was built and tested against a stand-in, because the place it was built in cannot reach Supabase. The first two-device try is the real test. If Settings says it could not connect, the likeliest cause is the Realtime service or public channels being switched off for the project in the Supabase dashboard.
+  - What is shared is only where the elf is and what it looks like. Lessons, coins, the satchel, chests and the beetle stay your own. Other players' elves cannot be bumped into or spoken to yet.
+  - Limits: it sends a position five times a second while moving, which Supabase's free plan will carry for a dozen or so players at once, not a crowd. Up to 24 others are drawn. The channels are open to anyone holding the game's public key, so a determined person could send false positions; a proper game server ends that. An elf's name is shown to whoever is nearby exactly as it was typed (letters, numbers and spaces only, 16 at most).
+- **The year you were born.** A new game asks for it, with no hint of what any answer does. An elf made before the question existed is asked once on Continue. The answer is kept on the device apart from the elf's save, so starting a new elf does not ask again; after that only a parent's passcode can change it.
+  - Under 13: voice chat off, and only a parent can turn it on. 13 to 17: friends and party only. 18 and over: anyone nearby. Age is counted as the youngest it could be (the birthday may not have come yet this year).
+  - **Voice chat and ready-made phrases are not built.** These settings are stored now so every player is sorted from the start.
+- **Parental controls** are at the bottom of Settings. A parent sets a passcode of 4 to 8 digits; from then on the page is locked, and the passcode is needed to see or change voice, phrases, seeing other players, or the birth year. It locks again when Settings is closed.
+  - **Before this is offered to the public:** a passcode typed on the child's own device is not verified consent from a parent. US children's privacy law (COPPA) wants a method that shows it really was a parent before a child under 13 can talk to others. That needs deciding, with advice, before voice goes live.
+- How it works: `fam` is the family record (`long-road-family-v1` on the device) and `renderFam` draws its page. `NET` is the connection: it speaks Supabase Realtime's own protocol over a WebSocket, joins a channel named for the place, and sends and hears `p` messages. `makeKid()` now builds an elf (yours, and each of the others), and `applyLookTo` dresses one.
 
 ## Things, coins and trade
 
