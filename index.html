@@ -316,6 +316,7 @@
     <div class="swrow"><span>Hat colour</span><div class="sw" data-k="hat"></div></div>
     <div class="swrow"><span>Tunic</span><div class="sw" data-k="tunic"></div></div>
     <div class="swrow"><span>Face</span><div class="faces" id="elffaces"></div></div>
+    <div class="swrow" id="elflevelrow"><span>I am working on</span><div class="faces" id="elflevel"></div></div>
     <div class="swrow"><span>Height</span><div><input type="range" id="elfheight" min="1" max="2.45" step="0.05" value="1" style="width:100%"><div id="elfheightval" style="font-size:13px"></div></div></div>
     <p class="warn" id="creatorwarn" hidden></p>
     <div class="row"><button class="btn" id="creatorback">Back</button><button class="btn primary" id="creatorgo">Begin</button></div>
@@ -567,10 +568,11 @@
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
   const dirt = new THREE.Mesh(new THREE.CircleGeometry(9, 40), mat('#ffffff', { map: dirtTex }));
   dirt.rotation.x = -Math.PI / 2; dirt.position.set(YARD.x, 0.03, YARD.z); dirt.receiveShadow = true; scene.add(dirt);
+  let pathN = 0;
   pathEnds.forEach(([a, b, trim, w]) => {
     const dir = b.clone().sub(a); const len = dir.length() - trim; dir.normalize();
     const grp = new THREE.Group(); grp.position.copy(a).addScaledVector(dir, len / 2); grp.rotation.y = Math.atan2(dir.x, dir.z);
-    const path = new THREE.Mesh(new THREE.PlaneGeometry(w, len), mat('#ffffff', { map: dirtTex })); path.rotation.x = -Math.PI / 2; path.position.y = 0.025; path.receiveShadow = true; grp.add(path);
+    const path = new THREE.Mesh(new THREE.PlaneGeometry(w, len), mat('#ffffff', { map: dirtTex })); path.rotation.x = -Math.PI / 2; path.position.y = 0.025 + (pathN++) * 0.004; path.receiveShadow = true; grp.add(path);   // each path a hair higher than the last, so where two cross one simply lies on top and nothing flickers
     scene.add(grp);
   });
   // wheel ruts down the main street
@@ -719,7 +721,7 @@
     }
   }
   // a seat that is only a spot: the chair or stool it belongs to is already standing there
-  function seatSpot(sc, world, x, z, yaw, top, label) { const o = new THREE.Object3D(); o.position.set(x, 0, z); sc.add(o); o.userData = { pickable: true, kind: 'seat', yaw, seatTop: top, label, world }; roomSeats.push(o); seats.push(o); return o; }
+  function seatSpot(sc, world, x, z, yaw, top, label, y0) { const o = new THREE.Object3D(); o.position.set(x, y0 || 0, z); sc.add(o); o.userData = { pickable: true, kind: 'seat', yaw, seatTop: top, label, world, y0: y0 || 0 }; roomSeats.push(o); seats.push(o); return o; }
   function makeBench(withBack) {
     const g = new THREE.Group(); const w = mat('#8a6438'), d = mat('#5a3d22');
     const seat = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.22, 1.1), w); seat.position.y = 1.4; g.add(seat);
@@ -917,7 +919,7 @@
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1, 0.8), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1.2 })); lamp.position.set(-5.6, 5.2, 9.8); shop.add(lamp);
     const glow = new THREE.PointLight('#ffb950', 0.9, 16); glow.position.set(-5.6, 5, 10.5); shop.add(glow);
     solids.push({ x: -6.8, z: 9.8, r: 0.6 });
-    [[7.2, 9.2], [8.6, 7.6]].forEach(([x, z]) => {
+    [[7.75, 9.9], [9.5, 8.3]].forEach(([x, z]) => {   // clear of the stump's wall
       const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.9, 2.2, 16), mat('#8a6438')); barrel.position.set(x, 1.1, z); shop.add(barrel);
       [0.5, 1.7].forEach(y => { const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.97, 0.06, 6, 20), mat('#4b4b4b', { metalness: 0.5 })); hoop.rotation.x = Math.PI / 2; hoop.position.set(x, y, z); shop.add(hoop); });
       solids.push({ x, z, r: 1.1 });
@@ -2251,7 +2253,7 @@
     // windows along the side walls
     [-1, 1].forEach(d => { for (let z = -D / 2 + 4; z < D / 2 - 2; z += 6) { const w = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), mat('#fff0c8', { emissive: '#ffd27a', emissiveIntensity: 0.8, side: THREE.DoubleSide })); w.position.set(d * (W / 2 - 0.05), H * 0.55, z); w.rotation.y = -d * Math.PI / 2; sc.add(w); [[0, 0, 3, 0.2], [0, 0, 0.2, 3]].forEach(([ox, oy, ww, hh]) => { const fr = new THREE.Mesh(new THREE.BoxGeometry(0.25, hh, ww), trimM); fr.position.set(d * (W / 2 - 0.1), H * 0.55 + oy, z + ox); sc.add(fr); }); } });
     const it = { id, scene: sc, w: W, d: D, h: H, solids: [], boxes: [], label: o.label, region: o.region, hint: o.hint || '', door: null, hinge, doorA: 0 };
-    o.decorate && o.decorate(sc, it.solids, { wall, W, D, H, trimM, id, boxes: it.boxes, seat: (x, z, yaw, top, label) => seatSpot(sc, 'in:' + id, x, z, yaw, top, label) });
+    o.decorate && o.decorate(sc, it.solids, { wall, W, D, H, trimM, id, boxes: it.boxes, room: it, seat: (x, z, yaw, top, label, y0) => seatSpot(sc, 'in:' + id, x, z, yaw, top, label, y0) });
     sc.traverse(m => { if (m.isMesh && m !== outside && m !== floor) { m.castShadow = true; m.receiveShadow = true; } });
     interiors[id] = it; return it;
   }
@@ -2296,34 +2298,52 @@
     const vs = [], vwall = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; lg.add(b); return b; };
     inner(lg, vs, { wall: vwall, W: (W / 2 - PX) / S, D: D / S, H: H / S, trimM, id: k.id, scene: sc, seat: (x, z, yaw, t, label) => k.seat(lx + x * S, z * S, yaw, t * S, label) });
     vs.forEach(q => solids.push({ x: lx + q.x * S, z: q.z * S, r: q.r * S }));
-    // the wall between the living room and the wing, with three doorways, and the two walls between the wing's rooms
-    const z1 = -5.4, z2 = 5.2, gaps = [(-D / 2 + z1) / 2, (z1 + z2) / 2, (z2 + D / 2) / 2], gh = 2.3, dh = 9.4, part = (x, z, w, d) => { wall(w, H, d, x, H / 2, z, wm); k.boxes.push({ x, z, hw: w / 2, hd: d / 2 }); };
-    let zc = -D / 2; gaps.forEach(c => { part(PX, (zc + c - gh) / 2, 0.5, c - gh - zc); wall(0.5, H - dh, gh * 2, PX, (H + dh) / 2, c, wm); wall(0.7, 0.5, gh * 2 + 0.6, PX, dh, c, trimM); zc = c + gh; }); part(PX, (zc + D / 2) / 2, 0.5, D / 2 - zc);
-    [z1, z2].forEach(z => part((-W / 2 + PX) / 2, z, PX + W / 2, 0.5));
-    const wl = new THREE.PointLight('#ffd9a0', 0.55, 46); wl.position.set(-W / 2 + 11, H - 3, 0); sc.add(wl);
-    const X0 = -W / 2, flat = (r, col, x, z) => { const q = new THREE.Mesh(new THREE.CircleGeometry(r, 26), mat(col, { roughness: 1 })); q.rotation.x = -Math.PI / 2; q.position.set(x, 0.03, z); sc.add(q); };
-    // the parents' room: a grown elf's bed, a wardrobe, a chest
-    { const bx = X0 + 7.2, bz = (-D / 2 + z1) / 2; wall(12.4, 1.8, 7.4, bx, 1.2, bz, wood); wall(12, 0.9, 7, bx + 0.1, 2.5, bz, mat(o.quilt, { roughness: 1 })); wall(2.4, 0.8, 5.4, bx - 4.6, 3.1, bz, cream); wall(0.5, 6, 7.8, X0 + 0.7, 3, bz, dark);
-      solids.push({ x: bx - 3.4, z: bz, r: 3.6 }, { x: bx + 2.6, z: bz, r: 3.6 });
-      wall(5.4, 11, 2.4, PX - 4.2, 5.5, -D / 2 + 1.5, dark); wall(0.12, 9.6, 0.1, PX - 4.2, 5.3, -D / 2 + 2.72, mat('#2a1a10')); [-0.5, 0.5].forEach(q => { const kn = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), mat('#d8b24a', { metalness: 0.6 })); kn.position.set(PX - 4.2 + q, 5.2, -D / 2 + 2.8); sc.add(kn); }); solids.push({ x: PX - 5.4, z: -D / 2 + 1.5, r: 1.9 }, { x: PX - 3, z: -D / 2 + 1.5, r: 1.9 });
-      flat(3.4, o.rug, PX - 5, z1 - 3.4); }
-    // the child's room: everything here is small
-    { const cz = (z1 + z2) / 2, bx = X0 + 4.4, bz = cz - 2.4; wall(7.2, 1.1, 4.2, bx, 0.75, bz, wood); wall(6.8, 0.5, 4, bx + 0.1, 1.5, bz, mat(o.kidQuilt || '#f4d35e', { roughness: 1 })); wall(1.4, 0.5, 3.1, bx - 2.5, 1.9, bz, cream); wall(0.3, 3.2, 4.4, X0 + 0.6, 1.6, bz, dark); solids.push({ x: bx - 1.8, z: bz, r: 2.2 }, { x: bx + 1.8, z: bz, r: 2.2 });
-      const tx = X0 + 15.5, tz = cz + 2.1; wall(3, 0.25, 2.2, tx, 2.2, tz, top); [[-1.3, -0.9], [1.3, -0.9], [-1.3, 0.9], [1.3, 0.9]].forEach(([x, z]) => wall(0.22, 2.1, 0.22, tx + x, 1.05, tz + z, dark)); solids.push({ x: tx, z: tz, r: 1.6 });
-      const st = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.55, 1.4, 12), wood); st.position.set(tx, 0.7, tz - 2.4); sc.add(st); solids.push({ x: tx, z: tz - 2.4, r: 0.7 }); k.seat(tx, tz - 2.4, 0, 1.4, 'little stool');
-      wall(2.8, 1.5, 1.8, X0 + 2.2, 0.75, cz + 3.6, mat('#b5562b')); wall(2.9, 0.2, 1.9, X0 + 2.2, 1.6, cz + 3.6, mat('#8a3a2a')); solids.push({ x: X0 + 2.2, z: cz + 3.6, r: 1.6 });
-      [acornPerson('#d23b4e'), acornTop(), acornCart()].forEach((t, i) => { t.position.set(X0 + 7 + i * 1.6, 0.05, cz + 3 + (i % 2) * 0.8); t.rotation.y = i * 1.1; t.scale.setScalar(1.3); sc.add(t); });
-      const pap = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.04, 0.8), cream); pap.position.set(tx - 0.4, 2.36, tz); pap.rotation.y = 0.3; sc.add(pap);
-      flat(3, '#7fb0d8', X0 + 10.5, cz + 0.6); }
-    // the kitchen: a range with a fire in it, a long counter, a table for the family
-    { const kz = (z2 + D / 2) / 2; wall(6, 5, 2.6, X0 + 12, 2.5, z2 + 1.6, stone); wall(3, 2.2, 0.3, X0 + 12, 1.6, z2 + 2.95, mat('#1a1410')); wall(1.6, H - 5, 1.6, X0 + 12, 5 + (H - 5) / 2, z2 + 1.1, stone);
-      const kl = new THREE.PointLight('#ff8a3a', 0.6, 22); kl.position.set(X0 + 12, 2.4, z2 + 4.4); sc.add(kl); makeFire(sc, sc, X0 + 12, 0.6, z2 + 3.2, 0.72, kl); solids.push({ x: X0 + 10.4, z: z2 + 1.7, r: 2.1 }, { x: X0 + 13.6, z: z2 + 1.7, r: 2.1 });
-      [[-1.4, 0.7, '#3a3a3a'], [1.3, 0.55, '#8a6a3a']].forEach(([dx, r, col]) => { const pot = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.9, r * 1.1, 12), mat(col, { metalness: 0.5, roughness: 0.5 })); pot.position.set(X0 + 12 + dx, 5 + r * 0.55, z2 + 1.6); sc.add(pot); });
-      wall(2.8, 4.3, 8.4, X0 + 1.9, 2.15, kz + 0.6, wood); wall(3.1, 0.3, 8.8, X0 + 2, 4.45, kz + 0.6, top); [-3, 0, 3].forEach(q => solids.push({ x: X0 + 1.9, z: kz + 0.6 + q, r: 1.9 }));
-      [0, 1, 2, 3].forEach(i => { const j = jar(['#d9a33f', '#8fbf4a', '#b0203a', '#e9e2d0'][i], 1.1); j.position.set(X0 + 2, 4.6, kz - 2.4 + i * 1.9); sc.add(j); });
-      const tx = PX - 6.4, tz = kz + 1.2; wall(7, 0.4, 4.4, tx, 4.2, tz, top); [[-3.1, -1.8], [3.1, -1.8], [-3.1, 1.8], [3.1, 1.8]].forEach(([x, z]) => wall(0.4, 4, 0.4, tx + x, 2, tz + z, dark)); solids.push({ x: tx - 1.7, z: tz, r: 2.4 }, { x: tx + 1.7, z: tz, r: 2.4 });
-      [[tx - 2, tz - 3.6, 0], [tx + 2, tz - 3.6, 0], [tx, tz + 3.6, Math.PI]].forEach(([x, z, yaw]) => { wall(2.2, 0.3, 2.2, x, 2.6, z, wood); [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([a, b]) => wall(0.26, 2.5, 0.26, x + a, 1.25, z + b, dark)); wall(2.2, 3, 0.26, x, 4.2, z + (yaw ? 1 : -1), wood); solids.push({ x, z, r: 1.3 }); k.seat(x, z, yaw, 2.75, 'chair'); });
-      const lf = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 8), mat('#c9955a', { roughness: 1 })); lf.scale.set(1.5, 0.7, 1); lf.position.set(tx, 4.9, tz); sc.add(lf); }
+    // ---- the wing, on two floors: the kitchen fills the ground floor, and a stair along the south wall climbs to the bedrooms ----
+    const X0 = -W / 2, FH = 10, SX0 = X0 + 4, SX1 = PX - 4, SZ = D / 2 - 4, plank = mat('#ffffff', { map: plankTex }), black = mat('#1a1410');
+    const box = (x, z, hw, hd, lv) => k.boxes.push(lv === undefined ? { x, z, hw, hd } : { x, z, hw, hd, lv }), so = (x, z, r, lv) => solids.push({ x, z, r, lv });
+    const flat = (r, col, x, z, y) => { const q = new THREE.Mesh(new THREE.CircleGeometry(r, 26), mat(col, { roughness: 1 })); q.rotation.x = -Math.PI / 2; q.position.set(x, (y || 0) + 0.03, z); sc.add(q); };
+    // the wall between the living room and the wing: two doorways below, solid above
+    { const gaps = [-10.7, -0.1], gh = 2.5, dh = 9.2; let zc = -D / 2; const part = (z, d) => { wall(0.5, H, d, PX, H / 2, z, wm); box(PX, z, 0.25, d / 2); };
+      gaps.forEach(c => { part((zc + c - gh) / 2, c - gh - zc); wall(0.5, H - dh, gh * 2, PX, (H + dh) / 2, c, wm); wall(0.7, 0.5, gh * 2 + 0.6, PX, dh, c, trimM); box(PX, c, 0.25, gh, 1); zc = c + gh; }); part((zc + D / 2) / 2, D / 2 - zc); }
+    // the upper floor, with a well left open for the stair
+    wall(22, 0.4, D - 4, X0 + 11, FH - 0.2, -2, plank); wall(4, 0.4, 4, X0 + 2, FH - 0.2, D / 2 - 2, plank); wall(4, 0.4, 4, PX - 2, FH - 0.2, D / 2 - 2, plank);
+    // the stair: fourteen steps, solid underneath; a panel shuts it off from the kitchen and carries the handrail upstairs
+    { const N = 14, run = (SX1 - SX0) / N; for (let i = 0; i < N; i++) { const h = (i + 1) * FH / N; wall(run, h, 4, SX1 - (i + 0.5) * run, h / 2, D / 2 - 2, i % 2 ? wood : dark); }
+      wall(SX1 - SX0, FH + 3.2, 0.3, (SX0 + SX1) / 2, (FH + 3.2) / 2, SZ, wm); wall(SX1 - SX0 + 0.4, 0.3, 0.5, (SX0 + SX1) / 2, FH + 3.3, SZ, dark); box((SX0 + SX1) / 2, SZ, (SX1 - SX0) / 2, 0.15);
+      wall(0.3, FH - 0.4, 4, SX0, (FH - 0.4) / 2, D / 2 - 2, wm); box(SX0, D / 2 - 2, 0.15, 2, 0);            // under the landing, the back of the stair is closed
+      wall(0.3, 3.2, 4, SX1, FH + 1.6, D / 2 - 2, dark); box(SX1, D / 2 - 2, 0.15, 2, 1); }                    // upstairs, a rail across the head of the well
+    k.room.upY = FH;
+    k.room.floorAt = (x, z, y) => { if (x > PX) return 0; if (z > SZ && x > SX0 && x < SX1) return clamp((SX1 - x) / (SX1 - SX0), 0, 1) * FH; return y > FH - 1.4 ? FH : 0; };
+    const wl = new THREE.PointLight('#ffd9a0', 0.6, 40); wl.position.set(X0 + 11, FH - 2, 0); sc.add(wl);
+    const ul = new THREE.PointLight('#ffe2b0', 0.55, 44); ul.position.set(X0 + 11, H - 2.5, -2); sc.add(ul);
+    // ---- the kitchen: a range with a fire in it, a long counter, and a table with room to pull the chairs out ----
+    { const RX = X0 + 11, RZ = -D / 2; wall(6, 5, 2.6, RX, 2.5, RZ + 1.3, stone); wall(3, 2.2, 0.3, RX, 1.6, RZ + 2.65, black); wall(1.6, FH - 5.4, 1.6, RX, 5 + (FH - 5.4) / 2, RZ + 0.9, stone);
+      const kl = new THREE.PointLight('#ff8a3a', 0.6, 22); kl.position.set(RX, 2.4, RZ + 4.2); sc.add(kl); makeFire(sc, sc, RX, 0.6, RZ + 2.9, 0.72, kl); so(RX - 1.6, RZ + 1.4, 2.1, 0); so(RX + 1.6, RZ + 1.4, 2.1, 0);
+      [[-1.4, 0.7, '#3a3a3a'], [1.3, 0.55, '#8a6a3a']].forEach(([dx, r, col]) => { const pot = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.9, r * 1.1, 12), mat(col, { metalness: 0.5, roughness: 0.5 })); pot.position.set(RX + dx, 5 + r * 0.55, RZ + 1.3); sc.add(pot); });
+      const cz = -3; wall(2.8, 4.3, 10, X0 + 1.9, 2.15, cz, wood); wall(3.1, 0.3, 10.4, X0 + 2, 4.45, cz, top); [-4, -1.3, 1.3, 4].forEach(q => so(X0 + 1.9, cz + q, 1.9, 0));
+      [0, 1, 2, 3, 4].forEach(i => { const j = jar(['#d9a33f', '#8fbf4a', '#b0203a', '#e9e2d0', '#7a4a8a'][i], 1.1); j.position.set(X0 + 2, 4.6, cz - 4 + i * 2); sc.add(j); });
+      const tx = X0 + 13, tz = 4; wall(8, 0.4, 4.6, tx, 4.2, tz, top); [[-3.6, -1.9], [3.6, -1.9], [-3.6, 1.9], [3.6, 1.9]].forEach(([x, z]) => wall(0.4, 4, 0.4, tx + x, 2, tz + z, dark)); so(tx - 2, tz, 2.5, 0); so(tx + 2, tz, 2.5, 0);
+      [[tx - 2, tz - 4.2, 0], [tx + 2, tz - 4.2, 0], [tx - 2, tz + 4.2, Math.PI], [tx + 2, tz + 4.2, Math.PI]].forEach(([x, z, yaw]) => { wall(2.2, 0.3, 2.2, x, 2.6, z, wood); [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([a, b]) => wall(0.26, 2.5, 0.26, x + a, 1.25, z + b, dark)); wall(2.2, 3, 0.26, x, 4.2, z + (yaw ? 1 : -1), wood); so(x, z, 1.2, 0); k.seat(x, z, yaw, 2.75, 'chair'); });
+      const lf = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 8), mat('#c9955a', { roughness: 1 })); lf.scale.set(1.5, 0.7, 1); lf.position.set(tx, 4.9, tz); sc.add(lf);
+      [[X0 + 1.9, D / 2 - 1.8, 1.2, 2.8], [X0 + 2.3, D / 2 - 4.6, 0.95, 2.2]].forEach(([x, z, r, h]) => { const bq = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.88, h, 14), wood); bq.position.set(x, h / 2, z); sc.add(bq); so(x, z, r + 0.1, 0); });   // the pantry, under the landing
+      flat(4.2, o.rug, tx, tz - 9); }
+    // ---- upstairs: the child's room at the head of the stair, and the parents' room beyond it ----
+    { const UZ = -2, dx = X0 + 15, gh = 2.4, dh = 9; const up = (w, h, d, x, y, z, m) => wall(w, h, d, x, FH + y, z, m);
+      [[X0, dx - gh], [dx + gh, PX]].forEach(([a, b]) => { up(b - a, H - FH, 0.5, (a + b) / 2, (H - FH) / 2, UZ, wm); box((a + b) / 2, UZ, (b - a) / 2, 0.25, 1); }); up(gh * 2, H - FH - dh, 0.5, dx, (H - FH + dh) / 2, UZ, wm); up(gh * 2 + 0.6, 0.5, 0.7, dx, dh, UZ, trimM);
+      // the parents' room: a grown elf's bed, a wardrobe, a chest
+      { const bx = X0 + 7.2, bz = -9.5; up(12.4, 1.8, 7.4, bx, 1.2, bz, wood); up(12, 0.9, 7, bx + 0.1, 2.5, bz, mat(o.quilt, { roughness: 1 })); up(2.4, 0.8, 5.4, bx - 4.6, 3.1, bz, cream); up(0.5, 6, 7.8, X0 + 0.7, 3, bz, dark); so(bx - 3.4, bz, 3.6, 1); so(bx + 2.6, bz, 3.6, 1);
+        up(5.4, 9, 2.4, PX - 4.2, 4.5, -D / 2 + 1.5, dark); up(0.12, 7.8, 0.1, PX - 4.2, 4.3, -D / 2 + 2.72, mat('#2a1a10')); [-0.5, 0.5].forEach(q => { const kn = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), mat('#d8b24a', { metalness: 0.6 })); kn.position.set(PX - 4.2 + q, FH + 4.4, -D / 2 + 2.8); sc.add(kn); }); so(PX - 5.4, -D / 2 + 1.5, 1.9, 1); so(PX - 3, -D / 2 + 1.5, 1.9, 1);
+        up(3.4, 1.9, 2.2, PX - 2.6, 0.95, UZ - 2, mat('#7a4a2a')); up(3.5, 0.25, 2.3, PX - 2.6, 2, UZ - 2, dark); so(PX - 2.6, UZ - 2, 1.9, 1);
+        const ch = [PX - 9, -D / 2 + 2]; up(2.2, 0.3, 2.2, ch[0], 2.6, ch[1], wood); [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([a, b]) => up(0.26, 2.5, 0.26, ch[0] + a, 1.25, ch[1] + b, dark)); up(2.2, 3, 0.26, ch[0], 4.2, ch[1] - 1, wood); so(ch[0], ch[1], 1.2, 1); k.seat(ch[0], ch[1], 0, 2.75, 'chair', FH);
+        flat(3.6, o.rug, X0 + 15, -7, FH); }
+      // the child's room: everything here is small
+      { const bx = X0 + 4.4, bz = 2; up(7.2, 1.1, 4.2, bx, 0.75, bz, wood); up(6.8, 0.5, 4, bx + 0.1, 1.5, bz, mat(o.kidQuilt || '#f4d35e', { roughness: 1 })); up(1.4, 0.5, 3.1, bx - 2.5, 1.9, bz, cream); up(0.3, 3.2, 4.4, X0 + 0.6, 1.6, bz, dark); so(bx - 1.8, bz, 2.2, 1); so(bx + 1.8, bz, 2.2, 1);
+        const tx = PX - 4.5, tz = 3; up(3, 0.25, 2.2, tx, 2.2, tz, top); [[-1.3, -0.9], [1.3, -0.9], [-1.3, 0.9], [1.3, 0.9]].forEach(([x, z]) => up(0.22, 2.1, 0.22, tx + x, 1.05, tz + z, dark)); so(tx, tz, 1.6, 1);
+        const st = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.55, 1.4, 12), wood); st.position.set(tx, FH + 0.7, tz + 2.4); sc.add(st); so(tx, tz + 2.4, 0.7, 1); k.seat(tx, tz + 2.4, Math.PI, 1.4, 'little stool', FH);
+        up(2.8, 1.5, 1.8, PX - 2, 0.75, 9.6, mat('#b5562b')); up(2.9, 0.2, 1.9, PX - 2, 1.6, 9.6, mat('#8a3a2a')); so(PX - 2, 9.6, 1.6, 1);   // the toy chest, out of the way of the stair head
+        [acornPerson('#d23b4e'), acornTop(), acornCart()].forEach((t, i) => { t.position.set(X0 + 8 + i * 1.7, FH + 0.05, 8 + (i % 2) * 0.9); t.rotation.y = i * 1.1; t.scale.setScalar(1.3); sc.add(t); });
+        const pap = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.04, 0.8), cream); pap.position.set(tx - 0.4, FH + 2.36, tz); pap.rotation.y = 0.3; sc.add(pap);
+        flat(3.2, '#7fb0d8', X0 + 11, 5, FH); } }
   }; }
   function homeKit(sc, solids, k, o) {
     const { wall, W, D, H, trimM } = k;
@@ -2344,7 +2364,7 @@
     wall(1.3, 0.2, len, W / 2 - 0.75, y, z0, mat('#ffffff', { map: plankTex }));
     items.forEach((obj, i) => { obj.position.set(W / 2 - 0.8, y + 0.1, z0 - len / 2 + 0.6 + i * (len - 1.2) / Math.max(1, items.length - 1)); obj.rotation.y = -Math.PI / 2 + rnd(-0.3, 0.3); sc.add(obj); });
   }
-  makeRoom('bwhome', { w: 64, d: 32, h: 14.4, doorH: 9.4, wall: '#e9dcc3', trim: '#5a3d22', label: 'Bramblewick’s Cottage', region: 'village', hint: 'Books to the rafters, and a kettle that is never quite cold.', decorate: familyHome({ wall: '#e9dcc3', quilt: '#3e6b52', kidQuilt: '#d9a33f', rug: '#b8a070' }, (sc, solids, k) => {
+  makeRoom('bwhome', { w: 64, d: 32, h: 20, doorH: 9.4, wall: '#e9dcc3', trim: '#5a3d22', label: 'Bramblewick’s Cottage', region: 'village', hint: 'Books to the rafters, and a kettle that is never quite cold.', decorate: familyHome({ wall: '#e9dcc3', quilt: '#3e6b52', kidQuilt: '#d9a33f', rug: '#b8a070' }, (sc, solids, k) => {
     const { wall, W, D } = k, { dark, top, tx, tz } = homeKit(sc, solids, k, { rug: '#8a3a3a', quilt: '#3e6b52' });
     wall(0.25, 7, 9, W / 2 - 0.2, 3.5, -4.5, dark);
     [1.1, 2.9, 4.7, 6.5].forEach((y, r) => { wall(1.3, 0.18, 9, W / 2 - 0.8, y, -4.5, top); for (let z = -8.7; z < -0.5; z += 0.42) { if (Math.random() < 0.12) continue; const hh = rnd(0.9, 1.4); wall(0.8, hh, 0.34, W / 2 - 0.85, y + 0.09 + hh / 2, z, mat(pick(['#7a3e2a', '#3e6b52', '#2f4f7a', '#8a6a3c', '#5a3d5a', '#b08a3a']))); } });
@@ -2355,7 +2375,7 @@
     const led = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.2, 1), mat('#efe3c8')); led.position.set(tx + 0.8, 2.5, tz + 0.2); led.rotation.y = 0.3; sc.add(led);
     [acornPerson('#3a6bd0'), acornTop(), acornCart()].forEach((t, i) => { t.position.set(0.8 + i * 0.9, 5.66, -D / 2 + 1.1); sc.add(t); });
   }) });
-  makeRoom('marihome', { w: 64, d: 32, h: 14.4, doorH: 9.4, wall: '#e6dfc6', trim: '#3e6b52', label: 'Fernsby Cottage', region: 'village', hint: 'Every sill has something growing on it.', decorate: familyHome({ wall: '#e6dfc6', quilt: '#e68fb0', kidQuilt: '#9fd07a', rug: '#b8a070' }, (sc, solids, k) => {
+  makeRoom('marihome', { w: 64, d: 32, h: 20, doorH: 9.4, wall: '#e6dfc6', trim: '#3e6b52', label: 'Fernsby Cottage', region: 'village', hint: 'Every sill has something growing on it.', decorate: familyHome({ wall: '#e6dfc6', quilt: '#e68fb0', kidQuilt: '#9fd07a', rug: '#b8a070' }, (sc, solids, k) => {
     const { wall, W, D, H } = k, { top, dark } = homeKit(sc, solids, k, { rug: '#6f9a3a', quilt: '#e68fb0' });
     wall(2.2, 0.25, 9, W / 2 - 1.3, 2.2, -4, top); [[-0.8, -4.2], [0.8, -4.2], [-0.8, 4.2], [0.8, 4.2]].forEach(([x, z]) => wall(0.28, 2.1, 0.28, W / 2 - 1.3 + x, 1.05, -4 + z, dark));
     for (let i = 0; i < 8; i++) { const z = -8 + i * 1.15, pot = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.32, 0.6, 10), mat('#b5653a')); pot.position.set(W / 2 - 1.3 + rnd(-0.4, 0.4), 2.63, z); sc.add(pot); const sd = seedling(rnd(0.5, 1)); sd.position.set(pot.position.x, 2.85, z); sc.add(sd); }
@@ -2402,7 +2422,7 @@
     loc.forEach(q => solids.push({ x: h.x + q.x, z: h.z + q.z, r: q.r }));
     realHouses.push({ id, x: h.x, z: h.z, hw: W / 2, hd: D / 2, dw: dg - 0.55, h: H, label: o.label, hint: o.hint });
   }
-  makeRoom('aldhome', { w: 64, d: 32, h: 14.4, doorH: 9.4, wall: '#d8c9a4', trim: '#4a3420', label: 'Bough’s House', region: 'village', hint: 'Everything in here is curved, and he made all of it.', decorate: familyHome({ wall: '#d8c9a4', quilt: '#2f4f7a', kidQuilt: '#e8a33f', rug: '#b8a070' }, (sc, solids, k) => {
+  makeRoom('aldhome', { w: 64, d: 32, h: 20, doorH: 9.4, wall: '#d8c9a4', trim: '#4a3420', label: 'Bough’s House', region: 'village', hint: 'Everything in here is curved, and he made all of it.', decorate: familyHome({ wall: '#d8c9a4', quilt: '#2f4f7a', kidQuilt: '#e8a33f', rug: '#b8a070' }, (sc, solids, k) => {
     const { wall, W, D } = k, { top, dark, wood, tx, tz } = homeKit(sc, solids, k, { rug: '#8a6a3c', quilt: '#2f4f7a' });
     wall(2.4, 0.3, 8, W / 2 - 1.4, 2.25, -4.5, top); [[-0.9, -3.7], [0.9, -3.7], [-0.9, 3.7], [0.9, 3.7]].forEach(([x, z]) => wall(0.3, 2.1, 0.3, W / 2 - 1.4 + x, 1.05, -4.5 + z, dark));
     for (let z = -7.5; z <= -1.5; z += 2) solids.push({ x: W / 2 - 1.4, z, r: 1.5 });
@@ -2419,7 +2439,7 @@
     [-0.9, 0.9].forEach(d => { const rk = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.1, 6, 16, 1.5), dark); rk.position.set(rx + d, 1.75, rz); rk.rotation.set(0, Math.PI / 2, -Math.PI / 2 - 0.75); sc.add(rk); });
     wall(2, 0.2, 1.8, rx, 1.3, rz, wood); wall(2, 2.4, 0.2, rx, 2.4, rz - 0.9, wood); solids.push({ x: rx, z: rz, r: 1.5 }); k.seat(rx, rz + 0.1, 0, 1.4, 'rocking chair');
   }) });
-  makeRoom('fenhome', { w: 64, d: 32, h: 14.4, doorH: 9.4, wall: '#f0e2d8', trim: '#8a3a4a', label: 'Dewberry Cottage', region: 'village', hint: 'Jam jars to the ceiling. It smells of berries and sugar.', decorate: familyHome({ wall: '#f0e2d8', quilt: '#f4d35e', kidQuilt: '#e68fb0', rug: '#b8a070' }, (sc, solids, k) => {
+  makeRoom('fenhome', { w: 64, d: 32, h: 20, doorH: 9.4, wall: '#f0e2d8', trim: '#8a3a4a', label: 'Dewberry Cottage', region: 'village', hint: 'Jam jars to the ceiling. It smells of berries and sugar.', decorate: familyHome({ wall: '#f0e2d8', quilt: '#f4d35e', kidQuilt: '#e68fb0', rug: '#b8a070' }, (sc, solids, k) => {
     const { wall, W, D } = k, { tx, tz } = homeKit(sc, solids, k, { rug: '#c8384a', quilt: '#f4d35e' });
     const cols = ['#b0203a', '#6a2d7a', '#2f5fb0', '#d9a33f', '#8a2a4a', '#3e8a52'];
     [2.2, 4.2, 6.2].forEach((y, r) => wallShelf(sc, wall, W, y, -4.5, 9, Array.from({ length: 9 }, (_, i) => jar(cols[(i + r) % cols.length], rnd(0.5, 0.9)))));
@@ -4176,6 +4196,7 @@
   }
   // ---------- the satchel, and the counter when you are at one ----------
   let bagOpen = false, bagShop = null, bagTab = 'all', bagMsg = '';
+  const BIKE_PARTS = [['gear', 2], ['bell', 1], ['rope', 1]], BIKE_COINS = 30;
   function openBag(shopId) {
     if (bagOpen || talking() || fading || mapOpen || !gameStarted || !$('settings').hidden) return;
     bagShop = shopId ? SHOPS[shopId] : null; bagOpen = true; bagTab = 'all'; bagMsg = '';
@@ -4203,6 +4224,7 @@
     $('bagshopcol').hidden = !shop; if (!shop) $('bagshop').innerHTML = '';
     if (shop) {
       const rows = shop.stock.filter(tabOK).map(id => { const p = buyPrice(shop, id), poor = coins < p, full = used + roomOf(id) > max; return row(id, 0, itemNote(id), `<button class="btn small primary" data-a="buy" data-i="${id}" ${poor || full ? 'disabled' : ''}>${poor ? 'Costs ' + p : full ? 'No room' : 'Buy · ' + coinWord(p)}</button>`); });
+      if (shop === SHOPS.bikeworks && !bikeOwned) { const ok = BIKE_PARTS.every(([id, n]) => (v[id] || 0) >= n) && coins >= BIKE_COINS; rows.unshift(`<div class="bagrow"><div class="em" aria-hidden="true">🚲</div><div class="nm"><b>A bicycle, built for you</b><small>Bring ${BIKE_PARTS.map(([id, n]) => `${n} ${ITEMS[id].n.toLowerCase()}${n > 1 ? 's' : ''} (you have ${v[id] || 0})`).join(', ')} and ${BIKE_COINS} coins. Gears and bells are made here; rope comes from Fernwater.</small></div><div class="do"><button class="btn small primary" data-a="bike" data-i="x" ${ok ? '' : 'disabled'}>${ok ? 'Have it built' : 'Not yet'}</button></div></div>`); }
       $('bagshoph').textContent = 'For sale here'; $('bagshop').innerHTML = rows.join('') || '<div class="bagempty">Nothing of that kind here.</div>';
     }
     const order = { food: 0, wear: 1, tool: 2, goods: 3 }, mine = Object.keys(v).filter(id => ITEMS[id] && v[id] > 0 && tabOK(id)).sort((a, b) => order[ITEMS[a].c] - order[ITEMS[b].c] || ITEMS[a].n.localeCompare(ITEMS[b].n));
@@ -4232,8 +4254,156 @@
     else if (a === 'lamp' && has(id)) { setLamp(!save.lamp); persist(); bagMsg = save.lamp ? 'The lantern is lit.' : 'You put the lantern out.'; }
     else if (a === 'drop' && has(id)) { removeItem(id); bagMsg = `You left the ${it.n.toLowerCase()} behind.`; }
   }
-  $('bag').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const a = b.dataset.a, id = b.dataset.i; if (a === 'close') closeBag(); else if (a === 'whistle') { bagMsg = whistle(); renderBag(); } else if (a === 'tab') { bagTab = id; renderBag(); } else if (a) { bagAct(a, id); renderBag(); } });
+  $('bag').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const a = b.dataset.a, id = b.dataset.i; if (a === 'close') closeBag(); else if (a === 'bike') { if (BIKE_PARTS.every(([q, n]) => (inv()[q] || 0) >= n) && coins >= BIKE_COINS) { BIKE_PARTS.forEach(([q, n]) => { for (let k = 0; k < n; k++) removeItem(q); }); setCoins(coins - BIKE_COINS); bikeOwned = true; save.bike = true; persist(); chink(1320); bagMsg = 'The apprentices bolt it together while you wait. The bicycle is yours: step outside and press the ride key.'; } renderBag(); } else if (a === 'whistle') { bagMsg = whistle(); renderBag(); } else if (a === 'tab') { bagTab = id; renderBag(); } else if (a) { bagAct(a, id); renderBag(); } });
 
+
+  // ---------- teachers, placement and the quests that are not lessons ----------
+  // A lesson begins with its teacher, in its town. Someone who already knows a town's arithmetic can be tested on it instead:
+  // five questions, four right, and every lesson there is marked known and paid for, as a trade pays more for what you can already do.
+  const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const mc = (text, right, wrong) => { const seen = new Set([String(right)]), opts = [String(right)]; wrong.forEach(w => { w = String(w); if (!seen.has(w)) { seen.add(w); opts.push(w); } }); for (let k = 1; opts.length < 4 && typeof right === 'number' && k < 9; k++) { const w = String(right + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * (Number.isInteger(right) ? 1 : 0.5)); if (!seen.has(w)) { seen.add(w); opts.push(w); } } return [text, shuf(opts.slice(0, 4)), String(right)]; };
+  const QBANK = [
+    [ () => { const a = rint(23, 58), b = rint(14, 39); return mc(`What is <b>${a} + ${b}</b>?`, a + b, [a + b + 10, a + b - 10, a + b + 1]); },
+      () => { const a = rint(52, 96), b = rint(15, 48); return mc(`What is <b>${a} − ${b}</b>?`, a - b, [a - b + 10, a - b - 10, a - b + 2]); },
+      () => { const t = rint(2, 9), o = rint(1, 9); return mc(`What number is <b>${t} tens and ${o} ones</b>?`, t * 10 + o, [o * 10 + t, t + o, t * 100 + o]); },
+      () => { const a = rint(11, 89); return mc(`What is <b>100 − ${a}</b>?`, 100 - a, [110 - a, 90 - a, 101 - a]); },
+      () => { const a = rint(5, 9), b = rint(5, 9), c = rint(5, 9); return mc(`What is <b>${a} + ${b} + ${c}</b>?`, a + b + c, [a + b + c + 1, a + b + c - 2, a + b + c + 10]); },
+      () => { const a = rint(3, 8) * 10 + rint(1, 9); return mc(`Which of these is the <b>greatest</b>?`, a + 9, [a, a - 10, a + 1]); } ],
+    [ () => { const a = rint(6, 9), b = rint(6, 9); return mc(`What is <b>${a} × ${b}</b>?`, a * b, [a * b + a, a * b - b, a * b + 1]); },
+      () => { const a = rint(6, 9), b = rint(7, 12); return mc(`What is <b>${a * b} ÷ ${a}</b>?`, b, [b + 1, b - 1, a]); },
+      () => { const d = rint(6, 9), q = rint(5, 9), r = rint(1, d - 1); return mc(`<b>${d * q + r} ÷ ${d}</b> leaves what <b>remainder</b>?`, r, [r + 1, r === 1 ? 0 : r - 1, d]); },
+      () => mc('Which of these is a <b>factor of 36</b>?', 9, [8, 5, 7]),
+      () => { const a = rint(12, 24), b = rint(3, 7); return mc(`What is <b>${a} × ${b}</b>?`, a * b, [a * b + b, a * b - a, a * b + 10]); },
+      () => { const d = rint(4, 8), q = rint(11, 15); return mc(`<b>${d * q}</b> apples go into <b>${d}</b> crates, the same in each. How many in a crate?`, q, [q + 1, q - 1, q + d]); } ],
+    [ () => mc('What is <b>1/2 + 1/4</b>?', '3/4', ['2/6', '1/3', '2/4']),
+      () => { const n = rint(3, 9) * 4; return mc(`What is <b>3/4 of ${n}</b>?`, n * 3 / 4, [n / 4, n / 2, n * 3 / 4 + 1]); },
+      () => mc('What is <b>0.5 + 0.75</b>?', '1.25', ['0.125', '1.5', '0.8']),
+      () => { const n = rint(2, 9) * 20; return mc(`What is <b>25% of ${n}</b>?`, n / 4, [n / 2, n / 5, n / 4 + 5]); },
+      () => { const k = rint(3, 6); return mc(`A loaf costs <b>1.50</b>. What do <b>${k}</b> loaves cost?`, (k * 1.5).toFixed(2), [(k * 1.5 + 0.5).toFixed(2), (k * 1.05).toFixed(2), (k + 0.5).toFixed(2)]); },
+      () => mc('Which of these is the same as <b>0.75</b>?', '3/4', ['7/5', '3/5', '1/75']),
+      () => mc('Which is <b>bigger</b>?', '2/3', ['1/2', '3/5', '0.6']) ],
+    [ () => { const w = rint(4, 9), h = rint(11, 16); return mc(`A field is <b>${w}</b> by <b>${h}</b>. What is its <b>area</b>?`, w * h, [2 * (w + h), w + h, w * h + w]); },
+      () => { const w = rint(4, 9), h = rint(11, 16); return mc(`A field is <b>${w}</b> by <b>${h}</b>. How far is it <b>all the way round</b>?`, 2 * (w + h), [w * h, w + h, 2 * (w + h) + 2]); },
+      () => { const b = rint(3, 8) * 2, h = rint(5, 11); return mc(`A triangle has base <b>${b}</b> and height <b>${h}</b>. What is its <b>area</b>?`, b * h / 2, [b * h, b + h, b * h / 2 + b]); },
+      () => { const a = rint(2, 5), b = rint(3, 6), c = rint(4, 7); return mc(`A cistern is <b>${a}</b> by <b>${b}</b> by <b>${c}</b>. What is its <b>volume</b>?`, a * b * c, [a + b + c, 2 * (a * b + b * c + a * c), a * b * c + a * b]); },
+      () => { const k = rint(2, 5); return mc(`A right triangle has short sides <b>${3 * k}</b> and <b>${4 * k}</b>. How long is the <b>long side</b>?`, 5 * k, [7 * k, 6 * k, 5 * k + 1]); },
+      () => { const a = rint(35, 70), b = rint(40, 75); return mc(`Two corners of a triangle are <b>${a}°</b> and <b>${b}°</b>. What is the third?`, (180 - a - b) + '°', [(360 - a - b) + '°', (90 - Math.min(a, b)) + '°', (190 - a - b) + '°']); },
+      () => mc('A round pond is <b>10</b> across. About how far is it <b>round the edge</b>?', '31.4', ['78.5', '20', '100']) ],
+    [ () => { const k = rint(3, 8) * 2; return mc(`Two gears have teeth in the ratio <b>3 : 2</b>. The big one turns <b>${k}</b> times. How many times does the small one turn?`, k * 3 / 2, [k * 2 / 3 | 0, k + 1, k * 2]); },
+      () => { const s = rint(6, 14), t = rint(3, 6); return mc(`A cart goes <b>${s * t}</b> miles in <b>${t}</b> hours. How fast is that?`, s + ' an hour', [(s + t) + ' an hour', (s * t) + ' an hour', (s - 1) + ' an hour']); },
+      () => { const n = rint(2, 9) * 20; return mc(`What is <b>15% of ${n}</b>?`, n * 0.15, [n * 0.5, n * 0.1, n * 0.15 + 3]); },
+      () => { const a = rint(5, 9), b = rint(11, 18); return mc(`What is <b>−${a} + ${b}</b>?`, b - a, [-(a + b), a + b, a - b]); },
+      () => { const a = rint(2, 7), b = rint(3, 8); return mc(`What is <b>−${a} − ${b}</b>?`, -(a + b), [b - a, a + b, a - b === -(a + b) ? 0 : a - b]); },
+      () => { const a = rint(2, 6), b = rint(3, 6), c = rint(4, 7); return mc(`What is <b>${a} + ${b} × ${c}</b>?`, a + b * c, [(a + b) * c, a * b + c, a + b + c]); },
+      () => { const n = rint(3, 9) * 10; return mc(`A price of <b>${n}</b> goes <b>up by 20%</b>. What is it now?`, n * 1.2, [n + 20, n * 0.8, n * 1.02]); } ],
+    [ () => { const a = rint(2, 6), x = rint(3, 9), b = rint(2, 9); return mc(`Solve <b>${a}x + ${b} = ${a * x + b}</b>. What is x?`, x, [x + 1, x - 1, a * x]); },
+      () => { const x = rint(5, 9), y = rint(1, 4); return mc(`<b>x + y = ${x + y}</b> and <b>x − y = ${x - y}</b>. What is x?`, x, [y, x + y, x - 1]); },
+      () => { const p = rint(1, 4), q = rint(5, 8); return mc(`Which numbers solve <b>x² − ${p + q}x + ${p * q} = 0</b>?`, `${p} and ${q}`, [`−${p} and −${q}`, `${p} and ${p + q}`, `${p * q} and 1`]); },
+      () => { const n = rint(4, 7); return mc(`What is x if <b>2ˣ = ${2 ** n}</b>?`, n, [n + 1, n - 1, 2 ** n / 2]); },
+      () => { const m = rint(2, 5), b = rint(1, 6), c = rint(2, 4); return mc(`A line goes through <b>(0, ${b})</b> and <b>(${c}, ${b + m * c})</b>. What is its <b>slope</b>?`, m, [m + 1, b, m * c]); },
+      () => { const a = rint(2, 5), b = rint(3, 7); return mc(`Multiply out <b>(x + ${a})(x + ${b})</b>.`, `x² + ${a + b}x + ${a * b}`, [`x² + ${a * b}x + ${a + b}`, `x² + ${a * b}`, `2x + ${a + b}`]); },
+      () => { const a = rint(2, 4), x = rint(4, 9); return mc(`Which x make <b>${a}x > ${a * x}</b> true?`, `x > ${x}`, [`x < ${x}`, `x > ${a * x}`, `x = ${x}`]); } ],
+    [ () => mc('What is <b>sin 30°</b>?', '1/2', ['√3/2', '1', '0']),
+      () => mc('What is <b>tan 45°</b>?', '1', ['0', '√2/2', '√3']),
+      () => mc('How many <b>radians</b> is 180°?', 'π', ['2π', 'π/2', '180']),
+      () => mc('How long is one full wave of <b>sin(2x)</b>?', 'π', ['2π', '4π', 'π/2']),
+      () => { const a = rint(2, 5), b = rint(1, 6), x = rint(2, 7); return mc(`f(x) = ${a}x + ${b}. What x gives <b>f(x) = ${a * x + b}</b>?`, x, [a * x + b, x + 1, a * (a * x + b) + b]); },
+      () => { const k = rint(2, 6); return mc(`As x gets close to ${k}, what does <b>(x² − ${k * k}) / (x − ${k})</b> get close to?`, 2 * k, [0, k, 'It has no limit']); },
+      () => mc('What is <b>log₁₀ 1000</b>?', '3', ['100', '10', '30']),
+      () => mc('A cliff throws a shadow as long as it is tall. How high is the sun?', '45°', ['30°', '60°', '90°']) ],
+    [ () => { const x = rint(2, 4); return mc(`How steep is <b>y = x³</b> at x = ${x}?`, 3 * x * x, [x ** 3, 3 * x, 2 * x]); },
+      () => mc('What is the derivative of <b>sin x</b>?', 'cos x', ['−cos x', '−sin x', 'tan x']),
+      () => { const b = rint(2, 5); return mc(`What is the area under <b>y = 2x</b> from 0 to ${b}?`, b * b, [2 * b, b * b / 2, 2 * b * b]); },
+      () => { const a = rint(2, 6), b = rint(2, 7); return mc(`How steep is <b>y = ${a}x² + ${b}x</b> at x = 1?`, 2 * a + b, [a + b, 2 * a, a + 2 * b]); },
+      () => { const k = rint(2, 5); return mc(`Where is <b>y = −x² + ${2 * k}x</b> highest?`, `x = ${k}`, [`x = ${2 * k}`, 'x = 0', `x = ${k * k}`]); },
+      () => mc('What is <b>∫ cos x dx</b>?', 'sin x + C', ['−sin x + C', 'cos x + C', 'tan x + C']),
+      () => mc('What does <b>1 + 1/2 + 1/4 + 1/8 + …</b> add up to, for ever?', '2', ['It never stops growing', '1.5', '4']),
+      () => mc('What is the derivative of <b>eˣ</b>?', 'eˣ', ['x·eˣ⁻¹', 'ln x', '1/x']) ]
+  ];
+  function quizAsk(who, head, q, cb) {
+    showDialog(true); hint(''); clearDialog(); speakerEl.textContent = who; line.innerHTML = `<small style="color:var(--ink-soft)">${head}</small><br>${q[0]}`;
+    q[1].forEach(c => { const b = document.createElement('button'); b.className = 'btn choice'; b.textContent = c;
+      b.onclick = () => { const ok = c === q[2]; Array.from(actions.querySelectorAll('button')).forEach(x => { x.disabled = true; if (x.textContent === q[2]) x.classList.add('primary'); }); if (!ok) b.classList.add('wrong'); line.innerHTML = ok ? 'Right.' : `No. It is <b>${q[2]}</b>.`; setTimeout(() => cb(ok), ok ? 700 : 1700); };
+      actions.appendChild(b); });
+    actions.querySelector('button').focus({ preventScroll: true });
+  }
+  function challenge(i) {
+    const T = TEACH[i], L = REGIONS[i].lessons, qs = shuf(QBANK[i].slice()).slice(0, 5).map(f => f()); let n = 0, right = 0;
+    const next = () => { if (n === qs.length) return done(); quizAsk(T.n, `Question ${n + 1} of ${qs.length}`, qs[n], ok => { if (ok) right++; n++; next(); }); };
+    const done = () => {
+      if (right < 4) { say([`That is <b>${right} of 5</b>. Not this time: it takes four.`, 'No shame in it. The lessons are here whenever you want them, and you may ask me to test you again.'], null, T.n); return; }
+      const fresh = L.filter(([, k]) => !isDone(k)), pay = fresh.length * 2; save.tested = (save.tested || []).concat(fresh.map(([, k]) => k)); fresh.forEach(([, k]) => markDone(k)); kid.satchel.visible = true; setCoins(coins + pay);
+      if (i === 3) { try { buildBridge(); } catch (e) {} }
+      say([`<b>${right} of 5</b>. You know this country’s arithmetic already, and I’ll not waste your time teaching it to you.`, `What you carry in your head is worth paying for. Here are <b>${pay} coins</b>, two for every lesson you did not need.`, i < 7 ? `The road goes on to <b>${REGIONS[i + 1].name}</b>. ${TEACH[i + 1].n} teaches there, and will test you the same way if you ask.` : 'There is nobody further up the road to send you to. This is the top of it.'], null, T.n);
+    };
+    next();
+  }
+  function jump(key) { try { sessionStorage.setItem('lr-go', key); } catch (e) {} location.hash = key; location.reload(); }
+  function teacherMenu(i) {
+    if (talking() || bagOpen) return;
+    const T = TEACH[i], L = REGIONS[i].lessons, left = L.filter(([, k]) => !isDone(k)), next = left[0], opts = [];
+    if (next) opts.push([next[0], () => jump(next[1])]);
+    if (left.length) opts.push(['Test me: I know this already', () => challenge(i)]);
+    if (left.length < L.length) opts.push(['A lesson again', () => choose(T.n, 'Which one shall we go over?', L.filter(([, k]) => isDone(k)).map(([l, k]) => [l, () => jump(k)]).concat([['Never mind', null]]))]);
+    opts.push(['Never mind', null]);
+    choose(T.n, left.length ? `${REGIONS[i].math}: that is what I teach here. ${left.length === L.length ? 'Shall we begin, or do you know it already?' : `You have ${left.length} lesson${left.length === 1 ? '' : 's'} left with me.`}` : 'You have learned everything I teach. Come and go over any of it whenever you like.', opts);
+  }
+  // a new elf who said they are past counting: Bramblewick offers the test straight away
+  function placedIntro() {
+    say([`So, ${save.name || 'young one'}. You tell me you are past counting acorns.`, 'Then I’ll not make you count them. Answer me five questions, get four right, and I’ll pay you for what you know and point you up the road.'],
+      () => choose('Old Bramblewick', 'Shall I test you?', [['Test me', () => challenge(0)], ['Teach me from the start', () => jump('lesson-1')], ['Let me look around first', () => hint('Speak to Old Bramblewick at his counter when you are ready.')]]));
+  }
+  // ---------- the beetle, for anyone: feed the grub in the compost heap ----------
+  const GRUB_FOOD = [['mushroom', 3], ['pinecone', 2]]; let questGrub = null;
+  function grubQuest() {
+    if (talking() || bagOpen) return;
+    const haveAll = GRUB_FOOD.every(([id, n]) => (inv()[id] || 0) >= n), list = GRUB_FOOD.map(([id, n]) => `<b>${n} ${ITEMS[id].n.toLowerCase()}${n > 1 ? 's' : ''}</b> (you have ${inv()[id] || 0})`).join(' and ');
+    choose('The compost heap', `Something fat and white is curled in the rotting wood: a grub as long as your arm. It eats rot and nothing else. It wants ${list}. Both lie about beside the paths and the road.`,
+      haveAll ? [['Feed the grub', () => { GRUB_FOOD.forEach(([id, n]) => { for (let k = 0; k < n; k++) removeItem(id); });
+        say(['The grub eats the lot, and then goes very still. It has wrapped itself up as a <b>pupa</b>: inside the case it is taking itself apart and building something new.', 'You walk once round the nursery. When you come back the case has split, and out walks a <b>rhinoceros beetle</b>, six legs and a horn, looking at you as if it knows who fed it.'],
+          () => { beetle = makeBeetle(); beetle.position.set(BEETLE_HOME[0], 0, BEETLE_HOME[1]); beetle.rotation.y = 0.5; scene.add(beetle);
+            choose('The compost heap', 'What will you call your beetle?', ['Thunder', 'Pebble', 'Bramble', 'Rhino'].map(nm => [nm, () => { beetleName = nm; save.beetle = nm; beetle.userData.follow = true; keepCompanion(); flash(`${nm} follows you now, and carries 20. Speak to it to give it orders.`); }])); }, 'The compost heap'); }], ['Not yet', null]]
+        : [['I’ll go and find them', null]]);
+  }
+  // ---------- the ferry: the barge rides the Fern down to Hearthmoor and back ----------
+  let ferryRide = null, bargeW = null; const FERRY_DECK = 1.0, FERRY_FARE = 4;
+  function buildBarge() {
+    if (bargeW) return bargeW; const g = new THREE.Group(), wood = mat('#7a5632', { roughness: 0.9 }), dark = mat('#4a3420'), box = (w, h, d, x, y, z, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; };
+    box(10, 1.5, 22, 0, 0.45, 0, wood); box(9.4, 0.12, 21.4, 0, 1.2 + 0.02, 0, mat('#ffffff', { map: plankTex })); box(7, 1.2, 3, 0, 0.5, 12, wood).rotation.x = -0.35; box(7, 1.2, 3, 0, 0.5, -12, wood).rotation.x = 0.35;
+    [-4.8, 4.8].forEach(x => { box(0.3, 0.9, 21, x, 1.7, 0, dark); }); [-10.6, 10.6].forEach(z => box(9.6, 0.9, 0.3, 0, 1.7, z, dark));
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 7, 8), dark); mast.position.set(0, 4.7, -6); g.add(mast);
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.7), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1.1 })); lamp.position.set(0, 7.6, -6); g.add(lamp);
+    [[-3.3, -2], [3.2, -0.5], [3.3, -3]].forEach(([x, z]) => { const c = box(1.8, 1.6, 1.8, x, 2.05, z, mat('#a8814a')); c.rotation.y = x; });
+    const helm = makeElfNPC({ coat: '#2f4a6a', skin: '#e3b184', hair: '#5a3a1e', hat: 'cap', capColor: '#1f3a5a', tall: 6.6, wide: 1.2 }); helm.position.set(0, 1.26, -9); g.add(helm);
+    g.visible = false; worldScene.add(g); bargeW = g; return g;
+  }
+  function ferryPath() { const P = (hx, hz) => toWorld(frameH, hx, hz), F0 = toWorld(tileF, -74, RIVER.z); return [F0, P(-640, 0), P(-420, 14), P(-372, 44), P(-361.5, 70)]; }
+  function ferryStart(dir) {
+    if (ferryRide || talking()) return;
+    const who = 'Captain Oriel', there = dir === 'down' ? 'Hearthmoor' : 'Fernwater Crossing';
+    choose(who, `The barge goes ${dir === 'down' ? 'down the Fern to <b>Hearthmoor</b>' : 'back up the Fern to <b>Fernwater Crossing</b>'}. It is <b>${FERRY_FARE} coins</b>, and a little over a minute on the water.`, coins >= FERRY_FARE ? [[`Pay ${FERRY_FARE} coins and ride`, () => {
+      setCoins(coins - FERRY_FARE); if (riding) setRiding(false); if (sitting) standUp();
+      const pts = ferryPath(); if (dir === 'up') pts.reverse(); let len = 0; const seg = []; for (let k = 1; k < pts.length; k++) { const L = Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]); seg.push(L); len += L; }
+      const b = buildBarge(); b.visible = true; b.position.set(pts[0][0], -0.2, pts[0][1]); b.rotation.y = Math.atan2(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1]);
+      ferryRide = { pts, seg, len, s: 0, dir, x: pts[0][0], z: pts[0][1], said: false };
+      enterWild(pts[0][0], pts[0][1], b.rotation.y, `The barge casts off for ${there}.`);
+    }], ['Not now', null]] : [['I haven’t the coins', null]]);
+  }
+  function ferryTick(dt) {
+    const F = ferryRide; if (!F || where !== 'wild' || fading) return; const b = bargeW;
+    const sp = 44 * Math.min(1, 0.15 + F.s / 60, 0.15 + (F.len - F.s) / 80); F.s = Math.min(F.len, F.s + sp * dt);
+    let k = 0, a = F.s; while (k < F.seg.length - 1 && a > F.seg[k]) { a -= F.seg[k]; k++; } const u = Math.min(1, a / F.seg[k]), p0 = F.pts[k], p1 = F.pts[k + 1];
+    F.x = p0[0] + (p1[0] - p0[0]) * u; F.z = p0[1] + (p1[1] - p0[1]) * u; b.position.set(F.x, -0.2 + Math.sin(F.s * 0.05) * 0.05, F.z);
+    b.rotation.y += wrap(Math.atan2(p1[0] - p0[0], p1[1] - p0[1]) - b.rotation.y) * Math.min(1, dt * 1.2);
+    const c = Math.cos(b.rotation.y), s = Math.sin(b.rotation.y), put = (o, lx, lz) => { o.position.set(F.x + lx * c + lz * s, FERRY_DECK, F.z - lx * s + lz * c); };
+    put(player, 0, 7); py = FERRY_DECK; vy = 0; if (beetle) put(beetle, -2.4, 4.5);   // well forward, so the mast and the helmsman are behind the camera
+    if (!F.said && F.s > 120) { F.said = true; hint(F.dir === 'down' ? 'The Fern runs wide and slow to the lake. Hearthmoor is at the far end of it.' : 'Up the Fern against the stream. Fernwater is ahead.'); }
+    if (F.s >= F.len) {
+      ferryRide = null;
+      if (F.dir === 'down') { const [x, z] = toWorld(frameH, -350, 70); player.position.set(x, CITY.y, z); py = CITY.y; if (beetle) { const [bx, bz] = toWorld(frameH, -351, 74); beetle.position.set(bx, CITY.y, bz); } hint('Hearthmoor. The quay and the city are at the end of the pier.'); }
+      else { b.visible = false; fadeTo('Fernwater Crossing', () => { moveCompany(curScene(), fernScene); where = 'fernwater'; player.position.set(13, 1.65, 58); py = 1.65; vy = 0; bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; if (beetle) beetle.position.set(11, 1.65, 57); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }, () => hint('Fernwater Crossing. You are back on the ferry dock.')); }
+    }
+  }
   // ---------- companions: whoever walks with you can be told to follow, to wait where it stands, or to go home ----------
   // While it follows, the old `beetle` holds it and everything that moves you moves it too. Told to wait or sent home, it is `parked`:
   // it stays in the place it was left, and nothing that happens to you touches it until you speak to it or whistle.
@@ -4317,14 +4487,15 @@
   function econTick(dt) {
     econT -= dt; if (econT > 0) return; econT = 0.25;
     findsNear();
+    if (questGrub) questGrub.visible = !save.beetle && !beetle && !parked && phase === 'free';
     { const cb = beetle || (parked && parked.obj); if (cb && beetleName && !cb.userData.pickable) { cb.userData.pickable = true; cb.userData.kind = 'follower'; pickables.push(cb); } }
     $('ridebtn').hidden = !bikeOwned;
     if (!!save.lamp !== !!(lampLight && lampLight.parent)) setLamp(save.lamp);
     // say what the pick-up button will do, when it is something that isn't part of a lesson
     let text = '', word = 'Pick up';
-    if (!talking() && !bagOpen && !mapOpen && !fading && !sitting) { const [b0, d0] = nearestPick(0);
-      if (!(b0 && d0 <= REACH)) for (let tier = 1; tier < 4 && !text; tier++) { const [b, d] = nearestPick(tier); if (!b || d > REACH) continue; const u = b.userData;
-        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'shop') { text = 'Trade at ' + SHOPS[u.shop].n; word = 'Trade'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
+    if (!talking() && !bagOpen && !mapOpen && !fading && !sitting) { const [b0, d0] = nearestPick(0); if (b0 && d0 <= REACH && b0.userData.kind === 'sci') { text = 'Look at ' + b0.userData.label; word = 'Look'; }
+      if (!(b0 && d0 <= REACH)) for (let tier = 1; tier < 5 && !text; tier++) { const [b, d] = nearestPick(tier); if (!b || d > REACH) continue; const u = b.userData;
+        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { text = 'Trade at ' + SHOPS[u.shop].n; word = 'Trade'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
     if (text !== promptText) { promptText = text; const p = $('prompt'); p.hidden = !text; if (text) p.innerHTML = settings.input === 'touch' ? text : `<kbd>${settings.input === 'gamepad' ? 'X' : keyLabel(settings.binds.pick)}</kbd> ${text}`; $('grab').textContent = word; }
   }
 
@@ -4356,7 +4527,7 @@
   function cloudSoon() { if (!session) return; cloudDirty = true; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudPush, 3000); }
   async function cloudPush() {
     if (!session || cloudBusy || !cloudDirty) return; cloudBusy = true; cloudDirty = false;
-    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null, inv: save.inv || {}, hat: save.hatStyle || '', lamp: !!save.lamp, stam: save.stamMax || 100, ts: save.ts || 0, bm: save.beetleMode || '', ba: save.beetleAt || null } }); acctRefresh('Saved to the cloud.', 'ok'); }
+    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null, inv: save.inv || {}, hat: save.hatStyle || '', lamp: !!save.lamp, stam: save.stamMax || 100, ts: save.ts || 0, bm: save.beetleMode || '', ba: save.beetleAt || null, lv: save.level || 0, td: save.tested || [] } }); acctRefresh('Saved to the cloud.', 'ok'); }
     catch (e) { cloudDirty = true; acctRefresh('Cloud save failed, kept locally. ' + e.message, 'err'); }
     cloudBusy = false;
   }
@@ -4364,7 +4535,7 @@
   async function cloudPull() {
     const c = await rpc('game_load_progress'); if (!c) return 'empty';
     master = !!c.master; try { acctRefresh(); if (!startEl.hidden) drawPanel(); } catch (e) {}
-    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), lay: (c.blob && c.blob.lay) || 0, name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null, inv: (c.blob && c.blob.inv) || {}, hatStyle: (c.blob && c.blob.hat) || '', lamp: !!(c.blob && c.blob.lamp), stamMax: Math.max((c.blob && c.blob.stam) || 100, save.stamMax || 100), ts: (c.blob && c.blob.ts) || 0, found: save.found || {}, beetleMode: (c.blob && c.blob.bm) || '', beetleAt: (c.blob && c.blob.ba) || null };
+    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), lay: (c.blob && c.blob.lay) || 0, name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null, inv: (c.blob && c.blob.inv) || {}, hatStyle: (c.blob && c.blob.hat) || '', lamp: !!(c.blob && c.blob.lamp), stamMax: Math.max((c.blob && c.blob.stam) || 100, save.stamMax || 100), ts: (c.blob && c.blob.ts) || 0, found: save.found || {}, beetleMode: (c.blob && c.blob.bm) || '', beetleAt: (c.blob && c.blob.ba) || null, level: (c.blob && c.blob.lv) || 0, tested: (c.blob && c.blob.td) || [] };
     // a bike granted on the account is kept whichever save wins
     if (cloud.bike || save.bike) { cloud.bike = true; save.bike = true; bikeOwned = true; }
     // the same lessons done on both: the newer save wins (so coins you spent stay spent); otherwise the one further along
@@ -4457,6 +4628,11 @@
   }
   function canPick(o) {
     const k = o.userData.kind;
+    if (k === 'sci') return where === 'village' && phase === 'sci' && !!sciActive && sciActive.left.has(o.userData.id) && !talking();
+    if (k === 'sciteach') return where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
+    if (k === 'teacher') return TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
+    if (k === 'quest') return where === 'village' && phase === 'free' && !save.beetle && !beetle && !parked;
+    if (k === 'ferry') return o.userData.world === where && !ferryRide;
     if (k === 'follower') return (o === beetle && !!beetleName && beetle.userData.follow) || (!!parked && o === parked.obj && !parked.leave && parked.world === curWorld());
     if ((o.userData.world || 'village') !== (where === 'in' ? 'in:' + interior.id : where)) return false;
     if (k === 'spill') return phase === 'spill' && !(o.userData.fall && o.userData.fall.t < 1);
@@ -4471,7 +4647,7 @@
     if (k === 'shape') return phase === 'sortshapes';
     if (k === 'grub') return phase === 'getgrub';
     if (k === 'rot') return phase === 'rot' && rotCount < 5;
-    if (k === 'seat') return !sitting;
+    if (k === 'seat') return !sitting && (where !== 'in' || Math.abs((o.userData.y0 || 0) - player.position.y) < 4);
     if (k === 'orow') return phase === 'orows';
     if (k === 'apple') return phase === 'apples' && applesGot < 12;
     if (k === 'press') return phase === 'press';
@@ -4498,6 +4674,11 @@
     else if (d.kind === 'find') takeFind(obj);
     else if (d.kind === 'shop') openBag(d.shop);
     else if (d.kind === 'follower') companionMenu();
+    else if (d.kind === 'teacher') teacherMenu(d.i);
+    else if (d.kind === 'sci') sciPick(obj);
+    else if (d.kind === 'sciteach') sciMenu();
+    else if (d.kind === 'quest') grubQuest();
+    else if (d.kind === 'ferry') ferryStart(d.dir);
     else if (d.kind === 'orow') countRowOfTrees(obj);
     else if (d.kind === 'press') pullPress(obj);
     else if (d.kind === 'apple') { flyAway(obj); applesGot++; tasks.apples.have = applesGot; renderTasks(); if (applesGot >= 12) hint('Twelve apples! Back to Hollis by the press.'); }
@@ -4516,7 +4697,7 @@
   }
   function sitDown(seat) {
     sitting = true; sitSeat = seat; const d = seat.userData;
-    player.position.set(seat.position.x, 0, seat.position.z); py = Math.max(-0.4, d.seatTop - 0.95 * kid.tall); vy = 0; bodyYaw = d.yaw; camYaw = d.yaw; player.rotation.y = bodyYaw;
+    player.position.set(seat.position.x, d.y0 || 0, seat.position.z); py = Math.max(-0.4, d.seatTop - 0.95 * kid.tall); vy = 0; bodyYaw = d.yaw; camYaw = d.yaw; player.rotation.y = bodyYaw;
     hint(`Sitting on the ${d.label}. Move to stand up.`);
   }
   function standUp() {
@@ -4524,11 +4705,11 @@
     player.position.add(new THREE.Vector3(Math.sin(yaw) * 1.4, 0, Math.cos(yaw) * 1.4)); hint('');
   }
   // tier 0: whatever the lesson in hand wants picked; 1: things lying about; 2: a counter to trade at; 3: a seat
-  const PICK_TIER = { find: 1, shop: 2, follower: 2, seat: 3 };
+  const PICK_TIER = { find: 1, shop: 2, teacher: 2, sciteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
   function nearestPick(tier) { let best = null, bd = Infinity; pickables.forEach(o => { if ((PICK_TIER[o.userData.kind] || 0) !== tier || !canPick(o)) return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } }); return [best, bd]; }
   function pickNearest() {
     let [best, bd] = nearestPick(0);
-    if (!best || bd > REACH) { for (let tier = 1; tier < 4; tier++) { const [b2, d2] = nearestPick(tier); if (b2 && d2 <= REACH) { best = b2; bd = d2; break; } } }
+    if (!best || bd > REACH) { for (let tier = 1; tier < 5; tier++) { const [b2, d2] = nearestPick(tier); if (b2 && d2 <= REACH) { best = b2; bd = d2; break; } } }
     if (best && bd <= REACH) tryPick(best);
     else if (phase === 'harvest' && trayCount >= 10) hint('The tray is full. Take it back to Bramblewick first.');
     else if (phase === 'harvest' && stores + trayCount >= 14) hint('That’s plenty! Bramblewick only needs 14. Take the tray back.');
@@ -5367,7 +5548,7 @@
     } else if (phase === 'harvest') {
       labels.shop.visible = false; reachBramblewickHarvest();
     } else if (phase === 'free') {
-      say(['Back again! Good. Open the map, press M, and pick up wherever you left off.']);
+      teacherMenu(0);
     } else if (phase === 'tofen' || phase === 'sort') {
       say(['No jars yet? Fen\u2019s stall is down the lane, past the signpost.']);
     }
@@ -6888,7 +7069,7 @@
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
     visual.innerHTML = `<div class="reward"><h2>The Long Road</h2>
       <div class="items"><div>${ICON.coin}<span>${coins} acorn coins saved</span></div><div><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="#e8b64c" stroke-width="4"/><path d="M20 34 L30 44 L46 22" fill="none" stroke="#e8b64c" stroke-width="5" stroke-linecap="round"/></svg><span>Eight marks</span></div></div>
-      <p style="margin:0;color:var(--ink-soft)">${G('One, many, part, shape, balance, unknown, change — and home.')} You walked the whole road, Thistledown Hollow to Skyhaven, and flew it back. Every region is still open: walk anywhere, re-sit any lesson from the map, and the lifts and roads will take you.</p></div>`;
+      <p style="margin:0;color:var(--ink-soft)">${G('One, many, part, shape, balance, unknown, change — and home.')} You walked the whole road, Thistledown Hollow to Skyhaven, and flew it back. Every region is still open: walk anywhere, go over any lesson with its teacher, and the lifts and roads will take you.</p></div>`;
     const walk = document.createElement('button'); walk.className = 'btn primary'; walk.textContent = 'Walk around the Hollow'; walk.onclick = () => { showDialog(false); hint(''); };
     const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Back to the map'; b.onclick = () => { location.hash = ''; location.reload(); };
     actions.append(walk, b); actions.querySelector('button').focus({ preventScroll: true });
@@ -7080,7 +7261,7 @@
   canvas.addEventListener('pointercancel', () => { down = null; dragged = false; });
 
   // ---------- movement and collisions ----------
-  function inRiver(x, z) { if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; if (where === 'wild') return wildRiver(x, z) || wildSea(x, z); return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2 && fernDeck(x, z) === null; }
+  function inRiver(x, z) { if (ferryRide) return false; if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; if (where === 'wild') return wildRiver(x, z) || wildSea(x, z); return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2 && fernDeck(x, z) === null; }
   // places to stand by the water at Fernwater: the ramp, the dock, the gangplank and the deck of the barge
   function fernDeck(x, z) {
     if (x > 14.6 && x < 19.4 && z >= 51.4 && z < 55) return 1.65 * (z - 51.4) / 3.6;
@@ -7090,7 +7271,8 @@
     return null;
   }
   function groundAt(x, z) {
-    if (where === 'in') return 0;
+    if (where === 'in') return interior.floorAt ? interior.floorAt(x, z, player.position.y) : 0;   // a house with an upstairs says which floor you are on
+    if (ferryRide && where === 'wild' && Math.hypot(x - ferryRide.x, z - ferryRide.z) < 12) return FERRY_DECK;
     if (where === 'wild') { const dk = cityDeck(x, z); return dk !== null ? dk : wildRiver(x, z) ? Math.min(worldH(x, z), -1.45) : wildSea(x, z) ? SEA_L - 1.45 : worldH(x, z); }
     if (where === 'cairnhold') return (z > GORGE.z0 && z < GORGE.z1 && !(bridgeBuilt && Math.abs(x) < 3.5)) ? -GORGE.depth : 0;
     if (where === 'cogsworth') return cogH(x, z);
@@ -7208,8 +7390,8 @@
       skyBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
     }
     if (where === 'in') {
-      const it = interior; it.solids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
-      it.boxes.forEach(b => { const dx = p.x - b.x, dz = p.z - b.z, ex = b.hw + 0.6, ez = b.hd + 0.6; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (ex - Math.abs(dx) < ez - Math.abs(dz)) p.x = b.x + (dx < 0 ? -1 : 1) * ex; else p.z = b.z + (dz < 0 ? -1 : 1) * ez; } });   // walls between rooms
+      const it = interior, lvNow = it.upY && p.y > it.upY - 1.4 ? 1 : 0; it.solids.forEach(s => { if (s.lv !== undefined && s.lv !== lvNow) return; const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
+      it.boxes.forEach(b => { if (b.lv !== undefined && b.lv !== lvNow) return; const dx = p.x - b.x, dz = p.z - b.z, ex = b.hw + 0.6, ez = b.hd + 0.6; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (ex - Math.abs(dx) < ez - Math.abs(dz)) p.x = b.x + (dx < 0 ? -1 : 1) * ex; else p.z = b.z + (dz < 0 ? -1 : 1) * ez; } });   // walls between rooms
       const hw = it.w / 2 - 0.9, hd = it.d / 2 - 0.9; p.x = clamp(p.x, -hw, hw);
       if (Math.abs(p.x) < 1.7 && p.z > it.d / 2 - 1.0 && !fading) exitInterior(); else p.z = clamp(p.z, -hd, Math.abs(p.x) < 1.7 ? it.d / 2 + 1 : hd);
     }
@@ -7255,7 +7437,7 @@
     }
     pos.y = Math.max(pos.y, Math.max(groundAt(pos.x, pos.z), floorY) + 0.5);
     if (where === 'in') { pos.x = clamp(pos.x, -interior.w / 2 + 0.6, interior.w / 2 - 0.6); pos.z = clamp(pos.z, -interior.d / 2 + 0.6, interior.d / 2 - 0.6); pos.y = Math.min(pos.y, interior.h - 0.6); }
-    if (where === 'in' && interior.boxes.length) { const hit = (x, z) => interior.boxes.some(b => Math.abs(x - b.x) < b.hw + 0.5 && Math.abs(z - b.z) < b.hd + 0.5); let t = 1; for (let q = 1; q <= 12; q++) { const u = q / 12; if (hit(base.x + (pos.x - base.x) * u, base.z + (pos.z - base.z) * u)) { t = Math.max(0.22, (q - 1) / 12); break; } } if (t < 1) pos.lerpVectors(base, pos, t); }   // the camera stays in the room you are in
+    if (where === 'in' && interior.boxes.length) { const lvC = interior.upY && player.position.y > interior.upY - 1.4 ? 1 : 0, hit = (x, z) => interior.boxes.some(b => (b.lv === undefined || b.lv === lvC) && Math.abs(x - b.x) < b.hw + 0.5 && Math.abs(z - b.z) < b.hd + 0.5); let t = 1; for (let q = 1; q <= 12; q++) { const u = q / 12; if (hit(base.x + (pos.x - base.x) * u, base.z + (pos.z - base.z) * u)) { t = Math.max(0.22, (q - 1) / 12); break; } } if (t < 1) pos.lerpVectors(base, pos, t); }   // the camera stays in the room you are in
     if (rh) { pos.x = clamp(pos.x, rh.x - rh.hw + 0.9, rh.x + rh.hw - 0.9); pos.z = clamp(pos.z, rh.z - rh.hd + 0.9, rh.z + rh.hd - 0.9); pos.y = Math.min(pos.y, rh.h - 0.6); }
     const look = view === 'front' ? base.clone() : base.clone().add(new THREE.Vector3(Math.sin(camYaw) * Math.cos(pitch) * 3, -Math.sin(pitch) * 3, Math.cos(camYaw) * Math.cos(pitch) * 3));
     return [pos, look];
@@ -7575,9 +7757,10 @@
     if (gameStarted && !mapOpen && keysShown < 99) { keysShown += dt; if (keysShown > 9) { keysEl.classList.add('gone'); keysShown = 99; } }
     if (canvas.clientWidth !== shownW || canvas.clientHeight !== shownH) resize();
     ambientTick(dt, t); wildLifeTick(dt); doorsTick(dt); fireTick(dt, t); songTick(dt); sndTick(dt, t); cullTimer += dt; if (cullTimer > 0.5) { cullTimer = 0; cullFar(); }
+    ferryTick(dt);
     // your beetle trots along behind you
     if (beetle && inRiver(beetle.position.x, beetle.position.z)) { if (where === 'lantern') { beetle.position.set(40, lantH(40, COVE.z), COVE.z); } else if (where === 'wild' && wildSea(beetle.position.x, beetle.position.z)) { const [bx, bz] = toWorld(tileL, 40, 112); beetle.position.set(bx, worldH(bx, bz), bz); } else if (where === 'wild') { const [, lx, lz] = riverD(beetle.position.x, beetle.position.z), [bx, bz] = toWorld(tileF, lx, lz < 78 ? 52 : 104); beetle.position.set(bx, worldH(bx, bz), bz); } else { beetle.position.z = beetle.position.z < 78 ? 55.5 : 100.5; beetle.position.y = 0; } }
-    if (beetle && beetle.userData.follow && !inRiver(player.position.x, player.position.z)) {
+    if (beetle && beetle.userData.follow && !ferryRide && !inRiver(player.position.x, player.position.z)) {
       const dxb = player.position.x - beetle.position.x, dzb = player.position.z - beetle.position.z, db = Math.hypot(dxb, dzb);
       if (db > 40 || (where === 'fernwater' && (player.position.z > 97.6) !== (beetle.position.z > 97.6) && Math.abs(player.position.x) > 5.2)) { beetle.position.set(player.position.x + 2, 0, player.position.z + 2); }
       if (db > 3.2) { const sp = Math.min(9, (db - 3) * 3) * dt; beetle.position.x += dxb / db * sp; beetle.position.z += dzb / db * sp; beetle.userData.walk = (beetle.userData.walk || 0) + dt * 14; }
@@ -7586,11 +7769,11 @@
       beetle.position.y = groundAt(beetle.position.x, beetle.position.z);
     }
 
-    econTick(dt, t); parkedTick(dt);
+    econTick(dt, t); parkedTick(dt); sciTick(dt);
     pickables.forEach(o => {
       const f = o.userData.fall;
       if (f && f.t < 1) { f.t = Math.min(1, f.t + dt * 1.2); const kk = Math.max(0, f.t); o.position.lerpVectors(f.from, f.to, kk); o.position.y += Math.sin(kk * Math.PI) * 3.5; o.rotation.x += dt * 7; }
-      if (o.userData.kind !== 'follower' && canPick(o) && !reduce) { const near = flatDist(o) <= REACH; o.scale.setScalar(near ? 1.15 + Math.sin(t * 6) * 0.06 : (o.userData.kind === 'fresh' ? 1.2 : 1)); }
+      if (!{ follower: 1, teacher: 1, quest: 1, sciteach: 1 }[o.userData.kind] && canPick(o) && !reduce) { const near = flatDist(o) <= REACH; o.scale.setScalar(near ? 1.15 + Math.sin(t * 6) * 0.06 : (o.userData.kind === 'fresh' ? 1.2 : 1)); }
     });
     for (let i = flying.length - 1; i >= 0; i--) {
       const f = flying[i]; f.t += dt * 2.6;
@@ -7665,6 +7848,18 @@
   cairnScene.fog.color.copy(worldScene.fog.color); cairnScene.fog.near = 150; cairnScene.fog.far = 430;
   STITCHED.forEach(t => { t.scene.userData.fog0 = [150, 430]; t.scene.fog.near = 150 * worldDistK; t.scene.fog.far = 430 * worldDistK; });
   trimTowns();
+  // ---------- teachers to speak to, the grub's heap, and the ferry bells ----------
+  var TEACH = [{ n: 'Old Bramblewick', sc: scene, w: 'village', p: BWPOS }, { n: 'Hollis Quern', sc: orchScene, w: 'orchards', p: HOLPOS }, { n: ORI, sc: fernScene, w: 'fernwater', p: ORIPOS }, { n: WREN, sc: cairnScene, w: 'cairnhold', p: WRENPOS },
+    { n: TAM, sc: cogScene, w: 'cogsworth', p: TAMPOS }, { n: DUR, sc: embScene, w: 'emberdeep', p: DURPOS }, { n: AST, sc: lantScene, w: 'lantern', p: ASTPOS }, { n: ILS, sc: skyScene, w: 'skyhaven', p: ILSPOS }];
+  {
+    const spot = (sc, world, x, y, z, data) => { const o = new THREE.Object3D(); o.position.set(x, y, z); sc.add(o); o.userData = Object.assign({ pickable: true, world }, data); pickables.push(o); return o; };
+    TEACH.forEach((T, i) => spot(T.sc, T.w, T.p.x, T.p.y || 0, T.p.z, { kind: 'teacher', i }));
+    spot(scene, 'village', NURS.x - 10.3, 0, NURS.z - 0.6, { kind: 'quest', id: 'grub' });
+    questGrub = makeGrub(); questGrub.position.set(NURS.x - 10.3, 0.5, NURS.z - 0.6); questGrub.rotation.y = 0.8; scene.add(questGrub);   // there to be seen until somebody raises it
+    const fb = shopBell(fernScene, 'fernwater', 19.4, 1.65 + 2.3, 59.8, null, { post: true, floor: 1.65 }); fb.userData.kind = 'ferry'; fb.userData.dir = 'down'; fernSolids.push({ x: 19.4, z: 59.8, r: 0.9 });
+    const [wx, wz] = toWorld(frameH, -347.4, 60); const cb = shopBell(worldScene, 'wild', wx, CITY.y + 2.3, wz, null, { post: true, floor: CITY.y }); cb.userData.kind = 'ferry'; cb.userData.dir = 'up'; CITY.solids.push({ x: -347.4, z: 60, r: 0.9 });
+    [fb, cb].forEach(o => { if (!pickables.includes(o)) pickables.push(o); });
+  }
   // ---------- where you can trade: a bell on every counter, and one on a barrel where there is no counter ----------
   {
     shopBell(scene, 'village', -1.2, 2.41, -4.6, 'stores', { hidden: true });   // Bramblewick's counter already has its bell
@@ -7678,6 +7873,196 @@
     [[-58, 247, 72, 34, 0], [58, 247, 72, 34, 0], [58, 413, 72, 34, 1], [-58, 413, 72, 34, 1], [-124, 288, 34, 60, 2], [-124, 372, 34, 60, 2], [124, 288, 34, 60, 3], [124, 372, 34, 60, 3]].forEach(([x, z, w, d, face], i) => { const p = [[x + 7, z + d / 2 + 3.2], [x + 7, z - d / 2 - 3.2], [x + w / 2 + 3.2, z + 7], [x - w / 2 - 3.2, z + 7]][face]; cityBell(p[0], p[1], 2.5, 'hall' + i, true); });
     [[-60, 300], [-30, 300], [30, 300], [60, 300], [-60, 360], [-30, 360], [30, 360], [60, 360]].forEach(([x, z], i) => cityBell(x + 4.4, z, 3.55, 'stall' + i, false));
     shopSpots.forEach(o => { if (!pickables.includes(o)) pickables.push(o); });
+  }
+  // =====================================================================================================
+  // SCIENCE IN THE HOLLOW: eight lessons with Marigold Fernsby. Each one sends you to look at, sort, set up or
+  // test real things standing about the village, and then asks what you found out.
+  // =====================================================================================================
+  var SCI_TITLES = ['Alive, once alive, never alive', 'What a plant needs', 'Which part do we eat?', 'Egg to frog, egg to butterfly', 'Who lives here?', 'Reading the weather', 'What things are made of', 'Pushes and pulls'];
+  var sciActive = null, sciAnim = null;
+  {
+    const MARI = 'Marigold Fernsby', ALD = 'Aldric Bough', SPOT = {};
+    const G = () => new THREE.Group(), M = (g, geo, col, x, y, z, o) => { const q = new THREE.Mesh(geo, mat(col, o || { roughness: 0.85 })); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; };
+    const sph = (r, a, b) => new THREE.SphereGeometry(r, a || 10, b || 8), cyl = (a, b, h, n) => new THREE.CylinderGeometry(a, b, h, n || 10), bx = (w, h, d) => new THREE.BoxGeometry(w, h, d), cone = (r, h, n) => new THREE.ConeGeometry(r, h, n || 8);
+    // somewhere clear to stand a thing: off the paths, away from houses, fences and whatever is already there
+    const freeAt = (x, z, pad) => x > FENCE.x0 + 4 && x < FENCE.x1 - 4 && z > FENCE.z0 + 4 && z < FENCE.z1 - 5 && !onPath(x, z, pad + 1.8) && !nearHome(x, z, pad) && Math.hypot(x, z) > R + 4 + pad && Math.hypot(x - OAK.x, z - OAK.z) > 10 + pad && Math.hypot(x - BUSH.x, z - BUSH.z) > 6 + pad
+      && !(Math.abs(x - NURS.x) < 17.5 + pad && Math.abs(z - NURS.z) < 15.5 + pad) && !solids.some(s => Math.hypot(s.x - x, s.z - z) < s.r + pad) && !hollowBoxes.some(b => Math.abs(x - b.x) < b.hw + pad && Math.abs(z - b.z) < b.hd + pad);
+    const place = (x, z, offs, pad) => { for (let r = 0; r < 26; r += 1.5) for (let a = 0; a < (r ? 12 : 1); a++) { const cx = x + Math.cos(a * 0.5236) * r, cz = z + Math.sin(a * 0.5236) * r; if (offs.every(([ox, oz]) => freeAt(cx + ox, cz + oz, pad))) return [cx, cz]; } return [x, z]; };
+    const spot = (id, label, g, x, z, r) => { g.position.set(x, 0, z); scene.add(g); if (r) solids.push({ x, z, r }); g.userData = { pickable: true, kind: 'sci', id, label, world: 'village' }; pickables.push(g); SPOT[id] = g; return g; };
+    const row = (n, gap, alongX) => Array.from({ length: n }, (_, i) => alongX ? [(i - (n - 1) / 2) * gap, 0] : [0, (i - (n - 1) / 2) * gap]);
+    const post = (g, text, h) => { M(g, cyl(0.09, 0.09, h, 6), '#5a3d22', 0, h / 2, 0); const s = signBoard(text, 1.5, 0.6); s.position.set(0, h + 0.2, 0); g.add(s); };
+    // ---------- 1: things to judge ----------
+    { let [x, z] = place(-11, 60, [[0, 0]], 2); const st = G(); M(st, sph(1.3, 8, 6), '#8d8676', 0, 0.8, 0, { roughness: 1, flatShading: true }).scale.set(1.2, 0.75, 1); spot('stone', 'the stone', st, x, z, 1.4);
+      [x, z] = place(-55, 108, [[0, 0]], 2); const mu = G(); M(mu, cyl(0.3, 0.4, 1.3), '#efe6d2', 0, 0.65, 0); M(mu, new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), '#b5562b', 0, 1.2, 0); M(mu, cyl(0.2, 0.26, 0.8), '#efe6d2', 1, 0.4, 0.5); M(mu, new THREE.SphereGeometry(0.6, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), '#b5562b', 1, 0.75, 0.5); spot('shroom', 'the toadstools', mu, x, z, 1);
+      [x, z] = place(-12, 28, [[0, 0]], 2.4); const br = G(); M(br, cyl(1, 0.7, 0.9, 10), '#3a3a3a', 0, 1.5, 0, { metalness: 0.5, roughness: 0.6 }); [0, 2.1, 4.2].forEach(a => { const l = M(br, cyl(0.07, 0.07, 1.4, 5), '#3a3a3a', Math.cos(a) * 0.6, 0.65, Math.sin(a) * 0.6); l.rotation.set(Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3); });
+      spot('fire', 'the fire in the brazier', br, x, z, 1.2); const fl = new THREE.PointLight('#ff8a3a', 0.5, 14); fl.position.set(x, 2.6, z); scene.add(fl); makeFire(scene, scene, x, 1.9, z, 0.7, fl);
+      [x, z] = place(-11, 70, [[0, 0]], 2); const tr = G(); M(tr, bx(2.2, 0.2, 1.5), '#8a6438', 0, 1.6, 0); [[-0.9, -0.6], [0.9, -0.6], [-0.9, 0.6], [0.9, 0.6]].forEach(([a, b]) => M(tr, bx(0.14, 1.5, 0.14), '#5a3d22', a, 0.75, b)); for (let i = 0; i < 12; i++) M(tr, sph(0.07, 6, 5), '#3a2a1a', -0.8 + (i % 4) * 0.52, 1.75, -0.4 + Math.floor(i / 4) * 0.4); M(tr, bx(1.9, 0.06, 1.2), '#e9e2d0', 0, 1.71, 0); spot('seeds', 'the dry seeds on the tray', tr, x, z, 1.3);
+      const fix = (id, label, px, pz) => spot(id, label, new THREE.Object3D(), px, pz, 0); fix('oak', 'the Old Oak', OAK.x + 9.5, OAK.z + 2); fix('bush', 'the berry bush', BUSH.x + 5, BUSH.z + 1); fix('lamp', 'the lantern post', 7, 13.8); fix('barrel', 'the barrel by the shop', 9.4, 11); fix('nest', 'the nest in the oak', OAK.x - 9.5, OAK.z + 3); }
+    // ---------- 2: four pots ----------
+    const pots = []; { const offs = row(4, 3.4), [x, z] = place(-11, 80, offs, 1.6); offs.forEach(([ox, oz], i) => { const g = G(); M(g, cyl(0.75, 0.55, 1.1, 12), '#b5673a', 0, 0.55, 0); M(g, cyl(0.68, 0.68, 0.06, 12), '#3a2a1a', 0, 1.09, 0); const pl = G(); pl.position.y = 1.1; g.add(pl);
+        const crate = M(g, bx(2, 2.4, 2), '#a8814a', 0, 1.2, 0); crate.visible = false; const wet = M(g, cyl(0.69, 0.69, 0.07, 12), '#1f1610', 0, 1.1, 0); wet.visible = false;
+        const set = st => { while (pl.children.length) pl.remove(pl.children[0]); const stem = (h, col, lean) => { const s = M(pl, cyl(0.045, 0.06, h, 6), col, lean * h * 0.25, h / 2, 0); s.rotation.z = -lean * 0.5; return s; }, leaf = (col, y, sz, droop) => [-1, 1].forEach(d => { const l = M(pl, sph(0.2 * sz, 8, 6), col, d * 0.2 * sz, y, 0); l.scale.set(1.4, 0.3, 0.8); l.rotation.z = d * (droop ? 1.1 : -0.3); });
+            if (st === 'seedling') { stem(0.35, '#6fae4a', 0); leaf('#6fae4a', 0.36, 0.7); }
+            else if (st === 'good') { stem(1.5, '#4f8a33', 0); leaf('#4f9a3a', 0.6, 1.5); leaf('#4f9a3a', 1.05, 1.4); leaf('#5fae4a', 1.5, 1.1); }
+            else if (st === 'wilt') { stem(0.55, '#8a7a3a', 0.8); leaf('#9a8246', 0.42, 0.9, true); }
+            else if (st === 'pale') { stem(2, '#e3dc8a', 0.6); leaf('#ece58f', 1.3, 0.6); leaf('#ece58f', 1.95, 0.5); }
+            else if (st === 'dead') { stem(0.3, '#6a5a3a', 1.2); leaf('#6a5a3a', 0.18, 0.6, true); } };
+        set('seedling'); spot('pot' + i, 'pot ' + 'ABCD'[i], g, x + ox, z + oz, 0.9); pots.push({ g, set, crate, wet, how: null }); post(g, 'ABCD'[i], 0.01); g.children[g.children.length - 1].position.set(0, 0.5, 0.95); g.children[g.children.length - 2].visible = false; }); }
+    // ---------- 3: the kitchen bed ----------
+    { const offs = row(6, 3.1), [x, z] = place(11, 32, offs, 1.5); const bed = G(); M(bed, bx(3.2, 0.3, 19.4), '#4a3524', 0, 0.15, 0, { roughness: 1 }); bed.position.set(x, 0, z); scene.add(bed);
+      const crops = { carrot: g => { M(g, cone(0.3, 1, 8), '#e07a2a', 0, 0.75, 0).rotation.x = Math.PI; for (let k = 0; k < 5; k++) { const l = M(g, cone(0.08, 0.9, 5), '#4f9a3a', Math.cos(k * 1.26) * 0.12, 1.6, Math.sin(k * 1.26) * 0.12); l.rotation.set(Math.sin(k * 1.26) * 0.4, 0, -Math.cos(k * 1.26) * 0.4); } },
+        celery: g => { for (let k = 0; k < 5; k++) { M(g, cyl(0.09, 0.11, 1.6, 6), '#b9d98a', Math.cos(k * 1.26) * 0.16, 1.1, Math.sin(k * 1.26) * 0.16); M(g, sph(0.2, 7, 5), '#5fae4a', Math.cos(k * 1.26) * 0.2, 2, Math.sin(k * 1.26) * 0.2); } },
+        lettuce: g => { M(g, sph(0.7, 10, 8), '#8fce5a', 0, 0.75, 0).scale.y = 0.75; for (let k = 0; k < 6; k++) M(g, sph(0.42, 8, 6), '#a6dc6a', Math.cos(k * 1.05) * 0.5, 0.6, Math.sin(k * 1.05) * 0.5).scale.y = 0.4; },
+        broccoli: g => { M(g, cyl(0.16, 0.2, 0.9, 7), '#9fc46a', 0, 0.75, 0); for (let k = 0; k < 7; k++) M(g, sph(0.3, 7, 6), '#2f7a3a', k ? Math.cos(k * 1.05) * 0.36 : 0, k ? 1.3 : 1.5, k ? Math.sin(k * 1.05) * 0.36 : 0); },
+        tomato: g => { M(g, cyl(0.05, 0.06, 2, 5), '#4f8a33', 0, 1.3, 0); [[0.3, 1.2, 0.1], [-0.28, 1.6, -0.1], [0.1, 1.95, 0.25]].forEach(([a, y, c]) => M(g, sph(0.26, 9, 7), '#d23b2e', a, y, c, { roughness: 0.4 })); [[-0.3, 1], [0.3, 1.7], [-0.2, 2.2]].forEach(([a, y]) => M(g, sph(0.22, 7, 5), '#4f9a3a', a, y, 0).scale.y = 0.3); },
+        pea: g => { M(g, cyl(0.04, 0.05, 2.2, 5), '#5a3d22', 0, 1.4, 0); [[0.25, 1.3], [-0.25, 1.7], [0.22, 2.1]].forEach(([a, y]) => { const pd = M(g, sph(0.16, 8, 6), '#7ac05a', a, y, 0); pd.scale.set(0.6, 2.2, 0.6); pd.rotation.z = a * 1.4; }); [0.6, 1, 1.5].forEach((y, k) => M(g, sph(0.2, 7, 5), '#4f9a3a', k % 2 ? 0.2 : -0.2, y + 0.3, 0.1).scale.y = 0.3); } };
+      Object.keys(crops).forEach((id, i) => { const g = G(); crops[id](g); spot(id, { carrot: 'the carrot', celery: 'the celery', lettuce: 'the lettuce', broccoli: 'the broccoli', tomato: 'the tomato', pea: 'the peas in their pod' }[id], g, x + offs[i][0], z + offs[i][1], 0.5); g.position.y = 0.2; }); }
+    // ---------- 4: the pond, and the two ways of growing up ----------
+    { const [px, pz] = place(44, 124, [[0, 0], [7, 0], [-7, 0], [0, 7], [0, -7]], 1.5); const pond = new THREE.Mesh(new THREE.CircleGeometry(4.6, 30), mat('#5aa6cf', { roughness: 0.2, transparent: true, opacity: 0.9 })); pond.rotation.x = -Math.PI / 2; pond.position.set(px, 0.06, pz); scene.add(pond);
+      const rim = new THREE.Mesh(new THREE.RingGeometry(4.5, 5.2, 30), mat('#8d8676', { roughness: 1 })); rim.rotation.x = -Math.PI / 2; rim.position.set(px, 0.05, pz); scene.add(rim);
+      for (let k = 0; k < 4; k++) { const r = M(scene, cyl(0.04, 0.05, 1.8, 5), '#4f8a33', px + Math.cos(k * 1.9) * 3.9, 0.9, pz + Math.sin(k * 1.9) * 3.9); r.rotation.z = 0.1 * (k - 1.5); }
+      const frog = { spawn: g => { for (let k = 0; k < 9; k++) M(g, sph(0.16, 7, 6), '#dfe8ee', (k % 3 - 1) * 0.26, 0.2 + (k % 2) * 0.12, (Math.floor(k / 3) - 1) * 0.26, { roughness: 0.2, transparent: true, opacity: 0.8 }); for (let k = 0; k < 9; k++) M(g, sph(0.05, 5, 4), '#1a1a1a', (k % 3 - 1) * 0.26, 0.2 + (k % 2) * 0.12, (Math.floor(k / 3) - 1) * 0.26); },
+        tadpole: g => { M(g, sph(0.3, 9, 7), '#3a3a32', 0, 0.3, 0.2); const t = M(g, cone(0.14, 0.9, 6), '#3a3a32', 0, 0.3, -0.45); t.rotation.x = -Math.PI / 2; },
+        froglet: g => { M(g, sph(0.34, 9, 7), '#6a8a3a', 0, 0.36, 0.1).scale.set(1, 0.8, 1.2); const t = M(g, cone(0.1, 0.5, 6), '#5a7a32', 0, 0.3, -0.5); t.rotation.x = -Math.PI / 2; [-1, 1].forEach(d => { M(g, sph(0.12, 6, 5), '#6a8a3a', d * 0.32, 0.16, -0.1); M(g, sph(0.09, 6, 5), '#6a8a3a', d * 0.28, 0.14, 0.4); }); },
+        frog: g => { M(g, sph(0.5, 10, 8), '#4f9a3a', 0, 0.48, 0).scale.set(1, 0.75, 1.2); [-1, 1].forEach(d => { M(g, sph(0.13, 7, 6), '#f2f2e6', d * 0.22, 0.86, 0.36); M(g, sph(0.06, 5, 4), '#1a1a1a', d * 0.22, 0.88, 0.46); M(g, sph(0.2, 7, 6), '#3f8a33', d * 0.5, 0.2, -0.2).scale.set(1, 0.6, 1.6); M(g, sph(0.13, 6, 5), '#3f8a33', d * 0.4, 0.14, 0.5); }); } };
+      [['spawn', 'the frogspawn'], ['tadpole', 'the tadpole'], ['froglet', 'the froglet with legs and a tail'], ['frog', 'the frog']].forEach(([id, label], i) => { const a = [2.2, 0.4, 3.9, 5.4][i], g = G(); frog[id](g); const st = G(); M(st, cyl(0.7, 0.8, 0.5, 10), '#8d8676', 0, 0.25, 0, { roughness: 1 }); g.position.y = 0.5; st.add(g); spot(id, label, st, px + Math.cos(a) * 6.6, pz + Math.sin(a) * 6.6, 0.8); });
+      spot('pond', 'the pond', new THREE.Object3D(), px + Math.cos(1.3) * 5.4, pz + Math.sin(1.3) * 5.4, 0);
+      const offs = row(4, 3.2, true), [bx0, bz0] = place(26, 112, offs, 1.5);
+      const fly = { egg: g => { M(g, sph(0.5, 8, 6), '#4f9a3a', 0, 1.3, 0).scale.set(1.6, 0.2, 1); for (let k = 0; k < 5; k++) M(g, sph(0.07, 6, 5), '#f4efc8', -0.3 + k * 0.15, 1.42, (k % 2) * 0.12); },
+        caterpillar: g => { for (let k = 0; k < 6; k++) M(g, sph(0.18, 8, 6), k % 2 ? '#7ac05a' : '#e8d44a', -0.5 + k * 0.22, 1.35 + Math.sin(k) * 0.05, 0); M(g, sph(0.5, 8, 6), '#4f9a3a', 0, 1.15, 0).scale.set(1.8, 0.2, 1); },
+        chrysalis: g => { M(g, cyl(0.03, 0.03, 0.4, 4), '#5a3d22', 0, 1.9, 0); const c = M(g, sph(0.24, 9, 7), '#8aa86a', 0, 1.45, 0); c.scale.set(0.8, 1.7, 0.8); M(g, bx(1.4, 0.08, 0.1), '#5a3d22', 0, 2.1, 0); },
+        butterfly: g => { M(g, cyl(0.06, 0.05, 0.7, 6), '#2a2420', 0, 1.6, 0).rotation.x = Math.PI / 2; [-1, 1].forEach(d => { const w = M(g, sph(0.5, 10, 6), '#e88a2a', d * 0.42, 1.68, 0.05); w.scale.set(1, 0.06, 0.8); w.rotation.z = d * 0.5; const w2 = M(g, sph(0.34, 9, 6), '#f0b03a', d * 0.32, 1.64, -0.36); w2.scale.set(1, 0.06, 0.8); w2.rotation.z = d * 0.5; }); } };
+      [['egg', 'the eggs on the leaf'], ['caterpillar', 'the caterpillar'], ['chrysalis', 'the chrysalis'], ['butterfly', 'the butterfly']].forEach(([id, label], i) => { const k = [2, 0, 3, 1][i], g = G(); M(g, cyl(0.08, 0.1, 1.2, 6), '#5a3d22', 0, 0.6, 0); fly[id](g); spot('b_' + id, label, g, bx0 + offs[k][0], bz0 + offs[k][1], 0.5); }); }
+    // ---------- 5: homes ----------
+    { let [x, z] = place(56, 106, [[0, 0]], 2.2); const bu = G(); M(bu, sph(1.7, 10, 7), '#7a5a3a', 0, 0, 0, { roughness: 1 }).scale.y = 0.6; M(bu, sph(0.6, 9, 7), '#1a120c', 0.2, 0.5, 1.2).scale.set(1, 1, 0.5); spot('burrow', 'the burrow in the bank', bu, x, z, 1.5);
+      [x, z] = place(-30, 108, [[0, 0], [1.5, 0], [-1.5, 0]], 1.6); const lg = G(), l = M(lg, cyl(0.8, 0.9, 4, 10), '#5a4630', 0, 0.8, 0, { roughness: 1 }); l.rotation.z = Math.PI / 2; M(lg, sph(0.5, 8, 6), '#3a2a1c', 2, 0.8, 0).scale.x = 0.2; [[-1, 1.5, 0.3], [0.6, 1.55, -0.2]].forEach(([a, y, c]) => M(lg, new THREE.SphereGeometry(0.3, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), '#c9b08a', a, y, c)); spot('log', 'the rotting log', lg, x, z, 1.6); }
+    // ---------- 6: the weather station ----------
+    { const offs = row(4, 3.4, true), [x, z] = place(16, 138, offs, 1.5);
+      const th = G(); M(th, cyl(0.1, 0.1, 3, 6), '#5a3d22', 0, 1.5, 0); M(th, bx(0.5, 1.8, 0.1), '#f2ead8', 0, 2.2, 0.1); M(th, bx(0.1, 1.5, 0.06), '#e9e2d0', 0, 2.2, 0.17); M(th, bx(0.1, 0.75, 0.07), '#c8383a', 0, 1.83, 0.18); M(th, sph(0.12, 7, 6), '#c8383a', 0, 1.42, 0.18); spot('thermo', 'the thermometer', th, x + offs[0][0], z + offs[0][1], 0.4);
+      const rg = G(); M(rg, cyl(0.1, 0.1, 1.6, 6), '#5a3d22', 0, 0.8, 0); M(rg, cyl(0.4, 0.4, 1.2, 12), '#cfe6ee', 0, 2.2, 0, { transparent: true, opacity: 0.45, roughness: 0.1 }); M(rg, cyl(0.38, 0.38, 0.4, 12), '#5aa6cf', 0, 1.82, 0, { transparent: true, opacity: 0.8 }); M(rg, cyl(0.55, 0.4, 0.2, 12), '#8d8676', 0, 2.9, 0); spot('rain', 'the rain gauge', rg, x + offs[1][0], z + offs[1][1], 0.5);
+      const wv = G(); M(wv, cyl(0.1, 0.12, 4.4, 6), '#5a3d22', 0, 2.2, 0); const arrow = G(); arrow.position.y = 4.5; wv.add(arrow); M(arrow, bx(0.1, 0.1, 2.2), '#3a3a3a', 0, 0, 0); const hd = M(arrow, cone(0.26, 0.6, 6), '#c8383a', 0, 0, 1.3); hd.rotation.x = Math.PI / 2; M(arrow, bx(0.06, 0.7, 0.7), '#3a3a3a', 0, 0, -1.1); arrow.rotation.y = -Math.PI / 2;   // pointing west: the wind is coming out of the west
+        [['N', 0, -1], ['S', 0, 1], ['E', 1, 0], ['W', -1, 0]].forEach(([t, a, b]) => { const s = signBoard(t, 0.5, 0.5); s.position.set(a * 0.8, 3.6, b * 0.8); s.rotation.y = Math.atan2(a, b); wv.add(s); }); spot('vane', 'the weather vane', wv, x + offs[2][0], z + offs[2][1], 0.4);
+      const sd = G(); M(sd, cyl(1.3, 1.3, 0.3, 20), '#cfc8b4', 0, 0.9, 0, { roughness: 1 }); M(sd, cyl(0.5, 0.7, 0.8, 10), '#8d8676', 0, 0.4, 0, { roughness: 1 }); M(sd, cyl(0.05, 0.05, 1.3, 6), '#3a3a3a', 0, 1.7, 0); M(sd, bx(0.14, 0.02, 0.55), '#2a2a2a', 0, 1.07, -0.35); spot('dial', 'the shadow stick', sd, x + offs[3][0], z + offs[3][1], 1.3); }
+    // ---------- 7: the test bench by the woodshop ----------
+    { const offs = row(6, 2.5), [x, z] = place(14, 70, offs.concat([[3.4, 0]]), 1.6); const tb = G(); M(tb, bx(1.8, 0.2, 15.6), '#ffffff', 0, 2, 0, { map: plankTex }); [-7, -2.4, 2.4, 7].forEach(q => [-0.7, 0.7].forEach(a => M(tb, bx(0.2, 1.9, 0.2), '#5a3d22', a, 0.95, q))); tb.position.set(x, 0, z); scene.add(tb);
+      const tub = G(); M(tub, cyl(1.7, 1.5, 1.5, 16), '#8a6438', 0, 0.75, 0); M(tub, cyl(1.55, 1.55, 0.06, 16), '#5aa6cf', 0, 1.42, 0, { transparent: true, opacity: 0.85, roughness: 0.2 }); tub.position.set(x + 3.6, 0, z); scene.add(tub); solids.push({ x: x + 3.6, z, r: 1.8 }); offs.forEach(([ox, oz]) => solids.push({ x: x + ox, z: z + oz, r: 1 }));
+      const things = { cork: g => M(g, cyl(0.25, 0.22, 0.5, 10), '#c9a877', 0, 2.36, 0), nail: g => { M(g, cyl(0.05, 0.02, 0.9, 6), '#6a6a6a', 0, 2.2, 0, { metalness: 0.7, roughness: 0.4 }).rotation.z = Math.PI / 2; M(g, cyl(0.12, 0.12, 0.04, 8), '#6a6a6a', -0.45, 2.2, 0, { metalness: 0.7 }).rotation.z = Math.PI / 2; },
+        block: g => M(g, bx(0.7, 0.5, 0.5), '#b58a52', 0, 2.36, 0), pebble: g => M(g, sph(0.3, 8, 6), '#8d8676', 0, 2.32, 0, { roughness: 1 }).scale.y = 0.7, candle: g => { M(g, cyl(0.16, 0.16, 0.7, 10), '#f2ead8', 0, 2.46, 0); M(g, cyl(0.015, 0.015, 0.12, 4), '#2a2420', 0, 2.87, 0); }, cup: g => { M(g, cyl(0.28, 0.2, 0.45, 12), '#b5673a', 0, 2.33, 0); M(g, cyl(0.24, 0.24, 0.03, 12), '#3a2a1a', 0, 2.55, 0); } };
+      Object.keys(things).forEach((id, i) => { const g = G(); things[id](g); spot('m_' + id, { cork: 'the cork', nail: 'the iron nail', block: 'the block of oak', pebble: 'the pebble', candle: 'the wax candle', cup: 'the clay cup' }[id], g, x + offs[i][0], z + offs[i][1], 0); }); }
+    // ---------- 8: the cart and its lane ----------
+    const cart = { g: G(), x: 0, z0: 0, sacks: [] }; { const offs = [[0, 0], [0, 6], [0, 12], [0, 18], [0, 22]], [x, z] = place(56, -12, offs, 1.8); cart.x = x; cart.z0 = z;
+      const lane = new THREE.Mesh(new THREE.PlaneGeometry(3, 24), mat('#ffffff', { map: dirtTex })); lane.rotation.x = -Math.PI / 2; lane.position.set(x, 0.035, z + 10.5); scene.add(lane);
+      const grass = new THREE.Mesh(new THREE.PlaneGeometry(3, 24), mat('#4f8a3a', { roughness: 1 })); grass.rotation.x = -Math.PI / 2; grass.position.set(x + 4, 0.035, z + 10.5); scene.add(grass); for (let k = 0; k < 60; k++) M(scene, cone(0.09, 0.7, 4), '#5fae4a', x + 2.7 + Math.random() * 2.6, 0.35, z - 1 + Math.random() * 23);
+      for (let k = 0; k <= 20; k += 2) { const s = signBoard(String(k), 0.7, 0.45); s.position.set(x - 2, 0.5, z + k); s.rotation.y = Math.PI / 2; scene.add(s); M(scene, bx(0.5, 0.05, 0.12), '#f2ead8', x - 1.6, 0.05, z + k); }
+      const c = cart.g; M(c, bx(2, 0.9, 2.8), '#8a6438', 0, 1.2, 0); M(c, bx(1.7, 0.08, 2.5), '#5a3d22', 0, 1.62, 0); [[-1.1, -0.9], [1.1, -0.9], [-1.1, 0.9], [1.1, 0.9]].forEach(([a, b]) => { const w = M(c, cyl(0.55, 0.55, 0.2, 14), '#3a2a1c', a, 0.55, b); w.rotation.z = Math.PI / 2; });
+      [[-0.4, 0.6], [0.4, 0.5], [0, -0.5]].forEach(([a, b]) => { const s = M(c, sph(0.55, 9, 7), '#c9b08a', a, 1.95, b, { roughness: 1 }); s.scale.set(1, 0.75, 1.1); s.visible = false; cart.sacks.push(s); });
+      spot('cart', 'the handcart', c, x, z, 0); }
+    // ---------- the lesson engine ----------
+    const run = (steps, i = 0) => { if (i < steps.length && phase === 'sci') steps[i](() => run(steps, i + 1)); };
+    const teachAsk = (who, text, opts, next) => { showDialog(true); hint(''); clearDialog(); speakerEl.textContent = who; line.innerHTML = text;
+      shuf(opts.slice()).forEach(([label, right, why]) => { const b = document.createElement('button'); b.className = 'btn choice'; b.textContent = label; b.onclick = () => { if (!right) { b.disabled = true; b.classList.add('wrong'); line.innerHTML = `${why || 'Not that one.'}<br><small style="color:var(--ink-soft)">${text}</small>`; const f = actions.querySelector('button:not(:disabled)'); if (f) f.focus({ preventScroll: true }); return; }
+          say([`<b>${label}.</b> ${why || 'Just so.'}`], next, who); }; actions.appendChild(b); }); actions.querySelector('button').focus({ preventScroll: true }); };
+    const T = { say: (who, lines) => next => say(lines, next, who), ask: (who, text, opts) => next => teachAsk(who, text, opts, next), call: fn => next => { fn(); next(); }, fade: (text, fn) => next => fadeTo(text, fn || (() => {}), next),
+      touch: (ids, label, fn, tip) => next => { sciActive = { left: new Set(ids), fn, next }; setTasks([{ id: 'sci', icon: 'basket', label, have: 0, need: ids.length }]); hint(tip); },
+      sort: (who, items, cats, label, tip) => T.touch(items.map(q => q[0]), label, (sp, done) => { const it = items.find(q => q[0] === sp.userData.id); choose(who, `<b>${sp.userData.label.replace(/^./, c => c.toUpperCase())}.</b> ${it[3] || ''} Which is it?`, cats.map((c, ci) => [c, () => say([ci === it[1] ? `<b>${c}.</b> ${it[2]}` : `Not that. ${it[4] || 'Look at it again and think what it does, or once did.'}`], () => done(ci === it[1]), who)])); }, tip),
+      order: (who, ids, label, tip, wrong) => { let n = 0; return T.touch(ids, label, (sp, done) => { if (sp.userData.id === ids[n]) { n++; flash(`${n} of ${ids.length}: ${sp.userData.label}.`); done(true); } else say([wrong(sp, n)], () => done(false), who); }, tip); } };
+    function sciTouch(obj) { const A = sciActive; if (!A || !A.left.has(obj.userData.id) || talking()) return; A.fn(obj, ok => { if (!ok || sciActive !== A) return; A.left.delete(obj.userData.id); tasks.sci.have++; renderTasks(); if (!A.left.size) { sciActive = null; setTasks([]); hint(''); A.next(); } }); }
+    const finish = (n, lines) => next => { markDone('sci-' + n); setCoins(coins + 2); say(lines.concat([`That is science lesson ${n} of 8 done. Here are <b>2 coins</b> for a good morning’s looking.`]), () => { phase = 'free'; sciActive = null; setTasks([]); hint(n < 8 ? 'Speak to Marigold when you want the next one.' : 'You have done all the science Marigold teaches in the Hollow.'); next(); }, MARI); };
+    const LIVE = ['Alive now', 'Was alive once', 'Never alive'];
+    const LESSON = [
+      // 1
+      () => [T.say(MARI, ['Before you can study living things you have to be able to tell one when you meet it. That is harder than it sounds.', 'A living thing <b>feeds</b>, <b>grows</b>, <b>breathes</b>, <b>makes more of itself</b>, and <b>answers to the world</b> around it. All five, not just one or two.', 'Go round the Hollow and judge eight things for me. Each is alive now, or was alive once, or never was. Some will try to fool you.']),
+        T.sort(MARI, [['oak', 0, 'It feeds on light, drinks, grows a ring every year, and drops acorns to make more oaks.', '', 'It does not move about, but watch it for a year.'], ['bush', 0, 'It grows, flowers, and its berries carry the seeds of the next bush.'], ['stone', 2, 'It never fed, never grew, never made another stone.', '', 'Has it ever fed or grown?'],
+          ['shroom', 0, 'A fungus. Not a plant and not an animal, but it feeds on rot, grows, and scatters spores to make more.', '', 'It feeds on the rotting wood under it, and it grew overnight.'], ['fire', 2, 'This is the one that fools people. It moves, it eats wood, it grows, it even spreads. But it has no body, it is not made of cells, and one fire is not the child of another.', 'It moves and eats and grows.', 'It moves, eats and spreads, I know. But is there a body there? Does it make young?'],
+          ['seeds', 0, 'They look dead as grit. But each one is a tiny plant asleep, with its food packed round it. Water wakes it. That is called <b>dormant</b>.', 'They have sat dry on that tray all winter.', 'Dry and still, yes. What happens when I water one?'], ['barrel', 1, 'Oak wood. It was a living tree, and the cooper cut it. The wood does nothing a living thing does any more.', '', 'What is it made of, and where did that come from?'], ['lamp', 2, 'Iron and glass. Dug from the ground and melted. It was never alive.', '', 'Iron and glass. Where do those come from?']],
+          LIVE, 'Things judged', 'Walk up to each thing and judge it: the Old Oak, the berry bush, a stone, the toadstools, the brazier, the seed tray, the barrel by the shop, the lantern post.'),
+        T.ask(MARI, 'Fire moves, eats and grows. Why is it <b>not</b> alive?', [['It has no body and does not make young of its own kind', true, 'It does some of the five things, never all of them.'], ['Because it is hot', false, 'Plenty of living things are warm.'], ['Because it cannot think', false, 'Nor can an oak, and the oak is alive.']]),
+        T.ask(MARI, 'A dry seed does nothing at all. Why do we call it <b>alive</b>?', [['It is dormant: it can wake, grow and make more', true, 'Asleep is not the same as dead.'], ['Because it is small', false, 'So is a grain of sand.'], ['Because it came from a plant', false, 'So did the barrel, and that is not alive now.']]),
+        finish(1, ['Alive, once alive, never alive. Every thing in the world goes in one of those three.'])],
+      // 2
+      () => { pots.forEach(p => { p.how = null; p.set('seedling'); p.crate.visible = false; p.wet.visible = false; }); const HOW = ['Sun and water', 'Sun, kept dry', 'Water, kept in the dark', 'Dark and dry'], used = () => pots.map(p => p.how), find = h => pots.findIndex(p => p.how === h);
+        return [T.say(MARI, ['Four pots, four bean seedlings, all the same. I want to find out two things: does a plant need <b>water</b>, and does it need <b>light</b>?', 'So one pot gets both. One gets light and no water. One gets water and no light: we put a crate over it. One gets neither.', 'That way, when two pots turn out different, I know which one thing made the difference. That is a <b>fair test</b>. You set them up.']),
+          T.touch(['pot0', 'pot1', 'pot2', 'pot3'], 'Pots set up', (sp, done) => { const p = pots[+sp.userData.id.slice(3)]; choose(MARI, `<b>Pot ${'ABCD'[+sp.userData.id.slice(3)]}.</b> Which treatment shall this one have? Each of the four is used once.`, HOW.map((h, hi) => [h, () => { p.how = hi; p.wet.visible = hi === 0 || hi === 2; p.crate.visible = hi >= 2; flash(`Pot ${'ABCD'[+sp.userData.id.slice(3)]}: ${h.toLowerCase()}.`); done(true); }]).filter((_, hi) => !used().includes(hi))); }, 'The four pots stand in a row. Walk up to each and choose what it gets.'),
+          T.ask(MARI, 'Before we wait: which pot do you think will do <b>best</b>?', [['The one with sun and water', true, 'We shall see if you are right. Guessing first and then checking is how it is done.'], ['The one kept dry in the sun', false, 'Have another think. What has it not got?'], ['The one watered in the dark', false, 'Have another think. What has it not got?']]),
+          T.fade('A week later…', () => pots.forEach(p => { p.crate.visible = false; p.set(['good', 'wilt', 'pale', 'dead'][p.how]); })),
+          T.say(MARI, ['A week gone. I have lifted the crates off. Go and look at all four.']),
+          T.touch(['pot0', 'pot1', 'pot2', 'pot3'], 'Pots looked at', (sp, done) => { const p = pots[+sp.userData.id.slice(3)]; say([['<b>Sun and water.</b> Tall, dark green, three pairs of leaves. Thriving.', '<b>Sun, kept dry.</b> Brown and bent over. It had light but nothing to drink, and it wilted.', '<b>Water, in the dark.</b> Look at that: taller than any of them, but thin, pale yellow and falling over. It spent everything stretching to find light, and without light it cannot make its green.', '<b>Dark and dry.</b> Shrivelled. Nothing to drink and nothing to grow by.'][p.how]], () => done(true), MARI); }, 'Look at each pot and see what a week has done.'),
+          T.ask(MARI, 'Which two pots, side by side, show that a plant needs <b>water</b>?', [['Sun and water, against sun and dry', true, 'Same light, different water. Only the water can be to blame.'], ['Sun and water, against dark and dry', false, 'Two things differ between those. You cannot tell which one did it.'], ['Sun and dry, against water in the dark', false, 'Two things differ between those. You cannot tell which one did it.']]),
+          T.ask(MARI, 'The one in the dark grew <b>tallest</b>. Did it do well?', [['No: it stretched for light and could not make green', true, 'Tall is not the same as healthy. Leaves are green because of what they use to catch light.'], ['Yes, tallest is best', false, 'Look at the colour, and how it leans.'], ['Yes, because it had water', false, 'Water kept it alive. Look at the colour, though.']]),
+          T.ask(MARI, 'Why did I change only <b>one thing</b> between the pots I compare?', [['So I know that one thing caused the difference', true, 'A fair test. Remember the words.'], ['To save seedlings', false, 'It uses just as many.'], ['Because plants only need one thing', false, 'You have just seen they need at least two.']]),
+          finish(2, ['Light and water. And a fair test to prove it.'])]; },
+      // 3
+      () => [T.say(MARI, ['A plant is built of parts, and every part has a job.', '<b>Roots</b> hold it in the ground and drink. The <b>stem</b> holds it up and carries the water. <b>Leaves</b> catch light and make the food. <b>Flowers</b> make seeds. The <b>fruit</b> is the case the seeds travel in. The <b>seed</b> is next year’s plant.', 'We eat every one of those parts, off one plant or another. Go along my kitchen bed and tell me which part of each plant ends up on the plate.']),
+        T.sort(MARI, [['carrot', 0, 'It grows down into the soil and stores the plant’s food there, which is why it is sweet.', '', 'Which way does it grow, and where was it when I pulled it?'], ['celery', 1, 'Stalks. Snap one and you can see the strings that carry the water up.', '', 'It stands upright and carries water up to the leaves.'], ['lettuce', 2, 'All leaf: broad, flat and green, for catching light.', '', 'Broad, flat and green. What is that shape for?'],
+          ['broccoli', 3, 'Those green knobs are flower buds. Leave it a week and the whole head goes yellow with flowers.', '', 'Leave those knobs a week and they open yellow.'], ['tomato', 4, 'Cut one open: it is full of seeds. Anything that grows from the flower and carries the seeds is a fruit, whatever the cook calls it.', '', 'Cut one open. What is inside?'], ['pea', 5, 'The pod is the fruit; the peas inside are the seeds. Plant one and you get a pea plant.', 'Mind: I mean the peas, not the pod.', 'Plant one of them and see what comes up.']],
+          ['Root', 'Stem', 'Leaf', 'Flower', 'Fruit', 'Seed'], 'Plants named', 'Six plants grow in the long bed. Walk up to each and say which part of it we eat.'),
+        T.ask(MARI, 'Which part of a plant <b>makes its food</b>?', [['The leaves, out of light, air and water', true, 'The plant is not fed by the soil. It makes its own food in its leaves.'], ['The roots, out of soil', false, 'Roots drink, and take up a little of what is dissolved in the water. They do not make food.'], ['The flowers', false, 'Flowers make seeds.']]),
+        T.ask(MARI, 'A cook calls a tomato a vegetable. Why does a gardener call it a <b>fruit</b>?', [['It grows from the flower and holds the seeds', true, 'So is a cucumber, a pumpkin, and a pea pod.'], ['Because it is sweet', false, 'A lemon is a fruit and nobody calls it sweet.'], ['Because it is red', false, 'Colour has nothing to do with it.']]),
+        finish(3, ['Root, stem, leaf, flower, fruit, seed. Look at your dinner tonight and name them.'])],
+      // 4
+      () => [T.say(MARI, ['Your beetle did not hatch looking like a beetle, and it is not the only one. Plenty of creatures change their whole body as they grow up. The word is <b>metamorphosis</b>.', 'Down by the pond I have set out the four stages of a frog’s life on stones, all jumbled. Touch them in the order they happen, youngest first.']),
+        T.order(MARI, ['spawn', 'tadpole', 'froglet', 'frog'], 'Frog stages in order', 'Four stones stand round the pond. Touch the stages of a frog’s life in order, from the very start.', (sp, n) => `Not ${sp.userData.label} yet. ${['Start at the very beginning: what does a frog lay in the water?', 'What hatches out of the jelly, with a tail and no legs?', 'Legs come before the tail goes.', 'One left.'][n]}`),
+        T.say(MARI, ['Spawn, tadpole, froglet, frog. The tadpole breathes water with gills, like a fish. The frog breathes air. The same animal, rebuilt.', 'Now the butterfly. Four posts stand in a row over yonder. Same again: in order.']),
+        T.order(MARI, ['b_egg', 'b_caterpillar', 'b_chrysalis', 'b_butterfly'], 'Butterfly stages in order', 'Four posts in a row, east of the street. Touch the stages of a butterfly’s life in order.', (sp, n) => `Not ${sp.userData.label} yet. ${['It starts very small, stuck to a leaf.', 'What hatches from the egg and does nothing but eat?', 'When it has eaten enough it shuts itself in a case.', 'One left.'][n]}`),
+        T.ask(MARI, 'What is a caterpillar’s <b>whole job</b>?', [['To eat and grow', true, 'It can grow a thousand times heavier in a few weeks. The butterfly’s job is to fly, find a mate and lay eggs.'], ['To lay eggs', false, 'Only the adult can do that.'], ['To fly', false, 'It has no wings yet.']]),
+        T.ask(MARI, 'Inside the <b>chrysalis</b>, what is happening?', [['The body is taken apart and rebuilt as a butterfly', true, 'Nearly all of it turns to soup and is built again. It is not resting.'], ['It is asleep for the winter', false, 'It is the busiest it will ever be.'], ['It is hiding from birds', false, 'It is hidden, but that is not what it is doing in there.']]),
+        T.ask(MARI, 'A tadpole and a frog live differently. What is the <b>biggest</b> change?', [['Gills for water become lungs for air', true, 'And a plant-eater with a tail becomes a hunter with legs.'], ['It turns green', false, 'That is the least of it.'], ['It gets bigger', false, 'Everything gets bigger. Think what it breathes.']]),
+        finish(4, ['Egg, young, adult, and round again. That circle is called a <b>life cycle</b>.'])],
+      // 5
+      () => [T.say(MARI, ['Every creature in the Hollow lives where it can find three things: <b>food</b>, <b>shelter</b>, and <b>somewhere safe for its young</b>. The place that gives it those is its <b>habitat</b>.', 'Four homes. Go and look at each, and tell me who you think lives there.']),
+        T.touch(['burrow', 'log', 'nest', 'pond'], 'Homes looked at', (sp, done) => { const A = { burrow: ['A hole dug into a dry bank, with nibbled grass all round the door.', 'The rabbit', 'It eats the grass at its own front door and bolts underground when the crow’s shadow passes. Its young are born down there, blind and bald.'], log: ['Soft, wet, crumbling wood, full of tunnels as wide as your finger.', 'The beetle grub', 'It eats the rotting wood itself. Food and shelter are the same thing.'], nest: ['A bowl of twigs, high in a fork of the Old Oak.', 'The crow', 'High up, where nothing that walks can reach the eggs, and with a view of everything worth eating.'], pond: ['Still water, weed, and jelly on the stones.', 'The frog', 'It must lay its eggs in water, and its young breathe water. So it never lives far from a pond.'] }[sp.userData.id];
+            choose(MARI, `<b>${sp.userData.label.replace(/^./, c => c.toUpperCase())}.</b> ${A[0]} Who lives here?`, shuf(['The rabbit', 'The beetle grub', 'The crow', 'The frog']).map(w => [w, () => say([w === A[1] ? `<b>${w}.</b> ${A[2]}` : 'Not that one. Think what it eats, and where its young would be safe.'], () => done(w === A[1]), MARI)])); }, 'Four homes: a burrow in a bank to the south-east, a rotting log to the south-west, a nest in the Old Oak, and the pond.'),
+        T.say(MARI, ['Now, who eats whom. The oak leaf makes its food from sunlight. The caterpillar eats the leaf. The wren eats the caterpillar. The hawk eats the wren.', 'Sun, leaf, caterpillar, wren, hawk. That is a <b>food chain</b>, and every one of them starts with a green plant.']),
+        T.ask(MARI, 'Why does every food chain <b>start with a plant</b>?', [['Only plants make food from sunlight', true, 'Everything else must eat a plant, or eat something that did.'], ['Plants are the smallest', false, 'An oak is not small.'], ['Animals do not like the sun', false, 'Think who can make food out of light.']]),
+        T.ask(MARI, 'One bad spring every caterpillar dies. What happens to the <b>wrens</b>?', [['They go hungry, and there are fewer of them', true, 'Take out one link and everything above it suffers.'], ['Nothing: they will eat leaves instead', false, 'A wren cannot live on leaves.'], ['There are more of them', false, 'With less to eat?']]),
+        T.ask(MARI, 'A rabbit eats only plants. A hawk eats only animals. What do we call an animal, like the crow, that eats <b>both</b>?', [['An omnivore', true, 'Herbivore for plants, carnivore for meat, omnivore for both. You are one.'], ['A herbivore', false, 'That is the rabbit: plants only.'], ['A carnivore', false, 'That is the hawk: meat only.']]),
+        finish(5, ['Food, shelter, and somewhere for the young. Find those three and you have found the animal.'])],
+      // 6
+      () => [T.say(MARI, ['A gardener who cannot read the weather loses the crop. I keep four instruments at the south end of the village. None of them tells you anything until you know how to read it.', 'Go and read all four.']),
+        T.touch(['thermo', 'rain', 'vane', 'dial'], 'Instruments read', (sp, done) => { const Q = { thermo: ['The red line stands at <b>4</b> degrees. Water freezes at 0. What should I do about my seedlings tonight?', [['Cover them: it may freeze before morning', true, 'Four degrees at dusk can be a frost by dawn. The night is always colder than the evening.'], ['Nothing: 4 is above freezing', false, 'It is, now. Which way does it go after dark?'], ['Water them well', false, 'Wet leaves freeze all the faster.']]],
+            rain: ['The gauge is a straight jar under a funnel. This week the water stands <b>12 millimetres</b> deep. What does that number mean?', [['Rain enough to cover all the ground 12 mm deep', true, 'That is why the jar is straight-sided. The depth in it is the depth that fell everywhere.'], ['12 drops fell', false, 'Rather more than that.'], ['It rained for 12 hours', false, 'It measures how much, not how long.']]],
+            vane: ['The arrow points to the <b>W</b>. A vane turns to face into the wind. So where is the wind <b>coming from</b>?', [['From the west', true, 'A west wind comes out of the west. Winds are named for where they come from, because that tells you what they bring.'], ['From the east', false, 'The arrow faces into the wind, like a dog facing a stranger.'], ['It cannot tell you', false, 'It can. The arrow faces into the wind.']]],
+            dial: ['A stick stood upright, and its shadow. At noon the shadow is as <b>short</b> as it gets all day. Why?', [['The sun is at its highest', true, 'High sun, short shadow. Low sun at morning and evening, long shadow. In winter even the noon shadow is long.'], ['The sun is brightest', false, 'Brightness does not change a shadow’s length. Think where the sun is in the sky.'], ['The stick shrinks in the heat', false, 'It does not. Think where the sun is in the sky.']]] }[sp.userData.id]; teachAsk(MARI, Q[0], Q[1], () => done(true)); }, 'Four instruments stand in a row at the south end of the village, east of the street.'),
+        T.say(MARI, ['Now the long weather: the <b>seasons</b>. Spring, summer, autumn, winter, and round again. Days long and warm, then short and cold.', 'Everything alive in the Hollow keeps time by them. Bramblewick’s winter stores are nothing but a season, counted in sacks.']),
+        T.ask(MARI, 'In <b>autumn</b> the oak drops every leaf. Why?', [['Short cold days: leaves cost more than they earn', true, 'With little light and frozen water a leaf cannot pay its way. The tree shuts down and waits.'], ['The wind blows them off', false, 'The tree lets go of them itself. Why would it?'], ['The leaves are dead of old age', false, 'They are six months old. The tree drops them on purpose.']]),
+        T.ask(MARI, 'Why do we fill the stores before <b>winter</b>?', [['Nothing grows in the cold, short days', true, 'What we eat in winter is what we kept from summer.'], ['Winter food tastes better', false, 'It tastes of being six months old.'], ['Because Bramblewick likes counting', false, 'He does. That is not why.']]),
+        T.ask(MARI, 'On a <b>winter</b> noon, how is the shadow of that stick?', [['Longer than on a summer noon', true, 'The winter sun rides low even at midday. Low sun, long shadow, weak light.'], ['Shorter than in summer', false, 'How high does the winter sun get?'], ['The same all year', false, 'The sun’s path across the sky changes with the season.']]),
+        finish(6, ['Temperature, rain, wind, sun. Read them every morning and the weather stops surprising you.'])],
+      // 7
+      () => { const FS = ['It will float', 'It will sink']; return [T.say(MARI, ['Today is Aldric’s. A carpenter knows better than anyone that what a thing is <b>made of</b> decides what it can <b>do</b>.', 'He has set out a bench of odds and ends and a tub of water south of his woodshop, on the east side of the street. Go and see him.']),
+        T.say(ALD, ['Six things on the bench. Before any of them goes in the tub, you tell me: float, or sink.', 'Guess first. Then we find out. And if you are wrong, good: that is the one you will remember.']),
+        T.sort(ALD, [['m_cork', 0, 'Drop. It bobs up high, half out of the water. Cork is full of trapped air.', 'Bark of a tree, very light.', 'Lift it. Light as nothing for its size.'], ['m_nail', 1, 'Plink. Straight to the bottom. Iron is far heavier than the same amount of water.', 'Small, but iron.', 'It is small. Is small the same as light for its size?'], ['m_block', 0, 'It floats, but low, most of it under. Oak is a heavy wood, yet still a bit lighter than water.', 'A good solid lump of oak, heavier than the nail.', 'It is heavier than the nail, yes. Heavier than the same lump of water?'],
+          ['m_pebble', 1, 'Down it goes. Stone is heavier than water, however small the stone.', 'Smooth river stone.', 'Has a stone ever floated for you?'], ['m_candle', 0, 'It floats, lying on its side. Wax is a little lighter than water.', 'Beeswax.', 'Wax and water: which sits on top when you melt a candle over a bowl?'], ['m_cup', 1, 'It sinks. But set it down gently the right way up, empty, and it floats like a boat, because of the air it holds. Shape matters as well as stuff.', 'Fired clay. I shall drop it in on its side.', 'Clay is baked earth. On its side, it fills with water.']],
+          FS, 'Things tested', 'Six things on Aldric’s bench. Walk up to each and say whether it will float or sink.'),
+        T.ask(ALD, 'The oak block is <b>heavier</b> than the iron nail, but the block floats and the nail sinks. Why?', [['What counts is how heavy it is for its size', true, 'A big light thing floats; a small heavy-for-its-size thing sinks. The word for it is <b>density</b>.'], ['Wood always floats', false, 'There are woods that sink. Think of weight and size together.'], ['The nail is sharper', false, 'Shape matters a little. That is not this.']]),
+        T.ask(ALD, 'I need a pan to cook over the fire. <b>Wood, wax or iron?</b>', [['Iron: it will not burn or melt', true, 'You choose the stuff for the job. That is all of carpentry, and most of everything else.'], ['Wood', false, 'Over a fire?'], ['Wax', false, 'It would be a puddle before the water was warm.']]),
+        T.ask(ALD, 'A hat to keep the rain off. <b>Wool, or waxed cloth?</b>', [['Waxed cloth: water runs off it', true, 'Wool soaks water up. Wax will not let it in. That is why the sou’wester is oilskin.'], ['Wool', false, 'Warm, yes. Hold a bit of wool under the pump and see.']]),
+        finish(7, ['Light or heavy for its size, hard or soft, burns or does not, soaks or sheds. Those are a thing’s <b>properties</b>, and they decide its use.'])]; },
+      // 8
+      () => { const go = (d, loaded, grass) => next => { cart.sacks.forEach(s => (s.visible = loaded)); cart.g.position.set(cart.x + (grass ? 4 : 0), 0, cart.z0); sciAnim = { t: 0, d, next }; hint(''); };
+        const trial = (text, opts, d, loaded, grass, after) => [T.ask(MARI, text, opts), go(d, loaded, grass), T.say(MARI, [after])];
+        return [T.say(MARI, ['Last one. Nothing in this world starts moving, stops moving or turns a corner unless something <b>pushes</b> or <b>pulls</b> it. A push or a pull is called a <b>force</b>.', 'There is a handcart on the lane at the far north-east corner of the village, with posts every two paces. Go and stand by it.']),
+          T.touch(['cart'], 'At the cart', (sp, done) => done(true), 'The handcart stands on a dirt lane in the north-east corner, past Bramblewick’s cottage. Walk up to it.'),
+          T.say(MARI, ['I shall give it one push, always the same push, and we shall see how far it rolls. Watch the posts.']),
+          go(12, false, false), T.say(MARI, ['Twelve paces, empty, on the hard lane. Now I load it with three sacks.']),
+          ...trial('The <b>same push</b>, but the cart is now <b>loaded</b>. How far?', [['Less far than before', true, 'Let us see.'], ['Just as far', false, 'Same push, more to move. Think again.'], ['Further', false, 'Same push, more to move. Think again.']], 4, true, false, 'Four paces. The same force moves a heavier thing less. To get a loaded cart going as fast as an empty one, you must push harder.'),
+          ...trial('Empty again, same push, but this time on the <b>long grass</b> beside the lane. How far?', [['Less far than on the lane', true, 'Let us see.'], ['Just as far', false, 'What does long grass do to a wheel?'], ['Further', false, 'What does long grass do to a wheel?']], 5, false, true, 'Five paces. The grass drags at the wheels. That drag is a force too, and it always pushes against whatever is moving. It is called <b>friction</b>.'),
+          T.ask(MARI, 'After my push, nothing was pushing the cart. So why did it <b>stop</b>?', [['Friction was pushing against it the whole time', true, 'On ice, with almost no friction, it would have rolled on and on. Things do not stop by themselves; something stops them.'], ['It ran out of push', false, 'A push is not a thing the cart carries and uses up. Something else was acting on it all the way.'], ['Carts are lazy', false, 'Something was pushing back. What?']]),
+          T.ask(MARI, 'A sack slides off the cart and falls. What <b>pulled</b> it down?', [['Gravity: the pull of the earth', true, 'A force you cannot see, pulling everything towards the ground, all the time. It is pulling on you now.'], ['Nothing: things just fall', false, 'Nothing moves without a force. Which one acts on everything, always, downward?'], ['The wind', false, 'There is no wind today.']]),
+          T.ask(MARI, 'You want the loaded cart to go as far as the empty one did. What must you do?', [['Push harder', true, 'More to move needs more force. Or get the beetle to pull as well.'], ['Push the same', false, 'You saw what the same push did.'], ['Push more gently', false, 'That would make it worse.']]),
+          finish(8, ['Push, pull, friction, gravity. Four forces, and you have met all of them before breakfast.', 'That is all the science I have for you in the Hollow. The rest is up the road.'])]; }
+    ];
+    var sciStart = n => { if (where !== 'village') return; phase = 'sci'; sciActive = null; setTasks([]); run(LESSON[n - 1]()); };
+    var sciMenu = () => { if (talking() || bagOpen) return;
+      if (phase === 'sci') { choose(MARI, 'Still at it? Carry on, or leave the lesson for another day.', [['Carry on', null], ['Stop for now', () => { phase = 'free'; sciActive = null; setTasks([]); hint('Speak to Marigold when you want to take it up again.'); }]]); return; }
+      const left = SCI_TITLES.map((t, i) => i + 1).filter(n => !isDone('sci-' + n)), opts = [];
+      if (left.length) opts.push([`Science ${left[0]}: ${SCI_TITLES[left[0] - 1]}`, () => sciStart(left[0])]);
+      if (left.length < 8) opts.push(['A lesson again', () => choose(MARI, 'Which one shall we do again?', SCI_TITLES.map((t, i) => [`${i + 1}: ${t}`, () => sciStart(i + 1)]).filter((_, i) => isDone('sci-' + (i + 1))).concat([['Never mind', null]]))]);
+      opts.push(['Never mind', null]);
+      choose(MARI, left.length ? 'Arithmetic is Bramblewick’s. I teach the other half: how the living world works, and how to find things out by looking. Shall we?' : 'You have had all my science. Come and go over any of it.', opts); };
+    var sciPick = sciTouch;
+    var sciTick = dt => { const A = sciAnim; if (!A) return; A.t += dt; const u = Math.min(1, A.t / 2.4), e = 1 - (1 - u) * (1 - u); cart.g.position.z = cart.z0 + A.d * e; cart.g.children.forEach(c => { if (c.geometry && c.geometry.type === 'CylinderGeometry' && c.rotation.z) c.rotation.x = cart.g.position.z * 1.8; }); if (u >= 1) { sciAnim = null; setTimeout(A.next, 500); } };
+    { const o = new THREE.Object3D(); o.position.set(MARIPOS.x, 0, MARIPOS.z); scene.add(o); o.userData = { pickable: true, kind: 'sciteach', world: 'village' }; pickables.push(o); }
   }
   // ---------- what lies about ----------
   {
@@ -7872,7 +8257,7 @@
       <path d="${gorge}" stroke="#5a4a3a" stroke-width="4" fill="none" opacity=".7" stroke-linecap="round"/><path d="${gorge}" stroke="#2f261c" stroke-width="1.2" fill="none"/>
       <text x="${fx}" y="${fy - 8}" font-size="11" font-style="italic" fill="#2f4a6a" text-anchor="middle">the Fern</text>
       ${(() => { const [mx, my] = mapXY(frameH.ox, frameH.oz), [cx, cy] = mapXY(CITY.cx, CITY.cz); return `<ellipse cx="${mx}" cy="${my}" rx="17" ry="4" fill="#4a7fb8" opacity=".8" transform="rotate(${(-frameH.yaw * 180 / Math.PI).toFixed(1)} ${mx} ${my})"/>
-      <g id="capmark" tabindex="0" style="cursor:pointer" transform="translate(${cx} ${cy})"><rect x="-13" y="-9" width="26" height="18" rx="3" fill="#f6e7c2" stroke="#b5562b" stroke-width="2.5"/><path d="M-9 6 V-1 L-6 -4 L-3 -1 V6 Z M-2 6 V-4 L1 -7 L4 -4 V6 Z M5 6 V0 L7.5 -2.5 L10 0 V6Z" fill="#b5562b"/><text y="24" text-anchor="middle" font-family="Uncial Antiqua, Georgia, serif" font-size="13" fill="#3a2a18">Hearthmoor</text><text y="36" text-anchor="middle" font-size="9" fill="#5a3d22">the capital · go there</text></g>`; })()}
+      <g id="capmark" tabindex="0" style="cursor:pointer" transform="translate(${cx} ${cy})"><rect x="-13" y="-9" width="26" height="18" rx="3" fill="#f6e7c2" stroke="#b5562b" stroke-width="2.5"/><path d="M-9 6 V-1 L-6 -4 L-3 -1 V6 Z M-2 6 V-4 L1 -7 L4 -4 V6 Z M5 6 V0 L7.5 -2.5 L10 0 V6Z" fill="#b5562b"/><text y="24" text-anchor="middle" font-family="Uncial Antiqua, Georgia, serif" font-size="13" fill="#3a2a18">Hearthmoor</text><text y="36" text-anchor="middle" font-size="9" fill="#5a3d22">the capital</text></g>`; })()}
       <text x="${gx}" y="${gy - 7}" font-size="10" font-style="italic" fill="#3a2a18" text-anchor="middle">Cairn Gorge</text>
       <text x="972" y="560" font-size="11" font-style="italic" fill="#2f4a6a" text-anchor="middle" transform="rotate(90 972 560)">the sea</text>
       <path d="M${lx} ${ly} L${sx} ${sy}" stroke="#7a5a30" stroke-width="2" stroke-dasharray="3 5" fill="none"/>
@@ -7896,7 +8281,7 @@
     mapSvgEl.innerHTML = svg; refreshSaveButtons();
     if (!gameStarted && save.started) $('maphint').textContent = `Welcome back: ${save.coins} acorn coins and ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Continue, or pick any lesson.`;
     mapSvgEl.querySelectorAll('.mapmark').forEach(g => { g.addEventListener('click', () => selectRegion(parseInt(g.dataset.i, 10))); g.setAttribute('tabindex', '0'); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRegion(parseInt(g.dataset.i, 10)); } }); });
-    { const cm = mapSvgEl.querySelector('#capmark'), go = () => { if (!gameStarted) { $('maphint').textContent = 'Start or continue the game first; then you can go to Hearthmoor from this map.'; return; } closeMap(); const [x, z] = toWorld(frameH, -474, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor, the capital.'); }; if (cm) { cm.addEventListener('click', go); cm.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); } }
+    { const cm = mapSvgEl.querySelector('#capmark'), go = () => { if (!master) { $('maphint').textContent = 'Hearthmoor, the capital, on the lake. Take the ferry from Fernwater, or walk the branch road.'; return; } if (!gameStarted) { $('maphint').textContent = 'Start or continue the game first; then you can go to Hearthmoor from this map.'; return; } closeMap(); const [x, z] = toWorld(frameH, -474, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor, the capital.'); }; if (cm) { cm.addEventListener('click', go); cm.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); } }
     drawPanel();
   }
   // the tester's ways round: straight to any town with no lesson begun, and everything in the satchel
@@ -7918,7 +8303,9 @@
     const m = document.createElement('div'); m.className = 'math'; m.textContent = r.math; mapPanel.appendChild(m);
     if (r.lessons) {
       const list = document.createElement('div'); list.className = 'lessons';
-      r.lessons.forEach(([label, key]) => { const b = document.createElement('button'); b.className = 'btn small ' + (isDone(key) ? '' : 'primary'); b.textContent = (isDone(key) ? '\u2713 ' : '') + label; b.title = isDone(key) ? 'Finished. Play it again any time.' : ''; b.onclick = () => { if (gameStarted) { location.hash = key; location.reload(); } else launch(key); }; list.appendChild(b); });
+      r.lessons.forEach(([label, key]) => { const b = document.createElement('button'); b.className = 'btn small ' + (isDone(key) ? '' : 'primary'); b.textContent = (isDone(key) ? '\u2713 ' : '') + label; b.title = isDone(key) ? 'Finished. Play it again any time.' : ''; if (master) b.onclick = () => { if (gameStarted) jump(key); else launch(key); }; else { b.disabled = true; b.style.opacity = isDone(key) ? '0.75' : '0.55'; b.style.cursor = 'default'; } list.appendChild(b); });
+      if (selRegion === 0) { const sh = document.createElement('div'); sh.className = 'math'; sh.style.marginTop = '10px'; sh.textContent = 'Science, with Marigold Fernsby at the nursery'; mapPanel.appendChild(sh); const sl = document.createElement('div'); sl.className = 'lessons'; SCI_TITLES.forEach((t, i) => { const b = document.createElement('button'); b.className = 'btn small'; b.disabled = true; b.style.opacity = isDone('sci-' + (i + 1)) ? '0.75' : '0.55'; b.style.cursor = 'default'; b.innerHTML = `Science ${i + 1}: ${t}` + (isDone('sci-' + (i + 1)) ? ' <span class="tick">✓</span>' : ''); sl.appendChild(b); }); mapPanel.appendChild(sl); }
+      if (!master) { const nt = document.createElement('div'); nt.className = 'math'; nt.textContent = `Lessons begin with the teacher. Walk to ${r.name} and speak to ${TEACH[selRegion] ? TEACH[selRegion].n : 'the teacher there'}, who will also test you if you know it already.`; mapPanel.appendChild(nt); }
       const doneN = r.lessons.filter(([, k]) => isDone(k)).length; if (doneN) { const dn = document.createElement('div'); dn.className = 'math'; dn.textContent = `${doneN} of ${r.lessons.length} finished`; mapPanel.appendChild(dn); }
       mapPanel.appendChild(list);
     } else { const sn = document.createElement('div'); sn.className = 'soon'; sn.textContent = 'Not built yet. The road will reach it.'; mapPanel.appendChild(sn); }
@@ -7952,7 +8339,7 @@
   mapReset.addEventListener('click', () => { if (!resetArmed) { resetArmed = true; mapReset.textContent = 'Really start over? Click again'; setTimeout(() => { resetArmed = false; mapReset.textContent = 'Start over'; }, 4000); return; } clearSave(); if (session) { cloudDirty = true; cloudPush().finally(() => { location.hash = ''; location.reload(); }); } else { location.hash = ''; location.reload(); } });
   function continueGame() {
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false;
-    kid.satchel.visible = save.done.length > 0; setCoins(save.coins || 0); phase = 'free'; bikeOwned = !!save.bike || save.done.includes('cog-10');
+    kid.satchel.visible = save.done.length > 0; setCoins(save.coins || 0); phase = 'free'; bikeOwned = !!save.bike || (save.done.includes('cog-10') && !(save.tested || []).includes('cog-10'));
     if (save.beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(save.pos[0] - 2, 0, save.pos[2] - 2); restoreCompanion(); }
     if (save.lay !== 2) { if (save.where === 'village' && Math.hypot(save.pos[0], save.pos[2]) > R) { save.pos = [0, 0, 17]; save.yaw = 0; } save.lay = 2; }   // the Hollow was smaller once
     const place = () => { player.position.set(save.pos[0], 0, save.pos[2]); py = 0; bodyYaw = camYaw = save.yaw || 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(player.position.x - 2, 0, player.position.z - 2); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); };
@@ -7978,7 +8365,8 @@
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; save.started = true; if (save.beetle && !beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(-3, 0, 8); restoreCompanion(); } if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
-    if (key === 'lesson-2') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(1); setTimeout(startLesson2, 500); }
+    if (key === 'placed') { placeInShop(); phase = 'free'; setCoins(save.coins || 0); setTimeout(placedIntro, 700); }
+    else if (key === 'lesson-2') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(1); setTimeout(startLesson2, 500); }
     else if (key === 'lesson-3') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(3); setTimeout(startLesson3, 500); }
     else if (key === 'lesson-4') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(6); setTimeout(startLesson4, 500); }
     else if (key === 'lesson-9') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(16); setTimeout(startLesson9, 500); }
@@ -8030,7 +8418,7 @@
   // the creator's other two choices: how tall (7 inches is the smallest child; a grown elf is about 17) and which face
   function syncCreator() { const h = clamp(+draft.height || 1, 1, 2.45); $('elfheight').value = h; $('elfheightval').textContent = `${Math.round(7 * h)} inches · ${heightWord(h)}`; const box = $('elffaces'); box.innerHTML = ''; FACES.forEach((n, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft.face | 0) === i)); b.onclick = () => { draft.face = i; applyLook(draft); syncCreator(); }; box.appendChild(b); });
     const pick = (id, list, key) => { const bx = $(id); bx.innerHTML = ''; list.forEach(([v, n]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft[key] === undefined ? list[0][0] : draft[key]) === v)); b.onclick = () => { draft[key] = v; applyLook(draft); syncCreator(); }; bx.appendChild(b); }); };
-    pick('elfsex', [['boy', 'Boy (tunic)'], ['girl', 'Girl (dress)']], 'sex'); pick('elfhair', HAIRS, 'hairStyle'); pick('elfhat', [[true, 'Pointed cap'], [false, 'No hat']], 'hatOn'); }
+    pick('elfsex', [['boy', 'Boy (tunic)'], ['girl', 'Girl (dress)']], 'sex'); pick('elfhair', HAIRS, 'hairStyle'); pick('elfhat', [[true, 'Pointed cap'], [false, 'No hat']], 'hatOn'); $('elflevelrow').hidden = editLook; pick('elflevel', [[0, 'Counting and adding'], [1, 'Times tables'], [2, 'Fractions'], [3, 'Shapes and measuring'], [4, 'Ratios and percent'], [5, 'Algebra'], [6, 'Trigonometry'], [7, 'Calculus']], 'level'); }
   $('elfheight').addEventListener('input', e => { if (!draft) return; draft.height = +e.target.value; applyLook(draft); syncCreator(); });
   const titleEl = $('title'), titleMain = $('titlemain'), creatorEl = $('creator'); let draft = null, newArmed = false, editLook = false;
   $('titleacct').appendChild($('account'));   // signing in belongs on the title screen
@@ -8059,12 +8447,14 @@
     const name = $('elfname').value.replace(/\s+/g, ' ').trim().slice(0, 16) || 'Elfling';
     if (editLook) { save.name = name; save.look = draft; persist(); showTitle(); return; }   // the same elf, a new look: nothing else changes
     if (hasProgress() && !newArmed) { newArmed = true; const w = $('creatorwarn'); w.hidden = false; w.textContent = `This starts a brand new elf. ${save.name || 'Your current elf'}, with ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished and ${save.coins || 0} acorn coins, will be gone for good. Press again if you are sure.`; $('creatorgo').textContent = 'Yes, start over'; return; }
-    if (hasProgress()) { clearSave(); save.name = name; save.look = draft; persist(); const go = () => { location.hash = 'lesson-1'; location.reload(); }; if (session) { cloudDirty = true; cloudPush().finally(go); } else go(); return; }
-    save.name = name; save.look = draft; persist(); hideTitle(); launch('lesson-1');
+    const lvl = draft.level | 0; delete draft.level;
+    if (hasProgress()) { clearSave(); save.name = name; save.look = draft; save.level = lvl; persist(); const first = save.level > 0 ? 'placed' : 'lesson-1', go = () => jump(first); if (session) { cloudDirty = true; cloudPush().finally(go); } else go(); return; }
+    save.name = name; save.look = draft; save.level = lvl; persist(); hideTitle(); launch(lvl > 0 ? 'placed' : 'lesson-1');
   });
   applyLook(save.look);
   const h = location.hash.replace('#', '');
-  if (['lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'hills', 'high', 'cairn-1', 'cairn-2', 'cairn-3', 'cairn-4', 'cairn-5', 'cairn-6', 'cairn-7', 'cairn-8', 'cairn-9', 'cairn-10', 'cliff', 'cog-1', 'cog-2', 'cog-3', 'cog-4', 'cog-5', 'cog-6', 'cog-7', 'cog-8', 'cog-9', 'cog-10', 'mtn', 'ember-1', 'ember-2', 'ember-3', 'ember-4', 'ember-5', 'ember-6', 'ember-7', 'ember-8', 'ember-9', 'ember-10', 'sea', 'lant-1', 'lant-2', 'lant-3', 'lant-4', 'lant-5', 'lant-6', 'lant-7', 'lant-8', 'lant-9', 'lant-10', 'lift', 'sky-1', 'sky-2', 'sky-3', 'sky-4', 'sky-5', 'sky-6', 'sky-7', 'sky-8', 'sky-9', 'sky-10', 'sky-11', 'sky-12', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5', 'fern-6', 'fern-7', 'fern-8', 'fern-9'].includes(h)) launch(h);
+  const hashOK = (() => { try { const g = sessionStorage.getItem('lr-go'); sessionStorage.removeItem('lr-go'); return g === h || localStorage.getItem('long-road-dev') === '1'; } catch (e) { return false; } })();   // a lesson in the address bar only counts when the game itself put it there
+  if (hashOK && ['placed', 'lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'hills', 'high', 'cairn-1', 'cairn-2', 'cairn-3', 'cairn-4', 'cairn-5', 'cairn-6', 'cairn-7', 'cairn-8', 'cairn-9', 'cairn-10', 'cliff', 'cog-1', 'cog-2', 'cog-3', 'cog-4', 'cog-5', 'cog-6', 'cog-7', 'cog-8', 'cog-9', 'cog-10', 'mtn', 'ember-1', 'ember-2', 'ember-3', 'ember-4', 'ember-5', 'ember-6', 'ember-7', 'ember-8', 'ember-9', 'ember-10', 'sea', 'lant-1', 'lant-2', 'lant-3', 'lant-4', 'lant-5', 'lant-6', 'lant-7', 'lant-8', 'lant-9', 'lant-10', 'lift', 'sky-1', 'sky-2', 'sky-3', 'sky-4', 'sky-5', 'sky-6', 'sky-7', 'sky-8', 'sky-9', 'sky-10', 'sky-11', 'sky-12', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5', 'fern-6', 'fern-7', 'fern-8', 'fern-9'].includes(h)) launch(h);
   else { drawMap(); showTitle(); }
 })();
 </script>

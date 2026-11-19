@@ -103,10 +103,17 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - The world is built for grown elves; the player's 7-inch elf is a small child in it. Grown elves stand about 7.5 units tall.
 - Character creator: besides name and colours you now choose a face (Cheerful, Wide-eyed, Sleepy, Determined) and a height, from 7 inches (a little one) to 17 inches (grown). Height is `look.height`, a scale from 1 to 2.45 applied to the whole elf, the bike included; the camera sits higher and further back for taller elves, and they walk a little faster. Face is `look.face`.
 - Hats on the townsfolk (`makeElfNPC`) are pulled down onto the head, and Marigold's sun hat has a crown.
-- The four homes in the Hollow are grown-elf houses. Outside they are 26 by 18.5 units with a door 8.9 tall (`HOME_S`). Inside each is 64 by 32 (`familyHome`): the living room with the hearth and the owner's things, and a wing of three rooms through their own doorways: the kitchen, the child's room and the parents' room. Only the child's room has child-sized furniture. Rooms can now have inner walls (`it.boxes`), and the camera stays in the room you are in. There is no upstairs yet.
+- The four homes in the Hollow are grown-elf houses. Outside they are 26 by 18.5 units with a door 8.9 tall (`HOME_S`). Inside each is 64 by 32 and 20 high (`familyHome`), on two floors:
+  - **Living room** (east, 42 wide, open to the roof): the hearth and the owner's things.
+  - **Kitchen** (the whole ground floor of the west wing, 22 by 28): a range with a fire, a long counter, a table with four chairs and room to walk right round it, and a pantry corner under the stair. Two doorways lead in from the living room.
+  - **Stair** along the south wall of the wing: fourteen steps up to a landing in the south-west corner. It is closed off from the kitchen by a panel, which carries the handrail upstairs.
+  - **Upstairs** (10 up): the child's room at the head of the stair (small bed, small table and stool, toy chest, toys) and through a doorway the parents' room (big bed, wardrobe, chest, chair).
+  - How it works: a room can now give its own floor height (`floorAt`) and say which floor a wall, rail or piece of furniture belongs to (`lv`). You are on the upper floor once you have climbed to it; rails and furniture only block on their own floor, and a seat can only be picked from its own floor. Other buildings have no upstairs yet.
 - The scale pass: every walk-in building in the other towns, the potting shed and the Ferry Office are now sized for grown elves (`growBuilding`). Each is about 1.7 times as tall, a little wider, and deeper away from the street; the front door stays where it was, so streets and lessons are untouched. Doors are 8 to 9.5 units tall. The way out of every room is as tall as its ceiling allows, up to 9.
 - Still at the old scale: the furniture and room sizes inside the shops (the lessons are set out around them), and the Village Stores, which is a hollow stump 22 across and 13 high with a 6-unit door.
 - **The river sits in the lowest ground.** The Fern used to be drawn at one level whatever the land did, so wherever the country dipped it ran along a raised causeway with a sheer drop (15 to 27 units) ninety units back from each bank; drawn on the 4-unit land grid that drop looked like terraces, and trees on its edge hung in the air. Now land within 330 units of the river is never lower than the bank and comes up to it gently (steepest slope in the whole corridor: 0.46). The bank top is 1.2 above the bed's datum instead of 0.35, so the waterline falls on the steep part of the bank and is a clean line instead of a sawtooth. Hearthmoor's own shore stays level with the quay.
+- Paths in the Hollow each lie a hair higher than the last, so where two cross nothing flickers.
+- The two barrels outside the Village Stores stand clear of the stump's wall.
 - Animals that get stuck pick a new direction. They are only ever moved to a clear spot when more than 140 units from you, so you never see one jump.
 
 ## Things, coins and trade
@@ -126,6 +133,41 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - On a short phone screen held sideways the control buttons used to be pushed off the bottom while the help panel showed; they now always stay on screen.
 - On a controller: D-pad down opens the satchel; D-pad or left stick moves the highlight (up and down by row, left and right along a row), A presses, LB and RB change tab, B closes. X at a bell opens the shop the same way.
 - Not built yet: seeds cannot be planted, there is no furniture, and shops never run out.
+
+## Teachers, placement and travel
+
+- **A lesson begins with its teacher.** Each town has one: Old Bramblewick (the Hollow), Hollis Quern (Orchards), Captain Oriel (Fernwater), Wren Ashcombe (Cairnhold), Tamsin Gearwright (Cogsworth), Master Durna (Emberdeep), Astra Vell (Lanternreach) and Professor Quill (Skyhaven). Walk up and press the pick-up key (the button says **Speak**). The teacher offers your next lesson there, any finished lesson again, or a test.
+- **"Test me: I know this already."** Five multiple-choice questions on that town's arithmetic, drawn fresh each time from a bank of six to eight kinds with new numbers. Four right and every lesson in that town is marked known, and you are paid two coins for each lesson you did not need. Fewer than four and nothing changes; you can ask again whenever you like.
+- **"I am working on..."** in the creator (counting and adding, up to calculus). Pick anything past the first and the game does not open with the acorn spill: Bramblewick offers the test at once, or lesson 1 if you would rather.
+- **No fast travel.** The map shows where things are and which lessons are done, but its lesson list no longer starts anything, and a lesson name typed into the address bar is ignored. You get to a town by walking, cycling or the ferry. (The master account keeps its clickable list and Tester buttons. For testing, `localStorage['long-road-dev'] = '1'` lets address-bar lessons through.)
+- Starting a lesson from its teacher still reloads the page and sets you at that lesson's starting spot inside the same town.
+- The bridge at Cairnhold is built if you pass Wren's test, as it is when you finish her last lesson.
+
+### Science in the Hollow
+
+Marigold Fernsby teaches it, at the nursery. Speak to her between lessons. Each lesson sends you to real things standing about the village, then asks what you found out; a wrong answer gets a reason and another go. Two coins each. Lessons start where you stand, with no reload, and "Stop for now" leaves one cleanly.
+
+1. **Alive, once alive, never alive.** Judge eight things round the village: the Old Oak, the berry bush, a stone, toadstools, a fire in a brazier, dry seeds on a tray, the barrel by the shop, the lantern post. (The fire and the seeds are the traps.)
+2. **What a plant needs.** Four pots. You decide which gets sun and water, sun only, water only (under a crate), or neither. A week passes and each pot shows what its treatment did. Then: which pairs make a fair test.
+3. **Which part do we eat?** Six plants in a kitchen bed: carrot, celery, lettuce, broccoli, tomato, peas. Root, stem, leaf, flower, fruit or seed.
+4. **Egg to frog, egg to butterfly.** Four stones round a pond and four posts: touch each life's stages in order.
+5. **Who lives here?** A burrow, a rotting log, a nest in the Oak, the pond. Then food chains, and herbivore, carnivore, omnivore.
+6. **Reading the weather.** A thermometer, a rain gauge, a weather vane and a shadow stick, each with a reading to interpret. Then the seasons.
+7. **What things are made of.** With Aldric: six things on a bench by a tub, float or sink, guessed before tested. Then density and choosing a material for a job.
+8. **Pushes and pulls.** A handcart on a measured lane: the same push empty, loaded, and on long grass. Then friction and gravity.
+
+- The props stand in the Hollow all the time (a pond in the south-east, a weather station by the south fence, a test bench south of the woodshop, a cart lane in the north-east corner, and so on). Each was placed by a search for clear ground, off the paths and away from houses.
+- Not built yet: no placement test for science, no science past the Hollow, and the science list on the map only shows what is done.
+
+### Things anyone can earn
+
+- **The beetle.** A grub lies in the compost heap at the far corner of the nursery. Bring it 3 field mushrooms and 2 pine cones (both lie beside the paths and roads), and it pupates, hatches and is yours to name. Lesson 10 still gives one too.
+- **The bicycle.** The Bicycle Works in Cogsworth builds one for 2 brass gears, 1 bicycle bell, 1 coil of rope and 30 coins. Gears and bells are made in Cogsworth; rope comes from Fernwater. Lesson "Your bicycle" still gives one too; passing Tamsin's test does not.
+
+### The ferry
+
+- A bell on the Fernwater ferry dock, and one on the western pier at Hearthmoor. Ring it, pay 4 coins, and the barge carries you down the Fern, across the lake and alongside the pier (or back). You stand on the deck and can look about; the beetle rides with you. A little over a minute.
+- The ride itself is continuous through the open world. There is a fade when the barge casts off, and one when it comes back into Fernwater.
 
 ## Companions
 
@@ -158,7 +200,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 
 - One account is flagged in the database table `game_masters` (row-level security on; players can read only their own row and cannot write). `game_load_progress` returns `master: true` for it. The flag lives only in memory for the signed-in session and is never written to the device, so signing out removes it.
 - For that account the map panel shows a **Tester** block: go to the selected town with no lesson started, go to Hearthmoor, fly the glider, and "bicycle, 200 coins and one of everything". The satchel has no limit.
-- Everyone else still reaches a town by walking or by starting one of its lessons. Locking the lesson list to lessons you have earned is not built yet.
+- Everyone else reaches a town by walking, cycling or the ferry, and starts lessons with the teacher there.
 
 ## Phones and tablets
 
