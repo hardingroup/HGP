@@ -149,7 +149,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 ## Inside Hearthmoor, your room, and storage
 
 - **Every door in the city opens.** Walk straight at a door and you go in (walking along a wall past one does nothing). Coming out puts you back on the step you went in by.
-  - **Rowan House** on South Street is the lodging house: a passage with three rooms off it, and **Room 2 is yours**. It has a bed, a desk under a window with a stool to sit at, a chest, a wardrobe and a bookshelf. It is sized so two children are comfortable and four are a crowd. Hesper Rowan keeps the house. The other two rooms are taken and shut, and Hazel House and Alder House next door tell you your room is in Rowan.
+  - **Rowan, Hazel and Alder House** on South Street are the lodging houses. See **A room of your own** below.
   - **The eight trade halls** each have a counter, the town's goods on the shelves, crates and sacks, benches, a keeper who will talk, and the bell on a barrel. The bell outside each hall still works too.
   - **The Guildhall** has the long table with a chair for each town (you can sit in any of them), their banners, and Odo Ledgerwood the clerk.
   - **The Bank** has a counter behind a brass grille, the vault door, and a wall of strongboxes; the brass one is yours and holds 40.
@@ -158,11 +158,11 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
   - **The terrace houses** all open onto one of two shared house interiors (the Hollow's house plan, in two colourings), named for the street the door is on. Nobody is in.
   - The four colleges and the warehouses give a reason at the door and stay shut.
 - **Storage.** A place to keep things is a `storeSpot`. Walk up to one and open it: the satchel panel shows what is in it on one side and what you carry on the other, with **Put in** and **Take**. What you leave stays there, on this device and in the cloud save.
-  - Yours: the chest (20), wardrobe (12, things to wear only), bookshelf (10) and desk drawer (6) in your room; the strongbox at the Bank (40); and a travellers' chest by the door of each inn, the Sleepy Beetle in the Hollow and the Hearthstone in the city (20 each). So there is somewhere to empty a full satchel at both ends of the road.
+  - Yours: the chest (20), wardrobe (12, things to wear only), bookshelf (10) and desk drawer (6) in your room, wherever that room is; the strongbox at the Bank (40); and a travellers' chest by the door of each inn, the Sleepy Beetle in the Hollow and the Hearthstone in the city (20 each). So there is somewhere to empty a full satchel at both ends of the road.
   - Each of yours has a lock you can turn on and off. It is locked unless you unlock it. With only one player in the world the lock keeps nobody out yet; it is there for when rooms can have visitors.
   - Other people's: the wardrobe and chest upstairs in each Hollow house and in the city houses belong to the family, and are locked. Looking at one tells you whose it is.
 - How it works: `CITY.doors` lists every door with the room it leads to (`inside`) or the reason it does not (`msg`); `cityCollide` notices you walking at one and `cityDoor` takes you in. City rooms are ordinary rooms (`makeRoom`) whose way out is set to whichever door you used. `openStore`, `storeOf(id)` and the `take`, `put` and `lock` actions are the storage; the contents are in `save.stores`.
-- Not yet: there is one room for one player (when there are many players each needs their own), the letter rack in Rowan House is waiting for the post, and nothing can be put on a table or a shelf where you can see it: storage is a list, not objects in the room.
+- Not yet: nothing can be put on a table or a shelf where you can see it (storage is a list, not objects in the room), and the letter racks are waiting for the post.
 
 ## Other players, the age question, and parental controls
 
@@ -177,6 +177,23 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Parental controls** are at the bottom of Settings. A parent sets a passcode of 4 to 8 digits; from then on the page is locked, and the passcode is needed to see or change voice, phrases, seeing other players, or the birth year. It locks again when Settings is closed.
   - **Before this is offered to the public:** a passcode typed on the child's own device is not verified consent from a parent. US children's privacy law (COPPA) wants a method that shows it really was a parent before a child under 13 can talk to others. That needs deciding, with advice, before voice goes live.
 - How it works: `fam` is the family record (`long-road-family-v1` on the device) and `renderFam` draws its page. `NET` is the connection: it speaks Supabase Realtime's own protocol over a WebSocket, joins a channel named for the place, and sends and hears `p` messages. `makeKid()` now builds an elf (yours, and each of the others), and `applyLookTo` dresses one.
+
+## A room of your own, and a lot
+
+- **Each account has its own room.** There are three lodging houses with four rooms each, twelve places in all. Signing in asks the Guild's register (the database) for your room; the first time, it gives you the first free one and that room is yours from then on. Jake's account already holds Room 2 of Rowan House. Signed out, a device uses Room 2 of Rowan House on its own.
+  - In your house your door stands open and has a "yours" plate; the other doors are shut. In the other two houses every door is shut and the hint tells you where your room is. Each house has its own warden, who will tell you the same.
+  - If all twelve are taken, a new account is told so honestly and gets no room. More houses, or upper floors, are the fix.
+- **The rooms are not all alike.**
+  - Rooms are built in mirrored pairs: Rooms 1 and 2 share a wall, and so do 3 and 4. Each room's **washstand** stands against that shared wall, back to back with its neighbour's, with one lead pipe up the wall for the two. So Room 2 is Room 1 turned round: bed on the other side, wardrobe and shelf on the other side.
+  - The **end rooms** (1 and 4) are wider, have a window in the outside wall, and an armchair.
+  - In **Hazel House** the middle two are one long **shared room** for two: two beds, two desks, two of everything, and a table with two stools between. Either occupant's door opens it.
+  - Every room has a bed, a desk under a window with a stool, a chest, a wardrobe, a bookshelf and the washstand (you can wash at it).
+- **Your colours.** Stand on your rug and choose a colour for the quilt and for the rug, six of each. Signed in, the choice is kept with your room.
+- **Chests are kept under your account.** As well as travelling in the cloud save, the contents of every store are written to a table of their own, with whether you have locked it. The database will show a store to its owner always, and to anyone else only if the owner has unlocked it. Nothing in the game lets one player open another's yet; this is the rule that will be enforced when it does.
+- **Garden Lots can be claimed, one to each account.** Stand at the post by a lot's gate. If it is unclaimed and you are signed in and have no lot, you can claim it; the sign then carries your elf's name, in green for you and brown for everyone else. A lot cannot be swapped or given up yet, and nothing can be built on one. The signs are read from the database when the city comes into view and every two minutes after.
+- In the database: tables `game_rooms`, `game_stores` and `game_lots`, all with row-level security, and the functions `game_my_room`, `game_room_colours`, `game_stores_put`, `game_store_peek`, `game_lots_list` and `game_claim_lot`. The functions decide everything from the signed-in account, never from what the game says about who is asking.
+- In the game: `LODGE` and `LROOMS` are the houses and their rooms, `myRoom` is yours, `lodgeSync` opens and shuts the doors, `lodgeFetch` asks the register; `lotState`, `lotsFetch`, `lotsApply` and `lotPick` are the lots.
+- Tested: the database functions were run as two different accounts inside a transaction that was then undone (rooms handed out in order, a second claim refused, a taken lot refused, a locked chest refused to a stranger and an unlocked one shown). The game side was tested with the answers fed in by hand, because the place it was built in cannot reach Supabase. **The two have not been run joined together.**
 
 ## Things, coins and trade
 
