@@ -97,14 +97,33 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
   - Inside the walls it is 900 by 437 units, with three gates (West, East, South), the High Street and Lake Street crossing at the Market Square, and side streets.
   - Built so far: walls, towers and gates; the quay and five piers on the lake, two barges, four warehouses; the Market Square with a fountain, eight stalls and eight trade halls (one named for each town); the University's four colleges and the Library Tower; Lakeside park and its three big houses; the Guildhall and Bank; Old Town, Tailors' Row, Makers' Row and Southgate as streets of houses; fenced Garden Lots; a few townsfolk.
   - Scale: Hearthmoor's buildings are sized for grown elves, who stand about 7.5 units tall (the player's elf is 3). A storey is about 9 units, a house door 8.6, houses are 20 to 38 wide and two or three storeys, the trade halls stand 25 to the eaves, the walls 24, the Library Tower 80. `HS` in `buildCity()` scales every building's height.
-  - Not built yet: nothing in the city has an inside, nothing is for sale, the townsfolk do not talk, and no road leaves the East or South Gate.
+  - The eight trade halls and the eight market stalls trade (see **Things, coins and trade**).
+  - Not built yet: nothing in the city has an inside, the townsfolk do not talk, and no road leaves the East or South Gate.
   - The in-game map shows Hearthmoor; tapping it there takes you to the West Gate.
 - The world is built for grown elves; the player's 7-inch elf is a small child in it. Grown elves stand about 7.5 units tall.
 - Character creator: besides name and colours you now choose a face (Cheerful, Wide-eyed, Sleepy, Determined) and a height, from 7 inches (a little one) to 17 inches (grown). Height is `look.height`, a scale from 1 to 2.45 applied to the whole elf, the bike included; the camera sits higher and further back for taller elves, and they walk a little faster. Face is `look.face`.
 - Hats on the townsfolk (`makeElfNPC`) are pulled down onto the head, and Marigold's sun hat has a crown.
 - The four homes in the Hollow are grown-elf houses. Outside they are 26 by 18.5 units with a door 8.9 tall (`HOME_S`). Inside each is 64 by 32 (`familyHome`): the living room with the hearth and the owner's things, and a wing of three rooms through their own doorways: the kitchen, the child's room and the parents' room. Only the child's room has child-sized furniture. Rooms can now have inner walls (`it.boxes`), and the camera stays in the room you are in. There is no upstairs yet.
-- Still at the old, smaller scale: the Village Stores, the potting shed and nursery, and every building in the other seven towns.
+- The scale pass: every walk-in building in the other towns, the potting shed and the Ferry Office are now sized for grown elves (`growBuilding`). Each is about 1.7 times as tall, a little wider, and deeper away from the street; the front door stays where it was, so streets and lessons are untouched. Doors are 8 to 9.5 units tall. The way out of every room is as tall as its ceiling allows, up to 9.
+- Still at the old scale: the furniture and room sizes inside the shops (the lessons are set out around them), and the Village Stores, which is a hollow stump 22 across and 13 high with a 6-unit door.
 - Animals that get stuck pick a new direction. They are only ever moved to a clear spot when more than 140 units from you, so you never see one jump.
+
+## Things, coins and trade
+
+- **The satchel** (`I`, the Bag button, or a click on your coins) lists what you carry, with tabs for food and drink, clothes, tools and goods. Pockets hold 6; the satchel from lesson 1 holds 20; a traveller's pack adds 20; a beetle walking with you carries 20 more. Heavy things (flour, iron, coal, a clock) take the room of 3.
+- **Things lie about.** Berries, mushrooms, flowers, herbs, feathers, pine cones and acorns sit in small clusters beside every road, about every hundred paces; shells near the Lanternreach coast; the odd ember crystal near the mountain doors. There are acorns under the Old Oak, berries by the bushes and windfall apples in the orchards. Walk up and press the pick-up key. A picked thing comes back after about twenty minutes. The wild ones are made as you come near and removed behind you, so the long roads cost nothing.
+- **Shops.** A brass bell marks every counter (on a barrel where there is no counter). The pick-up key there opens the shop: what it sells on the left, what you carry on the right, and it will buy anything. Where nobody stands behind the counter it is an honesty dish.
+  - The Hollow: the Village Stores (nut mix, acorn toys, the pack), Fen's stall (jam, tunic dyes), the potting shed (seeds, seedlings, straw hats), Bough's woodshop (walking stick, whistles).
+  - Orchards: Quern Mill (apples, cider, flour). Fernwater: bakery, Nets & Lines, Tideknot Ropes. Cairnhold: the Lodge. Cogsworth: the Clockworks and the Bicycle Works. Emberdeep: Durna's ore bench. Lanternreach: the Chandlery. Skyhaven: the Glider Guild.
+  - Hearthmoor: each trade hall sells everything its town makes; the market stalls sell food, hats, dyes, seeds and tools.
+- **Prices are a rule, not a table.** Every thing has one worth. A shop in the town that makes it sells it for that; anywhere else (Hearthmoor included) it costs half as much again. Selling: wild things fetch their worth everywhere. Made things fetch 60% at home and 15% more for every town along the road you carried them, up to 150%; Hearthmoor pays a flat 120%. So buying where a thing is made and carrying it far is how you earn, and buying and selling in the same place always loses.
+- **Food and drink** give back stamina (a pie and smoked fish mend a little health too). There is no hunger bar; you cannot eat when you are already full.
+- **Clothes**: six hats (straw, wool, flat cap, miner's helmet, sou'wester, flying cap) that you wear from the satchel, and five dyes that recolour your tunic (one jar, one tunic).
+- **Tools** work by being carried: trail boots make running cost a quarter less stamina, a walking stick brings stamina back 30% faster, the pack adds room, and the lantern is a real light you turn on and off.
+- Lesson 2 no longer touches your purse: the jar money is Bramblewick's coin plus the two you earn at the stall, so coins you have made yourself are safe.
+- Saved with everything else, locally and in the cloud. When the same lessons are done on both sides, the newer save now wins, so spent coins stay spent.
+- On a short phone screen held sideways the control buttons used to be pushed off the bottom while the help panel showed; they now always stay on screen.
+- Not built yet: seeds cannot be planted, there is no furniture, shops never run out, and the satchel screen cannot be worked from a controller (mouse or touch only).
 
 ## Title screen and your elf
 
@@ -116,7 +135,9 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 ## Phones and tablets
 
 - Walking uses a thumb stick: a fixed round pad at the bottom left. The knob follows your thumb, and how far you push sets how fast you go. Drag the picture to look.
-- The round buttons (Map, Run, View, Jump, Pick up) answer the touch itself. The game stops the browser's own touch handling on the control pad so the page cannot scroll or zoom, and that also stops phones sending a click afterwards, so nothing there may rely on click.
+- The round buttons are Map, Bag, Ride (once you own the bicycle), Run, View, Jump and Pick up. The big button says Trade or Sit when that is what it will do.
+- A small line above the stamina bar says what the pick-up key will do when you are next to something: pick up, trade or sit.
+- The round buttons answer the touch itself. The game stops the browser's own touch handling on the control pad so the page cannot scroll or zoom, and that also stops phones sending a click afterwards, so nothing there may rely on click.
 - The picture is always drawn at the size of the box it is shown in, checked every frame, so it cannot be stretched when a phone's address bar shows or hides.
 
 ## The bike
@@ -144,7 +165,8 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 | Shift run (stamina bar) | B or left-stick click | Run button |
 | Space jump | A | Jump button |
 | E pick up, talk, sit | X | Pick up button |
-| R ride / get off the bicycle (once you have one) | D-pad up | — |
+| R ride / get off the bicycle (once you have one) | D-pad up | Ride button |
+| I open the satchel | — | Bag button |
 | V switch between the back view and the front view | Y | View button |
 | Z or mouse wheel: close, mid or wide camera | Bumpers | — |
 | M open the world map | Start | Map button |

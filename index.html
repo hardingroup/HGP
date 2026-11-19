@@ -125,6 +125,31 @@
   .act.main { width: 84px; height: 84px; border-color: var(--gold); font-size: 15px; }
   @media (min-width: 700px) { .acts { max-width: none; } }
   body.touchmode .pad { display: flex; }
+  #bag { position: fixed; inset: 0; z-index: 55; background: rgba(14,22,16,.9); color: var(--ink); overflow: auto; padding: 14px 10px 32px; font-size: 15px; -webkit-overflow-scrolling: touch; }
+  #bag .sheet { max-width: 1000px; margin: 0 auto; background: var(--panel); border: 2px solid var(--panel-edge); border-radius: 16px; padding: 14px 18px 18px; }
+  .baghead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+  .baghead h1 { font-family: var(--font-display); color: var(--gold); font-size: 24px; margin: 0; flex: 1 1 200px; }
+  .baghead .chip svg { width: 18px; height: 18px; }
+  #bagnote { color: var(--ink-soft); font-size: 13.5px; margin: 6px 0 0; }
+  #bagmsg { color: var(--gold); font-weight: 600; min-height: 1.4em; margin: 6px 0 0; }
+  .bagtabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; }
+  .bagtabs .btn[aria-pressed="true"] { background: var(--gold); color: #1b2b1e; border-color: var(--gold); }
+  .bagcols { display: flex; gap: 8px 22px; flex-wrap: wrap; margin-top: 10px; }
+  .bagcols section { flex: 1 1 320px; min-width: 0; }
+  .bagcols h2 { font-size: 15px; color: var(--ink-soft); margin: 0 0 2px; border-bottom: 1px solid var(--panel-edge); padding-bottom: 4px; }
+  .bagrow { display: grid; grid-template-columns: 36px 1fr auto; gap: 4px 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(60,90,52,.55); }
+  .bagrow .em { font-size: 26px; text-align: center; line-height: 1; }
+  .bagrow .nm small { display: block; color: var(--ink-soft); font-size: 12.5px; }
+  .bagrow .nm .ct { color: var(--gold); font-variant-numeric: tabular-nums; }
+  .bagrow .do { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .bagrow .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .bagempty { color: var(--ink-soft); padding: 10px 0; }
+  .bottom { position: relative; flex: none; }
+  .hud > div:first-child { flex: 0 1 auto; min-height: 0; }   /* on a short screen the top may overlap; the controls must never be pushed off the bottom */
+  .prompt { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 8px; white-space: nowrap; max-width: 94vw; overflow: hidden; text-overflow: ellipsis; background: rgba(15,26,18,.8); border: 1px solid var(--panel-edge); border-radius: 999px; padding: 4px 14px; font-size: 14px; }
+  .prompt kbd { background: var(--bg); border: 1px solid var(--panel-edge); border-radius: 6px; padding: 0 6px; font-family: inherit; }
+  #bagchip, #coins { pointer-events: auto; cursor: pointer; font: inherit; font-weight: 600; color: var(--ink); }
+  #coins { color: var(--gold); }
   .stam { width: 180px; height: 8px; border-radius: 4px; background: rgba(27,43,30,.85); border: 1px solid var(--panel-edge); overflow: hidden; align-self: flex-start; opacity: 0; transition: opacity .4s; }
   .stam.show { opacity: 1; }
   .stam.hp .fill { background: #c8384a; }
@@ -212,6 +237,15 @@
 
 <canvas id="scene" aria-label="Bramblewick's shop and the forest clearing outside, seen from seven inches tall"></canvas>
 <div class="fade" id="fade" aria-live="polite"></div>
+<div id="bag" hidden>
+  <div class="sheet">
+    <div class="baghead"><h1 id="bagtitle">Your satchel</h1><span class="chip gold" id="bagcoins"></span><span class="chip" id="bagload"></span><button class="btn primary" data-a="close">Close</button></div>
+    <p id="bagnote"></p>
+    <div class="bagtabs" id="bagtabs"></div>
+    <p id="bagmsg" aria-live="polite"></p>
+    <div class="bagcols"><section id="bagshopcol"><h2 id="bagshoph">For sale</h2><div id="bagshop"></div></section><section><h2 id="bagmineh">You are carrying</h2><div id="bagmine"></div></section></div>
+  </div>
+</div>
   <div id="settings" hidden>
     <div class="sheet">
       <h1>Settings</h1>
@@ -310,9 +344,10 @@
 <div class="hud">
   <div>
     <div class="top">
-      <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>mouse</kbd> look (inverted) &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> pick up / sit &middot; <kbd>V</kbd> view &middot; <kbd>Z</kbd> / <kbd>wheel</kbd> zoom &middot; <kbd>M</kbd> map &middot; <kbd>H</kbd> hide this<br><span id="lockhint">Click the game to grab the mouse, <kbd>Esc</kbd> to let go.</span><br><span id="gphint">Controller: sticks move and look, <kbd>A</kbd> jump, <kbd>X</kbd> pick up, <kbd>Y</kbd> view, bumpers zoom, <kbd>Select</kbd> this panel.</span></div>
+      <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>mouse</kbd> look (inverted) &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> jump &middot; <kbd>E</kbd> pick up / sit &middot; <kbd>V</kbd> view &middot; <kbd>Z</kbd> / <kbd>wheel</kbd> zoom &middot; <kbd>I</kbd> satchel &middot; <kbd>M</kbd> map &middot; <kbd>H</kbd> hide this<br><span id="lockhint">Click the game to grab the mouse, <kbd>Esc</kbd> to let go.</span><br><span id="gphint">Controller: sticks move and look, <kbd>A</kbd> jump, <kbd>X</kbd> pick up, <kbd>Y</kbd> view, bumpers zoom, <kbd>Select</kbd> this panel.</span></div>
       <div class="right">
-        <div class="chip gold" id="coins" hidden></div>
+        <button class="chip gold" id="coins" hidden title="Open your satchel"></button>
+        <button class="chip" id="bagchip" hidden title="Open your satchel">🎒 <span>Satchel</span></button>
         <div class="tasks" id="tasks"></div>
         <span style="flex-basis:100%;height:0"></span>
         <div class="hint" id="hint" hidden></div>
@@ -321,6 +356,7 @@
     </div>
   </div>
   <div class="bottom">
+    <div class="prompt" id="prompt" hidden></div>
     <div class="stam hp" id="hp"><div class="fill" id="hpfill"></div></div>
     <div class="stam" id="stam"><div class="fill" id="stamfill"></div></div>
     <div class="dialog" id="dialog" hidden>
@@ -333,6 +369,8 @@
       <div class="stick" id="stick" role="application" aria-label="Move: slide your thumb in the direction you want to walk"><div class="knob" id="knob"></div></div>
       <div class="acts">
         <button class="act" id="mapbtn">Map</button>
+        <button class="act" id="bagbtn">Bag</button>
+        <button class="act" id="ridebtn" hidden>Ride</button>
         <button class="act" id="runbtn">Run</button>
         <button class="act" id="viewbtn">View</button>
         <button class="act" id="jumpbtn">Jump</button>
@@ -464,8 +502,17 @@
     const tex = textTex(text, 512, Math.round(512 * hUnits / wUnits), bg, fg);
     textTexes.push({ tex, text, bg, fg });
     const side = mat('#6b4a2b');
-    return new THREE.Mesh(new THREE.BoxGeometry(wUnits, hUnits, 0.2), [side, side, side, side, mat('#ffffff', { map: tex }), mat('#ffffff', { map: tex })]);
+    const sgn = new THREE.Mesh(new THREE.BoxGeometry(wUnits, hUnits, 0.2), [side, side, side, side, mat('#ffffff', { map: tex }), mat('#ffffff', { map: tex })]); sgn.userData.sign = true; return sgn;
   }
+  // The towns were first built at a child's size. growBuilding makes a building fit grown elves (about 7.5 units tall) without moving its front door:
+  // taller most of all, a little wider, and deeper away from the street. Its box for bumping into grows with it; its signs keep their shape.
+  const GROWN = [];
+  function growBuilding(g, facing, D, box, gx = 1.2, gy = 1.7, gz = 1.15) {
+    const back = D / 2 * (gz - 1), sn = Math.sin(facing), cs = Math.cos(facing);
+    g.scale.set(gx, gy, gz); g.position.x -= sn * back; g.position.z -= cs * back; GROWN.push({ g, gx, gy, gz });
+    if (box) { const alongZ = Math.abs(cs) > 0.5; box.x -= sn * back; box.z -= cs * back; box.hw = (box.hw - 0.3) * (alongZ ? gx : gz) + 0.3; box.hd = (box.hd - 0.3) * (alongZ ? gz : gx) + 0.3; }
+  }
+  function fixGrownSigns() { GROWN.forEach(q => q.g.traverse(o => { if (o.userData && o.userData.sign) { const side = Math.abs(Math.sin(o.rotation.y)) > 0.5; o.scale.set(1.3 / (side ? q.gz : q.gx), 1.3 / q.gy, 1); } })); }
 
   // ---------- world layout: one village street, north to south, inside a fence ----------
   const SHOP = new THREE.Vector3(0, 0, 0), R = 11, GAP = Math.asin(2.5 / R);
@@ -625,7 +672,18 @@
   });
 
   // ---------- benches and stools you can sit on ----------
-  const seats = [], roomSeats = [], realHouses = [];
+  const seats = [], roomSeats = [], realHouses = [], shopSpots = [];
+  // a brass bell on a counter: ring it to trade. Where there is no counter, it stands on a barrel.
+  function shopBell(sc, world, x, y, z, shop, o = {}) {
+    const g = new THREE.Group(); g.position.set(x, y, z);
+    if (!o.hidden) { const brass = mat('#e8b64c', { metalness: 0.7, roughness: 0.3 });
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), brass); dome.position.y = 0.06; g.add(dome);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.44, 0.07, 14), mat('#3a2a1e')); base.position.y = 0.035; g.add(base);
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), brass); knob.position.y = 0.43; g.add(knob); }
+    if (o.post) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.75, y - (o.floor || 0), 14), mat('#8a6438')); b.position.set(x, (o.floor || 0) + (y - (o.floor || 0)) / 2, z); b.castShadow = true; sc.add(b);
+      [0.25, 0.75].forEach(k => { const h = new THREE.Mesh(new THREE.TorusGeometry(0.84, 0.05, 6, 18), mat('#3a3a3a', { metalness: 0.5 })); h.rotation.x = Math.PI / 2; h.position.set(x, (o.floor || 0) + (y - (o.floor || 0)) * k, z); sc.add(h); }); }
+    sc.add(g); g.userData = { pickable: true, kind: 'shop', shop, world }; shopSpots.push(g); return g;
+  }
   // A fire: layered flames that lick and lean, embers under them, sparks rising, and its light flickering with it.
   const fires = [];
   function makeFire(parent, sc, x, y, z, size = 1, light = null) {
@@ -1055,7 +1113,7 @@
     { const door = new THREE.Mesh(new THREE.BoxGeometry(2.8, 4.8, 0.3), mat('#3e2812')); door.position.set(0, 2.4, 3.6); shed.add(door); hingeDoor(door, shed); }
     [-1, 1].forEach(d => { const w = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.8), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.45 })); w.position.set(d * 3.6, 3.6, 3.52); shed.add(w); });
     const shedSign = signBoard('Fernsby Nursery', 5.2, 1.1, '#3e6b52', '#f6e7c2'); shedSign.position.set(0, 5.75, 3.7); shed.add(shedSign);
-    hollowBoxes.push({ id: 'potting', x: NURS.x, z: NURS.z - 11, hw: 5.5, hd: 3.5, door: { x: NURS.x, z: NURS.z - 7.5 } });
+    { const bx = { id: 'potting', x: NURS.x, z: NURS.z - 11, hw: 5.8, hd: 3.8, door: { x: NURS.x, z: NURS.z - 7.5 } }; hollowBoxes.push(bx); growBuilding(shed, 0, 7, bx, 1.08, 1.8, 1.3); }
     const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1, 2.4, 16), mat('#6b4a2b')); barrel.position.set(12, 1.2, 7); nursery.add(barrel);
     const water = new THREE.Mesh(new THREE.CircleGeometry(1.0, 16), new THREE.MeshStandardMaterial({ color: '#5fa4c4', roughness: 0.1, metalness: 0.2 })); water.rotation.x = -Math.PI / 2; water.position.set(12, 2.2, 7); nursery.add(water);
     [0.6, 1.8].forEach(y => { const hoop = new THREE.Mesh(new THREE.TorusGeometry(1.07, 0.06, 6, 20), mat('#4b4b4b', { metalness: 0.5 })); hoop.rotation.x = Math.PI / 2; hoop.position.set(12, y, 7); nursery.add(hoop); });
@@ -1367,6 +1425,19 @@
       kid.setFace = i => { i = clamp(i | 0, 0, 3); const es = i === 1 ? 1.35 : i === 3 ? 0.9 : 1; faceBits.w.forEach(m => m.scale.setScalar(es)); faceBits.p.forEach(m => { m.scale.setScalar(i === 1 ? 1.25 : 1); m.position.z = i === 1 ? 0.6 : 0.56; });
         faceBits.c.forEach(m => (m.visible = i === 0 || i === 2)); freck.visible = i === 1; lids.visible = i === 2; brows.visible = i === 3; smile.visible = i === 0 || i === 2; smile.scale.setScalar(i === 2 ? 0.7 : 1); mouthO.visible = i === 1; mouthFlat.visible = i === 3; };
       kid.setFace(0); }
+    // hats you can buy sit on the same head: the pointed cap you started with, or one of these
+    const hatG = {}; { const own = new THREE.Group(); hd.remove(cap); hd.remove(leaf); own.add(cap); own.add(leaf); hd.add(own); hatG.cap = own;
+      const mk = (name, build) => { const g = new THREE.Group(); build(g, (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; }); g.visible = false; hd.add(g); hatG[name] = g; };
+      const half = (r, k) => new THREE.SphereGeometry(r, 18, 10, 0, Math.PI * 2, 0, Math.PI * (k || 0.5)), ring = (r, t) => new THREE.TorusGeometry(r, t, 6, 22);
+      mk('straw', (g, a) => { const m = mat('#e3c770', { roughness: 1 }); a(new THREE.CylinderGeometry(1.05, 1.05, 0.05, 22), m, 0, 0.3, 0); a(half(0.61), m, 0, 0.24, 0).scale.y = 0.8; a(ring(0.6, 0.05), mat('#8a3a4a'), 0, 0.36, 0).rotation.x = Math.PI / 2; g.rotation.x = -0.12; });
+      mk('wool', (g, a) => { const cream = mat('#f2e6c8', { roughness: 1 }); a(half(0.63), mat('#b5562b', { roughness: 1 }), 0, 0.1, 0); a(ring(0.62, 0.085), cream, 0, 0.14, 0).rotation.x = Math.PI / 2; a(new THREE.SphereGeometry(0.17, 10, 8), cream, 0, 0.78, 0); g.rotation.x = -0.1; });
+      mk('flat', (g, a) => { const m = mat('#6a6a5e', { roughness: 1 }); a(half(0.67), m, 0, 0.2, 0).scale.y = 0.72; a(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 14, 1, false, -Math.PI / 2, Math.PI), m, 0, 0.25, 0.44); g.rotation.x = 0.06; });
+      mk('helm', (g, a) => { const m = mat('#d9a82e', { metalness: 0.5, roughness: 0.4 }); a(half(0.64), m, 0, 0.1, 0); a(ring(0.65, 0.06), m, 0, 0.14, 0).rotation.x = Math.PI / 2; a(new THREE.CylinderGeometry(0.13, 0.15, 0.12, 12), mat('#ffe39a', { emissive: '#ffcf5a', emissiveIntensity: 0.9 }), 0, 0.42, 0.6).rotation.x = Math.PI / 2; });
+      mk('sou', (g, a) => { const m = mat('#e3bf1e', { roughness: 0.6, side: THREE.DoubleSide }); a(half(0.63), m, 0, 0.1, 0); a(new THREE.CylinderGeometry(0.62, 1.02, 0.22, 20, 1, true), m, 0, 0.14, 0); g.rotation.x = -0.2; });
+      mk('flying', (g, a) => { const brass = mat('#c9a23a', { metalness: 0.6, roughness: 0.35 }); a(half(0.62, 0.6), mat('#6b4a2b', { roughness: 0.8 }), 0, 0.04, 0); a(ring(0.62, 0.035), mat('#2a2420'), 0, 0.3, 0).rotation.x = Math.PI / 2;
+        [-1, 1].forEach(d => { const r = a(ring(0.14, 0.04), brass, d * 0.2, 0.36, 0.53); r.rotation.x = -0.45; const l = a(new THREE.CircleGeometry(0.13, 12), mat('#9fd0e8', { roughness: 0.15 }), d * 0.2, 0.36, 0.535); l.rotation.x = -0.45; }); });
+    }
+    kid.setHat = st => { for (const k in hatG) hatG[k].visible = k === (hatG[st] ? st : 'cap'); };
     Object.assign(kid, { legs, arms, hd, satchel, mats: { tunic: tunicM, skin: skinK, hair: hairM, hat: cap.material } });
   }
   player.position.set(0, 0, 6.5); scene.add(player);
@@ -2111,7 +2182,7 @@
 
   // ---------- interiors: every building is its own room, loaded when you walk through its door ----------
   function makeRoom(id, o) {
-    const sc = new THREE.Scene(); const W = o.w, D = o.d, H = o.h || 9, DH = o.doorH || 6.4;
+    const sc = new THREE.Scene(); const W = o.w, D = o.d, H = o.h || 9, DH = o.doorH || clamp(H - 1.4, 6.4, 9);   // the way out is as tall as the room allows, up to a grown elf's door
     const night = o.region === 'lantern';   // it is always night outside in Lanternreach
     sc.add(new THREE.Mesh(new THREE.SphereGeometry(200, 16, 12), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, color: night ? '#16223c' : '#ffffff' })));
     sc.add(new THREE.HemisphereLight('#fff3dc', '#6a5a48', 0.42));
@@ -2367,7 +2438,7 @@
     wall(9, 2.2, 1.4, 2, 1.1, -3, mat('#8a6438')); wall(9.4, 0.2, 1.8, 2, 2.3, -3, mat('#ffffff', { map: plankTex })); solids.push({ x: -1, z: -3, r: 2 }, { x: 2, z: -3, r: 2 }, { x: 5, z: -3, r: 2 });
     for (let k = 0; k < 5; k++) { const hank = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 1.3, 10), mat(pick(['#d9c6a0', '#c7b386', '#a89670']))); hank.position.set(-1.5 + k * 1.5, 3.05, -3); sc.add(hank); }
     const tar = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.8, 1.6, 12), mat('#2a2a2a')); tar.position.set(5.5, 0.8, 3.5); sc.add(tar); solids.push({ x: 5.5, z: 3.5, r: 0.9 });
-    [[-3, 4], [0, 4.5]].forEach(([x, z]) => { const bundle = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.8, 14), mat('#c7b386', { roughness: 1 })); bundle.position.set(x, 0.4, z); sc.add(bundle); solids.push({ x, z, r: 1.1 }); });
+    [[-3, 4], [2.8, 5]].forEach(([x, z]) => { const bundle = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.8, 14), mat('#c7b386', { roughness: 1 })); bundle.position.set(x, 0.4, z); sc.add(bundle); solids.push({ x, z, r: 1.1 }); });
   } });
   makeRoom('nets', { w: 16, d: 14, h: 9, wall: '#e8dcc0', label: 'Nets & Lines', region: 'fernwater', hint: 'Nets in the rafters, floats on the wall, and this morning’s catch.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
     const net = new THREE.Mesh(new THREE.PlaneGeometry(12, 6, 12, 6), new THREE.MeshStandardMaterial({ color: '#c7b386', wireframe: true })); net.position.set(0, H - 2.2, -2); net.rotation.x = 0.35; sc.add(net);
@@ -2485,7 +2556,7 @@
       const fenceRun = (ax, az, bx, bz) => { const len = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(len / 3)); for (let k = 0; k <= n; k++) { const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 1.6, 6), trimM); pm.position.set(ax + (bx - ax) * k / n, 0.8, az + (bz - az) * k / n); fernScene.add(pm); } const rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.12, 0.12), mat('#8a6438')); rail.position.set((ax + bx) / 2, 1.3, (az + bz) / 2); rail.rotation.y = -Math.atan2(bz - az, bx - ax); fernScene.add(rail); };
       fenceZ.forEach(fz => { if (fz > 2 && fz < 50) fenceRun(backX, fz, frontX, fz); });
       fenceRun(backX, Math.max(2, fenceZ[0]), backX, Math.min(50, fenceZ[1]));
-      fernBoxes.push({ id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } });
+      { const bx = { id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } }; fernBoxes.push(bx); growBuilding(g, facing, D, bx); }
       interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
       return g;
     }
@@ -2509,7 +2580,7 @@
       const osign = signBoard('Ferry Office', 5.2, 1.1, '#f2e6c8', '#2f4a6a'); osign.position.set(0, 6.3, D / 2 + 0.3); g.add(osign);
       const tt = signBoard('Crossings: dawn, noon, dusk', 6.4, 1.1, '#f2e6c8', '#3a2a18'); tt.position.set(W / 2 + 0.12, 3.6, 0); tt.rotation.y = Math.PI / 2; g.add(tt);
       const lampO = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.8, 0.5), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lampO.position.set(-2.9, 5.2, D / 2 + 0.5); g.add(lampO);
-      fernBoxes.push({ id: 'ferryoffice', x: fx, z: fz, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: fx - D / 2, z: fz - 0.6 } });
+      { const bx = { id: 'ferryoffice', x: fx, z: fz, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: fx - D / 2, z: fz - 0.66 } }; fernBoxes.push(bx); growBuilding(g, -Math.PI / 2, D, bx, 1.1, 1.8, 1.15); }
       interiors.ferryoffice.door = { x: fx - D / 2 - 4.5, z: fz - 0.6, yaw: -Math.PI / 2 };
     }
     // bakery goods: cakes on the counter, cut into slices
@@ -2673,7 +2744,7 @@
       if (tower) { const tw = new THREE.Mesh(new THREE.CylinderGeometry(3, 3.4, H + 9, 12), stoneM); tw.position.set(-W / 2 + 1, (H + 9) / 2, -D / 2 + 1); tw.castShadow = true; g.add(tw); { const lx = -W / 2 + 1, lz = -D / 2 + 1, c = Math.cos(facing), sn = Math.sin(facing); cairnSolids.push({ x: x + lx * c + lz * sn, z: z - lx * sn + lz * c, r: 3.2 }); } const par = new THREE.Mesh(new THREE.CylinderGeometry(3.7, 3.4, 0.7, 12), stoneM); par.position.set(-W / 2 + 1, H + 9.1, -D / 2 + 1); g.add(par); const cap = new THREE.Mesh(new THREE.ConeGeometry(2.3, 2.6, 12), mat('#5a6b7a')); cap.position.set(-W / 2 + 1, H + 10.9, -D / 2 + 1); g.add(cap); for (let k = 0; k < 8; k++) { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), stoneM); const a = k * Math.PI / 4; m.position.set(-W / 2 + 1 + Math.cos(a) * 3.2, H + 9.95, -D / 2 + 1 + Math.sin(a) * 3.2); m.rotation.y = -a; g.add(m); } }
       const doorX = x + Math.sin(facing) * (D / 2), doorZ = z + Math.cos(facing) * (D / 2);
       const path = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(doorX) - 3.5, 3), mat('#ffffff', { map: dirtTex, color: '#b9b2a4' })); path.rotation.x = -Math.PI / 2; path.position.set((doorX + (facing > 0 ? -3.5 : 3.5)) / 2, 0.04, doorZ); cairnScene.add(path);
-      cairnBoxes.push({ id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } });
+      { const bx = { id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } }; cairnBoxes.push(bx); growBuilding(g, facing, D, bx); }
       interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
       return g;
     }
@@ -2843,7 +2914,7 @@
       const steps = new THREE.Mesh(new THREE.BoxGeometry(6, 0.5, 2.4), cstone); steps.position.set(0, 0.25, D / 2 + 1.5); g.add(steps);
       const doorX = x + Math.sin(facing) * (D / 2), doorZ = z + Math.cos(facing) * (D / 2);
       const path = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(doorX) - 3.5, 3), mat('#ffffff', { map: dirtTex, color: '#b9b2a4' })); path.rotation.x = -Math.PI / 2; path.position.set((doorX + (facing > 0 ? -3.5 : 3.5)) / 2, 0.04, doorZ); cogScene.add(path);
-      cogBoxes.push({ id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } });
+      { const bx = { id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } }; cogBoxes.push(bx); growBuilding(g, facing, D, bx); }
       interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
       return g;
     }
@@ -3069,7 +3140,7 @@
       const steps = new THREE.Mesh(new THREE.BoxGeometry(5, 0.5, 2.2), stoneM); steps.position.set(0, 0.25, D / 2 + 1.4); g.add(steps);
       const doorX = x + Math.sin(facing) * (D / 2), doorZ = z + Math.cos(facing) * (D / 2);
       const path = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(doorX) - 3.5, 3), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); path.rotation.x = -Math.PI / 2; path.position.set((doorX + (facing > 0 ? -3.5 : 3.5)) / 2, 0.06, doorZ); lantScene.add(path);
-      lantBoxes.push({ id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } });
+      { const bx = { id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } }; lantBoxes.push(bx); growBuilding(g, facing, D, bx); }
       interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
       return g;
     }
@@ -3256,7 +3327,7 @@
       [-1, 1].forEach(d => { const w = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), mat('#cfe4f4', { emissive: '#9fc4ea', emissiveIntensity: 0.3 })); w.position.set(d * (W / 4 + 1), 5.2, D / 2 + 0.02); g.add(w); });
       const sign = signBoard(label, 10, 1.4, '#1f3a5a', '#f6e7c2'); sign.position.set(0, H + 1.2, D / 2 + 0.5); g.add(sign);
       const doorX = x + Math.sin(facing) * (D / 2), doorZ = z + Math.cos(facing) * (D / 2);
-      skyBoxes.push({ id, x, z, hw: Math.abs(Math.cos(facing)) > 0.5 ? W / 2 + 0.3 : D / 2 + 0.3, hd: Math.abs(Math.cos(facing)) > 0.5 ? D / 2 + 0.3 : W / 2 + 0.3, door: { x: doorX, z: doorZ } });
+      { const bx = { id, x, z, hw: Math.abs(Math.cos(facing)) > 0.5 ? W / 2 + 0.3 : D / 2 + 0.3, hd: Math.abs(Math.cos(facing)) > 0.5 ? D / 2 + 0.3 : W / 2 + 0.3, door: { x: doorX, z: doorZ } }; skyBoxes.push(bx); growBuilding(g, facing, D, bx, 1.15, 1.7, 1.1); }
       interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
       return g;
     }
@@ -3938,12 +4009,233 @@
   let save = { coins: 0, done: [], where: 'village', pos: [0, 0, 6.5], yaw: Math.PI, beetle: '', started: false };
   try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const parsed = JSON.parse(raw); if (parsed && typeof parsed === 'object') save = Object.assign(save, parsed); } } catch (e) {}
   let saveTimer = 0;
-  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof cloudSoon === 'function') cloudSoon(); }
+  function persist() { save.ts = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof cloudSoon === 'function') cloudSoon(); }
   function markDone(key) { if (!save.done.includes(key)) { save.done.push(key); persist(); } }
   function isDone(key) { return save.done.includes(key); }
   function clearSave() { save = { coins: 0, done: [], where: 'village', pos: [0, 0, 6.5], yaw: Math.PI, beetle: '', started: false }; try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
-  function setCoins(n) { coins = n; save.coins = n; persist(); const c = $('coins'); c.hidden = false; c.innerHTML = ICON.coin + `<span>${n} acorn coin${n === 1 ? '' : 's'}</span>`; }
+  function setCoins(n) { coins = n; save.coins = n; persist(); const c = $('coins'); c.hidden = false; $('bagchip').hidden = false; c.innerHTML = ICON.coin + `<span>${n} acorn coin${n === 1 ? '' : 's'}</span>`; }
   function coinsAtLeast(n) { setCoins(Math.max(n, save.coins || 0)); }
+
+  // ---------- the economy: what you can carry, what it is worth, and who trades in it ----------
+  // Towns in the order the road reaches them. A thing is cheapest where it is made, and worth more the further you carry it.
+  const HUB = 8, TOWN_NAME = ['the Hollow', 'the Mallow Orchards', 'Fernwater', 'Cairnhold', 'Cogsworth', 'Emberdeep', 'Lanternreach', 'Skyhaven', 'Hearthmoor'];
+  // n name, e picture, v what it is worth where it is made, t the town that makes it (none: it grows wild), w how much room it takes (1 unless said),
+  // c kind, eat stamina it gives back, heal health it gives back, hat the hat it puts on your head, dye the colour it turns your tunic
+  const ITEMS = {
+    berries: { n: 'Wild berries', e: '🫐', v: 1, c: 'food', eat: 8, d: 'A handful, picked from the verge.' },
+    mushroom: { n: 'Field mushroom', e: '🍄', v: 2, c: 'food', eat: 10, d: 'Good raw, better fried.' },
+    acorn: { n: 'Acorn', e: '🌰', v: 1, c: 'goods', d: 'Every shopkeeper will take one.' },
+    pinecone: { n: 'Pine cone', e: '🌲', v: 1, c: 'goods', d: 'Kindling, and a toy if you are small.' },
+    feather: { n: 'Feather', e: '🪶', v: 2, c: 'goods', d: 'Quills are cut from these.' },
+    flower: { n: 'Meadow flowers', e: '🌼', v: 1, c: 'goods', d: 'A small bunch.' },
+    herb: { n: 'Wild herbs', e: '🌿', v: 2, c: 'goods', d: 'Cooks and healers both buy them.' },
+    shell: { n: 'Sea shell', e: '🐚', v: 3, c: 'goods', d: 'From the shore by Lanternreach.' },
+    crystal: { n: 'Ember crystal', e: '💎', v: 12, t: 5, c: 'goods', d: 'It keeps a little of the mountain’s glow.' },
+    nutmix: { n: 'Nut mix', e: '🥜', v: 3, t: 0, c: 'food', eat: 30, d: 'Bramblewick’s own: hazelnuts, dried berries, seeds.' },
+    jam: { n: 'Dewberry jam', e: '🍯', v: 4, t: 0, c: 'food', eat: 25, d: 'One of Fen’s jars, full this time.' },
+    toy: { n: 'Acorn toy', e: '🪀', v: 6, t: 0, c: 'goods', d: 'Carved in the Hollow. Children far away have never seen one.' },
+    whistle: { n: 'Wooden whistle', e: '🎶', v: 4, t: 0, c: 'goods', d: 'Aldric turns these from offcuts.' },
+    seeds: { n: 'Seed packet', e: '🌱', v: 2, t: 0, c: 'goods', d: 'Marigold’s seed, saved and sorted. For planting, when you have ground of your own.' },
+    seedling: { n: 'Oak seedling', e: '🪴', v: 5, t: 0, w: 2, c: 'goods', d: 'In a clay pot. Heavy for its size.' },
+    strawhat: { n: 'Straw hat', e: '👒', v: 12, t: 0, c: 'wear', hat: 'straw', d: 'Wide in the brim, like Marigold’s.' },
+    dyered: { n: 'Berry-red dye', e: '🟥', v: 6, t: 0, c: 'wear', dye: '#b53a3a', d: 'Turns your tunic red. One jar does one tunic.' },
+    dyeblue: { n: 'Bilberry-blue dye', e: '🟦', v: 6, t: 0, c: 'wear', dye: '#3a5fa8', d: 'Turns your tunic blue. One jar does one tunic.' },
+    dyegreen: { n: 'Leaf-green dye', e: '🟩', v: 6, t: 0, c: 'wear', dye: '#3e7a3a', d: 'Turns your tunic green. One jar does one tunic.' },
+    dyegold: { n: 'Marigold-yellow dye', e: '🟨', v: 6, t: 0, c: 'wear', dye: '#d9a82e', d: 'Turns your tunic yellow. One jar does one tunic.' },
+    dyeplum: { n: 'Plum dye', e: '🟪', v: 6, t: 0, c: 'wear', dye: '#7a3d7a', d: 'Turns your tunic purple. One jar does one tunic.' },
+    stick: { n: 'Walking stick', e: '🪵', v: 15, t: 0, c: 'tool', d: 'Carry it and you get your breath back sooner.' },
+    pack: { n: 'Traveller’s pack', e: '🎒', v: 40, t: 0, w: 0, c: 'tool', d: 'Carry it and you have room for 20 more.' },
+    apple: { n: 'Apple', e: '🍎', v: 1, t: 1, c: 'food', eat: 12, d: 'A Mallow windfall.' },
+    cider: { n: 'Sweet cider', e: '🧃', v: 4, t: 1, c: 'food', eat: 30, drink: true, d: 'Pressed at Quern Mill.' },
+    flour: { n: 'Sack of flour', e: '🌾', v: 4, t: 1, w: 3, c: 'goods', d: 'Stone-ground. Bakers everywhere want it.' },
+    bread: { n: 'Loaf of bread', e: '🍞', v: 3, t: 2, c: 'food', eat: 35, d: 'From Crumb’s oven.' },
+    cake: { n: 'Slice of cake', e: '🍰', v: 5, t: 2, c: 'food', eat: 45, d: 'Cut into fair eighths, as you know.' },
+    pie: { n: 'Berry pie', e: '🥧', v: 6, t: 2, c: 'food', eat: 60, heal: 20, d: 'A whole one. It mends you a little, too.' },
+    fish: { n: 'Smoked fish', e: '🐟', v: 5, t: 2, c: 'food', eat: 50, heal: 10, d: 'Caught at the Crossing, smoked over alder.' },
+    rope: { n: 'Coil of rope', e: '🪢', v: 6, t: 2, w: 2, c: 'goods', d: 'Tideknot’s best. Miners and sailors pay well for it.' },
+    cheese: { n: 'Highland cheese', e: '🧀', v: 5, t: 3, c: 'food', eat: 45, d: 'Hard, sharp, and it keeps for a month.' },
+    woolcap: { n: 'Wool cap', e: '🧶', v: 10, t: 3, c: 'wear', hat: 'wool', d: 'Knitted for the wind on the Highlands.' },
+    chalk: { n: 'Surveyor’s chalk', e: '🖍️', v: 2, t: 3, c: 'goods', d: 'Marks stone and washes off in rain.' },
+    mapscroll: { n: 'Survey map', e: '🗺️', v: 10, t: 3, c: 'goods', d: 'Drawn to scale in the Lodge. Travellers far off prize them.' },
+    gear: { n: 'Brass gear', e: '⚙️', v: 7, t: 4, c: 'goods', d: 'Cut true in Cogsworth.' },
+    bell: { n: 'Bicycle bell', e: '🔔', v: 9, t: 4, c: 'goods', d: 'Rings like a tiny clock.' },
+    clock: { n: 'Mantel clock', e: '⏰', v: 20, t: 4, w: 3, c: 'goods', d: 'Heavy, and worth the carrying.' },
+    flatcap: { n: 'Flat cap', e: '🧢', v: 14, t: 4, c: 'wear', hat: 'flat', d: 'What the clockmakers wear.' },
+    boots: { n: 'Trail boots', e: '🥾', v: 35, t: 4, w: 0, c: 'tool', d: 'Wear them and running tires you a quarter less.' },
+    iron: { n: 'Iron bar', e: '🧱', v: 8, t: 5, w: 3, c: 'goods', d: 'Smelted under the mountain.' },
+    coal: { n: 'Sack of coal', e: '🪨', v: 3, t: 5, w: 3, c: 'goods', d: 'Dirty, heavy, wanted everywhere it is cold.' },
+    helmet: { n: 'Miner’s helmet', e: '⛑️', v: 22, t: 5, c: 'wear', hat: 'helm', d: 'With a little lamp on the front.' },
+    lantern: { n: 'Lantern', e: '🏮', v: 25, t: 6, c: 'tool', lamp: true, d: 'Light it in the dark places.' },
+    oil: { n: 'Lamp oil', e: '🛢️', v: 5, t: 6, w: 2, c: 'goods', d: 'What keeps the great light turning.' },
+    souwester: { n: 'Sou’wester', e: '☔', v: 16, t: 6, c: 'wear', hat: 'sou', d: 'An oilskin hat, long at the back to shed the rain.' },
+    spyglass: { n: 'Spyglass', e: '🔭', v: 30, t: 6, c: 'goods', d: 'Ground at the Observatory.' },
+    goggles: { n: 'Flying cap', e: '🥽', v: 24, t: 7, c: 'wear', hat: 'flying', d: 'Leather, with goggles pushed up on the brow.' },
+    kite: { n: 'Kite', e: '🪁', v: 12, t: 7, c: 'goods', d: 'A glider’s first lesson.' },
+    silk: { n: 'Balloon silk', e: '🧣', v: 14, t: 7, c: 'goods', d: 'Light as nothing, strong as rope.' },
+    skytea: { n: 'Cloud tea', e: '🍵', v: 5, t: 7, c: 'food', eat: 40, drink: true, d: 'Grown on the islands, drunk hot.' }
+  };
+  const CATS = [['all', 'Everything'], ['food', 'Food and drink'], ['wear', 'Clothes'], ['tool', 'Tools'], ['goods', 'Goods']];
+  const madeIn = i => Object.keys(ITEMS).filter(k => ITEMS[k].t === i);
+  // n the shop, who whoever serves (nobody: an honesty dish), t the town it stands in, stock what it sells
+  const SHOPS = {
+    stores: { n: 'The Village Stores', who: 'Old Bramblewick', t: 0, stock: ['nutmix', 'toy', 'pack'] },
+    fen: { n: 'Dewberry’s stall', who: 'Fen Dewberry', t: 0, stock: ['jam', 'dyered', 'dyeblue', 'dyegreen', 'dyegold', 'dyeplum'] },
+    nursery: { n: 'Fernsby’s Potting Shed', t: 0, stock: ['seeds', 'seedling', 'strawhat'] },
+    wood: { n: 'Bough’s Woodshop', who: 'Aldric Bough', t: 0, stock: ['stick', 'whistle'] },
+    mill: { n: 'Quern Mill', t: 1, stock: ['apple', 'cider', 'flour'] },
+    bakery: { n: 'Crumb’s Bakery', who: 'Maudie Crumb', t: 2, stock: ['bread', 'cake', 'pie'] },
+    nets: { n: 'Nets & Lines', t: 2, stock: ['fish'] },
+    ropes: { n: 'Tideknot Ropes', t: 2, stock: ['rope'] },
+    lodge: { n: 'The Surveyors’ Lodge', t: 3, stock: ['cheese', 'woolcap', 'chalk', 'mapscroll'] },
+    clockworks: { n: 'The Clockworks', t: 4, stock: ['gear', 'clock', 'flatcap'] },
+    bikeworks: { n: 'The Bicycle Works', t: 4, stock: ['bell', 'boots'] },
+    durna: { n: 'Durna’s ore bench', who: 'Durna', t: 5, stock: ['iron', 'coal', 'crystal', 'helmet'] },
+    chandlery: { n: 'Reef & Rope Chandlery', t: 6, stock: ['lantern', 'oil', 'souwester', 'spyglass'] },
+    guild: { n: 'The Glider Guild', t: 7, stock: ['goggles', 'kite', 'silk', 'skytea'] },
+    stall0: { n: 'The pie stall', t: HUB, stock: ['bread', 'pie', 'cake'] },
+    stall1: { n: 'The fruit stall', t: HUB, stock: ['apple', 'cider', 'jam', 'nutmix'] },
+    stall2: { n: 'The fish and cheese stall', t: HUB, stock: ['fish', 'cheese'] },
+    stall3: { n: 'The hatter’s stall', t: HUB, stock: ['strawhat', 'woolcap', 'flatcap', 'souwester', 'goggles', 'helmet'] },
+    stall4: { n: 'The dyer’s stall', t: HUB, stock: ['dyered', 'dyeblue', 'dyegreen', 'dyegold', 'dyeplum'] },
+    stall5: { n: 'The seed stall', t: HUB, stock: ['seeds', 'seedling'] },
+    stall6: { n: 'The tinker’s stall', t: HUB, stock: ['lantern', 'stick', 'boots', 'pack'] },
+    stall7: { n: 'The tea stall', t: HUB, stock: ['skytea', 'cake'] }
+  };
+  ['Thistledown Hollow', 'Mallow Orchards', 'Fernwater Crossing', 'Cairnhold', 'Cogsworth', 'Emberdeep', 'Lanternreach', 'Skyhaven'].forEach((town, i) => { SHOPS['hall' + i] = { n: 'The ' + town + ' Hall', t: HUB, stock: madeIn(i) }; });
+  const hops = (a, b) => a === HUB || b === HUB ? 3 : Math.abs(a - b);
+  // where it is made you pay what it is worth; anywhere else, half as much again
+  function buyPrice(shop, id) { const it = ITEMS[id]; return it.t === undefined || it.t === shop.t ? it.v : Math.ceil(it.v * 1.5); }
+  // wild things fetch the same everywhere. Made things fetch little at home and more with every town you carry them past; the capital pays a steady fair price
+  function sellPrice(shop, id) { const it = ITEMS[id]; if (it.t === undefined) return it.v; if (shop.t === HUB) return Math.max(1, Math.floor(it.v * 1.2)); return Math.max(1, Math.floor(it.v * Math.min(1.5, 0.6 + 0.15 * hops(it.t, shop.t)))); }
+  function inv() { return save.inv && typeof save.inv === 'object' ? save.inv : (save.inv = {}); }
+  function has(id) { return (inv()[id] || 0) > 0; }
+  const roomOf = id => ITEMS[id].w === undefined ? 1 : ITEMS[id].w;
+  function carryUsed() { let n = 0; const v = inv(); for (const k in v) if (ITEMS[k]) n += v[k] * roomOf(k); return n; }
+  // pockets hold 6; the satchel Bramblewick gives you, 20; a pack, 20 more; and the beetle carries 20 while it walks with you
+  function carryMax() { return (kid.satchel.visible ? 20 : 6) + (has('pack') ? 20 : 0) + (beetle ? 20 : 0); }
+  function addItem(id, n = 1) { if (carryUsed() + roomOf(id) * n > carryMax()) return false; inv()[id] = (inv()[id] || 0) + n; persist(); return true; }
+  function removeItem(id) { const v = inv(); if (!v[id]) return; v[id]--; if (v[id] <= 0) delete v[id];
+    if (!v[id] && ITEMS[id].hat && save.hatStyle === ITEMS[id].hat) { save.hatStyle = ''; kid.setHat('cap'); }
+    if (!v[id] && ITEMS[id].lamp) setLamp(false);
+    persist(); }
+  function chink(f) { try { if (audioCtx && settings.sounds) sndNote(snd.fx, 'triangle', f, f * 1.02, audioCtx.currentTime, 0.14, 0.07, 0.003); } catch (e) {} }
+  // the lantern: a light you carry, lit only while you want it
+  let lampLight = null, lampMesh = null;
+  function setLamp(on) {
+    save.lamp = !!on && has('lantern');
+    if (save.lamp) {
+      if (!lampLight) { lampLight = new THREE.PointLight('#ffc878', 1.1, 52, 1.5); lampLight.position.set(0.7, 1.5, 0.5);
+        lampMesh = new THREE.Group(); const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.22, 8), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lampMesh.add(glass);
+        [0.14, -0.14].forEach(y => { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.05, 8), mat('#3a3a3a', { metalness: 0.5 })); cap.position.y = y; lampMesh.add(cap); }); lampMesh.position.set(0.66, 1.0, 0.3); }
+      player.add(lampLight); player.add(lampMesh);
+    } else if (lampLight) { player.remove(lampLight); player.remove(lampMesh); }
+  }
+  // ---------- the satchel, and the counter when you are at one ----------
+  let bagOpen = false, bagShop = null, bagTab = 'all', bagMsg = '';
+  function openBag(shopId) {
+    if (bagOpen || talking() || fading || mapOpen || !gameStarted || !$('settings').hidden) return;
+    bagShop = shopId ? SHOPS[shopId] : null; bagOpen = true; bagTab = 'all'; bagMsg = '';
+    if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} }
+    Object.keys(keys).forEach(k => (keys[k] = false)); stickV.x = stickV.y = 0;
+    if (bagShop) chink(1760);
+    renderBag(); $('bag').hidden = false; $('bag').scrollTop = 0;
+  }
+  function closeBag() { bagOpen = false; bagShop = null; $('bag').hidden = true; }
+  const coinWord = n => `${n} coin${n === 1 ? '' : 's'}`;
+  function itemNote(id) { const it = ITEMS[id], bits = [it.d]; if (it.eat) bits.push(`Stamina +${it.eat}${it.heal ? `, health +${it.heal}` : ''}.`); bits.push(it.t === undefined ? 'Grows wild.' : `Made in ${TOWN_NAME[it.t]}.`); if (roomOf(id) !== 1) bits.push(roomOf(id) ? `Takes the room of ${roomOf(id)}.` : 'Takes no room.'); return bits.join(' '); }
+  function renderBag() {
+    const v = inv(), shop = bagShop, used = carryUsed(), max = carryMax(), tabOK = id => bagTab === 'all' || ITEMS[id].c === bagTab;
+    $('bagtitle').textContent = shop ? shop.n : 'Your satchel';
+    $('bagcoins').innerHTML = ICON.coin + `<span>${coinWord(coins)}</span>`;
+    $('bagload').textContent = `Carrying ${used} of ${max}`;
+    $('bagnote').textContent = shop
+      ? (shop.who ? `${shop.who} serves you. ` : 'Nobody is at the counter. Ring the bell, take what you need and leave your coins in the dish. ') + (shop.t === HUB ? 'Hearthmoor makes little and sells everything, at capital prices, and pays a steady price for whatever you bring.' : 'What is made here is cheap here. Carry it down the road and it is worth more with every town you pass.')
+      : (kid.satchel.visible ? 'Your satchel holds 20.' : 'Your pockets hold 6, until you have a satchel.') + ' A traveller’s pack holds 20 more, and a beetle that walks with you carries 20.';
+    $('bagtabs').innerHTML = CATS.map(([k, n]) => `<button class="btn small" data-a="tab" data-i="${k}" aria-pressed="${bagTab === k}">${n}</button>`).join('');
+    $('bagmsg').textContent = bagMsg;
+    const row = (id, count, small, btns) => `<div class="bagrow"><div class="em" aria-hidden="true">${ITEMS[id].e}</div><div class="nm"><b>${ITEMS[id].n}</b>${count ? ` <span class="ct">× ${count}</span>` : ''}<small>${small}</small></div><div class="do">${btns}</div></div>`;
+    $('bagshopcol').hidden = !shop;
+    if (shop) {
+      const rows = shop.stock.filter(tabOK).map(id => { const p = buyPrice(shop, id), poor = coins < p, full = used + roomOf(id) > max; return row(id, 0, itemNote(id), `<button class="btn small primary" data-a="buy" data-i="${id}" ${poor || full ? 'disabled' : ''}>${poor ? 'Costs ' + p : full ? 'No room' : 'Buy · ' + coinWord(p)}</button>`); });
+      $('bagshoph').textContent = 'For sale here'; $('bagshop').innerHTML = rows.join('') || '<div class="bagempty">Nothing of that kind here.</div>';
+    }
+    const order = { food: 0, wear: 1, tool: 2, goods: 3 }, mine = Object.keys(v).filter(id => ITEMS[id] && v[id] > 0 && tabOK(id)).sort((a, b) => order[ITEMS[a].c] - order[ITEMS[b].c] || ITEMS[a].n.localeCompare(ITEMS[b].n));
+    $('bagmineh').textContent = shop ? 'You are carrying (they will buy any of it)' : 'You are carrying';
+    $('bagmine').innerHTML = mine.map(id => { const it = ITEMS[id]; let b = '';
+      if (shop) b = `<button class="btn small" data-a="sell" data-i="${id}">Sell · ${coinWord(sellPrice(shop, id))}</button>`;
+      else { if (it.eat) b += `<button class="btn small primary" data-a="eat" data-i="${id}">${it.drink ? 'Drink' : 'Eat'}</button>`;
+        if (it.hat) b += `<button class="btn small primary" data-a="wear" data-i="${id}">${save.hatStyle === it.hat ? 'Take off' : 'Wear'}</button>`;
+        if (it.dye) b += `<button class="btn small primary" data-a="dye" data-i="${id}">Dye my tunic</button>`;
+        if (it.lamp) b += `<button class="btn small primary" data-a="lamp" data-i="${id}">${save.lamp ? 'Put out' : 'Light'}</button>`;
+        b += `<button class="btn small" data-a="drop" data-i="${id}">Drop</button>`; }
+      return row(id, v[id], itemNote(id), b); }).join('') || `<div class="bagempty">${Object.keys(v).length ? 'Nothing of that kind.' : 'Nothing yet. Berries, mushrooms, feathers and the like lie beside the roads; walk up to one and pick it up.'}</div>`;
+  }
+  function bagAct(a, id) {
+    const it = ITEMS[id]; if (!it) return;
+    if (a === 'buy' && bagShop) { const p = buyPrice(bagShop, id); if (coins < p) { bagMsg = `That costs ${coinWord(p)}. You have ${coins}.`; return; } if (!addItem(id)) { bagMsg = 'You have no room for it.'; return; } setCoins(coins - p); chink(1320); bagMsg = `Bought: ${it.n}, for ${coinWord(p)}.`; }
+    else if (a === 'sell' && bagShop && has(id)) { const p = sellPrice(bagShop, id); removeItem(id); setCoins(coins + p); chink(1980); bagMsg = `Sold: ${it.n}, for ${coinWord(p)}.`; }
+    else if (a === 'eat' && has(id)) { const needS = stamina < stamMax - 1, needH = it.heal && hp < 99.5; if (!needS && !needH) { bagMsg = 'You are not hungry. Your stamina is full.'; return; }
+      removeItem(id); stamina = Math.min(stamMax, stamina + it.eat); if (it.heal) { hp = Math.min(100, hp + it.heal); hpFill.style.width = hp + '%'; hpEl.classList.toggle('low', hp < 30); hpEl.classList.toggle('show', hp < 99.5); }
+      bagMsg = `${it.drink ? 'You drank' : 'You ate'} the ${it.n.toLowerCase()}. Stamina +${it.eat}${it.heal ? ', health +' + it.heal : ''}.`; }
+    else if (a === 'wear' && has(id)) { const on = save.hatStyle !== it.hat; save.hatStyle = on ? it.hat : ''; kid.setHat(save.hatStyle || 'cap'); persist(); bagMsg = on ? `You put on the ${it.n.toLowerCase()}.` : 'Back to your own pointed cap.'; }
+    else if (a === 'dye' && has(id)) { removeItem(id); save.look = Object.assign({}, save.look || {}, { tunic: it.dye }); applyLook(save.look); persist(); bagMsg = 'Your tunic took the colour.'; }
+    else if (a === 'lamp' && has(id)) { setLamp(!save.lamp); persist(); bagMsg = save.lamp ? 'The lantern is lit.' : 'You put the lantern out.'; }
+    else if (a === 'drop' && has(id)) { removeItem(id); bagMsg = `You left the ${it.n.toLowerCase()} behind.`; }
+  }
+  $('bag').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const a = b.dataset.a, id = b.dataset.i; if (a === 'close') closeBag(); else if (a === 'tab') { bagTab = id; renderBag(); } else if (a) { bagAct(a, id); renderBag(); } });
+  // ---------- things lying about: beside the roads, under the oak, in the orchard grass ----------
+  const FIND_BACK = 20 * 60 * 1000;   // a picked thing grows back, or is dropped again, in about twenty minutes
+  function findGone(fid) { const f = save.found && save.found[fid]; return !!f && Date.now() - f < FIND_BACK; }
+  function findMesh(id) {
+    const g = new THREE.Group(), a = (geo, col, x, y, z, o) => { const q = new THREE.Mesh(geo, mat(col, o || { roughness: 0.8 })); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; };
+    if (id === 'berries') [[0, 0], [0.34, 0.14], [-0.12, 0.32]].forEach(([x, z]) => a(new THREE.SphereGeometry(0.22, 8, 6), '#4a5fb8', x, 0.2, z, { roughness: 0.3 }));
+    else if (id === 'mushroom') { a(new THREE.CylinderGeometry(0.12, 0.17, 0.45, 8), '#efe6d2', 0, 0.22, 0); a(new THREE.SphereGeometry(0.38, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), '#b5562b', 0, 0.42, 0); a(new THREE.CylinderGeometry(0.1, 0.13, 0.3, 8), '#efe6d2', 0.42, 0.15, 0.2); a(new THREE.SphereGeometry(0.24, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), '#b5562b', 0.42, 0.28, 0.2); }
+    else if (id === 'acorn') { const m = makeAcornMesh(); m.rotation.z = 1.2; m.position.y = 0.3; g.add(m); }
+    else if (id === 'pinecone') { const c = a(new THREE.SphereGeometry(0.27, 8, 8), '#6b4a2b', 0, 0.26, 0, { roughness: 1 }); c.scale.set(1, 1.55, 1); c.rotation.z = 1.3; }
+    else if (id === 'feather') { const f = a(new THREE.BoxGeometry(0.2, 0.03, 0.95), '#e9e2d0', 0, 0.1, 0); f.rotation.set(0.15, 0.7, 0.1); a(new THREE.BoxGeometry(0.035, 0.035, 1.15), '#8a8a82', 0, 0.11, 0).rotation.set(0.15, 0.7, 0.1); }
+    else if (id === 'flower') [[0, 0, '#f6f1e3'], [0.3, 0.2, '#e7a0c8'], [-0.2, 0.3, '#f6f1e3']].forEach(([x, z, c]) => { a(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 5), '#4f7a33', x, 0.3, z); a(new THREE.SphereGeometry(0.09, 8, 6), '#f4c53a', x, 0.63, z); for (let k = 0; k < 5; k++) a(new THREE.SphereGeometry(0.085, 6, 5), c, x + Math.cos(k * 1.257) * 0.15, 0.62, z + Math.sin(k * 1.257) * 0.15); });
+    else if (id === 'herb') for (let k = 0; k < 6; k++) { const l = a(new THREE.ConeGeometry(0.09, 0.6, 5), k % 2 ? '#5f9a45' : '#7ab356', Math.cos(k * 1.05) * 0.14, 0.28, Math.sin(k * 1.05) * 0.14); l.rotation.set(Math.sin(k * 1.05) * 0.5, 0, -Math.cos(k * 1.05) * 0.5); }
+    else if (id === 'shell') { const sh = a(new THREE.SphereGeometry(0.32, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), '#f0c9b8', 0, 0.02, 0, { roughness: 0.4 }); sh.scale.set(1, 0.55, 1.2); }
+    else if (id === 'crystal') { const o = { emissive: '#3a7ab8', emissiveIntensity: 0.7, roughness: 0.2 }; a(new THREE.OctahedronGeometry(0.3), '#8fd0ff', 0, 0.42, 0, o).scale.y = 1.7; a(new THREE.OctahedronGeometry(0.18), '#8fd0ff', 0.3, 0.24, 0.1, o).scale.y = 1.6; }
+    else if (id === 'apple') { a(new THREE.SphereGeometry(0.3, 10, 8), '#c8384a', 0, 0.3, 0, { roughness: 0.4 }); a(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 4), '#5a3d22', 0, 0.62, 0); }
+    return g;
+  }
+  const findRecs = [], findCells = new Map(), FCELL = 256, liveFinds = new Map(), fixedFinds = [];
+  // a thing that is always in the same spot of a town (the wild ones are made as you come near, and cleared away behind you)
+  function fixedFind(sc, world, x, y, z, item, fid) { const m = findMesh(item); m.position.set(x, y, z); m.rotation.y = (x * 7 + z * 3) % 6.28; sc.add(m); m.userData = { pickable: true, kind: 'find', item, fid, world, fixed: true }; pickables.push(m); fixedFinds.push(m); return m; }
+  function takeFind(obj) {
+    const d = obj.userData, it = ITEMS[d.item];
+    if (!addItem(d.item)) { flash(kid.satchel.visible ? 'No room. Your satchel is full.' : 'No room. Your pockets are full.'); return; }
+    (save.found || (save.found = {}))[d.fid] = Date.now(); persist();
+    const ghost = obj.clone(); ghost.userData = {}; obj.parent.add(ghost); flying.push({ obj: ghost, t: 0, from: ghost.position.clone() }); grabT = 0;
+    if (d.fixed) obj.visible = false; else { liveFinds.delete(d.fid); const i = pickables.indexOf(obj); if (i >= 0) pickables.splice(i, 1); obj.parent.remove(obj); }
+    try { if (audioCtx && settings.sounds) sndPop(0.25); } catch (e) {}
+    flash(`${it.n}. You have ${inv()[d.item]}.`);
+  }
+  let econT = 0, promptText = null;
+  function findsNear() {
+    for (const m of fixedFinds) m.visible = !findGone(m.userData.fid);
+    if (where === 'in' || !(where === 'wild' || frameOf(where))) return;
+    const [px, pz] = playerWorldXZ(), cx = Math.floor(px / FCELL), cz = Math.floor(pz / FCELL);
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const l = findCells.get((cx + a) + ',' + (cz + b)); if (!l) continue;
+      for (const r of l) { if (r.ok === false || liveFinds.has(r.id) || Math.hypot(r.x - px, r.z - pz) > 230 || findGone(r.id)) continue;
+        if (r.ok === undefined) r.ok = !(noGrow(r.x, r.z, 3) || wildSea(r.x, r.z) || Object.values(TILES).some(tl => tl.rect && !tl.air && inRect(tl, ...toLocal(tl, r.x, r.z), 14)));
+        if (!r.ok) continue;
+        const m = findMesh(r.item); m.position.set(r.x, worldH(r.x, r.z) + 0.04, r.z); m.rotation.y = (r.x + r.z) % 6.28; worldScene.add(m); m.userData = { pickable: true, kind: 'find', item: r.item, fid: r.id, world: 'wild' }; pickables.push(m); liveFinds.set(r.id, m); } }
+    liveFinds.forEach((m, id) => { if (Math.hypot(m.position.x - px, m.position.z - pz) > 330) { liveFinds.delete(id); const i = pickables.indexOf(m); if (i >= 0) pickables.splice(i, 1); worldScene.remove(m); } });
+  }
+  function econTick(dt) {
+    econT -= dt; if (econT > 0) return; econT = 0.25;
+    findsNear();
+    $('ridebtn').hidden = !bikeOwned;
+    if (!!save.lamp !== !!(lampLight && lampLight.parent)) setLamp(save.lamp);
+    // say what the pick-up button will do, when it is something that isn't part of a lesson
+    let text = '', word = 'Pick up';
+    if (!talking() && !bagOpen && !mapOpen && !fading && !sitting) { const [b0, d0] = nearestPick(0);
+      if (!(b0 && d0 <= REACH)) for (let tier = 1; tier < 4 && !text; tier++) { const [b, d] = nearestPick(tier); if (!b || d > REACH) continue; const u = b.userData;
+        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'shop') { text = 'Trade at ' + SHOPS[u.shop].n; word = 'Trade'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
+    if (text !== promptText) { promptText = text; const p = $('prompt'); p.hidden = !text; if (text) p.innerHTML = settings.input === 'touch' ? text : `<kbd>${settings.input === 'gamepad' ? 'X' : keyLabel(settings.binds.pick)}</kbd> ${text}`; $('grab').textContent = word; }
+  }
 
   // ---------- cloud saves (Supabase) ----------
   // The local save is always written; when signed in the same save is pushed to the cloud a few seconds later.
@@ -3973,17 +4265,19 @@
   function cloudSoon() { if (!session) return; cloudDirty = true; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudPush, 3000); }
   async function cloudPush() {
     if (!session || cloudBusy || !cloudDirty) return; cloudBusy = true; cloudDirty = false;
-    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null } }); acctRefresh('Saved to the cloud.', 'ok'); }
+    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null, inv: save.inv || {}, hat: save.hatStyle || '', lamp: !!save.lamp, stam: save.stamMax || 100, ts: save.ts || 0 } }); acctRefresh('Saved to the cloud.', 'ok'); }
     catch (e) { cloudDirty = true; acctRefresh('Cloud save failed, kept locally. ' + e.message, 'err'); }
     cloudBusy = false;
   }
   function progressOf(sv) { return (sv.done ? sv.done.length : 0) * 1000 + (sv.coins || 0) + (sv.started ? 1 : 0); }
   async function cloudPull() {
     const c = await rpc('game_load_progress'); if (!c) return 'empty';
-    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), lay: (c.blob && c.blob.lay) || 0, name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null };
+    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), lay: (c.blob && c.blob.lay) || 0, name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null, inv: (c.blob && c.blob.inv) || {}, hatStyle: (c.blob && c.blob.hat) || '', lamp: !!(c.blob && c.blob.lamp), stamMax: Math.max((c.blob && c.blob.stam) || 100, save.stamMax || 100), ts: (c.blob && c.blob.ts) || 0, found: save.found || {} };
     // a bike granted on the account is kept whichever save wins
     if (cloud.bike || save.bike) { cloud.bike = true; save.bike = true; bikeOwned = true; }
-    if (progressOf(cloud) >= progressOf(save)) { save = cloud; persist(); if (typeof applyLook === 'function') { applyLook(save.look); refreshTitle(); } return 'cloud'; }
+    // the same lessons done on both: the newer save wins (so coins you spent stay spent); otherwise the one further along
+    const sameLessons = cloud.done.length === (save.done ? save.done.length : 0), cloudWins = sameLessons && (cloud.ts || save.ts) ? (cloud.ts || 0) >= (save.ts || 0) : progressOf(cloud) >= progressOf(save);
+    if (cloudWins) { save = cloud; persist(); if (typeof applyLook === 'function') { applyLook(save.look); refreshTitle(); } return 'cloud'; }
     persist(); cloudSoon(); return 'local';
   }
   // the sign-in box on the map screen
@@ -4088,6 +4382,8 @@
     if (k === 'orow') return phase === 'orows';
     if (k === 'apple') return phase === 'apples' && applesGot < 12;
     if (k === 'press') return phase === 'press';
+    if (k === 'find') return !findGone(o.userData.fid);
+    if (k === 'shop') return !bagOpen;
     return false;
   }
   const REACH = 4.2;
@@ -4106,6 +4402,8 @@
     else if (d.kind === 'measure') doMeasure(obj);
     else if (d.kind === 'shape') sortShape(obj);
     else if (d.kind === 'seat') sitDown(obj);
+    else if (d.kind === 'find') takeFind(obj);
+    else if (d.kind === 'shop') openBag(d.shop);
     else if (d.kind === 'orow') countRowOfTrees(obj);
     else if (d.kind === 'press') pullPress(obj);
     else if (d.kind === 'apple') { flyAway(obj); applesGot++; tasks.apples.have = applesGot; renderTasks(); if (applesGot >= 12) hint('Twelve apples! Back to Hollis by the press.'); }
@@ -4131,10 +4429,12 @@
     if (!sitting) return; sitting = false; py = 0; const yaw = bodyYaw;
     player.position.add(new THREE.Vector3(Math.sin(yaw) * 1.4, 0, Math.cos(yaw) * 1.4)); hint('');
   }
+  // tier 0: whatever the lesson in hand wants picked; 1: things lying about; 2: a counter to trade at; 3: a seat
+  const PICK_TIER = { find: 1, shop: 2, seat: 3 };
+  function nearestPick(tier) { let best = null, bd = Infinity; pickables.forEach(o => { if ((PICK_TIER[o.userData.kind] || 0) !== tier || !canPick(o)) return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } }); return [best, bd]; }
   function pickNearest() {
-    let best = null, bd = Infinity;
-    pickables.forEach(o => { if (!canPick(o) || o.userData.kind === 'seat') return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } });
-    if (!best) pickables.forEach(o => { if (!canPick(o) || o.userData.kind !== 'seat') return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } });
+    let [best, bd] = nearestPick(0);
+    if (!best || bd > REACH) { for (let tier = 1; tier < 4; tier++) { const [b2, d2] = nearestPick(tier); if (b2 && d2 <= REACH) { best = b2; bd = d2; break; } } }
     if (best && bd <= REACH) tryPick(best);
     else if (phase === 'harvest' && trayCount >= 10) hint('The tray is full. Take it back to Bramblewick first.');
     else if (phase === 'harvest' && stores + trayCount >= 14) hint('That’s plenty! Bramblewick only needs 14. Take the tray back.');
@@ -4156,7 +4456,7 @@
     say([
       'Now, about these berry paints. I’ve got berries to spare, but paint with no jar is just a puddle.',
       'I’m clean out of empty jars. Down the lane, past the signpost, is <b>Fen Dewberry’s</b> stall. Fen sells jars for <b>1 acorn coin</b> each.',
-      'Buy me <b>3 jars</b>, would you? You’ve got a coin to start with. Off you go!'
+      'Buy me <b>3 jars</b>, would you? Here’s <b>1 coin</b> from the till to pay for them. It’s all there is in the drawer. Off you go!'
     ], () => {
       phase = 'tofen'; nearFen = false;
       setTasks([{ id: 'jars', icon: 'jar', label: 'Jars', have: 0, need: 3 }]);
@@ -4177,8 +4477,8 @@
       say([
         'Oh! Hi! You’re Bramblewick’s new helper, right? I’m <b>Fen Dewberry</b>. I just got put in charge of the front of the stall. All by myself!',
         'Jars? Sure, I’ve got loads. They’re <b>1 acorn coin</b> each, so three jars is <b>3 coins</b>.',
-        'Let’s see your coins… just <b>1</b>? Hmm.'
-      ], () => ask('Three jars cost <b>3</b> coins. You have <b>1</b>. How many <b>more</b> coins do you need?',
+        'Let’s see what Bramblewick sent… just <b>1</b> coin? Hmm.'
+      ], () => ask('Three jars cost <b>3</b> coins. Bramblewick sent <b>1</b>. How many <b>more</b> coins do you need?',
         ['1', '2', '3'], '2',
         back => countRow([{ kind: 'coin', n: 1, remove: true }, { kind: 'coin', n: 2 }], () => setTimeout(back, 600)),
         () => say([
@@ -4198,16 +4498,15 @@
         ['5', '6', '7'], '6',
         back => countRow([{ kind: 'berry', n: 4 }, { kind: 'blueberry', n: 2, joiner: '+' }], () => setTimeout(back, 600)),
         () => {
-          setCoins(coins + 2);
           say([
             'Six! <b>4 + 2 = 6</b>. You’re good at this. Here are your <b>2 coins</b>, as promised.',
-            'So now you’ve got 3 coins. Three jars, three coins. Hand them over…',
+            'So now there are 3 coins for the jars: Bramblewick’s 1 and the 2 you earned. Three jars, three coins. Hand them over…',
             'Here are your <b>3 jars</b>! And here’s your change: <b>1 coin</b> back.'
           ], () => ask('Wait. Three jars at 1 coin each cost <b>3</b> coins, and you paid <b>3</b>. How much change should you get back?',
             ['0', '1', '2'], '0',
             back => countRow([{ kind: 'coin', n: 3, remove: true }], () => setTimeout(back, 600)),
             () => {
-              setCoins(0); tasks.jars = { id: 'jars', icon: 'jar', label: 'Jars', have: 3, need: 3 }; setTasks([tasks.jars]); jarsHeld.visible = true;
+              tasks.jars = { id: 'jars', icon: 'jar', label: 'Jars', have: 3, need: 3 }; setTasks([tasks.jars]); jarsHeld.visible = true;
               say([
                 'Oops! You’re right. <b>3 − 3 = 0</b>. No change at all. I nearly gave the stall’s money away!',
                 'Thanks for catching that. Bramblewick would’ve had my ears. Mistakes happen, you just fix them.',
@@ -4227,7 +4526,7 @@
       'Three jars! Now the paint has somewhere to live.',
       'You worked out what you were missing, earned the coins yourself, and caught a counting mistake. That’s a real helper.',
       'Here’s <b>2 coins</b> for your trouble. Keep them safe in that satchel.'
-    ], () => { setCoins(2); reward2(); });
+    ], () => { setCoins(coins + 2); reward2(); });
   }
   function reward2() {
     markDone('lesson-2');
@@ -4986,7 +5285,7 @@
     visual.innerHTML = `<div class="reward"><h2>Lesson 1 complete</h2>
       <div class="items"><div>${ICON.coin}<span>1 acorn coin</span></div><div>${ICON.satchel}<span>Satchel</span></div></div>
       <p style="margin:0;color:var(--ink-soft)">You learned to <b style="color:var(--gold)">add</b> and <b style="color:var(--gold)">subtract</b> small numbers.</p></div>`;
-    setCoins(1);
+    setCoins(coins + 1);
     const again = document.createElement('button'); again.className = 'btn'; again.textContent = 'Play again'; again.onclick = () => location.reload();
     const walk = document.createElement('button'); walk.className = 'btn'; walk.textContent = 'Walk around';
     walk.onclick = () => { showDialog(false); hint('Your new satchel looks good on you! Come back to Bramblewick when you’re ready for more.'); phase = 'l2wait'; nearBW = true; };
@@ -6505,8 +6804,8 @@
   const keys = {};
   // ---------- input settings: device, key binds, mouse ----------
   const SET_KEY = 'long-road-settings-v1';
-  const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', ride: 'KeyR', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', keys: 'KeyH', settings: 'KeyP' };
-  const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', ride: 'Ride / get off the bicycle', view: 'Flip view', zoom: 'Zoom', map: 'World map', keys: 'Show / hide controls', settings: 'Settings' };
+  const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', ride: 'KeyR', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', bag: 'KeyI', keys: 'KeyH', settings: 'KeyP' };
+  const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', ride: 'Ride / get off the bicycle', view: 'Flip view', zoom: 'Zoom', map: 'World map', bag: 'Satchel', keys: 'Show / hide controls', settings: 'Settings' };
   const settings = { input: null, binds: Object.assign({}, DEFAULT_BINDS), invert: true, sens: 100, birds: true, music: true, musicVol: 60, sounds: true, soundVol: 70, showKeys: true };
   try { const sv = JSON.parse(localStorage.getItem(SET_KEY) || '{}'); Object.assign(settings, sv); settings.binds = Object.assign({}, DEFAULT_BINDS, sv.binds || {}); } catch (e) {}
   function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) {} }
@@ -6557,8 +6856,10 @@
   const SENS = 0.0022;
   function toggleView() { view = view === 'back' ? 'front' : 'back'; if (view === 'front') camYaw = bodyYaw; }
   window.addEventListener('keydown', e => {
+    if (bagOpen) { if (!e.repeat && (e.code === 'Escape' || actionOf(e.code) === 'bag')) closeBag(); return; }
     if (talking() || mapOpen) return;
     const a = actionOf(e.code); if (!a) return;
+    if (a === 'bag' && !e.repeat) { openBag(); return; }
     if (isMove(a)) { keys[a] = true; e.preventDefault(); }
     if (a === 'jump') { e.preventDefault(); if (!e.repeat) wantJump = true; }
     if (e.repeat) return;
@@ -6593,6 +6894,8 @@
   { const rb = $('runbtn'); const on = e => { e.preventDefault(); keys.run = true; }, off = () => { keys.run = false; }; rb.addEventListener('pointerdown', on); rb.addEventListener('pointerup', off); rb.addEventListener('pointerleave', off); rb.addEventListener('pointercancel', off); }
   tapButton($('jumpbtn'), () => { wantJump = true; });
   tapButton($('viewbtn'), toggleView);
+  tapButton($('bagbtn'), () => openBag()); tapButton($('ridebtn'), () => { if (!talking()) setRiding(!riding); });
+  $('coins').addEventListener('click', () => openBag()); $('bagchip').addEventListener('click', () => openBag());
 
   // gamepad: left stick walks, right stick looks, A jumps (or presses the highlighted button), X picks up, Y switches view
   const gp = { mx: 0, mz: 0, prev: [], seen: false, run: false };
@@ -6913,7 +7216,7 @@
     const line = settings.input === 'gamepad'
       ? `${kbd('Left stick')} walk &middot; ${kbd('Right stick')} look &middot; ${kbd('B')} run &middot; ${kbd('A')} jump &middot; ${kbd('X')} pick up / talk / sit &middot; ${kbd('D-pad up')} ride &middot; ${kbd('Y')} flip view &middot; ${kbd('LB')}${kbd('RB')} zoom &middot; ${kbd('Start')} map &middot; ${kbd('Select')} settings`
       : settings.input === 'touch' ? `Drag the picture to look. Slide the round pad to walk; the buttons run, jump, pick up and open the map.`
-      : `${kbd(L(kb.f))}${kbd(L(kb.l))}${kbd(L(kb.b))}${kbd(L(kb.r))} walk &middot; ${kbd('mouse')} look${settings.invert ? ' (inverted)' : ''} &middot; ${kbd(L(kb.run))} run &middot; ${kbd(L(kb.jump))} jump &middot; ${kbd(L(kb.pick))} pick up / talk / sit &middot; ${kbd(L(kb.ride))} ride &middot; ${kbd(L(kb.view))} flip view &middot; ${kbd(L(kb.zoom))} / ${kbd('wheel')} zoom &middot; ${kbd(L(kb.map))} map &middot; ${kbd(L(kb.settings))} settings &middot; ${kbd(L(kb.keys))} hide this<br><span id="lockhint">Click the game to grab the mouse, ${kbd('Esc')} to let go.</span>`;
+      : `${kbd(L(kb.f))}${kbd(L(kb.l))}${kbd(L(kb.b))}${kbd(L(kb.r))} walk &middot; ${kbd('mouse')} look${settings.invert ? ' (inverted)' : ''} &middot; ${kbd(L(kb.run))} run &middot; ${kbd(L(kb.jump))} jump &middot; ${kbd(L(kb.pick))} pick up / talk / sit &middot; ${kbd(L(kb.ride))} ride &middot; ${kbd(L(kb.view))} flip view &middot; ${kbd(L(kb.zoom))} / ${kbd('wheel')} zoom &middot; ${kbd(L(kb.bag))} satchel &middot; ${kbd(L(kb.map))} map &middot; ${kbd(L(kb.settings))} settings &middot; ${kbd(L(kb.keys))} hide this<br><span id="lockhint">Click the game to grab the mouse, ${kbd('Esc')} to let go.</span>`;
     keysEl.innerHTML = line; keysEl.classList.toggle('gone', !settings.showKeys); keysShown = settings.showKeys ? 0 : 99;
     document.body.classList.toggle('touchmode', settings.input === 'touch');
     if (hint.current) hint(hint.current);
@@ -6941,7 +7244,7 @@
     // walking, running, sitting
     pollGamepad(dt);
     let mx = gp.mx, mz = gp.mz;
-    if (!talking() && !fading && !mapOpen) { if (keys.f) mz += 1; if (keys.b) mz -= 1; if (keys.l) mx += 1; if (keys.r) mx -= 1; mx -= stickV.x; mz -= stickV.y; }
+    if (!talking() && !fading && !mapOpen && !bagOpen) { if (keys.f) mz += 1; if (keys.b) mz -= 1; if (keys.l) mx += 1; if (keys.r) mx -= 1; mx -= stickV.x; mz -= stickV.y; }
     const mag = Math.min(1, Math.hypot(mx, mz));
     if (sitting && mag > 0.05) standUp();
     const moving = mag > 0.05 && !sitting;
@@ -6949,7 +7252,7 @@
     const inWater = inRiver(player.position.x, player.position.z) && where !== 'in';
     const wantRun = (keys.run || gp.run) && moving && stamina > 0 && !inWater && (!riding || mz > 0.1);   // on the bike, Run is pedalling hard
     running = wantRun && (running || stamina > 15);
-    if (running) stamina -= dt * 22; else if (inWater) stamina -= dt * (moving ? 4 : 2.5); else stamina += dt * (moving ? 10 : 20);
+    if (running) stamina -= dt * 22 * (has('boots') ? 0.75 : 1); else if (inWater) stamina -= dt * (moving ? 4 : 2.5); else stamina += dt * (moving ? 10 : 20) * (has('stick') ? 1.3 : 1);   // good boots make running cheaper; a stick gets your breath back sooner
     stamina = clamp(stamina, 0, stamMax);
     // stamina grows from your own effort: running, swimming, climbing, and pedalling hard (never from coasting)
     if (moving && (running || inWater)) growStam(dt * (inWater ? 0.035 : riding ? 0.02 : 0.025));
@@ -7173,6 +7476,7 @@
       beetle.position.y = groundAt(beetle.position.x, beetle.position.z);
     }
 
+    econTick(dt, t);
     pickables.forEach(o => {
       const f = o.userData.fall;
       if (f && f.t < 1) { f.t = Math.min(1, f.t + dt * 1.2); const kk = Math.max(0, f.t); o.position.lerpVectors(f.from, f.to, kk); o.position.y += Math.sin(kk * Math.PI) * 3.5; o.rotation.x += dt * 7; }
@@ -7207,7 +7511,7 @@
     requestAnimationFrame(tick);
   }
   // Fernwater joins the continent: its own sky and fog give way, its water is cut to the town, and the Fern runs on outside
-  buildCity();
+  buildCity(); fixGrownSigns();
   tileV.sun = sun; tileO.sun = orchSun; tileF.sun = fernSun; tileF.scene = fernScene;
   fernScene.children.forEach(o => { if (o.isMesh && o.material && o.material.side === THREE.BackSide && o.material.map === skyTex) o.visible = false; }); fernScene.fog.color.copy(worldScene.fog.color); fernScene.fog.near = 150; fernScene.fog.far = 430;
   if (water) { const w0 = water.geometry.parameters.width; water.geometry.dispose(); water.geometry = new THREE.PlaneGeometry(92, 46); water.material.map.repeat.x *= 92 / w0;
@@ -7251,6 +7555,37 @@
   cairnScene.fog.color.copy(worldScene.fog.color); cairnScene.fog.near = 150; cairnScene.fog.far = 430;
   STITCHED.forEach(t => { t.scene.userData.fog0 = [150, 430]; t.scene.fog.near = 150 * worldDistK; t.scene.fog.far = 430 * worldDistK; });
   trimTowns();
+  // ---------- where you can trade: a bell on every counter, and one on a barrel where there is no counter ----------
+  {
+    shopBell(scene, 'village', -1.2, 2.41, -4.6, 'stores', { hidden: true });   // Bramblewick's counter already has its bell
+    shopBell(scene, 'village', FEN.x - 0.9, 3.05, FEN.z + 3.3, 'fen');
+    shopBell(scene, 'village', WOOD.x - 5.5, 2.3, WOOD.z + 6.5, 'wood', { post: true }); solids.push({ x: WOOD.x - 5.5, z: WOOD.z + 6.5, r: 0.9 });
+    [['potting', 1.3, 2.33, -7.1, 'nursery'], ['bakery', 3.2, 2.5, -1.2, 'bakery'], ['ropes', 4.5, 2.4, -2.8, 'ropes'], ['nets', 4, 2.4, -2.3, 'nets'], ['lodge', 5, 2.2, 4.4, 'lodge'], ['clockworks', 3.5, 2.6, -2.2, 'clockworks'], ['bikeworks', 3, 2.2, -2.4, 'bikeworks'], ['chandlery', 3, 2.2, -2.4, 'chandlery'], ['guild', 3, 2.2, -2.2, 'guild']].forEach(([room, x, y, z, shop]) => { if (interiors[room]) shopBell(interiors[room].scene, 'in:' + room, x, y, z, shop); });
+    shopBell(interiors.mill.scene, 'in:mill', 5.2, 2.3, 2, 'mill', { post: true }); interiors.mill.solids.push({ x: 5.2, z: 2, r: 0.9 });
+    shopBell(embScene, 'emberdeep', DURPOS.x + 4.6, 2.3, DURPOS.z - 3, 'durna', { post: true }); embSolids.push({ x: DURPOS.x + 4.6, z: DURPOS.z - 3, r: 0.9 });
+    // Hearthmoor: a barrel and bell before each trade hall, and a bell on each market stall
+    const cityBell = (lx, lz, y, shop, post) => { const [wx, wz] = toWorld(frameH, lx, lz); shopBell(worldScene, 'wild', wx, CITY.y + y, wz, shop, post ? { post: true, floor: CITY.y } : {}); if (post) CITY.solids.push({ x: lx, z: lz, r: 0.9 }); };
+    [[-58, 247, 72, 34, 0], [58, 247, 72, 34, 0], [58, 413, 72, 34, 1], [-58, 413, 72, 34, 1], [-124, 288, 34, 60, 2], [-124, 372, 34, 60, 2], [124, 288, 34, 60, 3], [124, 372, 34, 60, 3]].forEach(([x, z, w, d, face], i) => { const p = [[x + 7, z + d / 2 + 3.2], [x + 7, z - d / 2 - 3.2], [x + w / 2 + 3.2, z + 7], [x - w / 2 - 3.2, z + 7]][face]; cityBell(p[0], p[1], 2.5, 'hall' + i, true); });
+    [[-60, 300], [-30, 300], [30, 300], [60, 300], [-60, 360], [-30, 360], [30, 360], [60, 360]].forEach(([x, z], i) => cityBell(x + 4.4, z, 3.55, 'stall' + i, false));
+    shopSpots.forEach(o => { if (!pickables.includes(o)) pickables.push(o); });
+  }
+  // ---------- what lies about ----------
+  {
+    // the Hollow: acorns under the Old Oak, berries by the bushes, a few flowers, mushrooms in the damp corners, a crow's feather by the gate
+    [[OAK.x + 9, OAK.z + 5, 'acorn'], [OAK.x - 7, OAK.z + 8, 'acorn'], [OAK.x + 5, OAK.z - 9, 'acorn'], [OAK.x - 9, OAK.z - 6, 'acorn'], [BUSH.x + 4.5, BUSH.z + 3, 'berries'], [BUSH.x - 4, BUSH.z + 4.5, 'berries'], [BUSH.x + 3, BUSH.z - 4.5, 'berries'],
+      [-58, 30, 'flower'], [55, 120, 'flower'], [12, 140, 'flower'], [-57, 146, 'mushroom'], [58, -18, 'mushroom'], [9, 122, 'feather']].forEach(([x, z, item], i) => fixedFind(scene, 'village', x, 0.02, z, item, 'v' + i));
+    // the orchards: windfalls in the grass
+    { const R = seeded(5, 41, 2); let n = 0; for (let k = 0; k < 60 && n < 7; k++) { const x = -38 + R() * 76, z = 10 + R() * 62; if (!clearOf('orchards', x, z, 1.6) || Math.hypot(x - MILL.x, z - MILL.z) < 16) continue; fixedFind(orchScene, 'orchards', x, 0.02, z, 'apple', 'o' + n); n++; } }
+    // beside every road: a little cluster every hundred paces or so, of whatever grows in that country
+    const near = (x, z, p, r) => Math.hypot(x - p[0], z - p[1]) < r;
+    ROADS.forEach((RD, ri) => { const R = seeded(ri + 3, 77, 9); let acc = 70;
+      for (let i = 1; i < RD.pts.length; i++) { const a = RD.pts[i - 1], b = RD.pts[i], L = Math.hypot(b.x - a.x, b.z - a.z) || 1; acc += L; if (acc < 130) continue; acc = R() * 40;
+        const side = R() < 0.5 ? -1 : 1, off = 7 + R() * 11, cx = b.x - (b.z - a.z) / L * side * off, cz = b.z + (b.x - a.x) / L * side * off;
+        const coast = near(cx, cz, LANT_AT, 1500), ember = PORTALS.some(q => near(cx, cz, [q.ox, q.oz], 700)), u = R();
+        const item = ember && u < 0.3 ? 'crystal' : coast && u < 0.45 ? 'shell' : ['berries', 'berries', 'mushroom', 'flower', 'herb', 'feather', 'pinecone', 'acorn'][Math.floor(R() * 8)];
+        const n = item === 'crystal' || item === 'feather' ? 1 : 1 + Math.floor(R() * 3);
+        for (let k = 0; k < n; k++) { const rec = { id: 'w' + ri + '_' + i + '_' + k, x: cx + (R() - 0.5) * 5, z: cz + (R() - 0.5) * 5, item }, key = Math.floor(rec.x / FCELL) + ',' + Math.floor(rec.z / FCELL); findRecs.push(rec); if (!findCells.has(key)) findCells.set(key, []); findCells.get(key).push(rec); } } });
+  }
   tick();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => {
     textTexes.forEach(({ tex, text, bg, fg }) => {
@@ -7511,7 +7846,7 @@
   }
   let restoreAfter = null;
   tapButton($('mapbtn'), toggleMap);
-  window.addEventListener('keydown', e => { if (!$('settings').hidden) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
+  window.addEventListener('keydown', e => { if (!$('settings').hidden || bagOpen) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; save.started = true; if (save.beetle && !beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(-3, 0, 8); } if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
@@ -7562,7 +7897,7 @@
   const LOOKS = { skin: ['#f6dcc0', '#f0c9a0', '#d9a273', '#b07a4f', '#7d5234', '#573823'], hair: ['#8a4b22', '#2a2420', '#c9a14a', '#b5432a', '#e9e2d0', '#6a4a8a'], hat: ['#b0472f', '#2f6f9a', '#6a4a8a', '#d99a2b', '#3f7a44', '#3a3a3a'], tunic: ['#6f9a3a', '#3f7a8a', '#9a5a3a', '#7a5aa0', '#c4a03a', '#b05070'] };
   const DEFAULT_LOOK = { skin: LOOKS.skin[1], hair: LOOKS.hair[0], hat: LOOKS.hat[0], tunic: LOOKS.tunic[0], height: 1, face: 0 };
   const FACES = ['Cheerful', 'Wide-eyed', 'Sleepy', 'Determined'], heightWord = h => h < 1.2 ? 'a little one' : h < 1.6 ? 'a child' : h < 2.05 ? 'a youth' : 'grown';
-  function applyLook(look) { const L = Object.assign({}, DEFAULT_LOOK, look || {}); Object.keys(kid.mats).forEach(k => { if (/^#[0-9a-f]{6}$/i.test(L[k])) kid.mats[k].color.set(L[k]); }); player.scale.setScalar(clamp(+L.height || 1, 1, 2.45)); kid.setFace(L.face); }
+  function applyLook(look) { const L = Object.assign({}, DEFAULT_LOOK, look || {}); Object.keys(kid.mats).forEach(k => { if (/^#[0-9a-f]{6}$/i.test(L[k])) kid.mats[k].color.set(L[k]); }); player.scale.setScalar(clamp(+L.height || 1, 1, 2.45)); kid.setFace(L.face); kid.setHat(save.hatStyle || 'cap'); }
   // the creator's other two choices: how tall (7 inches is the smallest child; a grown elf is about 17) and which face
   function syncCreator() { const h = clamp(+draft.height || 1, 1, 2.45); $('elfheight').value = h; $('elfheightval').textContent = `${Math.round(7 * h)} inches · ${heightWord(h)}`; const box = $('elffaces'); box.innerHTML = ''; FACES.forEach((n, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft.face | 0) === i)); b.onclick = () => { draft.face = i; applyLook(draft); syncCreator(); }; box.appendChild(b); }); }
   $('elfheight').addEventListener('input', e => { if (!draft) return; draft.height = +e.target.value; applyLook(draft); syncCreator(); });
