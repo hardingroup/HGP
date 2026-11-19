@@ -130,6 +130,7 @@
   .baghead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
   .baghead h1 { font-family: var(--font-display); color: var(--gold); font-size: 24px; margin: 0; flex: 1 1 200px; }
   .baghead .chip svg { width: 18px; height: 18px; }
+  #bag button:focus { outline: 3px solid var(--gold); outline-offset: 2px; }
   #bagnote { color: var(--ink-soft); font-size: 13.5px; margin: 6px 0 0; }
   #bagmsg { color: var(--gold); font-weight: 600; min-height: 1.4em; margin: 6px 0 0; }
   .bagtabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; }
@@ -181,9 +182,10 @@
   .faces { display: flex; flex-wrap: wrap; gap: 6px; } .faces .btn[aria-pressed="true"] { outline: 2px solid var(--gold, #e8b64c); }
   .titlecard.creator { max-height: calc(100vh - 28px); max-height: calc(100dvh - 28px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
   @media (max-height: 520px) { .titlecard.creator { align-self: flex-start; margin-top: 14px; } }
-  .swrow { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-soft); }
+  .swrow { display: grid; grid-template-columns: 62px 1fr; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-soft); }
   .sw { display: flex; gap: 6px; flex-wrap: wrap; }
-  .sw button { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(0,0,0,.35); padding: 0; cursor: pointer; }
+  .sw { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sw button { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(0,0,0,.35); padding: 0; cursor: pointer; }
   .sw button[aria-pressed="true"] { outline: 3px solid var(--gold); outline-offset: 2px; }
   .creator .warn { margin: 0; color: #ffcf9a; font-size: 14px; }
   .creator .row { display: flex; gap: 10px; justify-content: space-between; margin-top: 4px; }
@@ -241,8 +243,10 @@
   <div class="sheet">
     <div class="baghead"><h1 id="bagtitle">Your satchel</h1><span class="chip gold" id="bagcoins"></span><span class="chip" id="bagload"></span><button class="btn primary" data-a="close">Close</button></div>
     <p id="bagnote"></p>
+    <p id="bagpet" hidden style="margin:6px 0 0;font-size:13.5px;color:var(--ink-soft)"></p>
     <div class="bagtabs" id="bagtabs"></div>
     <p id="bagmsg" aria-live="polite"></p>
+    <p id="baghelp" class="note" hidden style="color:var(--ink-soft);font-size:13px;margin:0">D-pad or left stick: move &middot; A: press &middot; LB / RB: tabs &middot; B: close</p>
     <div class="bagcols"><section id="bagshopcol"><h2 id="bagshoph">For sale</h2><div id="bagshop"></div></section><section><h2 id="bagmineh">You are carrying</h2><div id="bagmine"></div></section></div>
   </div>
 </div>
@@ -270,7 +274,7 @@
       <p class="note">This works the same for the mouse, a finger on the screen and a controller stick.</p>
       <div id="gpsection">
         <h2>Controller</h2>
-        <p class="note">Left stick walks, right stick looks. A jump &middot; B run &middot; X pick up / talk / sit &middot; Y flip view &middot; bumpers zoom &middot; Start map &middot; Select settings.</p>
+        <p class="note">Left stick walks, right stick looks. A jump &middot; B run &middot; X pick up / talk / sit &middot; D-pad up ride &middot; D-pad down satchel &middot; Y flip view &middot; bumpers zoom &middot; Start map &middot; Select settings.</p>
         <div class="row"><label class="opt" id="gpinvertopt">Inverted look</label></div>
       </div>
       <h2>Graphics</h2>
@@ -296,6 +300,7 @@
     <p class="tag">Seven inches tall, eight towns to cross, and everything worth knowing along the way.</p>
     <button class="btn primary big" id="tcontinue" hidden>Continue</button>
     <button class="btn big" id="tnew">New game</button>
+    <button class="btn big" id="tlook" hidden>Change how my elf looks</button>
     <button class="btn big" id="tlessons">Lessons and map</button>
     <button class="btn big" id="tsettings">Settings</button>
     <div id="titleacct"></div>
@@ -303,9 +308,12 @@
   <div class="titlecard creator" id="creator" hidden>
     <h2>Who is setting out?</h2>
     <label>Your elf's name <input id="elfname" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Elfling"></label>
+    <div class="swrow"><span>Elf</span><div class="faces" id="elfsex"></div></div>
     <div class="swrow"><span>Skin</span><div class="sw" data-k="skin"></div></div>
     <div class="swrow"><span>Hair</span><div class="sw" data-k="hair"></div></div>
-    <div class="swrow"><span>Hat</span><div class="sw" data-k="hat"></div></div>
+    <div class="swrow"><span>Hair style</span><div class="faces" id="elfhair"></div></div>
+    <div class="swrow"><span>Hat</span><div class="faces" id="elfhat"></div></div>
+    <div class="swrow"><span>Hat colour</span><div class="sw" data-k="hat"></div></div>
     <div class="swrow"><span>Tunic</span><div class="sw" data-k="tunic"></div></div>
     <div class="swrow"><span>Face</span><div class="faces" id="elffaces"></div></div>
     <div class="swrow"><span>Height</span><div><input type="range" id="elfheight" min="1" max="2.45" step="0.05" value="1" style="width:100%"><div id="elfheightval" style="font-size:13px"></div></div></div>
@@ -1387,7 +1395,13 @@
       legs.push(hip);
     });
     const tprof = []; for (let i = 0; i <= 8; i++) { const t = i / 8; tprof.push(new THREE.Vector2(0.75 - t * 0.35 + (t < 0.15 ? 0.08 : 0), 0.9 + t * 1.15)); }
-    player.add(new THREE.Mesh(new THREE.LatheGeometry(tprof, 18), tunicM));
+    const tunic = new THREE.Mesh(new THREE.LatheGeometry(tprof, 18), tunicM); player.add(tunic);
+    // a girl's dress: fuller and longer in the skirt, drawn in at the waist
+    const dprof = []; for (let i = 0; i <= 10; i++) { const t = i / 10; dprof.push(new THREE.Vector2((t < 0.6 ? 0.96 - (t / 0.6) * 0.52 : 0.44 - ((t - 0.6) / 0.4) * 0.04) + (t < 0.08 ? 0.05 : 0), 0.5 + t * 1.55)); }
+    const dress = new THREE.Mesh(new THREE.LatheGeometry(dprof, 20), tunicM); dress.visible = false; player.add(dress);
+    // the shoulders close the top of the tunic, and a neck joins them to the head
+    const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.41, 16, 10), tunicM); shoulders.scale.y = 0.3; shoulders.position.y = 2.05; player.add(shoulders);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.34, 10), skinK); neck.position.y = 2.15; player.add(neck);
     const belt = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.08, 6, 18), mat('#7a4e26')); belt.rotation.x = Math.PI / 2; belt.position.y = 1.35; player.add(belt);
     const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.08), mat('#e8b64c', { metalness: 0.6, roughness: 0.3 })); buckle.position.set(0, 1.35, 0.62); player.add(buckle);
     const arms = [];
@@ -1409,8 +1423,9 @@
     const smile = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.025, 5, 12, Math.PI), mat('#a0503a')); smile.position.set(0, -0.2, 0.5); smile.rotation.z = Math.PI; hd.add(smile);
     const nose = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), skinK); nose.position.set(0, -0.04, 0.56); hd.add(nose);
     const hair = new THREE.Mesh(new THREE.SphereGeometry(0.58, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hairM); hair.position.y = 0.05; hair.rotation.x = -0.25; hd.add(hair);
-    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 14), mat('#b0472f')); cap.position.set(0, 0.75, -0.05); cap.rotation.x = -0.3; hd.add(cap);
-    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), mat('#8fbf4a')); leaf.scale.set(0.4, 0.12, 1); leaf.position.set(0.2, 0.55, -0.35); leaf.rotation.set(0.6, 0.4, 0.4); hd.add(leaf);
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.25, 18), mat('#b0472f')); cap.position.set(0, 0.9, -0.07); cap.rotation.x = -0.17; hd.add(cap);   // pulled down: the brim sits just above the ears and covers the top of the hair
+    { const band = new THREE.Mesh(new THREE.TorusGeometry(0.59, 0.07, 6, 22), cap.material); band.rotation.x = Math.PI / 2; band.position.y = -0.6; cap.add(band); }
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), mat('#8fbf4a')); leaf.scale.set(0.4, 0.12, 1); leaf.position.set(0.3, 0.5, -0.42); leaf.rotation.set(0.9, 0.5, 0.4); hd.add(leaf);
     const satchel = new THREE.Group();
     const bag = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, 0.25), mat('#8a5a2b')); bag.position.set(0.68, 1.35, 0.1); satchel.add(bag);
     [[0.5, 0.52], [0.5, -0.52]].forEach(([, z]) => { const strap = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.7, 0.05), mat('#6b4422')); strap.position.set(0.22, 1.75, z); strap.rotation.z = -0.42; satchel.add(strap); });
@@ -1422,8 +1437,15 @@
         const brow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.045, 0.05), hairM); brow.position.set(d * 0.2, 0.22, 0.5); brow.rotation.z = d * -0.32; brows.add(brow); });
       const mouthO = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.022, 5, 12), mouthM); mouthO.position.set(0, -0.22, 0.5); hd.add(mouthO);
       const mouthFlat = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.035, 0.04), mouthM); mouthFlat.position.set(0, -0.22, 0.51); hd.add(mouthFlat);
-      kid.setFace = i => { i = clamp(i | 0, 0, 3); const es = i === 1 ? 1.35 : i === 3 ? 0.9 : 1; faceBits.w.forEach(m => m.scale.setScalar(es)); faceBits.p.forEach(m => { m.scale.setScalar(i === 1 ? 1.25 : 1); m.position.z = i === 1 ? 0.6 : 0.56; });
-        faceBits.c.forEach(m => (m.visible = i === 0 || i === 2)); freck.visible = i === 1; lids.visible = i === 2; brows.visible = i === 3; smile.visible = i === 0 || i === 2; smile.scale.setScalar(i === 2 ? 0.7 : 1); mouthO.visible = i === 1; mouthFlat.visible = i === 3; };
+      const lashes = grp(); [-1, 1].forEach(d => { for (let q = 0; q < 3; q++) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.09, 0.018), mat('#2a2420')); l.position.set(d * (0.3 + q * 0.014), 0.1 + q * 0.035, 0.46 - q * 0.012); l.rotation.z = -d * (1.25 - q * 0.38); lashes.add(l); } });
+      // eight faces. eye: how wide; brow: the tilt of each eyebrow; mouth: which mouth
+      const FACE = [{ cheek: 1, mouth: 'smile' }, { eye: 1.35, freck: 1, mouth: 'o' }, { lids: 1, cheek: 1, mouth: 'small' }, { eye: 0.9, brow: [-0.32, -0.32], mouth: 'flat' },
+        { lash: 1, cheek: 1, mouth: 'small' }, { brow: [-0.3, 0.3], up: 1, mouth: 'smirk' }, { brow: [-0.5, -0.5], mouth: 'frown' }, { freck: 1, cheek: 1, mouth: 'grin' }];
+      kid.setFace = i => { const F = FACE[clamp(i | 0, 0, FACE.length - 1)], es = F.eye || 1, m = F.mouth; faceBits.w.forEach(q => q.scale.setScalar(es)); faceBits.p.forEach(q => { q.scale.setScalar(es > 1 ? 1.25 : 1); q.position.z = es > 1 ? 0.6 : 0.56; });
+        faceBits.c.forEach(q => (q.visible = !!F.cheek)); freck.visible = !!F.freck; lids.visible = !!F.lids; lashes.visible = !!F.lash; brows.visible = !!F.brow;
+        if (F.brow) brows.children.forEach((q, k) => { q.rotation.z = (k ? 1 : -1) * F.brow[k]; q.position.y = 0.22 + (F.up && k ? 0.06 : 0); });
+        smile.visible = m !== 'o' && m !== 'flat'; smile.scale.setScalar(m === 'small' ? 0.7 : m === 'grin' ? 1.35 : 1); smile.rotation.z = m === 'frown' ? 0 : m === 'smirk' ? Math.PI + 0.32 : Math.PI; smile.position.set(m === 'smirk' ? 0.05 : 0, m === 'frown' ? -0.31 : -0.2, 0.5);
+        mouthO.visible = m === 'o'; mouthFlat.visible = m === 'flat'; };
       kid.setFace(0); }
     // hats you can buy sit on the same head: the pointed cap you started with, or one of these
     const hatG = {}; { const own = new THREE.Group(); hd.remove(cap); hd.remove(leaf); own.add(cap); own.add(leaf); hd.add(own); hatG.cap = own;
@@ -1437,7 +1459,24 @@
       mk('flying', (g, a) => { const brass = mat('#c9a23a', { metalness: 0.6, roughness: 0.35 }); a(half(0.62, 0.6), mat('#6b4a2b', { roughness: 0.8 }), 0, 0.04, 0); a(ring(0.62, 0.035), mat('#2a2420'), 0, 0.3, 0).rotation.x = Math.PI / 2;
         [-1, 1].forEach(d => { const r = a(ring(0.14, 0.04), brass, d * 0.2, 0.36, 0.53); r.rotation.x = -0.45; const l = a(new THREE.CircleGeometry(0.13, 12), mat('#9fd0e8', { roughness: 0.15 }), d * 0.2, 0.36, 0.535); l.rotation.x = -0.45; }); });
     }
+    hatG.none = new THREE.Group(); hd.add(hatG.none);
     kid.setHat = st => { for (const k in hatG) hatG[k].visible = k === (hatG[st] ? st : 'cap'); };
+    // hair: the short crop everyone starts with, and what can be added to it
+    const hairG = {}; { const hm = (name, build) => { const g = new THREE.Group(); build((geo, x, y, z) => { const q = new THREE.Mesh(geo, hairM); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; }); g.visible = false; hd.add(g); hairG[name] = g; };
+      hm('long', a => { a(new THREE.SphereGeometry(0.57, 16, 12), 0, -0.32, -0.3).scale.set(1.02, 1.3, 0.56); });
+      hm('tails', a => { [-1, 1].forEach(d => { a(new THREE.SphereGeometry(0.2, 10, 8), d * 0.56, -0.42, -0.2).scale.set(0.85, 1.9, 0.85); a(new THREE.SphereGeometry(0.11, 8, 6), d * 0.54, -0.1, -0.2); }); });
+      hm('bun', a => { a(new THREE.SphereGeometry(0.27, 12, 10), 0, 0.3, -0.62); });
+      hm('curly', a => { for (let k = 0; k < 9; k++) { const an = Math.PI * (0.1 + k * 0.1), y = k % 2 ? -0.12 : 0.1; a(new THREE.SphereGeometry(0.19, 8, 7), Math.cos(an) * 0.5, y, -Math.sin(an) * 0.5 - 0.02); } for (let k = 0; k < 4; k++) a(new THREE.SphereGeometry(0.12, 8, 6), -0.27 + k * 0.18, 0.36, 0.4); });
+      hm('braid', a => { for (let k = 0; k < 5; k++) a(new THREE.SphereGeometry(0.16 - k * 0.012, 8, 7), 0, -0.2 - k * 0.24, -0.6 - Math.sin(k * 0.5) * 0.06); }); }
+    kid.setHair = st => { hair.visible = st !== 'bald'; for (const k in hairG) hairG[k].visible = k === st; };
+    // growing up: a taller elf is slimmer for its height and has a smaller head for its body, not a child blown up
+    kid.tall = 1;
+    kid.setBuild = (h, girl) => { h = clamp(+h || 1, 1, 2.45); const w = 1 + (h - 1) * 0.66, r = h / w, hs = (1 + (h - 1) * 0.45) / w;
+      kid.tall = h; player.scale.setScalar(w);
+      legs.forEach(l => { l.position.y = 1.15 * r; l.scale.y = r; }); arms.forEach(q => { q.position.y = 1.9 * r; q.scale.y = r; });
+      tunic.scale.y = r; dress.scale.y = r; tunic.visible = !girl; dress.visible = !!girl; satchel.scale.y = r;
+      belt.position.y = 1.35 * r; buckle.position.y = 1.35 * r; belt.scale.set(girl ? 0.83 : 1, girl ? 0.83 : 1, 1); buckle.position.z = girl ? 0.52 : 0.62;
+      shoulders.position.y = 2.05 * r; neck.position.y = 2.05 * r + 0.1; hd.scale.setScalar(hs); hd.position.y = 2.05 * r + 0.5 * hs + (h - 1) * 0.06; };
     Object.assign(kid, { legs, arms, hd, satchel, mats: { tunic: tunicM, skin: skinK, hair: hairM, hat: cap.material } });
   }
   player.position.set(0, 0, 6.5); scene.add(player);
@@ -1797,9 +1836,14 @@
     const r = roadNear(x, z); if (r && r.d < 26) { const b = ss(4.5, 26, r.d); h = r.h * (1 - b) + h * b; }
     h += cogLand(x, z, noCrag) + ridge(x, z);
     // the river's bed and banks, outside the town
-    const [rd, lx] = riverD(x, z);
+    const [rd, lx, rlz] = riverD(x, z);
     const hw = riverHW(lx);
-    if (rd < hw + 70 && Math.abs(lx) > 50) { const e = ss(50, 58, Math.abs(lx)), bed = rd < hw ? -1.45 : -1.45 + 1.8 * ss(hw, hw + 9, rd), b = ss(hw + 9, hw + 70, rd), hr = rd < hw + 9 ? bed : 0.35 * (1 - b) + Math.max(h, 0.35) * b; h = h * (1 - e) + hr * e; }
+    if (rd < hw + 330 && Math.abs(lx) > 50) { const e = ss(50, 58, Math.abs(lx));
+      // the top of the bank: a good step above the water, so the waterline falls on the steep part of the bank and stays a clean line; level with the quay on Hearthmoor's own shore
+      const T = rlz < RIVER.z ? 0.35 + 0.85 * ss(640, 840, Math.abs(lx - MERE.lx)) : 1.2;
+      // a river runs in the lowest ground: the land beside it never lies below its banks, and comes up to them gently
+      if (h < T) h += (T - h) * ss(hw + 330, hw + 70, rd) * e;
+      if (rd < hw + 70) { const bed = rd < hw ? -1.45 : -1.45 + (T + 1.45) * ss(hw, hw + 10, rd), b = ss(hw + 10, hw + 70, rd), hr = rd < hw + 10 ? bed : T * (1 - b) + Math.max(h, T) * b; h = h * (1 - e) + hr * e; } }
     // the gorge
     const [glx, glz] = toLocal(tileC, x, z), gd = Math.abs(glz - GW.zc), gax = Math.abs(glx);
     if (gd < GW.out && gax < GW.half + 40) { const G = gorgeG(glx), e = ss(GW.half + 40, GW.half, gax), hg = gd < GW.hw ? G - gorgeDepth(glx) : gd < GW.rim ? G : G + (h - G) * ss(GW.rim, GW.out, gd); h = h * (1 - e) + hg * e; }
@@ -1955,7 +1999,7 @@
     add(new THREE.BoxGeometry(905, 2.6, 18), plankM, 0, Y - 1.3, 101); add(new THREE.BoxGeometry(905, 3.2, 1.2), darkStone, 0, Y - 1.6, 91.6);
     CITY.piers.forEach(px => { add(new THREE.BoxGeometry(9, 0.5, 42), plankM, px, Y - 0.25, 73); for (let z = 54; z < 92; z += 9) [-4.2, 4.2].forEach(o => { add(new THREE.CylinderGeometry(0.45, 0.5, 4.6, 8), woodM, px + o, Y - 1.4, z); }); [-3.6, 3.6].forEach(o => { add(new THREE.CylinderGeometry(0.4, 0.45, 1.4, 8), woodM, px + o, Y + 0.7, 54); CITY.solids.push({ x: px + o, z: 54, r: 0.5 }); }); });
     // the lake itself
-    { const lake = new THREE.Mesh(new THREE.PlaneGeometry(1500, 215), new THREE.MeshStandardMaterial({ color: '#5f93c4', roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.93 })); lake.rotation.x = -Math.PI / 2; lake.position.set(0, 0.05, 0); G.add(lake); }
+    { const lake = new THREE.Mesh(new THREE.PlaneGeometry(1500, 215), new THREE.MeshStandardMaterial({ color: '#5f93c4', roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.93 })); lake.rotation.x = -Math.PI / 2; lake.position.set(0, 0.02, 0); G.add(lake); }
     // the walls on three sides (the fourth side is the water), with towers and three gates
     const WH = 24, WT = 6, wallBox = (x0, x1, z0, z1) => { add(new THREE.BoxGeometry(x1 - x0, WH, z1 - z0), stoneM, (x0 + x1) / 2, Y + WH / 2, (z0 + z1) / 2); add(new THREE.BoxGeometry(x1 - x0 + 0.8, 1, z1 - z0 + 0.8), darkStone, (x0 + x1) / 2, Y + WH + 0.5, (z0 + z1) / 2); CITY.boxes.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hd: (z1 - z0) / 2 }); };
     const gz = CITY.gateZ, gw = 8;
@@ -4112,7 +4156,7 @@
   const roomOf = id => ITEMS[id].w === undefined ? 1 : ITEMS[id].w;
   function carryUsed() { let n = 0; const v = inv(); for (const k in v) if (ITEMS[k]) n += v[k] * roomOf(k); return n; }
   // pockets hold 6; the satchel Bramblewick gives you, 20; a pack, 20 more; and the beetle carries 20 while it walks with you
-  function carryMax() { return (kid.satchel.visible ? 20 : 6) + (has('pack') ? 20 : 0) + (beetle ? 20 : 0); }
+  function carryMax() { if (master) return 999; return (kid.satchel.visible ? 20 : 6) + (has('pack') ? 20 : 0) + (beetle ? 20 : 0); }
   function addItem(id, n = 1) { if (carryUsed() + roomOf(id) * n > carryMax()) return false; inv()[id] = (inv()[id] || 0) + n; persist(); return true; }
   function removeItem(id) { const v = inv(); if (!v[id]) return; v[id]--; if (v[id] <= 0) delete v[id];
     if (!v[id] && ITEMS[id].hat && save.hatStyle === ITEMS[id].hat) { save.hatStyle = ''; kid.setHat('cap'); }
@@ -4138,23 +4182,25 @@
     if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} }
     Object.keys(keys).forEach(k => (keys[k] = false)); stickV.x = stickV.y = 0;
     if (bagShop) chink(1760);
-    renderBag(); $('bag').hidden = false; $('bag').scrollTop = 0;
+    $('bag').hidden = false; renderBag(); $('bag').scrollTop = 0;
   }
   function closeBag() { bagOpen = false; bagShop = null; $('bag').hidden = true; }
   const coinWord = n => `${n} coin${n === 1 ? '' : 's'}`;
   function itemNote(id) { const it = ITEMS[id], bits = [it.d]; if (it.eat) bits.push(`Stamina +${it.eat}${it.heal ? `, health +${it.heal}` : ''}.`); bits.push(it.t === undefined ? 'Grows wild.' : `Made in ${TOWN_NAME[it.t]}.`); if (roomOf(id) !== 1) bits.push(roomOf(id) ? `Takes the room of ${roomOf(id)}.` : 'Takes no room.'); return bits.join(' '); }
   function renderBag() {
     const v = inv(), shop = bagShop, used = carryUsed(), max = carryMax(), tabOK = id => bagTab === 'all' || ITEMS[id].c === bagTab;
+    const fe = document.activeElement, held = fe && $('bag').contains(fe) && fe.dataset.a ? [fe.dataset.a, fe.dataset.i, !!fe.closest('#bagshop')] : null;
     $('bagtitle').textContent = shop ? shop.n : 'Your satchel';
     $('bagcoins').innerHTML = ICON.coin + `<span>${coinWord(coins)}</span>`;
     $('bagload').textContent = `Carrying ${used} of ${max}`;
     $('bagnote').textContent = shop
       ? (shop.who ? `${shop.who} serves you. ` : 'Nobody is at the counter. Ring the bell, take what you need and leave your coins in the dish. ') + (shop.t === HUB ? 'Hearthmoor makes little and sells everything, at capital prices, and pays a steady price for whatever you bring.' : 'What is made here is cheap here. Carry it down the road and it is worth more with every town you pass.')
       : (kid.satchel.visible ? 'Your satchel holds 20.' : 'Your pockets hold 6, until you have a satchel.') + ' A traveller’s pack holds 20 more, and a beetle that walks with you carries 20.';
+    { const bp = $('bagpet'); bp.hidden = !save.beetle || !!bagShop; if (!bp.hidden) bp.innerHTML = `${beetleName} ${companionWhere()}.` + (parked && !parked.leave ? ' <button class="btn small" data-a="whistle" data-i="x">Whistle</button>' : ''); }
     $('bagtabs').innerHTML = CATS.map(([k, n]) => `<button class="btn small" data-a="tab" data-i="${k}" aria-pressed="${bagTab === k}">${n}</button>`).join('');
     $('bagmsg').textContent = bagMsg;
     const row = (id, count, small, btns) => `<div class="bagrow"><div class="em" aria-hidden="true">${ITEMS[id].e}</div><div class="nm"><b>${ITEMS[id].n}</b>${count ? ` <span class="ct">× ${count}</span>` : ''}<small>${small}</small></div><div class="do">${btns}</div></div>`;
-    $('bagshopcol').hidden = !shop;
+    $('bagshopcol').hidden = !shop; if (!shop) $('bagshop').innerHTML = '';
     if (shop) {
       const rows = shop.stock.filter(tabOK).map(id => { const p = buyPrice(shop, id), poor = coins < p, full = used + roomOf(id) > max; return row(id, 0, itemNote(id), `<button class="btn small primary" data-a="buy" data-i="${id}" ${poor || full ? 'disabled' : ''}>${poor ? 'Costs ' + p : full ? 'No room' : 'Buy · ' + coinWord(p)}</button>`); });
       $('bagshoph').textContent = 'For sale here'; $('bagshop').innerHTML = rows.join('') || '<div class="bagempty">Nothing of that kind here.</div>';
@@ -4169,6 +4215,10 @@
         if (it.lamp) b += `<button class="btn small primary" data-a="lamp" data-i="${id}">${save.lamp ? 'Put out' : 'Light'}</button>`;
         b += `<button class="btn small" data-a="drop" data-i="${id}">Drop</button>`; }
       return row(id, v[id], itemNote(id), b); }).join('') || `<div class="bagempty">${Object.keys(v).length ? 'Nothing of that kind.' : 'Nothing yet. Berries, mushrooms, feathers and the like lie beside the roads; walk up to one and pick it up.'}</div>`;
+    // a redraw throws the buttons away: put the highlight back on the same one, or the nearest thing to it
+    if (held || settings.input === 'gamepad') { const all = Array.from($('bag').querySelectorAll('button')).filter(q => !q.disabled), same = held && all.find(q => q.dataset.a === held[0] && q.dataset.i === held[1] && !!q.closest('#bagshop') === held[2]);
+      const side = held && all.find(q => q.closest(held[2] ? '#bagshop' : '#bagmine') && q.dataset.a === held[0]), t = same || side || all.find(q => q.closest('.bagrow')) || all[0]; if (t) t.focus({ preventScroll: true }); }
+    $('baghelp').hidden = settings.input !== 'gamepad';
   }
   function bagAct(a, id) {
     const it = ITEMS[id]; if (!it) return;
@@ -4182,7 +4232,47 @@
     else if (a === 'lamp' && has(id)) { setLamp(!save.lamp); persist(); bagMsg = save.lamp ? 'The lantern is lit.' : 'You put the lantern out.'; }
     else if (a === 'drop' && has(id)) { removeItem(id); bagMsg = `You left the ${it.n.toLowerCase()} behind.`; }
   }
-  $('bag').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const a = b.dataset.a, id = b.dataset.i; if (a === 'close') closeBag(); else if (a === 'tab') { bagTab = id; renderBag(); } else if (a) { bagAct(a, id); renderBag(); } });
+  $('bag').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const a = b.dataset.a, id = b.dataset.i; if (a === 'close') closeBag(); else if (a === 'whistle') { bagMsg = whistle(); renderBag(); } else if (a === 'tab') { bagTab = id; renderBag(); } else if (a) { bagAct(a, id); renderBag(); } });
+
+  // ---------- companions: whoever walks with you can be told to follow, to wait where it stands, or to go home ----------
+  // While it follows, the old `beetle` holds it and everything that moves you moves it too. Told to wait or sent home, it is `parked`:
+  // it stays in the place it was left, and nothing that happens to you touches it until you speak to it or whistle.
+  let parked = null;
+  const BEETLE_HOME = [NURS.x - 9, NURS.z + 1];   // beside the compost heap where the grub was found
+  const curWorld = () => (where === 'in' ? 'in:' + interior.id : where);
+  const worldScene_ = w => (w.startsWith('in:') ? interiors[w.slice(3)].scene : sceneOf(w));
+  const worldName = w => (w.startsWith('in:') ? interiors[w.slice(3)].label : w === 'wild' ? 'on the Long Road' : REGION_LABEL[w] || 'where you left it');
+  function companionWhere() { return !parked ? (beetle ? 'is walking with you and carries 20' : 'is not here') : parked.leave ? 'is on its way home' : parked.mode === 'home' ? 'is at home in the Hollow, by the compost heap' : 'is waiting ' + (parked.world === curWorld() ? 'nearby' : (parked.world.startsWith('in:') ? 'inside ' : parked.world === 'wild' ? '' : 'in ') + worldName(parked.world)); }
+  function keepCompanion() { save.beetleMode = parked ? parked.mode : 'follow'; save.beetleAt = parked && parked.mode === 'stay' ? { w: parked.world, p: [+parked.obj.position.x.toFixed(1), +parked.obj.position.y.toFixed(2), +parked.obj.position.z.toFixed(1)] } : null; persist(); }
+  function park(mode) { if (!beetle) return; const o = beetle; beetle = null; o.userData.follow = false; parked = { obj: o, mode, world: curWorld(), leave: 0 }; o.userData.legs.forEach(l => (l.rotation.x = 0)); }
+  function companionStay() { park('stay'); keepCompanion(); flash(`${beetleName} settles down to wait.`); }
+  function companionHome() {
+    if (!parked) park('home'); parked.mode = 'home';
+    if (parked.world !== 'village') { const o = parked.obj, dx = o.position.x - player.position.x, dz = o.position.z - player.position.z, L = Math.hypot(dx, dz) || 1; parked.leave = 5; parked.dir = where === 'in' ? [0, 1] : [dx / L, dz / L]; }
+    keepCompanion(); flash(`${beetleName} turns for home.`);
+  }
+  function companionFollow() { if (!parked || parked.leave || parked.world !== curWorld()) return false; const o = parked.obj; parked = null; beetle = o; o.userData.follow = true; keepCompanion(); flash(`${beetleName} falls in behind you.`); return true; }
+  function whistle() { if (!parked) return `${beetleName} is already with you.`; if (parked.leave) return `${beetleName} is on its way home and does not turn back.`; if (parked.world !== curWorld()) return `${beetleName} is too far away to hear. It ${companionWhere()}.`; try { if (audioCtx && settings.sounds) { const t0 = audioCtx.currentTime; sndNote(snd.fx, 'sine', 1500, 2300, t0, 0.18, 0.09, 0.01); sndNote(snd.fx, 'sine', 2300, 1700, t0 + 0.2, 0.22, 0.09, 0.01); } } catch (e) {} companionFollow(); return `You whistle. ${beetleName} comes.`; }
+  function choose(who, text, opts) { showDialog(true); clearDialog(); $('speaker').textContent = who; line.innerHTML = text; opts.forEach(([label, fn], i) => { const b = document.createElement('button'); b.className = 'btn' + (i ? '' : ' primary'); b.textContent = label; b.onclick = () => { showDialog(false); fn && fn(); }; actions.appendChild(b); }); const f = actions.querySelector('button'); if (f) f.focus({ preventScroll: true }); }
+  function companionMenu() {
+    if (talking() || bagOpen) return;
+    if (!parked) choose(beetleName, `${beetleName} looks up at you, feelers twitching.`, [['Stay here', companionStay], ['Go home', companionHome], ['Open the baskets', () => openBag()], ['Never mind', null]]);
+    else if (parked.mode === 'home') choose(beetleName, `${beetleName} is dozing by the compost heap, and wakes when you come close.`, [['Follow me', companionFollow], ['Never mind', null]]);
+    else choose(beetleName, `${beetleName} has waited right where you left it.`, [['Follow me', companionFollow], ['Go home', companionHome], ['Never mind', null]]);
+  }
+  function parkedTick(dt) {
+    if (!parked) return; const o = parked.obj; let step = null;
+    if (parked.leave > 0) { parked.leave -= dt; step = [parked.dir[0] * 5 * dt, parked.dir[1] * 5 * dt]; o.scale.setScalar(Math.max(0.05, Math.min(1, parked.leave / 1.2)));
+      if (parked.leave <= 0) { if (o.parent) o.parent.remove(o); scene.add(o); o.scale.setScalar(1); o.position.set(BEETLE_HOME[0], 0, BEETLE_HOME[1]); o.rotation.y = 1; parked.world = 'village'; parked.leave = 0; step = null; o.userData.legs.forEach(l => (l.rotation.x = 0)); } }
+    else if (parked.mode === 'home') { const dx = BEETLE_HOME[0] - o.position.x, dz = BEETLE_HOME[1] - o.position.z, L = Math.hypot(dx, dz); if (L > 0.6) step = [dx / L * 6 * dt, dz / L * 6 * dt]; else if (o.userData.walk) { o.userData.walk = 0; o.userData.legs.forEach(l => (l.rotation.x = 0)); } }
+    if (step) { o.position.x += step[0]; o.position.z += step[1]; o.rotation.y += wrap(Math.atan2(step[0], step[1]) - o.rotation.y) * Math.min(1, dt * 6); o.userData.walk = (o.userData.walk || 0) + dt * 14; o.userData.legs.forEach((l, i) => (l.rotation.x = Math.sin(o.userData.walk + i * 1.05) * 0.5)); if (parked.world === curWorld() && where !== 'in') o.position.y = groundAt(o.position.x, o.position.z); }
+  }
+  // after a save is loaded: put the companion back where it was told to be
+  function restoreCompanion() {
+    if (!beetle || !save.beetleMode || save.beetleMode === 'follow') return; const o = beetle, at = save.beetleAt;
+    try { if (save.beetleMode === 'stay' && at && at.w) { const sc = worldScene_(at.w); beetle = null; o.userData.follow = false; if (o.parent) o.parent.remove(o); sc.add(o); o.position.set(at.p[0], at.p[1], at.p[2]); parked = { obj: o, mode: 'stay', world: at.w, leave: 0 }; }
+      else { beetle = null; o.userData.follow = false; if (o.parent) o.parent.remove(o); scene.add(o); o.position.set(BEETLE_HOME[0], 0, BEETLE_HOME[1]); o.rotation.y = 1; parked = { obj: o, mode: 'home', world: 'village', leave: 0 }; } } catch (e) { beetle = o; o.userData.follow = true; parked = null; }
+  }
   // ---------- things lying about: beside the roads, under the oak, in the orchard grass ----------
   const FIND_BACK = 20 * 60 * 1000;   // a picked thing grows back, or is dropped again, in about twenty minutes
   function findGone(fid) { const f = save.found && save.found[fid]; return !!f && Date.now() - f < FIND_BACK; }
@@ -4227,20 +4317,21 @@
   function econTick(dt) {
     econT -= dt; if (econT > 0) return; econT = 0.25;
     findsNear();
+    { const cb = beetle || (parked && parked.obj); if (cb && beetleName && !cb.userData.pickable) { cb.userData.pickable = true; cb.userData.kind = 'follower'; pickables.push(cb); } }
     $('ridebtn').hidden = !bikeOwned;
     if (!!save.lamp !== !!(lampLight && lampLight.parent)) setLamp(save.lamp);
     // say what the pick-up button will do, when it is something that isn't part of a lesson
     let text = '', word = 'Pick up';
     if (!talking() && !bagOpen && !mapOpen && !fading && !sitting) { const [b0, d0] = nearestPick(0);
       if (!(b0 && d0 <= REACH)) for (let tier = 1; tier < 4 && !text; tier++) { const [b, d] = nearestPick(tier); if (!b || d > REACH) continue; const u = b.userData;
-        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'shop') { text = 'Trade at ' + SHOPS[u.shop].n; word = 'Trade'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
+        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'shop') { text = 'Trade at ' + SHOPS[u.shop].n; word = 'Trade'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
     if (text !== promptText) { promptText = text; const p = $('prompt'); p.hidden = !text; if (text) p.innerHTML = settings.input === 'touch' ? text : `<kbd>${settings.input === 'gamepad' ? 'X' : keyLabel(settings.binds.pick)}</kbd> ${text}`; $('grab').textContent = word; }
   }
 
   // ---------- cloud saves (Supabase) ----------
   // The local save is always written; when signed in the same save is pushed to the cloud a few seconds later.
   const SB_URL = 'https://vxiwbghlmibuodcqrigh.supabase.co', SB_KEY = 'sb_publishable_H8Xnym3klfBLHzyS6hsg3Q_sTeHO11H', SESSION_KEY = 'long-road-session-v1';
-  let session = null, cloudTimer = null, cloudDirty = false, cloudBusy = false;
+  let session = null, cloudTimer = null, cloudDirty = false, cloudBusy = false, master = false;   // master: set only by the server's answer for a signed-in account flagged in game_masters; never saved on the device
   try { const raw = localStorage.getItem(SESSION_KEY); if (raw) session = JSON.parse(raw); } catch (e) {}
   function keepSession(sess) { session = sess; try { if (sess) localStorage.setItem(SESSION_KEY, JSON.stringify(sess)); else localStorage.removeItem(SESSION_KEY); } catch (e) {} }
   async function sbAuth(path, body) {
@@ -4265,14 +4356,15 @@
   function cloudSoon() { if (!session) return; cloudDirty = true; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudPush, 3000); }
   async function cloudPush() {
     if (!session || cloudBusy || !cloudDirty) return; cloudBusy = true; cloudDirty = false;
-    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null, inv: save.inv || {}, hat: save.hatStyle || '', lamp: !!save.lamp, stam: save.stamMax || 100, ts: save.ts || 0 } }); acctRefresh('Saved to the cloud.', 'ok'); }
+    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null, inv: save.inv || {}, hat: save.hatStyle || '', lamp: !!save.lamp, stam: save.stamMax || 100, ts: save.ts || 0, bm: save.beetleMode || '', ba: save.beetleAt || null } }); acctRefresh('Saved to the cloud.', 'ok'); }
     catch (e) { cloudDirty = true; acctRefresh('Cloud save failed, kept locally. ' + e.message, 'err'); }
     cloudBusy = false;
   }
   function progressOf(sv) { return (sv.done ? sv.done.length : 0) * 1000 + (sv.coins || 0) + (sv.started ? 1 : 0); }
   async function cloudPull() {
     const c = await rpc('game_load_progress'); if (!c) return 'empty';
-    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), lay: (c.blob && c.blob.lay) || 0, name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null, inv: (c.blob && c.blob.inv) || {}, hatStyle: (c.blob && c.blob.hat) || '', lamp: !!(c.blob && c.blob.lamp), stamMax: Math.max((c.blob && c.blob.stam) || 100, save.stamMax || 100), ts: (c.blob && c.blob.ts) || 0, found: save.found || {} };
+    master = !!c.master; try { acctRefresh(); if (!startEl.hidden) drawPanel(); } catch (e) {}
+    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), lay: (c.blob && c.blob.lay) || 0, name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null, inv: (c.blob && c.blob.inv) || {}, hatStyle: (c.blob && c.blob.hat) || '', lamp: !!(c.blob && c.blob.lamp), stamMax: Math.max((c.blob && c.blob.stam) || 100, save.stamMax || 100), ts: (c.blob && c.blob.ts) || 0, found: save.found || {}, beetleMode: (c.blob && c.blob.bm) || '', beetleAt: (c.blob && c.blob.ba) || null };
     // a bike granted on the account is kept whichever save wins
     if (cloud.bike || save.bike) { cloud.bike = true; save.bike = true; bikeOwned = true; }
     // the same lessons done on both: the newer save wins (so coins you spent stay spent); otherwise the one further along
@@ -4283,7 +4375,7 @@
   // the sign-in box on the map screen
   const acctOpen = $('acctopen'), acctOut = $('acctout'), acctForm = $('acctform'), acctWho = $('acctwho'), acctStatus = $('acctstatus');
   function acctRefresh(msg, kind) {
-    const on = !!session; acctWho.hidden = !on; acctWho.textContent = on ? `Signed in as ${session.email}` : ''; acctOut.hidden = !on; acctOpen.hidden = on || !acctForm.hidden;
+    const on = !!session; if (!on) master = false; acctWho.hidden = !on; acctWho.textContent = on ? `Signed in as ${session.email}${master ? ' · master account' : ''}` : ''; acctOut.hidden = !on; acctOpen.hidden = on || !acctForm.hidden;
     if (msg !== undefined) { acctStatus.textContent = msg; acctStatus.className = 'status ' + (kind || ''); }
   }
   acctOpen.addEventListener('click', () => { acctForm.hidden = false; acctOpen.hidden = true; acctRefresh('', ''); $('acctemail').focus(); });
@@ -4365,6 +4457,7 @@
   }
   function canPick(o) {
     const k = o.userData.kind;
+    if (k === 'follower') return (o === beetle && !!beetleName && beetle.userData.follow) || (!!parked && o === parked.obj && !parked.leave && parked.world === curWorld());
     if ((o.userData.world || 'village') !== (where === 'in' ? 'in:' + interior.id : where)) return false;
     if (k === 'spill') return phase === 'spill' && !(o.userData.fall && o.userData.fall.t < 1);
     if (k === 'acorn' || k === 'berry') return phase === 'errand';
@@ -4404,6 +4497,7 @@
     else if (d.kind === 'seat') sitDown(obj);
     else if (d.kind === 'find') takeFind(obj);
     else if (d.kind === 'shop') openBag(d.shop);
+    else if (d.kind === 'follower') companionMenu();
     else if (d.kind === 'orow') countRowOfTrees(obj);
     else if (d.kind === 'press') pullPress(obj);
     else if (d.kind === 'apple') { flyAway(obj); applesGot++; tasks.apples.have = applesGot; renderTasks(); if (applesGot >= 12) hint('Twelve apples! Back to Hollis by the press.'); }
@@ -4422,7 +4516,7 @@
   }
   function sitDown(seat) {
     sitting = true; sitSeat = seat; const d = seat.userData;
-    player.position.set(seat.position.x, 0, seat.position.z); py = Math.max(-0.4, d.seatTop - 0.95 * player.scale.x); vy = 0; bodyYaw = d.yaw; camYaw = d.yaw; player.rotation.y = bodyYaw;
+    player.position.set(seat.position.x, 0, seat.position.z); py = Math.max(-0.4, d.seatTop - 0.95 * kid.tall); vy = 0; bodyYaw = d.yaw; camYaw = d.yaw; player.rotation.y = bodyYaw;
     hint(`Sitting on the ${d.label}. Move to stand up.`);
   }
   function standUp() {
@@ -4430,7 +4524,7 @@
     player.position.add(new THREE.Vector3(Math.sin(yaw) * 1.4, 0, Math.cos(yaw) * 1.4)); hint('');
   }
   // tier 0: whatever the lesson in hand wants picked; 1: things lying about; 2: a counter to trade at; 3: a seat
-  const PICK_TIER = { find: 1, shop: 2, seat: 3 };
+  const PICK_TIER = { find: 1, shop: 2, follower: 2, seat: 3 };
   function nearestPick(tier) { let best = null, bd = Infinity; pickables.forEach(o => { if ((PICK_TIER[o.userData.kind] || 0) !== tier || !canPick(o)) return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } }); return [best, bd]; }
   function pickNearest() {
     let [best, bd] = nearestPick(0);
@@ -6909,11 +7003,26 @@
     if (!gp.seen) { gp.seen = true; if (settings.input === 'keyboard' && !settings.chosen) { settings.input = 'gamepad'; applySettings(); } }
     const dz = v => (Math.abs(v) < 0.18 ? 0 : v);
     const ax = dz(pad.axes[0] || 0), ay = dz(pad.axes[1] || 0), rx = dz(pad.axes[2] || 0), ry = dz(pad.axes[3] || 0);
-    if (!talking() && !mapOpen) { gp.mx = -ax; gp.mz = -ay; if (rx || ry) look(rx * dt * 1000, ry * dt * 750 * (settings.gpInvert === false ? -1 : 1) * (settings.invert ? 1 : -1)); }
+    if (!talking() && !mapOpen && !bagOpen) { gp.mx = -ax; gp.mz = -ay; if (rx || ry) look(rx * dt * 1000, ry * dt * 750 * (settings.gpInvert === false ? -1 : 1) * (settings.invert ? 1 : -1)); }
     gp.run = !!(pad.buttons[10] && pad.buttons[10].pressed) || !!(pad.buttons[1] && pad.buttons[1].pressed);
     const now = pad.buttons.map(b => b.pressed);
     const hit = i => now[i] && !gp.prev[i];
     const picker = $('start');
+    if (bagOpen) {
+      // the satchel and the shop counters, worked from the pad: up and down the rows, left and right along a row, A to press, B to close, the bumpers for the tabs
+      const bs = Array.from($('bag').querySelectorAll('button')).filter(q => !q.disabled && q.offsetParent !== null), cur = bs.indexOf(document.activeElement);
+      const rowOf = q => q.closest('.bagrow') || q.closest('.bagtabs') || q.closest('.baghead'), focus = q => { if (q) { q.focus({ preventScroll: true }); q.scrollIntoView({ block: 'nearest' }); } };
+      gp.navT = (gp.navT || 0) - dt; let v = hit(13) ? 1 : hit(12) ? -1 : 0; if (!v && ay && gp.navT <= 0) v = ay > 0 ? 1 : -1; if (v) gp.navT = 0.22; if (!ay) gp.navT = Math.min(gp.navT, 0);
+      if (cur < 0) { if (v || hit(0) || hit(14) || hit(15)) focus(bs.find(q => q.closest('.bagrow')) || bs[0]); }
+      else {
+        if (v) { const r0 = rowOf(bs[cur]); let i = cur; do { i += v; } while (bs[i] && rowOf(bs[i]) === r0); if (bs[i] && v < 0) { const r1 = rowOf(bs[i]); while (bs[i - 1] && rowOf(bs[i - 1]) === r1) i--; } focus(bs[i]); }
+        if (hit(14) && bs[cur - 1]) focus(bs[cur - 1]); if (hit(15) && bs[cur + 1]) focus(bs[cur + 1]);
+        if (hit(0)) bs[cur].click();
+      }
+      if (hit(4) || hit(5)) { const k = CATS.map(c => c[0]), i = (k.indexOf(bagTab) + (hit(5) ? 1 : -1) + k.length) % k.length; bagTab = k[i]; renderBag(); }
+      if (hit(1) || hit(9)) closeBag();
+      gp.prev = now; gp.run = false; return;
+    }
     if (hit(9)) toggleMap();
     if (hit(8)) openSettings();
     if (!picker.hidden) {
@@ -6929,6 +7038,7 @@
       if (hit(0)) wantJump = true;
       if (hit(2)) pickNearest();
       if (hit(12)) setRiding(!riding);
+      if (hit(13)) openBag();
       if (hit(3)) toggleView();
       if (hit(4)) setZoom(zoom - 1); if (hit(5)) setZoom(zoom + 1);
     }
@@ -7132,8 +7242,8 @@
   function setZoom(z) { const nz = clamp(z, 0, ZOOMS.length - 1); if (nz === zoom) return; zoom = nz; flash(['Close view', 'Mid view', 'Wide view'][zoom]); }
   function camTarget() {
     const rh = where === 'village' ? realIn(player.position.x, player.position.z) : null;
-    const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' || rh ? 0.62 : ZOOMS[zoom]) * (1 + (player.scale.x - 1) * 0.5), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
-    const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4 * player.scale.x;
+    const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' || rh ? 0.62 : ZOOMS[zoom]) * (1 + (kid.tall - 1) * 0.5), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
+    const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4 * kid.tall;
     // when ground or a wall is in the way, the camera comes closer; it never climbs, so your view keeps the tilt you chose
     const floorY = where === 'wild' ? (toLocal(tileL, player.position.x, player.position.z)[0] > 30 ? SEA_L : -1000) : where === 'lantern' || where === 'sea' ? SEA_Y : where === 'cairnhold' ? -GORGE.depth : where === 'skyhaven' ? -600 : -0.1; // the lowest the camera may go: water, or the bottom of what you fell into
     const groundOk = p => where === 'in' || p.y >= Math.max(groundAt(p.x, p.z), floorY) + 0.7;
@@ -7214,7 +7324,7 @@
   function applySettings() {
     const kb = settings.binds, L = keyLabel, kbd = t => `<kbd>${t}</kbd>`;
     const line = settings.input === 'gamepad'
-      ? `${kbd('Left stick')} walk &middot; ${kbd('Right stick')} look &middot; ${kbd('B')} run &middot; ${kbd('A')} jump &middot; ${kbd('X')} pick up / talk / sit &middot; ${kbd('D-pad up')} ride &middot; ${kbd('Y')} flip view &middot; ${kbd('LB')}${kbd('RB')} zoom &middot; ${kbd('Start')} map &middot; ${kbd('Select')} settings`
+      ? `${kbd('Left stick')} walk &middot; ${kbd('Right stick')} look &middot; ${kbd('B')} run &middot; ${kbd('A')} jump &middot; ${kbd('X')} pick up / talk / sit &middot; ${kbd('D-pad up')} ride &middot; ${kbd('D-pad down')} satchel &middot; ${kbd('Y')} flip view &middot; ${kbd('LB')}${kbd('RB')} zoom &middot; ${kbd('Start')} map &middot; ${kbd('Select')} settings`
       : settings.input === 'touch' ? `Drag the picture to look. Slide the round pad to walk; the buttons run, jump, pick up and open the map.`
       : `${kbd(L(kb.f))}${kbd(L(kb.l))}${kbd(L(kb.b))}${kbd(L(kb.r))} walk &middot; ${kbd('mouse')} look${settings.invert ? ' (inverted)' : ''} &middot; ${kbd(L(kb.run))} run &middot; ${kbd(L(kb.jump))} jump &middot; ${kbd(L(kb.pick))} pick up / talk / sit &middot; ${kbd(L(kb.ride))} ride &middot; ${kbd(L(kb.view))} flip view &middot; ${kbd(L(kb.zoom))} / ${kbd('wheel')} zoom &middot; ${kbd(L(kb.bag))} satchel &middot; ${kbd(L(kb.map))} map &middot; ${kbd(L(kb.settings))} settings &middot; ${kbd(L(kb.keys))} hide this<br><span id="lockhint">Click the game to grab the mouse, ${kbd('Esc')} to let go.</span>`;
     keysEl.innerHTML = line; keysEl.classList.toggle('gone', !settings.showKeys); keysShown = settings.showKeys ? 0 : 99;
@@ -7269,7 +7379,7 @@
       if (grade > 0.25 && running) stamina = Math.max(0, stamina - dt * 20 * grade);
       const swimming = inRiver(player.position.x, player.position.z);
       if (riding && (swimming || where === 'in')) setRiding(false);
-      const speed = riding ? (mz > 0.1 ? (running ? 25 : 17.5) * Math.pow(slopeK, running ? 1.3 : 1.6) : 0) : (swimming ? 3.6 : running ? 14 : 7.5) * (1 + (player.scale.x - 1) * 0.3) * mag * (mz < 0 && Math.abs(mx) < 0.2 ? 0.65 : 1) * slopeK;
+      const speed = riding ? (mz > 0.1 ? (running ? 25 : 17.5) * Math.pow(slopeK, running ? 1.3 : 1.6) : 0) : (swimming ? 3.6 : running ? 14 : 7.5) * (1 + (kid.tall - 1) * 0.3) * mag * (mz < 0 && Math.abs(mx) < 0.2 ? 0.65 : 1) * slopeK;
       targetV.copy(fwd).multiplyScalar(speed);
       const face = view === 'front' ? bodyYaw : dir;
       if (riding) { bodyYaw = dir; if (view !== 'front') camYaw += wrap(bodyYaw - camYaw) * Math.min(1, dt * 2.2); } else bodyYaw += wrap(face - bodyYaw) * Math.min(1, dt * 10);
@@ -7476,11 +7586,11 @@
       beetle.position.y = groundAt(beetle.position.x, beetle.position.z);
     }
 
-    econTick(dt, t);
+    econTick(dt, t); parkedTick(dt);
     pickables.forEach(o => {
       const f = o.userData.fall;
       if (f && f.t < 1) { f.t = Math.min(1, f.t + dt * 1.2); const kk = Math.max(0, f.t); o.position.lerpVectors(f.from, f.to, kk); o.position.y += Math.sin(kk * Math.PI) * 3.5; o.rotation.x += dt * 7; }
-      if (canPick(o) && !reduce) { const near = flatDist(o) <= REACH; o.scale.setScalar(near ? 1.15 + Math.sin(t * 6) * 0.06 : (o.userData.kind === 'fresh' ? 1.2 : 1)); }
+      if (o.userData.kind !== 'follower' && canPick(o) && !reduce) { const near = flatDist(o) <= REACH; o.scale.setScalar(near ? 1.15 + Math.sin(t * 6) * 0.06 : (o.userData.kind === 'fresh' ? 1.2 : 1)); }
     });
     for (let i = flying.length - 1; i >= 0; i--) {
       const f = flying[i]; f.t += dt * 2.6;
@@ -7789,6 +7899,19 @@
     { const cm = mapSvgEl.querySelector('#capmark'), go = () => { if (!gameStarted) { $('maphint').textContent = 'Start or continue the game first; then you can go to Hearthmoor from this map.'; return; } closeMap(); const [x, z] = toWorld(frameH, -474, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor, the capital.'); }; if (cm) { cm.addEventListener('click', go); cm.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); } }
     drawPanel();
   }
+  // the tester's ways round: straight to any town with no lesson begun, and everything in the satchel
+  function masterGo(i) {
+    if (!master) return;
+    const run = () => { if (fading) { setTimeout(run, 300); return; }
+      if (where === 'in') { openMap(); $('maphint').textContent = 'Step outside first, then travel.'; return; }
+      closeMap(); phase = 'free'; pendingStart = null; setTasks([]); hint(''); if (riding) setRiding(false); if (sitting) standUp();
+      if (i === 'city') { const [x, z] = toWorld(frameH, -474, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor.'); }
+      else if (i === 'glider') startFlight();
+      else if (i === 0) fadeTo('Thistledown Hollow', () => { moveCompany(curScene(), scene); where = 'village'; player.position.set(0, 0, 17); py = 0; vy = 0; bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 15); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }, () => hint('Thistledown Hollow.'));
+      else [null, goToOrchards, goToFernwater, goToCairn, goToCogsworth, goToEmberdeep, goToLantern, goToSky][i](); };
+    if (!gameStarted) { hideTitle(); continueGame(); setTimeout(run, 800); } else run();
+  }
+  function masterGive() { if (!master) return; bikeOwned = true; save.bike = true; kid.satchel.visible = true; Object.keys(ITEMS).forEach(id => { if (!has(id)) inv()[id] = 1; }); if (!save.beetle && gameStarted && where !== 'in') { beetle = makeBeetle(); beetleName = save.beetle = 'Rhino'; beetle.userData.follow = true; curScene().add(beetle); beetle.position.set(player.position.x + 2, player.position.y, player.position.z + 2); } setCoins(coins + 200); persist(); $('maphint').textContent = 'Given: the bicycle, 200 coins and one of everything. Open the satchel to see.'; }
   function drawPanel() {
     const r = REGIONS[selRegion]; mapPanel.innerHTML = '';
     const h2 = document.createElement('h2'); h2.textContent = r.name; mapPanel.appendChild(h2);
@@ -7799,6 +7922,11 @@
       const doneN = r.lessons.filter(([, k]) => isDone(k)).length; if (doneN) { const dn = document.createElement('div'); dn.className = 'math'; dn.textContent = `${doneN} of ${r.lessons.length} finished`; mapPanel.appendChild(dn); }
       mapPanel.appendChild(list);
     } else { const sn = document.createElement('div'); sn.className = 'soon'; sn.textContent = 'Not built yet. The road will reach it.'; mapPanel.appendChild(sn); }
+    if (master) {
+      const t = document.createElement('div'); t.className = 'here'; t.innerHTML = '<b>Tester</b> (this account only)<div class="lessons" style="margin-top:6px"></div>'; const box = t.lastChild;
+      [[`Go to ${r.name}, no lesson`, () => masterGo(selRegion)], ['Go to Hearthmoor', () => masterGo('city')], ['Fly the glider', () => masterGo('glider')], ['Bicycle, beetle, 200 coins and one of everything', () => masterGive()]].forEach(([label, fn]) => { const b = document.createElement('button'); b.className = 'btn small'; b.textContent = label; b.onclick = fn; box.appendChild(b); });
+      mapPanel.appendChild(t);
+    }
     if (gameStarted) {
       const here = document.createElement('div'); here.className = 'here';
       const wr = regionOf(); const key = wr === 'orchards' ? 'orchards' : wr === 'village' ? 'village' : wr === 'fernwater' ? 'fernwater' : wr === 'cairnhold' ? 'cairnhold' : wr === 'cogsworth' ? 'cogsworth' : wr === 'emberdeep' ? 'emberdeep' : wr === 'lantern' ? 'lantern' : wr === 'skyhaven' ? 'skyhaven' : null;
@@ -7825,7 +7953,7 @@
   function continueGame() {
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false;
     kid.satchel.visible = save.done.length > 0; setCoins(save.coins || 0); phase = 'free'; bikeOwned = !!save.bike || save.done.includes('cog-10');
-    if (save.beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(save.pos[0] - 2, 0, save.pos[2] - 2); }
+    if (save.beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(save.pos[0] - 2, 0, save.pos[2] - 2); restoreCompanion(); }
     if (save.lay !== 2) { if (save.where === 'village' && Math.hypot(save.pos[0], save.pos[2]) > R) { save.pos = [0, 0, 17]; save.yaw = 0; } save.lay = 2; }   // the Hollow was smaller once
     const place = () => { player.position.set(save.pos[0], 0, save.pos[2]); py = 0; bodyYaw = camYaw = save.yaw || 0; player.rotation.y = bodyYaw; if (beetle) beetle.position.set(player.position.x - 2, 0, player.position.z - 2); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); };
     if (save.where === 'road') { goToRoad(); }
@@ -7849,7 +7977,7 @@
   window.addEventListener('keydown', e => { if (!$('settings').hidden || bagOpen) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {
-    startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; save.started = true; if (save.beetle && !beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(-3, 0, 8); } if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
+    startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; save.started = true; if (save.beetle && !beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(-3, 0, 8); restoreCompanion(); } if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
     if (key === 'lesson-2') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(1); setTimeout(startLesson2, 500); }
     else if (key === 'lesson-3') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(3); setTimeout(startLesson3, 500); }
     else if (key === 'lesson-4') { placeInShop(); kid.satchel.visible = true; coinsAtLeast(6); setTimeout(startLesson4, 500); }
@@ -7894,23 +8022,28 @@
     else { placeInShop(); player.rotation.y = bodyYaw; setTimeout(start, 500); }
   }
   // ---------- the title screen and the making of your elf ----------
-  const LOOKS = { skin: ['#f6dcc0', '#f0c9a0', '#d9a273', '#b07a4f', '#7d5234', '#573823'], hair: ['#8a4b22', '#2a2420', '#c9a14a', '#b5432a', '#e9e2d0', '#6a4a8a'], hat: ['#b0472f', '#2f6f9a', '#6a4a8a', '#d99a2b', '#3f7a44', '#3a3a3a'], tunic: ['#6f9a3a', '#3f7a8a', '#9a5a3a', '#7a5aa0', '#c4a03a', '#b05070'] };
-  const DEFAULT_LOOK = { skin: LOOKS.skin[1], hair: LOOKS.hair[0], hat: LOOKS.hat[0], tunic: LOOKS.tunic[0], height: 1, face: 0 };
-  const FACES = ['Cheerful', 'Wide-eyed', 'Sleepy', 'Determined'], heightWord = h => h < 1.2 ? 'a little one' : h < 1.6 ? 'a child' : h < 2.05 ? 'a youth' : 'grown';
-  function applyLook(look) { const L = Object.assign({}, DEFAULT_LOOK, look || {}); Object.keys(kid.mats).forEach(k => { if (/^#[0-9a-f]{6}$/i.test(L[k])) kid.mats[k].color.set(L[k]); }); player.scale.setScalar(clamp(+L.height || 1, 1, 2.45)); kid.setFace(L.face); kid.setHat(save.hatStyle || 'cap'); }
+  const LOOKS = { skin: ['#f6dcc0', '#f0c9a0', '#e3b184', '#d9a273', '#b07a4f', '#8f5f3c', '#7d5234', '#573823', '#3d2618', '#cfe0b8'], hair: ['#8a4b22', '#2a2420', '#5a3a1e', '#c9a14a', '#e8d27a', '#b5432a', '#d8702a', '#e9e2d0', '#9a9a9a', '#6a4a8a', '#3a6ea5', '#c95fa0'], hat: ['#b0472f', '#2f6f9a', '#6a4a8a', '#d99a2b', '#3f7a44', '#3a3a3a', '#c95fa0', '#2e8a8a', '#8a5a2b', '#e9e2d0', '#7a1f2a', '#1f3a5a'], tunic: ['#6f9a3a', '#3f7a8a', '#9a5a3a', '#7a5aa0', '#c4a03a', '#b05070', '#3a5fa8', '#b53a3a', '#3e7a3a', '#e08a3a', '#4a4a52', '#e9e2d0', '#2e8a8a', '#d98aa8'] };
+  const DEFAULT_LOOK = { skin: LOOKS.skin[1], hair: LOOKS.hair[0], hat: LOOKS.hat[0], tunic: LOOKS.tunic[0], height: 1, face: 0, sex: 'boy', hairStyle: 'short', hatOn: true };
+  const HAIRS = [['short', 'Short'], ['long', 'Long'], ['tails', 'Pigtails'], ['braid', 'Braid'], ['bun', 'Bun'], ['curly', 'Curly'], ['bald', 'None']];
+  const FACES = ['Cheerful', 'Wide-eyed', 'Sleepy', 'Determined', 'Gentle', 'Mischief', 'Grumpy', 'Freckled'], heightWord = h => h < 1.2 ? 'a little one' : h < 1.6 ? 'a child' : h < 2.05 ? 'a youth' : 'grown';
+  function applyLook(look) { const L = Object.assign({}, DEFAULT_LOOK, look || {}); Object.keys(kid.mats).forEach(k => { if (/^#[0-9a-f]{6}$/i.test(L[k])) kid.mats[k].color.set(L[k]); }); kid.setBuild(L.height, L.sex === 'girl'); kid.setHair(L.hairStyle || 'short'); kid.setFace(L.face); kid.setHat(save.hatStyle || (L.hatOn === false ? 'none' : 'cap')); }
   // the creator's other two choices: how tall (7 inches is the smallest child; a grown elf is about 17) and which face
-  function syncCreator() { const h = clamp(+draft.height || 1, 1, 2.45); $('elfheight').value = h; $('elfheightval').textContent = `${Math.round(7 * h)} inches · ${heightWord(h)}`; const box = $('elffaces'); box.innerHTML = ''; FACES.forEach((n, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft.face | 0) === i)); b.onclick = () => { draft.face = i; applyLook(draft); syncCreator(); }; box.appendChild(b); }); }
+  function syncCreator() { const h = clamp(+draft.height || 1, 1, 2.45); $('elfheight').value = h; $('elfheightval').textContent = `${Math.round(7 * h)} inches · ${heightWord(h)}`; const box = $('elffaces'); box.innerHTML = ''; FACES.forEach((n, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft.face | 0) === i)); b.onclick = () => { draft.face = i; applyLook(draft); syncCreator(); }; box.appendChild(b); });
+    const pick = (id, list, key) => { const bx = $(id); bx.innerHTML = ''; list.forEach(([v, n]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft[key] === undefined ? list[0][0] : draft[key]) === v)); b.onclick = () => { draft[key] = v; applyLook(draft); syncCreator(); }; bx.appendChild(b); }); };
+    pick('elfsex', [['boy', 'Boy (tunic)'], ['girl', 'Girl (dress)']], 'sex'); pick('elfhair', HAIRS, 'hairStyle'); pick('elfhat', [[true, 'Pointed cap'], [false, 'No hat']], 'hatOn'); }
   $('elfheight').addEventListener('input', e => { if (!draft) return; draft.height = +e.target.value; applyLook(draft); syncCreator(); });
-  const titleEl = $('title'), titleMain = $('titlemain'), creatorEl = $('creator'); let draft = null, newArmed = false;
+  const titleEl = $('title'), titleMain = $('titlemain'), creatorEl = $('creator'); let draft = null, newArmed = false, editLook = false;
   $('titleacct').appendChild($('account'));   // signing in belongs on the title screen
-  function refreshTitle() { const c = $('tcontinue'); c.hidden = !save.started; c.textContent = save.name ? `Continue as ${save.name}` : 'Continue'; }
+  function refreshTitle() { const c = $('tcontinue'); c.hidden = !save.started; c.textContent = save.name ? `Continue as ${save.name}` : 'Continue'; $('tlook').hidden = !save.started; }
   function showTitle() { titleUp = true; creatorUp = false; titleEl.hidden = false; titleMain.hidden = false; creatorEl.hidden = true; startEl.hidden = true; document.body.classList.add('titled'); refreshTitle(); applyLook(save.look); player.position.set(0, 0, 6.5); player.rotation.y = Math.PI; }
-  function hideTitle() { titleUp = false; creatorUp = false; titleEl.hidden = true; document.body.classList.remove('titled'); }
+  function hideTitle() { critters.forEach(c => { if (c._hid) { c.obj.visible = true; c._hid = false; } }); titleUp = false; creatorUp = false; titleEl.hidden = true; document.body.classList.remove('titled'); }
   // behind the title the camera drifts round the Hollow; in the creator it stands in front of your elf while the elf slowly turns
   function titleCam(t) {
-    if (creatorUp) { player.position.set(6, 0, 46); player.rotation.y = t * 0.55; kid.hd.rotation.set(0, 0, 0); const w = window.innerWidth < 640, kf = 0.45 + 0.55 * player.scale.x; camera.position.set(6 + (w ? 0 : -2.6 * kf), (w ? 3.0 : 2.6) * kf, 46 + (w ? 13 : 8.5) * kf); camera.lookAt(6 + (w ? 0 : -2.6 * kf), (w ? -3.6 : 1.9) * kf, 46);
+    if (creatorUp) { player.position.set(6, 0, 46); player.rotation.y = t * 0.55; kid.hd.rotation.set(0, 0, 0); const w = window.innerWidth < 640, kf = 0.45 + 0.55 * kid.tall; camera.position.set(6 + (w ? 0 : -2.6 * kf), (w ? 3.0 : 2.6) * kf, 46 + (w ? 13 : 8.5) * kf); camera.lookAt(6 + (w ? 0 : -2.6 * kf), (w ? -3.6 : 1.9) * kf, 46);
       critters.forEach(c => { if (c.kind === 'dog' && Math.hypot(c.obj.position.x - 6, c.obj.position.z - 46) < 16) { c.state = 'wander'; c.cool = 30; c.timer = 4; c.target = new THREE.Vector3(c.obj.position.x < 6 ? -24 : 30, 0, 46 + (c.obj.position.z < 46 ? -26 : 26)); } });   // the dogs keep out of the picture
+      critters.forEach(c => { if (c.obj && c.obj.parent === scene) { const near = Math.hypot(c.obj.position.x - 6, c.obj.position.z - 46) < 18; if (near && c.obj.visible) { c.obj.visible = false; c._hid = true; } else if (!near && c._hid) { c.obj.visible = true; c._hid = false; } } });   // and nothing else wanders into it
       return; }
+    critters.forEach(c => { if (c._hid) { c.obj.visible = true; c._hid = false; } });
     const a = t * 0.045 + 0.6; camera.position.set(Math.sin(a) * 62, 22 + Math.sin(t * 0.07) * 3, 46 + Math.cos(a) * 62); camera.lookAt(0, 7, 44);
   }
   function drawSwatches() { creatorEl.querySelectorAll('.sw').forEach(row => { const k = row.dataset.k; row.innerHTML = ''; LOOKS[k].forEach((hex, i) => { const b = document.createElement('button'); b.type = 'button'; b.style.background = hex; b.setAttribute('aria-label', `${k} colour ${i + 1}`); b.setAttribute('aria-pressed', String(draft[k] === hex)); b.onclick = () => { draft[k] = hex; applyLook(draft); drawSwatches(); }; row.appendChild(b); }); }); }
@@ -7919,10 +8052,12 @@
   $('tlessons').addEventListener('click', () => { hideTitle(); startEl.hidden = false; drawMap(); });
   $('maptitle').addEventListener('click', () => { if (!gameStarted) showTitle(); });
   $('tsettings').addEventListener('click', openSettings);
-  $('tnew').addEventListener('click', () => { creatorUp = true; newArmed = false; titleMain.hidden = true; creatorEl.hidden = false; draft = Object.assign({}, DEFAULT_LOOK, hasProgress() ? {} : save.look || {}); $('elfname').value = hasProgress() ? '' : save.name || ''; $('creatorwarn').hidden = true; $('creatorgo').textContent = 'Begin'; applyLook(draft); drawSwatches(); syncCreator(); });
+  $('tlook').addEventListener('click', () => { creatorUp = true; editLook = true; newArmed = false; titleMain.hidden = true; creatorEl.hidden = false; draft = Object.assign({}, DEFAULT_LOOK, save.look || {}); $('elfname').value = save.name || ''; $('creatorwarn').hidden = true; $('creatorgo').textContent = 'Save'; applyLook(draft); drawSwatches(); syncCreator(); });
+  $('tnew').addEventListener('click', () => { creatorUp = true; editLook = false; newArmed = false; titleMain.hidden = true; creatorEl.hidden = false; draft = Object.assign({}, DEFAULT_LOOK, hasProgress() ? {} : save.look || {}); $('elfname').value = hasProgress() ? '' : save.name || ''; $('creatorwarn').hidden = true; $('creatorgo').textContent = 'Begin'; applyLook(draft); drawSwatches(); syncCreator(); });
   $('creatorback').addEventListener('click', () => showTitle());
   $('creatorgo').addEventListener('click', () => {
     const name = $('elfname').value.replace(/\s+/g, ' ').trim().slice(0, 16) || 'Elfling';
+    if (editLook) { save.name = name; save.look = draft; persist(); showTitle(); return; }   // the same elf, a new look: nothing else changes
     if (hasProgress() && !newArmed) { newArmed = true; const w = $('creatorwarn'); w.hidden = false; w.textContent = `This starts a brand new elf. ${save.name || 'Your current elf'}, with ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished and ${save.coins || 0} acorn coins, will be gone for good. Press again if you are sure.`; $('creatorgo').textContent = 'Yes, start over'; return; }
     if (hasProgress()) { clearSave(); save.name = name; save.look = draft; persist(); const go = () => { location.hash = 'lesson-1'; location.reload(); }; if (session) { cloudDirty = true; cloudPush().finally(go); } else go(); return; }
     save.name = name; save.look = draft; persist(); hideTitle(); launch('lesson-1');

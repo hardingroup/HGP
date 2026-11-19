@@ -106,6 +106,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - The four homes in the Hollow are grown-elf houses. Outside they are 26 by 18.5 units with a door 8.9 tall (`HOME_S`). Inside each is 64 by 32 (`familyHome`): the living room with the hearth and the owner's things, and a wing of three rooms through their own doorways: the kitchen, the child's room and the parents' room. Only the child's room has child-sized furniture. Rooms can now have inner walls (`it.boxes`), and the camera stays in the room you are in. There is no upstairs yet.
 - The scale pass: every walk-in building in the other towns, the potting shed and the Ferry Office are now sized for grown elves (`growBuilding`). Each is about 1.7 times as tall, a little wider, and deeper away from the street; the front door stays where it was, so streets and lessons are untouched. Doors are 8 to 9.5 units tall. The way out of every room is as tall as its ceiling allows, up to 9.
 - Still at the old scale: the furniture and room sizes inside the shops (the lessons are set out around them), and the Village Stores, which is a hollow stump 22 across and 13 high with a 6-unit door.
+- **The river sits in the lowest ground.** The Fern used to be drawn at one level whatever the land did, so wherever the country dipped it ran along a raised causeway with a sheer drop (15 to 27 units) ninety units back from each bank; drawn on the 4-unit land grid that drop looked like terraces, and trees on its edge hung in the air. Now land within 330 units of the river is never lower than the bank and comes up to it gently (steepest slope in the whole corridor: 0.46). The bank top is 1.2 above the bed's datum instead of 0.35, so the waterline falls on the steep part of the bank and is a clean line instead of a sawtooth. Hearthmoor's own shore stays level with the quay.
 - Animals that get stuck pick a new direction. They are only ever moved to a clear spot when more than 140 units from you, so you never see one jump.
 
 ## Things, coins and trade
@@ -123,7 +124,17 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - Lesson 2 no longer touches your purse: the jar money is Bramblewick's coin plus the two you earn at the stall, so coins you have made yourself are safe.
 - Saved with everything else, locally and in the cloud. When the same lessons are done on both sides, the newer save now wins, so spent coins stay spent.
 - On a short phone screen held sideways the control buttons used to be pushed off the bottom while the help panel showed; they now always stay on screen.
-- Not built yet: seeds cannot be planted, there is no furniture, shops never run out, and the satchel screen cannot be worked from a controller (mouse or touch only).
+- On a controller: D-pad down opens the satchel; D-pad or left stick moves the highlight (up and down by row, left and right along a row), A presses, LB and RB change tab, B closes. X at a bell opens the shop the same way.
+- Not built yet: seeds cannot be planted, there is no furniture, and shops never run out.
+
+## Companions
+
+- Walk up to your beetle and press the pick-up key (the big button says **Speak**) to give it an order: **Stay here**, **Go home**, **Open the baskets**, or, once it is waiting, **Follow me**.
+- **Stay**: it waits exactly where it stands, in whatever town, room or stretch of road that is, for as long as you like. It is still there after you save and come back.
+- **Go home**: in the Hollow it walks to the compost heap where you found the grub. Anywhere else it walks off, and is at the heap the next time you are in the Hollow.
+- **Carry**: its baskets hold 20, but only while it walks with you. Leave it behind and your satchel is 20 smaller until you fetch it.
+- **Whistle** (in the satchel, when it is not with you) calls it if it is waiting in the same place as you. From anywhere else it cannot hear; the satchel says where it is.
+- Inside the code a companion that follows is moved by everything that moves you; one that waits is parked in its place and nothing touches it. Only the beetle exists so far, but the orders are not written for it alone.
 
 ## Title screen and your elf
 
@@ -131,6 +142,23 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - New game opens the creator: a name (up to 16 characters, "Elfling" if left blank) and colours for skin, hair, hat and tunic, shown on your elf as it turns. Begin starts the first lesson in Bramblewick's shop.
 - One elf per player. If there is already progress, Begin warns what will be lost and must be pressed a second time; it then wipes the save (and the cloud copy when signed in) and reloads into the first lesson.
 - The name and colours live in the save as `name` and `look`, and in the cloud inside `save_blob`. The `display_name` column in `game_players` is not written yet; multiplayer will need it.
+
+### Your elf, in more detail
+
+- **Growing up is not scaling up.** A taller elf is slimmer for its height (width grows at two thirds the rate of height), has longer legs, arms and body, and a head that is smaller for its body. The shoulders close the top of the tunic and there is a neck, so you can no longer see down into the collar.
+- **Boy or girl**: a tunic, or a dress that is fuller in the skirt and drawn in at the waist. Either can have any hair, face or colour.
+- **Hair**: short, long, pigtails, braid, bun, curly, or none.
+- **Faces**: eight (cheerful, wide-eyed, sleepy, determined, gentle, mischief, grumpy, freckled).
+- **Colours**: 10 skins, 12 hair colours, 12 hat colours, 14 tunic colours.
+- **The pointed cap** is pulled down onto the head, with a brim band just above the eyebrows; it can also be left off.
+- **Change how my elf looks** on the title screen reopens the creator for the elf you already have. Saving changes only the look and the name; lessons, coins and the satchel are untouched.
+- While the creator is open, animals near the elf are hidden so nothing walks through the picture.
+
+### The master account
+
+- One account is flagged in the database table `game_masters` (row-level security on; players can read only their own row and cannot write). `game_load_progress` returns `master: true` for it. The flag lives only in memory for the signed-in session and is never written to the device, so signing out removes it.
+- For that account the map panel shows a **Tester** block: go to the selected town with no lesson started, go to Hearthmoor, fly the glider, and "bicycle, 200 coins and one of everything". The satchel has no limit.
+- Everyone else still reaches a town by walking or by starting one of its lessons. Locking the lesson list to lessons you have earned is not built yet.
 
 ## Phones and tablets
 
@@ -166,7 +194,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 | Space jump | A | Jump button |
 | E pick up, talk, sit | X | Pick up button |
 | R ride / get off the bicycle (once you have one) | D-pad up | Ride button |
-| I open the satchel | — | Bag button |
+| I open the satchel | D-pad down | Bag button |
 | V switch between the back view and the front view | Y | View button |
 | Z or mouse wheel: close, mid or wide camera | Bumpers | — |
 | M open the world map | Start | Map button |
