@@ -72,8 +72,8 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - In the Hollow, straight-sided things (garden beds, rail fences, the potting shed) are box colliders in `hollowBoxes`: you slide along them and cannot pass through. A box with an `id` is a building entered at its door.
 - Fernsby's nursery is a 32 by 28 unit yard with its beds, cold frame, barrel and bench spread apart, a solid rail fence on three sides, and a potting shed you can walk into.
 - The spiral stair round Aldric's tree is climbable: 28 steps wind once round outside the platform and land on its rim, 21 units up. The stair passes over itself, so the game picks the step nearest your own height. Above 2.6 units you are clear of furniture and fences; the trunk still blocks. Stepping off is a real fall.
-- Thistledown Hollow is 128 by 176 units inside its fence (it was 88 by 122). The street runs 138 units from the yard to the gate. The gate stands where it always did in the wider world; the Hollow grew north and sideways. A save made in the smaller Hollow, outdoors, starts again in the yard.
-- Each of the four who work in the Hollow has a cottage with a path from the street: Bramblewick (north-east of the Stores), Marigold Fernsby (north of her nursery), Aldric Bough (south of the woodshop) and Fen Dewberry (west of her stall). They are listed in `HOMES`; each is a 14 by 10 unit cottage outside and a 26 by 20 unit room inside, with a hearth, bed, table and its owner's things. Nobody is at home: they are all at work.
+- Thistledown Hollow is 354 by 208 units inside its fence (it was 128 by 176). The main street still runs 138 units from the yard to the gate, and the gate stands where it always did in the wider world; the Hollow grew east for Lantern Lane and a little north. Everything about the fence, the ground, the grass and the map inset is worked out from `FENCE`.
+- Each of the four who work in the Hollow has a house on Lantern Lane, away from the workplaces (see **Lantern Lane** below). They are listed in `HOMES`. Nobody is at home: they are all at work.
 - The Village Stores works as a room: the door is shut until you come near, walking through it fades you in or out, and it shuts behind you. The inside is still built at the same spot as the stump, so the ten Hollow lessons did not have to move.
 - Doors inside rooms now swing outward, so the leaf never lands on furniture. The potting shed is 24 by 18 units inside.
 - Every building is a pocket room again, Bough's House included. The door of a pocket building unlatches a crack with lamplight in the gap, then you fade in. `realHome()` (a room built inside its own walls, no fade) is still in the file, unused, if a see-through house is wanted later.
@@ -103,9 +103,9 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - The world is built for grown elves; the player's 7-inch elf is a small child in it. Grown elves stand about 7.5 units tall.
 - Character creator: besides name and colours you now choose a face (Cheerful, Wide-eyed, Sleepy, Determined) and a height, from 7 inches (a little one) to 17 inches (grown). Height is `look.height`, a scale from 1 to 2.45 applied to the whole elf, the bike included; the camera sits higher and further back for taller elves, and they walk a little faster. Face is `look.face`.
 - Hats on the townsfolk (`makeElfNPC`) are pulled down onto the head, and Marigold's sun hat has a crown.
-- The four homes in the Hollow are grown-elf houses. Outside they are 26 by 18.5 units with a door 8.9 tall (`HOME_S`). Inside each is 64 by 32 and 20 high (`familyHome`), on two floors:
-  - **Living room** (east, 42 wide, open to the roof): the hearth and the owner's things.
-  - **Kitchen** (the whole ground floor of the west wing, 22 by 28): a range with a fire, a long counter, a table with four chairs and room to walk right round it, and a pantry corner under the stair. Two doorways lead in from the living room.
+- The four homes in the Hollow are grown-elf houses. Outside they are 52 by 32 units and two storeys (`buildHouse`). Inside each is 76 by 40 and 20 high (`familyHome`), on two floors:
+  - **The hall** (east, 54 by 40, open to the roof): the hearth with a stone chimney breast, the owner's things, two roof trusses, a wheel of candles, a settle facing the fire (seats two), a round game table with three stools, a tall clock, cloaks on pegs, pictures and wall hangings. Eight or ten players can stand about in it without crowding.
+  - **Kitchen** (the whole ground floor of the west wing, 22 by 36): a range with a fire, a long counter, a table with four chairs and room to walk right round it, and a pantry corner under the stair. Two doorways lead in from the hall.
   - **Stair** along the south wall of the wing: fourteen steps up to a landing in the south-west corner. It is closed off from the kitchen by a panel, which carries the handrail upstairs.
   - **Upstairs** (10 up): the child's room at the head of the stair (small bed, small table and stool, toy chest, toys) and through a doorway the parents' room (big bed, wardrobe, chest, chair).
   - How it works: a room can now give its own floor height (`floorAt`) and say which floor a wall, rail or piece of furniture belongs to (`lv`). You are on the upper floor once you have climbed to it; rails and furniture only block on their own floor, and a seat can only be picked from its own floor. Other buildings have no upstairs yet.
@@ -115,6 +115,16 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - Paths in the Hollow each lie a hair higher than the last, so where two cross nothing flickers.
 - The two barrels outside the Village Stores stand clear of the stump's wall.
 - Animals that get stuck pick a new direction. They are only ever moved to a clear spot when more than 140 units from you, so you never see one jump.
+
+## Lantern Lane, the gardens, and night
+
+- **Homes are apart from work.** Lantern Lane leaves the main street just south of the Stores and runs 262 units east to a round with a tall lamp in a ring of flowers. Two houses stand on each side, every front door facing the lane: 1 Bramblewick and 3 Bough on the north side, 2 Fernsby and 4 Dewberry on the south. Marigold no longer lives behind her own potting shed.
+- **Each house has a plot** 80 wide and 72 deep inside a white picket fence. In front: a gate under a rose arch with a lantern in it, a letterbox with the house number, a path to a porch, flower beds under the windows, two round bushes and a blossom tree. Behind: a big shade tree, a vegetable patch, a washing line, a bench you can sit on, and one thing of the family's own (Bramblewick's beehive, the Fernsbys' cold frame, Bough's woodpile and chopping block, the Dewberrys' berry bushes). A gate at each side of the house leads through to the back garden. The fences are solid.
+- **The green.** Where Bramblewick's old cottage stood there is now a well with a roof and two benches, and trees stand along the north fence and in the meadow south of the gardens. The lessons, shops and teachers are where they were, with the old house plots opened up around them; the science and reading things that were set out near a house found themselves a clear spot.
+- **Day and night.** A day is 24 minutes, the same for everyone (it is read off the real clock, so players who are on together see the same sky): about 16 minutes of daylight, a short dusk, 6 minutes of night and a short dawn. Night is dim and blue, never black. It reaches every outdoor town and the open land; rooms indoors are lamplit as before, Skyhaven above the cloud stays bright, and Lanternreach is still always night.
+- **Lamps.** Ten iron street lamps stand along the lane, three on the main street and one tall one at the round. By day each is only a post. After dark the lantern glows and throws a pool of light on the ground, the lanterns in the garden arches and by the front doors come on, and every window on the lane shines. A line of text tells you when night is falling and when the sun comes up.
+- The paths have their grain at any length (the dirt used to be one picture stretched the whole way down the street).
+- How it works: `LANE` and `HOMES` place everything; a house that faces north is the same house turned half round (`h.sg` turns a spot on its own plan into a spot in the Hollow). `bake(group)` welds a finished group into one mesh for each material, so a house with its garden is about ten draws instead of five hundred. `clockNight()` gives the night from the clock, `setNight` now also dims each town's own lights, and anything that should light up after dark adds a function to `NIGHT_GLOW`. The street lamps add no real lights (those are costly on a phone): the glow is a picture laid on the ground.
 
 ## Things, coins and trade
 
@@ -217,7 +227,7 @@ Fen Dewberry teaches it, at her stall. The eight lessons follow the order the sc
 ### The master account
 
 - One account is flagged in the database table `game_masters` (row-level security on; players can read only their own row and cannot write). `game_load_progress` returns `master: true` for it. The flag lives only in memory for the signed-in session and is never written to the device, so signing out removes it.
-- For that account the map panel shows a **Tester** block: go to the selected town with no lesson started, go to Hearthmoor, fly the glider, and "bicycle, 200 coins and one of everything". The satchel has no limit.
+- For that account the map panel shows a **Tester** block: go to the selected town with no lesson started, go to Hearthmoor, fly the glider, "bicycle, 200 coins and one of everything", and **Make it night**, **Make it day**, **Let the clock run**. The satchel has no limit.
 - Everyone else reaches a town by walking, cycling or the ferry, and starts lessons with the teacher there.
 
 ## Phones and tablets
