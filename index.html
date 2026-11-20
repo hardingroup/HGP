@@ -5274,7 +5274,7 @@
         if (Math.hypot(tx - ox, tz - oz) > 30) g.position.set(tx, ty, tz); else { const kx = Math.min(1, dt * 22); g.position.x += (tx - ox) * kx; g.position.y += (ty - g.position.y) * kx; g.position.z += (tz - oz) * kx; }
         { let dr = tr - g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); g.rotation.y += dr * Math.min(1, dt * 16); }
         p.sp += (Math.hypot(g.position.x - ox, g.position.z - oz) / Math.max(dt, 0.001) - p.sp) * Math.min(1, dt * 8);
-        const amp = p.sit ? 0 : Math.min(1, p.sp / 5), sw = Math.sin(t * (7 + Math.min(p.sp, 14) * 0.35) + p.k.tall * 9) * 0.6 * amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; });
+        p.ph = (p.ph || 0) + dt * (7 + Math.min(p.sp, 14) * 0.3); p.amp = (p.amp || 0) + ((p.sit ? 0 : Math.min(1, p.sp / 4)) - (p.amp || 0)) * Math.min(1, dt * 6); const sw = Math.sin(p.ph) * 0.6 * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; });
     }
     return { tick, hear, peers, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
       note: () => state === 'on' ? `Connected. ${peers.size ? peers.size + (peers.size === 1 ? ' other elf is' : ' other elves are') + ' in this place with you.' : 'Nobody else is in this place just now.'}` : state === 'connecting' ? 'Connecting…' : state === 'failed' ? `Could not connect (${why}). It will keep trying.` : 'Not connected: it joins when you are in the game.' };
