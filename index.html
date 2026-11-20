@@ -369,7 +369,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 101 · 19 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 102 · 20 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -1972,12 +1972,20 @@
   { const [cx, cz] = toWorld(tileO, 0, 55); tileO.ox += ORCH_AT[0] - cx; tileO.oz += ORCH_AT[1] - cz; tileO.m.setPosition(tileO.ox, 0, tileO.oz); tileO.inv = tileO.m.clone().invert(); }
   // Fernwater is an open river town: no fence, you can walk or swim in from any side. It faces on toward Cairnhold.
   const yawF = Math.atan2(CAIRN_AT[0] - FERN_AT[0], CAIRN_AT[1] - FERN_AT[1]);
-  const tileF = makeTile('fernwater', null, 0, 0, yawF, [-46, 46, 0, 120]); tileF.open = true;
+  const FERN_LEN = 320, FRN = { x: 110, lane: 205 };   // Fernwater: the old town and the river as they were, and Heron Row on the far bank
+  const fernHB = [], fernBenches = [];   // the straight-sided things on the far bank: houses, their fences and sheds
+  const FHOMES = [
+    { id: 'orihome', no: 1, x: -62, face: 0, yard: 'frame', sign: 'Tideknot', wall: '#dfe6e8', trim: '#2f4a6a', roof: '#2f4a6a', door: '#2f4a6a', flower: '#9fb7f0' },
+    { id: 'maudhome', no: 2, x: -62, face: Math.PI, yard: 'berries', sign: 'Crumb', wall: '#f0dfc0', trim: '#8a3a3a', roof: '#c8384a', door: '#8a3a3a', flower: '#e68fb0' },
+    { id: 'corhome', no: 3, x: 62, face: 0, yard: 'wood', sign: 'Sedge', wall: '#e8dcc0', trim: '#6b4a2b', roof: '#d9a33f', door: '#6b4a2b', flower: '#f4d35e' },
+    { id: 'pellhome', no: 4, x: 62, face: Math.PI, yard: 'hive', sign: 'Reedmace', wall: '#e2e6d6', trim: '#3e6a4a', roof: '#3e8a52', door: '#3e6a4a', flower: '#ffffff' }];
+  FHOMES.forEach(h => { h.hw = 26; h.hd = 16; h.sg = h.face ? -1 : 1; h.z = FRN.lane - h.sg * 38; });
+  const tileF = makeTile('fernwater', null, 0, 0, yawF, [-FRN.x, FRN.x, 0, FERN_LEN]); tileF.open = true;
   { const [cx, cz] = toWorld(tileF, 0, 60); tileF.ox += FERN_AT[0] - cx; tileF.oz += FERN_AT[1] - cz; tileF.m.setPosition(tileF.ox, 0, tileF.oz); tileF.inv = tileF.m.clone().invert(); }
   // the Fern runs straight through the town and on across the country in both directions
   const RIVER = { z: 78, hw: 19.6 };
   function riverD(x, z) { const [lx, lz] = toLocal(tileF, x, z); return [Math.abs(lz - RIVER.z), lx, lz]; }
-  function wildRiver(x, z) { const [rd, lx] = riverD(x, z); return rd < riverHW(lx) && Math.abs(lx) >= 46 && cityDeck(x, z) === null; }
+  function wildRiver(x, z) { const [rd, lx] = riverD(x, z); return rd < riverHW(lx) && Math.abs(lx) >= FRN.x && cityDeck(x, z) === null; }
   // Cairnhold stands on a highland 26 units up, open on every side, facing on toward Cogsworth. Its gorge runs out across the country both ways.
   const yawC = Math.atan2(COG_AT[0] - CAIRN_AT[0], COG_AT[1] - CAIRN_AT[1]);
   const tileC = makeTile('cairnhold', null, 0, 0, yawC, [-60, 60, 0, 150]); tileC.open = true; tileC.oy = 26; tileC.blend = 1000; tileC.noCrop = true;
@@ -2067,8 +2075,8 @@
   }
   const ROADS = [
     { a: 'Thistledown Hollow', b: 'Mallow Orchards', ai: 0, bi: 1, pts: buildRoad([toWorld(tileV, 0, GATE.z - 5), toWorld(tileV, 0, GATE.z + 30), toWorld(tileV, -10, GATE.z + 120), [10400, 18200], [11300, 17900], toWorld(tileO, 6, -120), toWorld(tileO, 0, -30), toWorld(tileO, 0, 3)]) },
-    (() => { const A = toWorld(tileF, 6, 300), B = toWorld(tileC, -40, -440), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
-      return { a: 'Fernwater Crossing', b: 'Cairnhold', ai: 2, bi: 3, pts: buildRoad([toWorld(tileF, 0, 117), toWorld(tileF, 0, 152), A, [A[0] + dx / 3 + nx * 130, A[1] + dz / 3 + nz * 130], [A[0] + dx * 2 / 3 - nx * 100, A[1] + dz * 2 / 3 - nz * 100], B, toWorld(tileC, -8, -170), toWorld(tileC, 0, -34), toWorld(tileC, 0, 3)]) }; })(),
+    (() => { const A = toWorld(tileF, 6, FERN_LEN + 190), B = toWorld(tileC, -40, -440), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
+      return { a: 'Fernwater Crossing', b: 'Cairnhold', ai: 2, bi: 3, pts: buildRoad([toWorld(tileF, 0, FERN_LEN - 3), toWorld(tileF, 0, FERN_LEN + 32), toWorld(tileF, 3, FERN_LEN + 110), A, [A[0] + dx / 3 + nx * 130, A[1] + dz / 3 + nz * 130], [A[0] + dx * 2 / 3 - nx * 100, A[1] + dz * 2 / 3 - nz * 100], B, toWorld(tileC, -8, -170), toWorld(tileC, 0, -34), toWorld(tileC, 0, 3)]) }; })(),
     (() => { const A = toWorld(tileC, 12, 340), B = toWorld(tileG, -70, -330), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
       return { a: 'Cairnhold', b: 'Cogsworth', ai: 3, bi: 4, pts: buildRoad([toWorld(tileC, 0, 147), toWorld(tileC, 0, 185), A, [A[0] + dx / 3 - nx * 140, A[1] + dz / 3 - nz * 140], [A[0] + dx * 2 / 3 + nx * 110, A[1] + dz * 2 / 3 + nz * 110], B, toWorld(tileG, -10, -150), toWorld(tileG, 0, -34), toWorld(tileG, 0, 3)]) }; })(),
     (() => { const A = toWorld(tileG, 300, 60), B = toWorld(frameE, 30, -420), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
@@ -2694,7 +2702,7 @@
   // Off its west side is a wing of three rooms, each with its own doorway: the kitchen at the front, the child's room in the middle, the parents' room at the back.
   // Only the child's room is furnished at a child's size.
   function familyHome(o, inner) { return (sc, solids, k) => {
-    const owner = { bwhome: 'Old Bramblewick', marihome: 'the Fernsbys', aldhome: 'the Boughs', fenhome: 'the Dewberrys', holhome: 'Hollis Quern', piphome: 'the Willowbys', bramhome: 'Bram Honeywell', tanhome: 'Tansy Applegarth' }[k.id] || 'the family who live here';
+    const owner = { bwhome: 'Old Bramblewick', marihome: 'the Fernsbys', aldhome: 'the Boughs', fenhome: 'the Dewberrys', holhome: 'Hollis Quern', piphome: 'the Willowbys', bramhome: 'Bram Honeywell', tanhome: 'Tansy Applegarth', orihome: 'the Tideknots', maudhome: 'Maudie Crumb', corhome: 'Corwin Sedge', pellhome: 'Pell Reedmace' }[k.id] || 'the family who live here';
     const { wall, W, D, H, trimM } = k, S = 1.6, PX = -W / 2 + 22, lx = (PX + W / 2) / 2, wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 }), wm = mat(o.wall, { roughness: 1 }), cream = mat('#f2ead8');
     const lg = new THREE.Group(); lg.position.set(lx, 0, 0); lg.scale.setScalar(S); sc.add(lg);
     const vs = [], vwall = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; lg.add(b); return b; };
@@ -3002,13 +3010,27 @@
     const dust = new THREE.PointLight('#ffe9c0', 0.6, 60); dust.position.set(0, 11, 6); sc.add(dust);
   } });
   interiors.mill.door = { x: MILL.x, z: MILL.z - MILLR - 3 - 4.5, yaw: Math.PI };
+  // the four houses on Heron Row, Fernwater
+  [['orihome', 'Tideknot House', 'Charts on the wall, and a coil of rope by every door.'], ['maudhome', 'Crumb Cottage', 'It smells of yesterday’s baking, and tomorrow’s is rising by the hearth.'], ['corhome', 'Sedge Cottage', 'A half-mended net hangs across one corner.'], ['pellhome', 'Reedmace Cottage', 'River marks pencilled up the door frame, with a date beside each.']].forEach(([id, label, hintT]) => { const h = FHOMES.find(q => q.id === id);
+    makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'fernwater', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.roof, kidQuilt: h.flower, rug: '#b8a070' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.door, quilt: h.roof }); }) });
+    interiors[id].door = { x: h.x, z: h.z + h.sg * (h.hd + 0.2 + 4.5), yaw: h.face }; });
   // the four houses on Windfall Lane
   [['holhome', 'The Miller’s House', 'Everything in here has a little flour on it.'], ['piphome', 'Willowby Cottage', 'Crates, stacked in rows, even indoors.'], ['bramhome', 'Honeywell Cottage', 'It smells of beeswax, and there is a jar on every sill.'], ['tanhome', 'Applegarth Cottage', 'Baskets by the door, and pears ripening on the dresser.']].forEach(([id, label, hintT]) => { const h = OHOMES.find(q => q.id === id);
     makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'orchards', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.roof, kidQuilt: h.flower, rug: '#b8a070' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.door, quilt: h.roof }); }) });
     interiors[id].door = { x: h.x, z: h.z + h.sg * (h.hd + 0.2 + 4.5), yaw: h.face }; });
   // the mill's door is in its south wall; the solid around the tower is trimmed so you can reach it
   // ---------- Region 3: Fernwater Crossing, the river town on stilts ----------
-  const FERN_LEN = 120, ORIPOS = new THREE.Vector3(10, 0, 58), MAUDPOS = new THREE.Vector3(3.2, 0, -5), CHANGEPOS = new THREE.Vector3(16, 0, 30);
+  const ORIPOS = new THREE.Vector3(10, 0, 58), MAUDPOS = new THREE.Vector3(3.2, 0, -5), CHANGEPOS = new THREE.Vector3(16, 0, 30);
+  // a town gate for grown elves and their carts: stone pillars, a timber lintel, and a board hung under it that reads one way going in and the other going out
+  function townGate(sc, sol, gx, gz, inside, outside, col, inDir) { const G = new THREE.Group(); G.position.set(gx, 0, gz); sc.add(G); const st = mat('#8f8a7a', { roughness: 1 }), cap = mat('#77735f', { roughness: 1 }), wd = mat('#6b4a2b');
+      const put = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); G.add(q); return q; };
+      [-8.6, 8.6].forEach(x => { put(new THREE.BoxGeometry(3.2, 17, 3.2), st, x, 8.5, 0); put(new THREE.BoxGeometry(4.1, 1.4, 4.1), cap, x, 0.7, 0); put(new THREE.BoxGeometry(4.1, 0.9, 4.1), cap, x, 17.45, 0); put(new THREE.ConeGeometry(2.8, 2.8, 4), cap, x, 19.3, 0).rotation.y = Math.PI / 4;
+        const s = x < 0 ? 1 : -1; put(new THREE.BoxGeometry(1.5, 0.16, 0.16), ironM, x + s * 2.2, 12.6, 0); put(new THREE.BoxGeometry(0.9, 1.3, 0.9), lampGlass, x + s * 2.9, 11.8, 0); put(new THREE.BoxGeometry(1.1, 0.16, 1.1), ironM, x + s * 2.9, 12.5, 0); put(new THREE.BoxGeometry(1.1, 0.16, 1.1), ironM, x + s * 2.9, 11.1, 0);
+        sol.push({ x: gx + x, z: gz, r: 2.3 }); });
+      put(new THREE.BoxGeometry(14.2, 1.3, 1.5), wd, 0, 16, 0); const ar = put(new THREE.TorusGeometry(7, 0.5, 8, 26, Math.PI), wd, 0, 16.4, 0); ar.scale.y = 0.42;
+      [-4.6, 4.6].forEach(x => put(new THREE.BoxGeometry(0.12, 1.6, 0.12), ironM, x, 14.7, 0));
+      const a = signBoard(inside, 11, 2.4, col, '#f6e7c2'); a.position.set(0, 12.9, inDir * 0.16); if (inDir < 0) a.rotation.y = Math.PI; G.add(a);
+      const b = signBoard(outside, 11, 2.4, '#5a3d22', '#f6e7c2'); b.position.set(0, 12.9, -inDir * 0.16); if (inDir > 0) b.rotation.y = Math.PI; G.add(b); }
   const fernScene = new THREE.Scene();
   fernScene.fog = new THREE.Fog('#d8dfd4', 70, 260);
   fernScene.add(new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
@@ -3017,6 +3039,7 @@
   Object.assign(fernSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); fernSun.shadow.mapSize.set(4096, 4096); fernSun.shadow.radius = 2; fernSun.shadow.bias = -0.0006;
   fernScene.add(fernSun); fernScene.add(fernSun.target);
   const fernSolids = [];
+  FHOMES.forEach(h => { h.sc = fernScene; h.sol = fernSolids; h.bx = fernHB; h.benches = fernBenches; });
   let water = null;
   function stallCart(color1, color2, label) {
     const g = new THREE.Group();
@@ -3081,10 +3104,13 @@
     shopExterior('bakery', -30, 34, Math.PI / 2, '#c8384a', 'Crumb’s Bakery');
     shopExterior('changer', 30, 14, -Math.PI / 2, '#4a5fb8', 'Money-Changer');
     shopExterior('nets', 30, 40, -Math.PI / 2, '#d9a33f', 'Nets & Lines');
-    [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(o, 3.5, FERN_LEN); fernScene.add(gp); fernSolids.push({ x: o, z: FERN_LEN, r: 1 }); });
-    { const lin = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lin.position.set(0, 7.3, FERN_LEN); fernScene.add(lin); const sg = signBoard('To Cairnhold', 5.4, 1.3, '#6e6a62', '#f6e7c2'); sg.position.set(0, 8.6, FERN_LEN - 0.2); sg.rotation.y = Math.PI; fernScene.add(sg); const farPath = new THREE.Mesh(new THREE.PlaneGeometry(7, FERN_LEN - 104), mat('#ffffff', { map: dirtTex })); farPath.rotation.x = -Math.PI / 2; farPath.position.set(0, 0.03, (104 + FERN_LEN) / 2); fernScene.add(farPath); }
+    townGate(fernScene, fernSolids, 0, FERN_LEN, 'To Cairnhold', 'Fernwater Crossing', '#6e6a62', -1);
+    // the far bank: the path on from the bridge, and Heron Row across it, where the people of the Crossing live
+    const froad = (x0, z0, x1, z1, w, y = 0.03) => { const len = Math.hypot(x1 - x0, z1 - z0), tx = dirtTex.clone(); tx.needsUpdate = true; tx.repeat.set(w / 5, len / 5); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), mat('#ffffff', { map: tx })); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.atan2(x1 - x0, z1 - z0); m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); m.receiveShadow = true; fernScene.add(m); return m; };
+    froad(0, 104, 0, FERN_LEN + 6, 8); froad(-102, FRN.lane, 102, FRN.lane, 10, 0.034); FHOMES.forEach(h => froad(h.x, h.z + h.sg * 30, h.x, FRN.lane, 7.4, 0.031));
+    froad(20, 46.5, 51, 46.5, 5, 0.032);   // from the lane side of the dock to the ferry office door
     // Oriel's ferry office: a proper building on the bank beside the dock, with a door you walk through
-    { const fx = 31.5, fz = 54.2, W = 7.4, D = 11, H = 6.4, g = new THREE.Group(); g.position.set(fx, 0, fz); g.rotation.y = -Math.PI / 2; fernScene.add(g);
+    { const fx = 58, fz = 44, W = 18, D = 13, H = 6.4, g = new THREE.Group(); g.position.set(fx, 0, fz); g.rotation.y = -Math.PI / 2; fernScene.add(g);
       const blue = mat('#2f4a6a'), trimM = mat('#5a3d22'), cream = mat('#f2e6c8'), bx = (w, h, d, x, y, z, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = true; q.receiveShadow = true; g.add(q); return q; };
       bx(W + 0.5, 0.8, D + 0.5, 0, 0.4, 0, mat('#8d7a66')); bx(W, H, D, 0, H / 2 + 0.6, 0, blue);
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => bx(0.5, H + 0.4, 0.5, sx * W / 2, H / 2 + 0.6, sz * D / 2, cream));
@@ -3093,6 +3119,7 @@
       const roof = new THREE.Mesh(new THREE.ConeGeometry((W / 2 + 1.1) * Math.SQRT2, 3.8, 4), mat('#5a3d22', { roughness: 1 })); roof.rotation.y = Math.PI / 4; roof.castShadow = true; rg.add(roof);
       { const door = new THREE.Mesh(new THREE.BoxGeometry(2.6, 4.8, 0.3), mat('#3e2812')); door.position.set(-0.6, 3.2, D / 2 + 0.1); g.add(door); hingeDoor(door, g); }
       bx(3.4, 0.4, 0.5, -0.6, 5.85, D / 2 + 0.1, cream); bx(4, 0.8, 1.8, -0.6, 0.4, D / 2 + 0.9, mat('#8a7458'));
+      [-6.2, 6.4].forEach(wxx => { const w2 = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.8), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.55 })); w2.position.set(wxx, 3.9, D / 2 + 0.03); g.add(w2); bx(1.9, 0.2, 0.2, wxx, 4.9, D / 2 + 0.08, cream); bx(1.9, 0.2, 0.2, wxx, 2.9, D / 2 + 0.08, cream); bx(0.14, 2, 0.14, wxx, 3.9, D / 2 + 0.08, cream); });
       const wn = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.8), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.55 })); wn.position.set(2.4, 3.9, D / 2 + 0.03); g.add(wn); bx(1.9, 0.2, 0.2, 2.4, 4.9, D / 2 + 0.08, cream); bx(1.9, 0.2, 0.2, 2.4, 2.9, D / 2 + 0.08, cream); bx(0.14, 2, 0.14, 2.4, 3.9, D / 2 + 0.08, cream);
       const osign = signBoard('Ferry Office', 5.2, 1.1, '#f2e6c8', '#2f4a6a'); osign.position.set(0, 6.3, D / 2 + 0.3); g.add(osign);
       const tt = signBoard('Crossings: dawn, noon, dusk', 6.4, 1.1, '#f2e6c8', '#3a2a18'); tt.position.set(W / 2 + 0.12, 3.6, 0); tt.rotation.y = Math.PI / 2; g.add(tt);
@@ -3131,18 +3158,8 @@
     const gpost = new THREE.Mesh(new THREE.BoxGeometry(0.6, 8, 0.6), mat('#efe6d2')); gpost.position.y = 4; gauge.add(gpost);
     for (let k = 0; k <= 8; k++) { const mk = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.08, 0.1), mat(k % 2 ? '#3a2a18' : '#c4362e')); mk.position.set(0, 0.5 + k * 0.9, 0.31); gauge.add(mk); }
     const glabel = signBoard('River gauge', 2.6, 0.7, '#efe6d2', '#3a2a18'); glabel.position.set(0, 8.6, 0.2); gauge.add(glabel);
-    // houses on stilts along the bank, lanterns, nets, a kingfisher
-    [[-40, 50, '#8a6a9a'], [-20, 53, '#3e8a52'], [34, 54, '#c8384a'], [46, 30, '#4a5fb8'], [-46, 20, '#d9a33f']].forEach(([x, z, c]) => {
-      const h = new THREE.Group(); h.position.set(x, 0, z); h.rotation.y = rnd(-0.3, 0.3); fernScene.add(h);
-      [[-3, -3], [3, -3], [-3, 3], [3, 3]].forEach(([sx, sz]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 4, 8), mat('#5a3d22')); st.position.set(sx, 2, sz); h.add(st); });
-      const fl = new THREE.Mesh(new THREE.BoxGeometry(8, 0.4, 8), mat('#ffffff', { map: plankTex })); fl.position.y = 4.1; h.add(fl);
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(7, 5, 7), mat(c)); wall.position.y = 6.8; h.add(wall);
-      const rf = new THREE.Mesh(new THREE.ConeGeometry(6, 3.5, 4), mat('#8a6240', { roughness: 1 })); rf.position.y = 11; rf.rotation.y = Math.PI / 4; h.add(rf);
-      const win = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), mat('#f6cf72', { emissive: '#d48f22', emissiveIntensity: 0.6 })); win.position.set(0, 7, 3.51); h.add(win);
-      const ladder = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4.6, 0.2), mat('#8a6438')); ladder.position.set(0, 2.3, 4.2); ladder.rotation.x = -0.25; h.add(ladder);
-      fernSolids.push({ x, z, r: 4.6 });
-    });
-    [[-6.5, 20], [-6.5, 46], [6.5, 4], [6.5, 28]].forEach(([x, z]) => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 5, 6), mat('#5a3d22')); post.position.set(x, 2.5, z); fernScene.add(post); const lamp2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp2.position.set(x, 5.3, z); fernScene.add(lamp2); });
+    // lamps along the lane, the bank and the far bank; the nets drying; a kingfisher
+    { const lg = new THREE.Group(); fernScene.add(lg); [[-6.5, 20], [6.5, 4], [6.5, 34], [-6.5, 47], [26, 50.5], [-6.5, 108], [6.5, 140], [-6.5, 172], [-40, FRN.lane - 6.5], [40, FRN.lane - 6.5], [-84, FRN.lane + 6.5], [84, FRN.lane + 6.5], [6.5, 246], [-6.5, 286]].forEach(([x, z]) => lampPost(lg, x, z, 10, 26, fernSolids)); lampPost(lg, 7.5, FRN.lane + 7.5, 14, 40, fernSolids); lg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(lg); }
     const net = new THREE.Mesh(new THREE.PlaneGeometry(6, 4, 6, 4), new THREE.MeshStandardMaterial({ color: '#c7b386', wireframe: true })); net.position.set(14, 3.5, 53); net.rotation.y = 0.3; fernScene.add(net); [[11.2, 54.1], [16.8, 51.9]].forEach(([nx, nz]) => { const np = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 5.5, 6), mat('#5a3d22')); np.position.set(nx, 2.75, nz); fernScene.add(np); });
     const kf = new THREE.Group(); kf.position.set(-8, 4.2, 56); fernScene.add(kf);
     const kfPost = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 4.2, 6), mat('#5a3d22')); kfPost.position.y = -2.1; kf.add(kfPost);
@@ -3154,16 +3171,20 @@
     const geo2 = new THREE.ConeGeometry(0.24, 1, 3); geo2.translate(0, 0.5, 0);
     const tallF = new THREE.InstancedMesh(geo2, mat('#ffffff', { roughness: 0.9 }), 3500);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 3500; i++) { const side = i % 2 ? 1 : -1; pv.set(side * rnd(46, 140), 0, rnd(-40, 56)); if (i % 3 === 0) { pv.set(rnd(-140, 140), 0, rnd(104, 220)); if (Math.abs(pv.x) < 9) pv.x += pv.x < 0 ? -9 : 9; } q.setFromEuler(new THREE.Euler(rnd(-0.25, 0.25), rnd(0, 6.3), rnd(-0.25, 0.25))); sv.set(1, rnd(3, 10), 1); tallF.setMatrixAt(i, m4.compose(pv, q, sv)); tallF.setColorAt(i, col.set(pick(['#7d9c45', '#6b8c3a', '#8fae52', '#5f7f33']))); }
+    for (let i = 0; i < 3500; i++) { const side = i % 2 ? 1 : -1; pv.set(side * rnd(FRN.x + 2, FRN.x + 100), 0, rnd(-40, FERN_LEN + 40)); if (i % 3 === 0) { pv.set(rnd(-200, 200), 0, rnd(FERN_LEN + 4, FERN_LEN + 120)); if (Math.abs(pv.x) < 9) pv.x += pv.x < 0 ? -9 : 9; } q.setFromEuler(new THREE.Euler(rnd(-0.25, 0.25), rnd(0, 6.3), rnd(-0.25, 0.25))); sv.set(1, rnd(3, 10), 1); tallF.setMatrixAt(i, m4.compose(pv, q, sv)); tallF.setColorAt(i, col.set(pick(['#7d9c45', '#6b8c3a', '#8fae52', '#5f7f33']))); }
     fernScene.add(tallF);
-    // the gate back to the orchards
-    const railM = mat('#8a6438'), postM = mat('#6b4a2b');
-    for (let x = -44; x <= 44; x += 4) { if (Math.abs(x) < 5) continue; const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 2.4, 7), postM); pm.position.set(x, 1.2, 0); fernScene.add(pm); }
-    [[-44, -5], [5, 44]].forEach(([a, b]) => [1.0, 1.9].forEach(y => { const r = new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.14, 0.14), railM); r.position.set((a + b) / 2, y, 0); fernScene.add(r); }));
-    [-5, 5].forEach(x => { const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 9, 10), postM); gp.position.set(x, 4.5, 0); fernScene.add(gp); });
-    const arch = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.35, 10, 30, Math.PI), railM); arch.position.set(0, 7.6, 0); fernScene.add(arch);
-    const gs = signBoard('Fernwater Crossing', 7.4, 1.6, '#4a5fb8', '#f6e7c2'); gs.position.set(0, 10.2, 0); fernScene.add(gs);
-    fernSolids.push({ x: -5, z: 0, r: 0.9 }, { x: 5, z: 0, r: 0.9 });
+    // the gate back to the orchards, with a rail fence either side of it
+    { const railM = mat('#8a6438'), postM = mat('#6b4a2b'), fg = new THREE.Group(); fernScene.add(fg);
+      for (let x = -FRN.x + 2; x <= FRN.x - 2; x += 4) { if (Math.abs(x) < 11 || (Math.abs(x) > 19.5 && Math.abs(x) < 42)) continue; const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 4.4, 7), postM); pm.position.set(x, 2.2, 0); fg.add(pm); }
+      [[-FRN.x + 2, -42], [-19, -10.4], [10.4, 19], [42, FRN.x - 2]].forEach(([a, b]) => [1.5, 2.7, 3.9].forEach(y => { const r = new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.18, 0.18), railM); r.position.set((a + b) / 2, y, 0); fg.add(r); })); bake(fg); }
+    townGate(fernScene, fernSolids, 0, 0, 'To Mallow Orchards', 'Fernwater Crossing', '#4a5fb8', 1);
+    // Heron Row: four houses on the far bank, each on its own plot
+    FHOMES.forEach(buildHouse);
+    // alders and willows on both banks, out past the shops
+    { const tg = new THREE.Group(); fernScene.add(tg); const bark = mat('#ffffff', { map: barkTex }), greens = ['#5f8f4a', '#74a85a', '#4f7f3c', '#8fb06a'].map(c => mat(c, { flatShading: true })), R = seeded(4, 9, 2);
+      [[-70, 12], [-92, 34], [-64, 46], [-100, 8], [72, 10], [96, 30], [84, 48], [104, 12], [-96, 112], [-70, 118], [-40, 114], [44, 112], [78, 116], [100, 110], [-104, 300], [-30, 296], [34, 300], [100, 298]].forEach(([x, z]) => { const h = 9 + R() * 5, q = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 1.2, h, 8), bark); q.position.set(x, h / 2, z); tg.add(q);
+        for (let c = 0; c < 6; c++) { const a = R() * 6.3, d = R() * 3, b = new THREE.Mesh(new THREE.IcosahedronGeometry(3 + R() * 1.6, 1), greens[c % 4]); b.position.set(x + Math.cos(a) * d, h + c * 1.3 - 1, z + Math.sin(a) * d); b.scale.y = 1.2; tg.add(b); } fernSolids.push({ x, z, r: 1.4 }); });
+      tg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(tg); }
     const bench = makeBench(true); bench.position.set(-6, 0, 50); bench.rotation.y = Math.PI; fernScene.add(bench);
     bench.userData = { pickable: true, kind: 'seat', yaw: Math.PI, seatTop: 1.51, label: 'bench by the river', world: 'fernwater' }; fernSolids.push({ x: -6, z: 50, r: 1.4 }); fernScene.userData.bench = bench;
     fernScene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o !== g && o !== water) { o.castShadow = true; o.receiveShadow = true; } });
@@ -3994,7 +4015,7 @@
   }
   hillsBeyond(fernScene, 0, -8, -1);                 // behind Fernwater's gate: the hills you came down
   hillsBeyond(orchScene, ORC.gx, ORCH_LEN + 8, 1);       // past the orchards' east gate: the hills ahead
-  [[-120, 60, 150, 34, 90], [40, 110, 170, 44, 110], [160, 80, 140, 30, 90]].forEach(([ox, oz, rx, h, rz]) => mound(fernScene, ox, FERN_LEN + oz, rx, h, rz, pick(['#7a8a5a', '#6f7f52'])));
+  [[-190, 190, 150, 34, 90], [40, 240, 170, 44, 110], [230, 200, 140, 30, 90]].forEach(([ox, oz, rx, h, rz]) => mound(fernScene, ox, FERN_LEN + oz, rx, h, rz, pick(['#7a8a5a', '#6f7f52'])));
   [[-110, 60, 150, 30, 90], [80, 100, 160, 36, 100]].forEach(([ox, oz, rx, h, rz]) => mound(cairnScene, ox, CAIRN_LEN + 30 + oz, rx, h, rz, '#7a8a5a'));
   [[420, 70, 160, 90, 160, '#8c8577'], [540, -90, 200, 130, 200, '#9a978f'], [500, 230, 180, 110, 180, '#8c8577']].forEach(([ox, oz, rx, h, rz, c]) => mound(cogScene, ox, oz, rx, h, rz, c));
 
@@ -4133,7 +4154,7 @@
   // dogs: one in the Hollow, one in Fernwater; they come and say hello
   [[scene, 6, 40, 'village', (nx, nz) => inFence(nx, nz, 3) && Math.hypot(nx, nz) > 14], [fernScene, 0, 24, 'fernwater', (nx, nz) => Math.abs(nx) < 14 && nz > 3 && nz < 50], [lantScene, -8, 80, 'lantern', (nx, nz) => Math.abs(nx) < 16 && nz > 4 && nz < 130]].forEach(([sc, x, z, key, okf]) => { const dg = makeDog(); dg.position.set(x, 0, z); sc.add(dg); wanderer(dg, { sceneKey: key, kind: 'dog', speed: 6, fleeSpeed: 11, flee: 0, radius: 30, ground: () => 0, bob: 0.25, gait: 10, ok: okf }); });
   // crows on the fences and gate posts; a hawk alone over the hills and the orchards
-  [[scene, 30, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 12, 'fernwater'], [orchScene, -19.5, 0, 70, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(), yaw = rnd(0, 6.3); cr.position.set(x, y + 2.42, z); cr.rotation.y = yaw; sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.42, z), yaw, state: 'perch', t: 0, a: 0 }); });
+  [[scene, 30, 0, FENCE.z1, 'village'], [fernScene, -43, 1.55, 0, 'fernwater'], [orchScene, -19.5, 0, 70, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(), yaw = rnd(0, 6.3); cr.position.set(x, y + 2.42, z); cr.rotation.y = yaw; sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.42, z), yaw, state: 'perch', t: 0, a: 0 }); });
   addFlock(orchScene, 0, 50, 70, 80, 1, () => 0); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   function animalTick(c, dt, t) {
     const o = c.obj, E = NET.nearElf(o.position), dp = Math.hypot(E.x - o.position.x, E.z - o.position.z);
@@ -4680,6 +4701,7 @@
     if (mineOn) { rdog.position.y = Math.abs(Math.sin(dogPh)) * 0.16 * amp; kid.body.position.y = DOG_SEAT + rdog.position.y; }
     const free = rdog.visible && rdog.parent && rdog.parent !== player && rdog.userData.world !== 'ridden'; dogSpot.visible = !!free; if (free) { if (dogSpot.parent !== rdog.parent) rdog.parent.add(dogSpot); dogSpot.position.set(rdog.position.x + Math.sin(rdog.rotation.y) * 3.2, rdog.position.y + 3, rdog.position.z + Math.cos(rdog.rotation.y) * 3.2); dogSpot.userData.world = rdog.userData.world; }
   }
+  fernBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); fernScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'garden bench', world: 'fernwater' }; pickables.push(b); });
   orchBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); orchScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'garden bench', world: 'orchards' }; pickables.push(b); });
   addSeat(makeBench(true), 5.5, R + 3.2, 0, 1.51, 'bench by the shop');
   addSeat(makeBench(false), FEN.x + 6.5, FEN.z - 5.5, -Math.PI / 2, 1.51, 'bench at the stall');
@@ -4965,7 +4987,7 @@
   // ---------- the satchel, and the counter when you are at one ----------
   let bagOpen = false, bagShop = null, bagTab = 'all', bagMsg = '';
   const BIKE_PARTS = [['gear', 2], ['bell', 1], ['rope', 1]], BIKE_COINS = 30;
-  function shopShut(id) { const sh = SHOPS[id]; return !!sh && sh.t <= 1 && !sh.always && shopsShut() && phase === 'free'; }
+  function shopShut(id) { const sh = SHOPS[id]; return !!sh && sh.t <= 2 && !sh.always && shopsShut() && phase === 'free'; }
   const honestStock = sh => sh.stock.filter(q => ITEMS[q].c === 'food');
   // a shop that has shut for the night still has its honesty box, if it sells anything to eat
   function shopRing(id) { if (!shopShut(id)) return openBag(id); const sh = SHOPS[id]; if (honestStock(sh).length) openBag(id, true); else flash(`${sh.n} is shut. It opens at seven in the morning.`, 5000); }
@@ -5168,7 +5190,7 @@
     const helm = makeElfNPC({ coat: '#2f4a6a', skin: '#e3b184', hair: '#5a3a1e', hat: 'cap', capColor: '#1f3a5a', tall: 6.6, wide: 1.2 }); helm.position.set(0, 1.26, -9); g.add(helm);
     g.visible = false; worldScene.add(g); bargeW = g; return g;
   }
-  function ferryPath() { const P = (hx, hz) => toWorld(frameH, hx, hz), F0 = toWorld(tileF, -74, RIVER.z); return [F0, P(-640, 0), P(-420, 14), P(-372, 44), P(-361.5, 70)]; }
+  function ferryPath() { const P = (hx, hz) => toWorld(frameH, hx, hz), F0 = toWorld(tileF, -(FRN.x + 30), RIVER.z); return [F0, P(-640, 0), P(-420, 14), P(-372, 44), P(-361.5, 70)]; }
   function ferryStart(dir) {
     if (ferryRide || talking()) return;
     const who = 'Captain Oriel', there = dir === 'down' ? 'Hearthmoor' : 'Fernwater Crossing';
@@ -5598,7 +5620,7 @@
     if (k === 'sci') return where === 'village' && phase === 'sci' && !!sciActive && sciActive.left.has(o.userData.id) && !talking();
     if (k === 'readteach') return FOLK.fen.mode === 'post' && where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
     if (k === 'sciteach') return FOLK.mari.mode === 'post' && where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
-    if (k === 'teacher') return (o.userData.i > 1 || FOLK[o.userData.i ? 'hol' : 'bw'].mode === 'post') && TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
+    if (k === 'teacher') return (o.userData.i > 2 || FOLK[['bw', 'hol', 'ori'][o.userData.i]].mode === 'post') && TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
     if (k === 'quest') return where === 'village' && phase === 'free' && !save.beetle && !beetle && !parked;
     if (k === 'ferry') return o.userData.world === where && !ferryRide;
     if (k === 'follower') return (o === beetle && !!beetleName && beetle.userData.follow) || (!!parked && o === parked.obj && !parked.leave && parked.world === curWorld());
@@ -8254,6 +8276,8 @@
   // ---------- movement and collisions ----------
   function inRiver(x, z) { if (ferryRide) return false; if (where === 'lantern') return !onPier(x, z) && lantH(x, z) < SEA_Y - 1.2; if (where === 'wild') return wildRiver(x, z) || wildSea(x, z); return where === 'fernwater' && z > 58.4 && z < 97.6 && Math.abs(x) > 5.2 && fernDeck(x, z) === null; }
   // places to stand by the water at Fernwater: the ramp, the dock, the gangplank and the deck of the barge
+  // how high the ground is anywhere in Fernwater for somebody who keeps to the paths: the dock, the bridge and its ramps, or the bank
+  function fernY(x, z) { const dk = fernDeck(x, z); if (dk !== null) return dk; if (Math.abs(x) > 5.2) return 0; if (z >= 56.5 && z <= 99.5) return 1.85; if (z > 51.5 && z < 56.5) return 1.85 * (z - 51.5) / 5; if (z > 99.5 && z < 104.5) return 1.85 * (104.5 - z) / 5; return 0; }
   function fernDeck(x, z) {
     if (x > 14.6 && x < 19.4 && z >= 51.4 && z < 55) return 1.65 * (z - 51.4) / 3.6;
     if (x > 7 && x < 21 && z >= 55 && z <= 61) return 1.65;
@@ -8326,7 +8350,7 @@
     if (where === 'fernwater') {
       fernSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       // the river: stay on the boardwalk when over the water
-      if ((Math.abs(p.x) > 46 || p.z < -0.5 || p.z > FERN_LEN + 0.5) && !fading) { switchFrame('wild', prev); return; }
+      if ((Math.abs(p.x) > FRN.x || p.z < -0.5 || p.z > FERN_LEN + 0.5) && !fading) { switchFrame('wild', prev); return; }
       // you can swim under the bridge, but you climb onto it only at the ramps
       if (inRiver(prev.x, prev.z) && Math.abs(p.x) <= 5.2 && p.z > 56.5 && p.z < 99.5) p.x = prev.x;
       // the bridge rails are solid: you leave the bridge at its ends
@@ -8334,6 +8358,7 @@
       // the dock, its ramp and the barge: you get up by the ramp (or a good jump), and you can step off any edge
       { const dk = fernDeck(p.x, p.z); if (dk !== null) { const pk = fernDeck(prev.x, prev.z), from = pk !== null ? pk : (inRiver(prev.x, prev.z) ? -1.45 : 0) + py; if (dk - from > 0.8) { p.x = prev.x; p.z = prev.z; } } }
       // the shop buildings: solid boxes, except at the door, which takes you inside
+      for (const bx of fernHB) { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (bx.id && Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.6) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } }
       fernBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } });
     }
     if (where === 'cairnhold') {
@@ -8391,7 +8416,7 @@
   // the camera stays out of buildings: the shop wall in the Hollow, the shop boxes in Fernwater, the mill tower
   function camFree(pos) {
     if (!sameSideOfWall(pos, player.position)) return false;
-    if (where === 'fernwater') return !fernBoxes.some(bx => Math.abs(pos.x - bx.x) < bx.hw + 0.4 && Math.abs(pos.z - bx.z) < bx.hd + 0.4 && pos.y < 13);
+    if (where === 'fernwater') return !fernBoxes.some(bx => Math.abs(pos.x - bx.x) < bx.hw + 0.4 && Math.abs(pos.z - bx.z) < bx.hd + 0.4 && pos.y < 19) && !fernHB.some(bx => bx.hw > 20 && Math.abs(pos.x - bx.x) < bx.hw + 0.6 && Math.abs(pos.z - bx.z) < bx.hd + 0.6 && pos.y < 30);
     if (where === 'orchards') return (Math.hypot(pos.x - MILL.x, pos.z - MILL.z) > MILLR + 1.2 || pos.y > 62) && !orchBoxes.some(bx => bx.hw > 20 && Math.abs(pos.x - bx.x) < bx.hw + 0.6 && Math.abs(pos.z - bx.z) < bx.hd + 0.6 && pos.y < 30);
     // every other place: the camera stays out of buildings, towers, pillars and big trunks, so walls never vanish
     const g0 = groundAt(pos.x, pos.z), bxs = { cairnhold: cairnBoxes, cogsworth: cogBoxes, lantern: lantBoxes, skyhaven: skyBoxes }[where];
@@ -8672,7 +8697,7 @@
     // Fernwater: Oriel at the dock, Maudie at the bakery, the ferry rocking, the water moving
     if (where === 'fernwater') {
       const dOri = Math.hypot(player.position.x - ORIPOS.x, player.position.z - ORIPOS.z);
-      if (dOri < 30) ori.lookAt(player.position.x, 1.65, player.position.z); if (!reduce) oriHead.rotation.y = Math.sin(t * 0.7) * 0.1;
+      if (dOri < 30 && FOLK.ori.mode === 'post') ori.lookAt(player.position.x, 1.65, player.position.z); if (!reduce) oriHead.rotation.y = Math.sin(t * 0.7) * 0.1;
       if (dOri < 7.5 && !nearOri && !talking() && ['todock', 'tofern', 'tomaud', 'f4go', 'f5go'].includes(phase)) { nearOri = true; offer(reachOriel); }
       if (dOri > 10.5) nearOri = false;
       const fy = fernScene.userData.ferry; if (fy && !reduce) { fy.position.y = 0.1 + Math.sin(t * 1.1) * 0.12; fy.rotation.z = Math.sin(t * 0.9) * 0.02; fy.rotation.x = Math.sin(t * 0.7) * 0.015; }
@@ -8803,13 +8828,13 @@
   CITY.lots.forEach(l => { const o = new THREE.Object3D(), [wx, wz] = toWorld(frameH, l.x - 8, l.z + l.gs * 24.4); o.position.set(wx, CITY.y, wz); worldScene.add(o); o.userData = { pickable: true, kind: 'lot', no: l.no, world: 'wild' }; pickables.push(o); });
   tileV.sun = sun; tileO.sun = orchSun; tileF.sun = fernSun; tileF.scene = fernScene;
   fernScene.children.forEach(o => { if (o.isMesh && o.material && o.material.side === THREE.BackSide && o.material.map === skyTex) o.visible = false; }); fernScene.fog.color.copy(worldScene.fog.color); fernScene.fog.near = 150; fernScene.fog.far = 430;
-  if (water) { const w0 = water.geometry.parameters.width; water.geometry.dispose(); water.geometry = new THREE.PlaneGeometry(92, 46); water.material.map.repeat.x *= 92 / w0;
+  if (water) { const w0 = water.geometry.parameters.width; water.geometry.dispose(); water.geometry = new THREE.PlaneGeometry(FRN.x * 2, 46); water.material.map.repeat.x *= FRN.x * 2 / w0;
     const rt = water.material.map.clone(); rt.needsUpdate = true; rt.repeat.set(7 * 22000 / 300, 1); worldScene.userData.riverTex = rt;
     const rm = new THREE.MeshStandardMaterial({ map: rt, roughness: 0.5, metalness: 0, transparent: true, opacity: 0.95 }), rg = new THREE.Group(); rg.matrixAutoUpdate = false; rg.matrix.copy(tileF.m);
     const lxCoast = (tileL.ox - 620 - toWorld(tileF, 0, RIVER.z)[0]) / Math.cos(tileF.yaw);   // the Fern runs out on the coastal plain
-    [-1, 1].forEach(sd => { const len = (Math.sign(lxCoast) === sd ? Math.abs(lxCoast) : 22000) - 46, pl = new THREE.Mesh(new THREE.PlaneGeometry(len, 55), rm); pl.rotation.x = -Math.PI / 2; pl.position.set(sd * (46 + len / 2), 0.06, RIVER.z); rg.add(pl); });
+    [-1, 1].forEach(sd => { const len = (Math.sign(lxCoast) === sd ? Math.abs(lxCoast) : 22000) - FRN.x, pl = new THREE.Mesh(new THREE.PlaneGeometry(len, 55), rm); pl.rotation.x = -Math.PI / 2; pl.position.set(sd * (FRN.x + len / 2), 0.06, RIVER.z); rg.add(pl); });
     worldScene.add(rg); }
-  fernScene.children.forEach(o => { if (o.isMesh && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.width === 144) { const sd = Math.sign(o.position.x); o.geometry.dispose(); o.geometry = new THREE.BoxGeometry(46, 1.2, 3); o.position.x = sd * 29; } });
+  fernScene.children.forEach(o => { if (o.isMesh && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.width === 144) { const sd = Math.sign(o.position.x); o.geometry.dispose(); o.geometry = new THREE.BoxGeometry(FRN.x, 1.2, 3); o.position.x = sd * (6 + FRN.x / 2); } });
   // Lanternreach joins the continent: its sea becomes the world's sea, and its night becomes the sky's
   tileL.sun = lantSun; tileL.scene = lantScene; tileL.hemi = lantScene.children.find(o => o.isHemisphereLight); lantScene.background = null;
   lantScene.fog.near = 150; lantScene.fog.far = 430; lantScene.userData.sea.visible = false; lantScene.userData.sea.userData.keepHidden = true;
@@ -8853,26 +8878,29 @@
     ald: { g: ald, hd: aldHead, n: 'Aldric Bough', post: ALDPOS, home: 'aldhome', via: [[24, 52], [4, 50]] },
     fen: { g: fen, hd: fenHead, n: 'Fen Dewberry', post: FENPOS, home: 'fenhome', via: [[-28.6, 99], [-8, 99], [0, 92]] },
     hol: { g: hol, hd: holHead, n: 'Hollis Quern', post: HOLPOS, home: 'holhome', w: 'orchards', via: [[2, 86], [14, 100], [ORC.gx, 100]] },
-    pip: { g: pip, hd: pipHead, n: 'Pip Willowby', post: PIPPOS, home: 'piphome', w: 'orchards', kid: true, noKnock: true, fire: [11, -8], via: [[8, 80], [10, 100], [ORC.gx, 100]] } };
+    pip: { g: pip, hd: pipHead, n: 'Pip Willowby', post: PIPPOS, home: 'piphome', w: 'orchards', kid: true, noKnock: true, fire: [11, -8], via: [[8, 80], [10, 100], [ORC.gx, 100]] },
+    ori: { g: ori, hd: oriHead, n: 'Captain Oriel Tideknot', post: ORIPOS, py: 1.65, home: 'orihome', w: 'fernwater', via: [[17, 57], [17, 50], [0, 50]] },
+    maud: { g: maud, hd: maudHead, n: 'Maudie Crumb', post: maud.position.clone(), home: 'maudhome', w: 'fernwater', indoor: 'bakery', via: [], solid: interiors.bakery.solids.find(q => q.x === maud.position.x && q.z === maud.position.z) } };
+  const FTOWN = { village: { homes: HOMES, lane: LANE.z, gx: 3, sc: scene, sol: solids }, orchards: { homes: OHOMES, lane: ORC.lane, gx: ORC.gx, sc: orchScene, sol: orchSolids }, fernwater: { homes: FHOMES, lane: FRN.lane, gx: 0, sc: fernScene, sol: fernSolids, gy: fernY } };
   const lyingQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0)));
   const BED = { x: -38 + 7.2, z: -9.5, y: 10 };   // the grown elves' bed, upstairs in every house
   const KIDBED = { x: -38 + 4.4, z: 2, y: 10 };   // the child's bed, in the little room at the head of the stair
-  function folkInit(id, i) { const f = FOLK[id], orch = f.w === 'orchards', h = (orch ? OHOMES : HOMES).find(q => q.id === f.home), lz = orch ? ORC.lane : LANE.z; f.id = id; f.h = h; f.i = i; f.mode = null; f.pose = null;
-    f.route = [[f.post.x, f.post.z], ...f.via, [orch ? ORC.gx : 3, lz], [h.x, lz], [h.x, h.z + h.sg * 30], [h.x, h.z + h.sg * 17]];
-    f.solid = f.solid || (orch ? orchSolids : solids).find(s => s.x === f.post.x && s.z === f.post.z);
+  function folkInit(id, i) { const f = FOLK[id], T = FTOWN[f.w || 'village'], h = T.homes.find(q => q.id === f.home), lz = T.lane; f.T = T; f.id = id; f.h = h; f.i = i; f.mode = null; f.pose = null;
+    f.route = [[f.post.x, f.post.z], ...f.via, [T.gx, lz], [h.x, lz], [h.x, h.z + h.sg * 30], [h.x, h.z + h.sg * 17]];
+    f.solid = f.solid || T.sol.find(s => s.x === f.post.x && s.z === f.post.z);
     const ud = f.g.userData; f.g.userData = {}; const c = f.g.clone(true); f.g.userData = ud; c.visible = false; c.position.y = 0; interiors[f.home].scene.add(c); f.in = c;   // the same figure again, for indoors
     { const bg = new THREE.Group(); bg.visible = false; interiors[f.home].scene.add(bg); f.abed = bg; const hu = f.hd.userData; f.hd.userData = {}; const hc = f.hd.clone(true); f.hd.userData = hu; const md = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), mat('#f2ead8', { roughness: 1 }));
       if (f.kid) { hc.position.set(KIDBED.x - 2.5, KIDBED.y + 2.55, KIDBED.z); md.scale.set(2.3, 0.5, 1.4); md.position.set(KIDBED.x + 0.5, KIDBED.y + 1.9, KIDBED.z); } else { hc.position.set(BED.x - 4.1, BED.y + 3.5 + 0.55, BED.z); md.scale.set(4.3, 0.85, 2.3); md.position.set(BED.x + 0.3, BED.y + 2.95, BED.z); }
       hc.quaternion.copy(lyingQ); bg.add(hc); md.castShadow = true; bg.add(md); }
     const sp = new THREE.Object3D(); interiors[f.home].scene.add(sp); sp.userData = { pickable: true, kind: 'resident', who: id, world: 'in:' + f.home }; pickables.push(sp); f.inSpot = sp;
-    const kn = new THREE.Object3D(); kn.position.set(h.x, 0, h.z + h.sg * 19.6); (orch ? orchScene : scene).add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: f.w || 'village' }; if (!f.noKnock) pickables.push(kn); }
+    const kn = new THREE.Object3D(); kn.position.set(h.x, 0, h.z + h.sg * 19.6); T.sc.add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: f.w || 'village' }; if (!f.noKnock) pickables.push(kn); }
   Object.keys(FOLK).forEach(folkInit);
   const abedNow = () => hollowAbed() && phase === 'free';
-  function folkSettle(f, mode) { f.mode = mode; f.g.visible = mode === 'post'; f.g.rotation.z = 0; if (mode === 'post') { f.g.position.x = f.post.x; f.g.position.z = f.post.z; f.g.position.y = 0; if (f.yaw0 !== undefined) f.g.rotation.set(0, f.yaw0, 0); } if (f.solid) f.solid.x = mode === 'post' ? f.post.x : 1e6; }
+  function folkSettle(f, mode) { f.mode = mode; f.g.visible = mode === 'post'; f.g.rotation.z = 0; if (mode === 'post') { f.g.position.x = f.post.x; f.g.position.z = f.post.z; f.g.position.y = f.py || 0; if (f.yaw0 !== undefined) f.g.rotation.set(0, f.yaw0, 0); } if (f.solid) f.solid.x = mode === 'post' ? f.post.x : 1e6; }
   // people who are not teachers: the two who keep the inn, the travellers staying in it, the lamplighter and the watchman. Each is only there at the hours they would be, and each will tell you why.
   const folk = [];
   function addFolk(sc, world, o, x, z, yaw, n, lines, on) { const g = makeElfNPC(o); g.position.set(x, o.sit ? -2.5 : 0, z); g.rotation.y = yaw; g.traverse(m => { if (m.isMesh) m.castShadow = true; }); sc.add(g); Object.assign(g.userData, { pickable: true, kind: 'folk', world, fi: folk.length }); pickables.push(g);
-    const F = { g, n, lines, on, k: 0, solid: o.sit || o.walks ? null : { x, z, r: 1.7 } }; if (F.solid) (world === 'village' ? solids : world === 'orchards' ? orchSolids : interiors[world.slice(3)].solids).push(F.solid); F.sx = x; folk.push(F); return F; }
+    const F = { g, n, lines, on, k: 0, solid: o.sit || o.walks ? null : { x, z, r: 1.7 } }; if (F.solid) (world === 'village' ? solids : world === 'orchards' ? orchSolids : world === 'fernwater' ? fernSolids : interiors[world.slice(3)].solids).push(F.solid); F.sx = x; folk.push(F); return F; }
   const day = (a, b) => h => a < b ? h >= a && h < b : h >= a || h < b;
   { const [kx, kz, ky] = INN_SEATS.keeper, isc = interiors.inn.scene;
     addFolk(isc, 'in:inn', { coat: '#a8563a', skin: '#e8b890', hair: '#8a4a2a' }, kx, kz, ky, 'Posy Underbough', ['Posy Underbough. Welcome to the Sleepy Beetle. If you are hungry, ring the bell on the barrel.', 'I keep the day and my brother Moss keeps the night, so there is always somebody awake here.', 'The beetle over the mantel? My grandfather carved him. He has been asleep for sixty years and I have never once seen him wake.'], day(7, 19));
@@ -8898,6 +8926,11 @@
     mk('nell', { coat: '#3a4a9a', skin: '#f0c9a0', hair: '#2a2a2a' }, 102, 130, Math.PI, 'Nell Willowby', ['Nell Willowby, cooper. Every crate and every cider barrel in the Orchards came off this bench.', 'A barrel is staves, hoops and nothing else. No nails and no glue. The cider swells the wood and the wood holds the cider.', 'Pip is mine. The stacking in rows comes from me, and I will not hear a word against it.', 'I work till the light goes. Then it is home to Windfall Lane, number two.'], 'piphome', [[76, 118], [ORC.gx, 118]]);
     mk('bram', { coat: '#b08a3a', skin: '#d9a070', hair: '#dcdcdc' }, 124, 37, -Math.PI / 2, 'Bram Honeywell', ['Bram Honeywell. These are my bees, though the bees would put it the other way about.', 'No bees, no apples. A blossom that no bee visits sets no fruit. Hollis knows it, which is why he lets me have this corner.', 'Walk slowly near the skeps and they will not mind you. It is flapping that upsets them.', 'I wrote it all down once. The Library at Hearthmoor has the book.'], 'bramhome', [[124, 66], [60, 100], [ORC.gx, 104]]);
     mk('tan', { coat: '#4f6b3a', skin: '#c9956a', hair: '#8a4a2a' }, 73, 40.5, -Math.PI / 2, 'Tansy Applegarth', ['Tansy Applegarth. I pick the pears. Apples you can shake down. A pear you must take off by hand, or it bruises.', 'Four rows of six. You will have that worked out before I finish saying it, if Hollis has had you.', 'A pear is picked hard and ripens indoors. One left to go soft on the tree is brown in the middle.', 'Number four, Windfall Lane, with the berry bushes at the back. That is me.'], 'tanhome', [[58, 70], [50, 96], [ORC.gx, 104]]); }
+  // Fernwater's own people
+  { const mk = (id, o, x, z, yaw, n, lines, home, via) => { const F = addFolk(fernScene, 'fernwater', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'fernwater', via, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
+    mk('hes', { coat: '#3e8a52', skin: '#c9956a', hair: '#5a3d22' }, -12, 20, -Math.PI / 2, 'Hester Tideknot', ['Hester Tideknot. Oriel sails with rope and I make it. He is my brother, and he would be tied up with string without me.', 'A rope is yarns twisted one way into strands, and strands twisted the other way into rope. Each twist is trying to undo the other, and that is what holds it shut.', 'Three strands is the usual. Count them on any rope you pick up.', 'We are both at number one, Heron Row, over the bridge. I walk home when the light goes.'], 'orihome', [[0, 20]]);
+    mk('cor', { coat: '#d9a33f', skin: '#f0c9a0', hair: '#2a2a2a' }, 9.5, 48.5, 0.4, 'Corwin Sedge', ['Corwin Sedge. Nets and lines. If it came out of the Fern this morning, I caught it.', 'A net is all one knot, tied a few hundred times. The holes are made to a size: big enough that the small fish swim through and grow.', 'A net dries on the rack, or it rots. So every evening it goes up, wet or not.', 'Number three, Heron Row. You will know it by the smell of smoke. That is the fish.'], 'corhome', [[0, 48.5]]);
+    mk('pell', { coat: '#3e6a4a', skin: '#d9a070', hair: '#dcdcdc' }, -9, 108, 2.4, 'Pell Reedmace', ['Pell Reedmace. I keep the bridge. Every plank and every post on it has been under my hand.', 'I read the river gauge at dawn and at dusk and write the number down. After rain in the hills the number goes up a day later, never the same day.', 'Wood that stays wet lasts. Wood that stays dry lasts. It is wood that is wet and then dry and then wet again that rots, so I watch the posts at the waterline.', 'Number four, Heron Row, this side of the water. I have the shortest walk home of anybody.'], 'pellhome', [[0, 108]]); }
   function residentTalk(who, knock) {
     const f = FOLK[who], hr = clockHour(), asleep = hr >= 22 || hr < 6.6, pre = knock ? (asleep ? '<i>You knock. A lamp is lit upstairs, and after a while the door opens.</i> ' : '<i>You knock, and the door opens.</i> ') : '';
     const L = { bw: asleep ? ['Mm? Who is… ah. It is you. I was asleep, but I had sooner teach than dream.', 'The Stores open at seven. Sums keep no hours.'] : ['Ah, it is you. The Stores are shut till seven, but sums keep no hours.'],
@@ -8908,28 +8941,34 @@
       pip: asleep ? ['…I was asleep. I was dreaming about crates. Twelve rows of twelve. It was a good dream.', 'Hollis teaches. I just stack. Come and find me in the yard tomorrow.'] : ['I am meant to be going to bed. I have stacked my boots in a row, though. Look.', 'Come and find me in the yard tomorrow.'],
       nell: asleep ? ['Is something on fire? No? Then it will keep till morning, love. The cooperage opens with the light.'] : ['Workshop is shut for the night. Pip is meant to be in bed, so do not get that one started on crates.'],
       bram: asleep ? ['Mm. The bees are asleep and so was I. Come to the bee yard in the morning, when we are all in a better temper.'] : ['The bees are in for the night, and so am I. Find me by the skeps tomorrow.'],
-      tan: asleep ? ['It is the middle of the night. The pears will still be there tomorrow, and so will I. Good night.'] : ['Done for the day. My arms have picked all they are going to. Come by the pear rows tomorrow.'] }[who];
+      tan: asleep ? ['It is the middle of the night. The pears will still be there tomorrow, and so will I. Good night.'] : ['Done for the day. My arms have picked all they are going to. Come by the pear rows tomorrow.'],
+      ori: asleep ? ['Who is knocking at this hour? Oh. A ferryman sleeps light, as it happens. What do you want to work out?'] : ['The barge is moored and the lamp is out. But there is always a watch to keep, so come in. Fractions?'],
+      hes: asleep ? ['Mm. It is the middle of the night, and I have a hundred fathoms to lay tomorrow. Find me at the rope-walk.'] : ['The rope-walk is shut up for the night. Oriel is the one for lessons. I am the one for rope.'],
+      maud: asleep ? ['Bless you, I am up at four for the ovens as it is. The bakery opens at seven. Go to bed, lamb.'] : ['The ovens are banked for the night, love. Fresh at seven. Off you go.'],
+      cor: asleep ? ['The fish are asleep. I should like to be. Come by the nets in the morning.'] : ['Nets are up and I am in. Come by the rack tomorrow.'],
+      pell: asleep ? ['Is the river up? No? Then it can wait till I read the gauge at dawn. Good night.'] : ['Bridge is sound and the gauge is read. That is my day done. Good night.'] }[who];
     L[0] = pre + L[0];
-    say(L, () => { if (who === 'bw') teacherMenu(0); else if (who === 'mari') sciMenu(); else if (who === 'fen') readMenu(); else if (who === 'hol') teacherMenu(1); }, f.n);
+    say(L, () => { if (who === 'bw') teacherMenu(0); else if (who === 'mari') sciMenu(); else if (who === 'fen') readMenu(); else if (who === 'hol') teacherMenu(1); else if (who === 'ori') teacherMenu(2); }, f.n);
   }
   let shutNow = null;
   function nightLifeTick(dt, t) {
-    const abed = abedNow(), hr = clockHour(), live = gameStarted && !titleUp, seen = where === 'village' && live, seenO = where === 'orchards' && live, want = abed ? 'home' : 'post';
+    const abed = abedNow(), hr = clockHour(), live = gameStarted && !titleUp, seen = where === 'village' && live, seenO = (where === 'orchards' || where === 'fernwater') && live, want = abed ? 'home' : 'post';
     Object.values(FOLK).forEach(f => { const R = f.route;
-      if (f.mode === null || (f.mode !== want && !(f.w === 'orchards' ? seenO : seen))) folkSettle(f, want);
+      if (f.indoor) { if (f.mode === null || (f.mode !== want && !(live && where === 'in' && interior && interior.id === f.indoor))) folkSettle(f, want); }   // somebody who works indoors stays till you have left the shop
+      else if (f.mode === null || (f.mode !== want && !(live && where === (f.w || 'village')))) folkSettle(f, want);
       else if ((f.mode === 'post' || f.mode === 'home') && f.mode !== want) { f.dir = want === 'home' ? 1 : -1; const k0 = f.dir > 0 ? 0 : R.length - 1; f.wx = R[k0][0]; f.wz = R[k0][1]; f.k = k0 + f.dir; f.wait = f.i * 3; f.yaw = f.g.rotation.y; f.mode = 'walk'; f.g.visible = true; if (f.solid) f.solid.x = 1e6; }
       if (f.mode === 'walk') {
         if ((f.dir > 0) !== (want === 'home')) { f.dir = -f.dir; f.k += f.dir; }
         if (f.wait > 0) { f.wait -= dt; if (f.dir < 0) f.g.visible = f.wait <= 0; }
         else { let step = 7.5 * dt; while (step > 0 && f.mode === 'walk') { const tx = R[f.k][0], tz = R[f.k][1], dx = tx - f.wx, dz = tz - f.wz, L = Math.hypot(dx, dz); if (L <= step) { f.wx = tx; f.wz = tz; step -= L; f.k += f.dir; if (f.k < 0 || f.k >= R.length) folkSettle(f, f.dir > 0 ? 'home' : 'post'); } else { f.wx += dx / L * step; f.wz += dz / L * step; let dy = Math.atan2(dx, dz) - f.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); f.yaw += dy * Math.min(1, dt * 8); step = 0; } }
-          if (f.mode === 'walk') { f.g.position.x = f.wx; f.g.position.z = f.wz; f.g.position.y = Math.abs(Math.sin(t * 7 + f.i)) * 0.12; f.g.rotation.set(0, f.yaw, Math.sin(t * 7 + f.i) * 0.05); } } }
+          if (f.mode === 'walk') { f.g.position.x = f.wx; f.g.position.z = f.wz; f.g.position.y = (f.T.gy ? f.T.gy(f.wx, f.wz) : 0) + Math.abs(Math.sin(t * 7 + f.i)) * 0.12; f.g.rotation.set(0, f.yaw, Math.sin(t * 7 + f.i) * 0.05); } } }
       // indoors: by the fire for the first hour, then upstairs in bed
       const home = f.mode === 'home', pose = !home ? 'out' : (hr >= 22 || hr < 6.6) ? 'bed' : 'fire';
       if (pose !== f.pose) { f.pose = pose; f.in.visible = pose === 'fire'; f.abed.visible = pose === 'bed';
         if (pose === 'bed') { if (f.kid) f.inSpot.position.set(KIDBED.x + 1, KIDBED.y, KIDBED.z + 2.6); else f.inSpot.position.set(BED.x - 0.5, BED.y, BED.z + 2.4); }
         else if (pose === 'fire') { const [fx, fz] = f.fire || [5, -12.5]; f.in.position.set(fx, 0, fz); f.in.rotation.set(0, 0.5, 0); f.inSpot.position.set(fx, 0, fz); } } });
     // shutting-up time, said once as it happens
-    { const shut = abed; if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
+    { const shut = abed; if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { const fw = where === 'fernwater'; if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : fw ? 'The shops are shut, and everyone is walking home over the bridge to Heron Row.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : fw ? 'The Crossing is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
     folk.forEach(F => { const on = F.on(hr); if (on !== F.g.visible) { F.g.visible = on; if (F.solid) F.solid.x = on ? F.sx : 1e6; } });
     if (WICK.g.visible && seen) { const g = WICK.g, L = LANE.x1 - 28, u = (netNow() * 3.2) % (2 * L); WICK.dir = u < L ? 1 : -1; g.position.x = 10 + (u < L ? u : 2 * L - u); g.rotation.y = WICK.dir * Math.PI / 2; g.position.y = Math.abs(Math.sin(t * 5)) * 0.1; }
     if (where === 'in' && interior) roomNight(interior);
@@ -9535,7 +9574,7 @@
     else if (save.where === 'orchards') { restoreAfter = place; goToOrchards(); }
     else if (save.where === 'fernwater') { restoreAfter = place; goToFernwater(); }
     else if (save.where === 'hills') { const [x, z] = toWorld(tileO, ORC.gx, ORCH_LEN + 12); enterWild(x, z, yawO, 'The Long Road. Fernwater Crossing lies ahead.'); }
-    else if (save.where === 'high') { const [x, z] = toWorld(tileF, 0, 128); enterWild(x, z, yawF, 'The Long Road. Cairnhold is up on the highland ahead.'); }
+    else if (save.where === 'high') { const [x, z] = toWorld(tileF, 0, FERN_LEN + 8); enterWild(x, z, yawF, 'The Long Road. Cairnhold is up on the highland ahead.'); }
     else if (save.where === 'cliff') { const [x, z] = toWorld(tileC, 0, 158); enterWild(x, z, yawC, 'The Long Road. Cogsworth lies ahead, under its crag.'); }
     else if (save.where === 'skyhaven' || save.where === 'lift' || save.where === 'flight') { restoreAfter = save.where === 'skyhaven' ? place : null; where = 'lift'; scene.remove(player); liftScene.add(player); if (beetle) { scene.remove(beetle); liftScene.add(beetle); } liftT = 1; goToSky(); }
     else if (save.where === 'sea') { leaveHall('e'); }
@@ -9575,7 +9614,7 @@
     else if (key === 'orch-1') { kid.satchel.visible = true; coinsAtLeast(22); phase = 'toorch'; setTimeout(goToOrchards, 200); }
     else if (key === 'road') { kid.satchel.visible = true; coinsAtLeast(19); setTimeout(goToRoad, 200); }
     else if (key === 'hills') { kid.satchel.visible = true; coinsAtLeast(27); where = 'orchards'; scene.remove(player); orchScene.add(player); if (beetle) { scene.remove(beetle); orchScene.add(beetle); } setTimeout(() => { const [x, z] = toWorld(tileO, ORC.gx, ORCH_LEN + 12); enterWild(x, z, yawO, 'The Long Road. Fernwater Crossing lies ahead.'); }, 200); }
-    else if (key === 'high') { kid.satchel.visible = true; coinsAtLeast(45); where = 'fernwater'; scene.remove(player); fernScene.add(player); if (beetle) { scene.remove(beetle); fernScene.add(beetle); } setTimeout(() => { const [x, z] = toWorld(tileF, 0, 128); enterWild(x, z, yawF, 'The Long Road. Cairnhold is up on the highland ahead.'); }, 200); }
+    else if (key === 'high') { kid.satchel.visible = true; coinsAtLeast(45); where = 'fernwater'; scene.remove(player); fernScene.add(player); if (beetle) { scene.remove(beetle); fernScene.add(beetle); } setTimeout(() => { const [x, z] = toWorld(tileF, 0, FERN_LEN + 8); enterWild(x, z, yawF, 'The Long Road. Cairnhold is up on the highland ahead.'); }, 200); }
     else if (key === 'cliff') { kid.satchel.visible = true; coinsAtLeast(65); where = 'cairnhold'; scene.remove(player); cairnScene.add(player); if (beetle) { scene.remove(beetle); cairnScene.add(beetle); } buildBridge(); setTimeout(() => { const [x, z] = toWorld(tileC, 0, 158); enterWild(x, z, yawC, 'The Long Road. Cogsworth lies ahead, under its crag.'); }, 200); }
     else if (key === 'lift') { kid.satchel.visible = true; coinsAtLeast(125); bikeOwned = true; where = 'lantern'; scene.remove(player); lantScene.add(player); if (beetle) { scene.remove(beetle); lantScene.add(beetle); } setTimeout(() => goToLift(false), 200); }
     else if (/^sky-(1[0-2]|[1-9])$/.test(key)) { kid.satchel.visible = true; const n = parseInt(key.slice(4), 10); coinsAtLeast(125 + 2 * (n - 1)); bikeOwned = true; where = 'lift'; scene.remove(player); liftScene.add(player); if (beetle) { scene.remove(beetle); liftScene.add(beetle); } liftT = 1; if (n === 1) { phase = 'tosky'; } else { phase = 'doneS1'; pendingStart = { 2: startS2, 3: startS3, 4: startS4, 5: startS5, 6: startS6, 7: startS7, 8: startS8, 9: startS9, 10: startS10, 11: startS11, 12: startS12 }[n]; } setTimeout(goToSky, 200); }
