@@ -163,15 +163,18 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
-## Emberdeep at full size
+## Emberdeep and Tinderfold (build 108)
 
-Emberdeep was always a hall big enough for grown elves, but nobody lived there. Now they do.
+Emberdeep is a place people work, not a place they live, so its people now live in a village of their own and ride to work.
 
-- **Hearth Gallery.** The west wall of the hall is gone and the cavern runs on another 160 units. Four two-storey house fronts are cut into its north wall, each with a grown-elf door you walk through, lit windows, a number and a family name. A great iron brazier of coals stands in the middle with six stones round it to sit on, with four more pillars, lamps, a coal store and a stack of iron pigs. All of it is solid.
-- **Four homes.** Ironvein, Cinder, Slagg and Flint Hold are full family homes inside, the same size as the homes in the other towns.
-- **Three new people.** Brokk Cinder keeps the furnaces, Hilda Slagg weighs the ore at the carts, and Odwin Flint trims the lamps and sweeps the forge-grid. Each has things to say about their work (smelting, shares of a hundred, along-then-up on the grid).
-- **Hours.** At nine in the evening Master Durna and the other three walk home along the gallery, sit by the fire, and go to bed. They are back at seven. Durna's shop bell is shut at night. Knock on her door and she will still teach.
-- **Not yet:** there is no day or night to see under the mountain, so evening only shows in people going home. The forge, furnaces and lava side are unchanged.
+- **Tinderfold** stands on level ground down the hill from Emberdeep's west door, at the end of a lane off the Long Road (a signpost marks the turning). It has one street, a well with a bench either side, lamps, and a ram shed.
+- **Four houses, none alike.** Durna's is low and stone, with a steep slate roof, a chimney like a tower and her own smithy under a lean-to. Brokk's is brick below and plaster above, jutting over the street, with a red tile roof, a kitchen wing and a fenced yard with a swing. Hilda's is tall and narrow, three floors of pale stone with a hipped roof, a bay window and a rock garden of labelled ores. Odwin's is a long log cabin with a deep porch and a lantern between every post.
+- **Inside, each is laid out differently.** Durna has one great room with her bed in an alcove and her anvil for a table. Brokk has two bedrooms, his and his daughter's, a kitchen and a half-played game of dominoes. Hilda has shelves of ore samples to the ceiling, a desk with scales, a ledger and an abacus, and her bed behind a curtain. Odwin has the fire at one end and his bed at the other, a lamp bench, a cat and a game of patience laid out for one. Only Brokk's house has a child's room, because only Brokk has a child.
+- **Tilly Cinder**, Brokk's daughter, plays in their yard by day and goes home at nine. She is the only child in Tinderfold, and you can see her.
+- **The carriage.** Gorse Tallow drives a long open cart pulled by two big rams, Tuff and Biscuit. A little after half past six it takes everyone up the road to Emberdeep's door, where it waits all day. Just after nine it brings them home. You can see the four of them sitting in it. Gorse will talk to you, but it is workers only for now.
+- **At night the cave is empty.** At nine Durna, Brokk, Hilda and Odwin walk out of the west gate to the carriage. They are back at their places a few minutes after it arrives in the morning. Knock on Durna's door in Tinderfold and she will still teach.
+- **Emberdeep's west gallery** has no houses now. Along its north wall are four ore bins, one for each seam.
+- **Not yet:** you cannot ride the carriage. Tinderfold is not on the map. Inside, the houses are one floor each.
 
 ## Cogsworth at full size
 

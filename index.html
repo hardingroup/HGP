@@ -369,7 +369,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 107 · 20 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 108 · 20 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -2002,12 +2002,6 @@
   const GW = { zc: 115, hw: 8, depth: 34, half: 1800, rim: 20, out: 46 };
   // Cogsworth sits at the foot of a crag, its east gate pointing at Emberdeep. The crag is real: you can climb its back and look down on the town.
   const yawG = Math.atan2(-(EMBER_AT[1] - COG_AT[1]), EMBER_AT[0] - COG_AT[0]);
-  const EHOMES = [
-    { id: 'durhome', no: 1, x: -90, sign: 'Ironvein', wall: '#5e5852', trim: '#2a2420', door: '#8a3a2a', flower: '#ff9a40' },
-    { id: 'brokhome', no: 2, x: -130, sign: 'Cinder', wall: '#66605a', trim: '#1b1b1b', door: '#b08a3a', flower: '#e8b64c' },
-    { id: 'hilhome', no: 3, x: -170, sign: 'Slagg', wall: '#5a5650', trim: '#2a2420', door: '#3e6a4a', flower: '#c0c0c0' },
-    { id: 'odwhome', no: 4, x: -210, sign: 'Flint', wall: '#625c56', trim: '#1b1b1b', door: '#3a4a9a', flower: '#9fb7f0' }];
-  EHOMES.forEach(h => { h.hw = 17; h.hd = 16; h.sg = -1; h.face = Math.PI; h.z = 128 + 16; });
   const LNT = { x0: -236, lane: 86 };   // Lanternreach: Windward Row runs west from the lane, two houses a side
   const lantHB = [], lantBenches = [];
   const LHOMES = [
@@ -2061,6 +2055,21 @@
   // frameE: origin at the west door, +z running through the mountain toward Lanternreach, the ridge lying along x.
   const yawE = Math.atan2(LANT_AT[0] - EMBER_AT[0], LANT_AT[1] - EMBER_AT[1]);
   const frameE = { yaw: yawE, ox: EMBER_AT[0] - 60 * Math.sin(yawE), oz: EMBER_AT[1] - 60 * Math.cos(yawE) };
+  // Tinderfold: the village down the hill from Emberdeep's west door, where the people who work in the mountain live. Its frame: x runs along the street (the lane to the road is at the -x end), z toward the mountain.
+  const TF = { y: -3, solids: [], boxes: [], wsol: [], dyn: [], tm: 80 / 3600, morn: 6.6, eve: 21.02 };
+  const frameT = (() => { const [ox, oz] = toWorld(frameE, 230, -240); return { yaw: yawE, ox, oz }; })();
+  const THOMES = [
+    { id: 'durhome', kind: 'forge', x: -62, z: 30, w: 40, d: 26, face: Math.PI, sign: 'Ironvein' },
+    { id: 'brokhome', kind: 'family', x: 40, z: 30, w: 34, d: 22, face: Math.PI, sign: 'Cinder' },
+    { id: 'hilhome', kind: 'tall', x: -48, z: -28, w: 24, d: 22, face: 0, sign: 'Slagg' },
+    { id: 'odwhome', kind: 'cabin', x: 50, z: -28, w: 44, d: 20, face: 0, sign: 'Flint' }];
+  THOMES.forEach(h => { h.sg = h.face ? -1 : 1; h.dz = h.z + h.sg * h.d / 2; const [x, z] = toWorld(frameT, h.x, h.dz + h.sg * 4.5); h.out = { x, z, yaw: yawE + h.face }; const [kx, kz] = toWorld(frameT, h.x, h.dz + h.sg * 1.6); h.knock = { x: kx, z: kz }; });
+  TF.late = TF.tm + 0.004;   // the mountain's people are not at work till the carriage has brought them up
+  function tinderFlat(x, z) { const [lx, lz] = toLocal(frameT, x, z); if (Math.abs(lx) > 200 || Math.abs(lz) > 120) return 0; return ss(-190, -150, lx) * ss(180, 140, lx) * ss(-112, -74, lz) * ss(112, 74, lz); }
+  // where nothing grows: the street and the lane to the road, the houses and their yards, the ram shed, the well
+  const TF_BLOCK = [[-235, 150, -6, 6], [-132, -92, -40, -8], [-16, 8, 8, 22]].concat(THOMES.map(h => [h.x - h.w / 2 - 20, h.x + h.w / 2 + 20, h.z - h.d / 2 - 6, h.z + h.d / 2 + 6]));
+  function tinderBlock(x, z, m) { const [lx, lz] = toLocal(frameT, x, z); if (Math.abs(lx) > 400 || Math.abs(lz) > 200) return false; if (m >= 12 && Math.abs(lx) < 185 && Math.abs(lz) < 105) return true;   // no big trees in the village itself
+    return TF_BLOCK.some(([a, b, c, d]) => lx > a - m && lx < b + m && lz > c - m && lz < d + m); }
   function ridge(x, z) {
     const [lx, lz] = toLocal(frameE, x, z), ax = Math.abs(lx); if (ax > 1500 || lz < -60 || lz > 180) return 0;
     let h = 140 * ss(-60, 40, lz) * ss(180, 80, lz) * ss(1500, 900, ax);
@@ -2095,7 +2104,7 @@
   // the gorge: a sheer cut, deepest by the town and running out to nothing at each end
   function gorgeG(lx) { const [x, z] = toWorld(tileC, lx, GW.zc), [k, y] = zoneAt(x, z); return bigH(x, z) * k + y * (1 - k); }
   function gorgeDepth(lx) { return GW.depth * ss(GW.half, GW.half - 600, Math.abs(lx)); }
-  function noGrow(x, z, m) { { const q = riverD(x, z); if (q[0] < riverHW(q[1]) + m) return true; } if (offshore(x, z, 5) || inCity(x, z, 14)) return true; const [lx, lz] = toLocal(tileC, x, z); if (Math.abs(lx) < GW.half && Math.abs(lz - GW.zc) < GW.rim + m) return true; return ridge(x, z) > 6; }
+  function noGrow(x, z, m) { if (tinderBlock(x, z, m)) return true; { const q = riverD(x, z); if (q[0] < riverHW(q[1]) + m) return true; } if (offshore(x, z, 5) || inCity(x, z, 14)) return true; const [lx, lz] = toLocal(tileC, x, z); if (Math.abs(lx) < GW.half && Math.abs(lz - GW.zc) < GW.rim + m) return true; return ridge(x, z) > 6; }
   // the Long Road, leg by leg: the Hollow's gate to the Orchards' gate, then the Orchards' far gate to Fernwater
   function buildRoad(p) {
     const curve = new THREE.CatmullRomCurve3(p.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
@@ -2138,6 +2147,7 @@
     // the gorge
     const [glx, glz] = toLocal(tileC, x, z), gd = Math.abs(glz - GW.zc), gax = Math.abs(glx);
     if (gd < GW.out && gax < GW.half + 40) { const G = gorgeG(glx), e = ss(GW.half + 40, GW.half, gax), hg = gd < GW.hw ? G - gorgeDepth(glx) : gd < GW.rim ? G : G + (h - G) * ss(GW.rim, GW.out, gd); h = h * (1 - e) + hg * e; }
+    { const w = tinderFlat(x, z); if (w > 0) h += (TF.y - h) * w; }   // Tinderfold stands on level ground
     return coast(x, z, h);
   }
 
@@ -2565,7 +2575,7 @@
       if (walkH(p.x, p.z) - h0 > 0.7 || walkH(prev.x + ux * 1.2, prev.z + uz * 1.2) - h0 > 1.2) { p.x = prev.x; p.z = prev.z; } }
     // the quay and the piers stand well above the lake: from the water you cannot climb them
     if (cityDeck(p.x, p.z) !== null && cityDeck(prev.x, prev.z) === null && wildRiver(prev.x, prev.z)) { p.x = prev.x; p.z = prev.z; }
-    cityCollide(p, prev);
+    cityCollide(p, prev); tinderCollide(p, prev);
     for (const q of PORTALS) { const [qx, qz] = toLocal(q, p.x, p.z); if (Math.abs(qx) < 40.6 && qz > 3.2 && qz < 30) {
         if (Math.abs(qx) < 4.4) { if (!fading) enterHall(q.key); p.x = prev.x; p.z = prev.z; return; }
         const w = toWorld(q, qx, 3.2); p.x = w[0]; p.z = w[1]; } }
@@ -3048,10 +3058,6 @@
   [['asthome', 'Vell House', 'Star charts pinned over the mantel, and a sextant in its box by the door.'], ['reefhome', 'Reef Cottage', 'Coils of rope on pegs, each one whipped at both ends.'], ['ebbhome', 'Ebb Cottage', 'A tide table on the wall, with today circled.'], ['wickhome', 'Wick Cottage', 'A row of polished lamp glasses on the sill, and the smell of oil.']].forEach(([id, label, hintT]) => { const h = LHOMES.find(q => q.id === id);
     makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'lantern', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.door, kidQuilt: h.flower, rug: '#5a6a8a' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.door, quilt: h.roof }); }) });
     interiors[id].door = { x: h.x, z: h.z + h.sg * (h.hd + 0.2 + 4.5), yaw: h.face }; });
-  // the four houses in the rock on Hearth Gallery, Emberdeep
-  [['durhome', 'Ironvein Hold', 'An anvil for a table, and it is the tidiest thing in the room.'], ['brokhome', 'Cinder Hold', 'Warm as a bread oven, with tongs hung by the hearth.'], ['hilhome', 'Slagg Hold', 'Ore samples along the sill, each with a paper label.'], ['odwhome', 'Flint Hold', 'A dozen lamps, trimmed and waiting, on the shelf by the door.']].forEach(([id, label, hintT]) => { const h = EHOMES.find(q => q.id === id);
-    makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: '#cfc6b4', trim: h.trim, label, region: 'emberdeep', hint: hintT, decorate: familyHome({ wall: '#cfc6b4', quilt: h.door, kidQuilt: h.flower, rug: '#8a4a2a' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: '#5a3d22', quilt: h.door }); }) });
-    interiors[id].door = { x: h.x, z: 122, yaw: Math.PI }; });
   // the four houses in the cliff on Cliff Row, Cogsworth
   [['tamhome', 'Gearwright House', 'A clock on every wall, and no two of them agree by more than a second.'], ['odehome', 'Spindle House', 'A wheel hangs over the hearth, true to a hair.'], ['barhome', 'Ratchet House', 'A row of brass levers by the door, each one labelled.'], ['clemhome', 'Verge House', 'The town clock’s spare hands lean in the corner.']].forEach(([id, label, hintT]) => { const h = GHOMES.find(q => q.id === id);
     makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'cogsworth', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.door, kidQuilt: h.flower, rug: '#b8a070' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.trim, quilt: h.door }); }) });
@@ -3625,7 +3631,7 @@
   { const gx = 149, gh = cogH(gx, 70); [-6.5, 6.5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(2.2, 14, 2.2), mat('#8c8577')); gp.position.set(gx, gh + 7, 70 + o); gp.castShadow = true; cogScene.add(gp); cogSolids.push({ x: gx, z: 70 + o, r: 1.5 }); }); const lin = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, 16.4), mat('#7a7468')); lin.position.set(gx, gh + 14.8, 70); lin.castShadow = true; cogScene.add(lin); const sg = signBoard('To Emberdeep', 9, 2, '#8a3a2a', '#f6e7c2'); sg.position.set(gx - 0.2, gh + 16.9, 70); sg.rotation.y = -Math.PI / 2; cogScene.add(sg); }
 
   // ---------- Region 6: Emberdeep, the dwarven forges under the mountain ----------
-  const EMB_LEN = 120, DURPOS = new THREE.Vector3(-10, 0, 42), LAVA_X = 34, EMBW = { x0: -230, wall: 128, lane: 112, gx: -62 };   // the hall now runs on westward into Hearth Gallery, where its people live
+  const EMB_LEN = 120, DURPOS = new THREE.Vector3(-10, 0, 42), LAVA_X = 34, EMBW = { x0: -230, wall: 128, lane: 112, gx: -62 };   // the hall runs on westward into the West Gallery, where the ore is kept
   const embHB = [], embBenches = [];
   const embScene = new THREE.Scene();
   embScene.fog = new THREE.Fog('#1a0e08', 40, 190); embScene.background = new THREE.Color('#1a0e08');
@@ -3674,10 +3680,15 @@
     [-6, 6].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(2.4, 12, 2.4), ironM); gp.position.set(o, 6, EMB_LEN); embScene.add(gp); embSolids.push({ x: o, z: EMB_LEN, r: 1.6 }); }); const arch2 = new THREE.Mesh(new THREE.TorusGeometry(6.4, 1.2, 10, 24, Math.PI), ironM); arch2.position.set(0, 12, EMB_LEN); embScene.add(arch2); const day2 = new THREE.Mesh(new THREE.PlaneGeometry(11, 13), mat('#dfe3e6', { emissive: '#dfe3e6', emissiveIntensity: 0.8 })); day2.position.set(0, 6, EMB_LEN + 2); day2.rotation.y = Math.PI; embScene.add(day2);
     // lamps along the lane so you can see your feet
     for (let z = 15; z < EMB_LEN; z += 30) [-5, 5].forEach(x => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 5, 6), ironM); post.position.set(x, 2.5, z); embScene.add(post); const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.6), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 })); lamp.position.set(x, 5.2, z); embScene.add(lamp); const l = new THREE.PointLight('#ffc46a', 0.6, 22); l.position.set(x, 5, z); embScene.add(l); });
-    // Hearth Gallery: the hall carried on to the west, with four houses cut into its north wall, a great brazier in the middle, and lamps
+    // the West Gallery: the hall carried on to the west, with the ore bins along its north wall, a great brazier in the middle, and lamps
     { const fg = new THREE.Group(); embScene.add(fg); const panes = mat('#f6cf72', { emissive: '#e09a2a', emissiveIntensity: 1.2 }), FZ = EMBW.wall - 0.6;
-      EHOMES.forEach(h => rockFront(fg, embScene, h, FZ, panes, embHB)); bake(fg);
-      const hs = signBoard('Hearth Gallery', 9, 1.6, '#1b1b1b', '#e8b64c'); hs.position.set(-70.4, 12, 100); hs.rotation.y = Math.PI / 2; embScene.add(hs);
+      { const bb = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); fg.add(b); return b; }, wd = mat('#5a3d22', { roughness: 1 });
+        [['#8a4a2a', 'Red seam'], ['#6b7a78', 'Grey seam'], ['#2a2a2e', 'Black seam'], ['#b08a3a', 'Gold seam']].forEach(([c, name], q) => { const x = -196 + q * 30, oreM = mat(c, { flatShading: true, roughness: 1 });
+          [-1, 1].forEach(s => bb(0.8, 5, 10, x + s * 8, 2.5, FZ - 5, wd)); bb(16.8, 4, 0.8, x, 2, FZ - 9.6, wd);
+          for (let k = 0; k < 14; k++) { const r = new THREE.Mesh(new THREE.DodecahedronGeometry(1 + (k % 3) * 0.4, 0), oreM); r.position.set(x - 6 + (k % 7) * 2, 1.2 + Math.floor(k / 7) * 1.5, FZ - 3 - (k % 3) * 1.8); fg.add(r); }
+          embHB.push({ x, z: FZ - 5, hw: 8.4, hd: 5 }); const lb = signBoard(name, 5, 1, '#1b1b1b', '#e8b64c'); lb.position.set(x, 5.4, FZ - 10.1); lb.rotation.y = Math.PI; embScene.add(lb); }); }
+      bake(fg);
+      const hs = signBoard('The West Gallery', 9, 1.6, '#1b1b1b', '#e8b64c'); hs.position.set(-70.4, 12, 100); hs.rotation.y = Math.PI / 2; embScene.add(hs);
       const gl = new THREE.Mesh(new THREE.PlaneGeometry(7, 150), mat('#ffffff', { map: dirtTex, color: '#6a6058' })); gl.rotation.x = -Math.PI / 2; gl.rotation.z = Math.PI / 2; gl.position.set(-78 - 75 + 78 - 68, 0.03, EMBW.lane); embScene.add(gl);
       const link = new THREE.Mesh(new THREE.PlaneGeometry(5, 64), mat('#ffffff', { map: dirtTex, color: '#6a6058' })); link.rotation.x = -Math.PI / 2; link.rotation.z = Math.PI / 2; link.position.set(-32, 0.03, EMBW.lane); embScene.add(link);
       // the brazier: a wide iron bowl of coals on a stone drum, with a ring of stone to sit on
@@ -4826,6 +4837,298 @@
   }
   embBenches.forEach(([x, z, yaw]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.5, 1.8), mat('#55504a', { roughness: 1 })); b.position.set(x, 0.75, z); b.rotation.y = yaw; b.castShadow = true; embScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.5, label: 'stone by the brazier', world: 'emberdeep' }; pickables.push(b); embSolids.push({ x, z, r: 1.6 }); });
   cogBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); cogScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'bench', world: 'cogsworth' }; pickables.push(b); cogSolids.push({ x, z, r: 1.4 }); });
+  // ---------- Tinderfold: four houses, none of them alike, a ram shed, a well, and the carriage that takes the mountain's people up to work and home again ----------
+  const TF_G = new THREE.Group(); TF_G.position.set(frameT.ox, TF.y, frameT.oz); TF_G.rotation.y = frameT.yaw; worldScene.add(TF_G);
+  {
+    const G = TF_G, S = TF.solids, BXS = TF.boxes, M = (c, o) => mat(c, Object.assign({ roughness: 1 }, o || {}));
+    const pane = mat('#f6cf72', { emissive: '#e09a2a', emissiveIntensity: 0.3 }); NIGHT_GLOW.push(n => { pane.emissiveIntensity = 0.3 + 1.2 * n; });
+    const iron = mat('#3a3a3a', { metalness: 0.6, roughness: 0.5 }), brass = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 }), dirt = mat('#ffffff', { map: dirtTex, color: '#9a8a70' });
+    const box = (g, w, hh, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m); b.position.set(x, y, z); g.add(b); return b; };
+    const put = (g, geo, m, x, y, z) => { const b = new THREE.Mesh(geo, m); b.position.set(x, y, z); g.add(b); return b; };
+    const flatOn = (w, d, x, z, m, y) => { const q = new THREE.Mesh(new THREE.PlaneGeometry(w, d), m || dirt); q.rotation.x = -Math.PI / 2; q.position.set(x, y || 0.05, z); q.receiveShadow = true; G.add(q); return q; };
+    // a pitched roof with its ridge along x, and the gable ends filled in
+    const gable = (g, W, D, H, RH, OV, roofM, endM, trimM) => { const run = D / 2 + OV, k = RH / (D / 2), sl = run * Math.hypot(1, k), a = Math.atan(k);
+      [-1, 1].forEach(s => { const r = box(g, W + OV * 2, 0.7, sl, 0, H + RH - k * run / 2, s * run / 2, roofM); r.rotation.x = s * a; }); if (trimM) box(g, W + OV * 2 + 0.3, 0.6, 1.1, 0, H + RH + 0.1, 0, trimM);
+      const sh = new THREE.Shape(); sh.moveTo(-D / 2, 0); sh.lineTo(D / 2, 0); sh.lineTo(0, RH); sh.lineTo(-D / 2, 0); const gb = new THREE.ExtrudeGeometry(sh, { depth: W - 0.1, bevelEnabled: false }); gb.translate(0, 0, -(W - 0.1) / 2); put(g, gb, endM, 0, H, 0).rotation.y = Math.PI / 2; };
+    const win = (g, x, y, z, w, hh, trim, ry, shut) => { const q = new THREE.Group(); q.position.set(x, y, z); q.rotation.y = ry || 0; g.add(q); const p = new THREE.Mesh(new THREE.PlaneGeometry(w, hh), pane); p.position.z = 0.03; q.add(p);
+      [[w + 0.5, 0.3, 0, hh / 2], [w + 0.7, 0.35, 0, -hh / 2], [0.3, hh, -w / 2, 0], [0.3, hh, w / 2, 0], [0.14, hh, 0, 0], [w, 0.14, 0, 0]].forEach(([a, b, u, v]) => box(q, a, b, 0.3, u, v, 0.12, trim));
+      if (shut) [-1, 1].forEach(s => box(q, w * 0.45, hh, 0.14, s * (w / 2 + w * 0.24 + 0.2), 0, 0.1, shut)); return q; };
+    const door = (g, x, z, w, hh, m, trim) => { const dm = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.3), m); dm.position.set(x, hh / 2, z + 0.12); g.add(dm); hingeDoor(dm, g); box(g, w + 1.1, 0.55, 0.5, x, hh + 0.27, z + 0.15, trim); [-1, 1].forEach(s => box(g, 0.5, hh, 0.5, x + s * (w / 2 + 0.25), hh / 2, z + 0.15, trim)); };
+    const sign = (g, text, x, y, z, bg, fg, w) => { const sn = signBoard(text, w || 6, 1.2, bg, fg); sn.position.set(x, y, z); g.add(sn); return sn; };
+    // a spot on a house's own plan, as a spot in the village: the house is turned to face the street
+    const at = (h, x, z) => [h.x + (h.face ? -x : x), h.z + (h.face ? -z : z)];
+    const sol = (h, x, z, r) => { const [a, b] = at(h, x, z); S.push({ x: a, z: b, r }); };
+    const rect = (h, x, z, hw, hd) => { const [a, b] = at(h, x, z); BXS.push({ x: a, z: b, hw, hd }); };
+    const house = h => { const g = new THREE.Group(); g.position.set(h.x, 0, h.z); g.rotation.y = h.face; G.add(g); BXS.push({ id: h.id, x: h.x, z: h.z, hw: h.w / 2 + 0.2, hd: h.d / 2 + 0.2, door: { x: h.x, z: h.dz } }); return g; };
+    const path = h => flatOn(5, Math.abs(h.dz) - 4.6, h.x, (h.dz + Math.sign(h.dz) * 4.6) / 2, null, 0.06);
+    // the street, and the lane down to the Long Road over the land as it lies
+    flatOn(300, 10, 0, 0);
+    { const verts = [], uvs = [], idx = []; let n = 0; for (let x = -149; x >= -230; x -= 3) { [[-4.2, 0], [4.2, 1]].forEach(([o, u]) => { const [wx, wz] = toWorld(frameT, x, o); verts.push(x, worldH(wx, wz) - TF.y + 0.08, o); uvs.push(u, x / 6); }); if (n > 0) { const a = (n - 1) * 2, b = n * 2; idx.push(a, a + 1, b, a + 1, b + 1, b); } n++; }
+      const gm = new THREE.BufferGeometry(); gm.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); gm.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); gm.setIndex(idx); gm.computeVertexNormals(); const ln = new THREE.Mesh(gm, mat('#ffffff', { map: dirtTex, color: '#9a8a70', side: THREE.DoubleSide })); ln.receiveShadow = true; G.add(ln); }
+    THOMES.forEach(path);
+
+    // ---- 1. Ironvein: Durna's forge-house. Low and stone, a steep slate roof, a chimney like a tower, and her own smithy under a lean-to at the side ----
+    { const h = THOMES[0], g = house(h), W = h.w, D = h.d, H = 12, stone = M('#7d776c'), dark = M('#3c3a36'), slate = M('#3c4148'), red = M('#8a2e22'), steel = mat('#55585c', { metalness: 0.7, roughness: 0.35 }), wood = M('#6b4a2b');
+      box(g, W + 1, 1.2, D + 1, 0, 0.6, 0, dark); box(g, W, H, D, 0, H / 2, 0, stone); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => box(g, 1.7, H, 1.7, a * W / 2, H / 2, b * D / 2, dark));
+      gable(g, W, D, H, 12, 1.6, slate, stone, dark);
+      box(g, 6.4, H + 18, 6.4, W / 2 + 2.8, (H + 18) / 2, -2, stone); box(g, 7.4, 0.8, 7.4, W / 2 + 2.8, H + 18.4, -2, dark); rect(h, W / 2 + 2.8, -2, 3.4, 3.4);
+      door(g, 0, D / 2, 4.8, 9.4, red, dark); for (let q = 0; q < 12; q++) box(g, 0.3, 0.3, 0.2, -1.8 + (q % 4) * 1.2, 1.6 + Math.floor(q / 4) * 3, D / 2 + 0.32, iron);
+      [-12, 12].forEach(x => { win(g, x, 6.4, D / 2 + 0.02, 3, 3.6, dark); win(g, x, 6.4, -D / 2 - 0.02, 3, 3.6, dark, Math.PI); });
+      sign(g, 'Ironvein', 0, 10.9, D / 2 + 0.45, '#2a2420', '#e8b64c');
+      // the smithy: a lean-to on posts, an open hearth with the coals still red, an anvil on its stump, and the quench barrel
+      { const X = -W / 2, a = Math.atan(2.6 / 16); const rf = box(g, 17, 0.5, 23, X - 8, 9.3, 0, slate); rf.rotation.z = a; [-10.5, 10.5].forEach(z => { box(g, 0.9, 8.4, 0.9, X - 15.6, 4.2, z, wood); sol(h, X - 15.6, z, 0.7); }); box(g, 0.6, 0.6, 22, X - 15.6, 8.4, 0, wood);
+        box(g, 5.4, 3.2, 4.4, X - 5, 1.6, -6, stone); put(g, new THREE.BoxGeometry(4, 0.4, 3), new THREE.MeshStandardMaterial({ color: '#ff5a10', emissive: '#ff5a10', emissiveIntensity: 1.3 }), X - 5, 3.3, -6); sol(h, X - 5, -6, 3);
+        const hl = new THREE.PointLight('#ff7a30', 0.7, 26); const [lx, lz] = at(h, X - 5, -6); hl.position.set(lx, 5, lz); G.add(hl);
+        put(g, new THREE.CylinderGeometry(1.4, 1.7, 2.4, 10), wood, X - 8, 1.2, 3); box(g, 3.6, 1.3, 1.5, X - 8, 3, 3, steel); put(g, new THREE.ConeGeometry(0.6, 1.8, 8), steel, X - 8, 3.2, 4.6).rotation.x = Math.PI / 2; sol(h, X - 8, 3, 2);
+        put(g, new THREE.CylinderGeometry(1.3, 1.2, 2.6, 12), wood, X - 12, 1.3, 7); put(g, new THREE.CylinderGeometry(1.15, 1.15, 0.1, 12), mat('#2a3a4a', { roughness: 0.2 }), X - 12, 2.55, 7); sol(h, X - 12, 7, 1.5);
+        for (let q = 0; q < 4; q++) { box(g, 0.14, 3, 0.14, X - 2.5 - q * 0.9, 6.4, -10.8, iron); box(g, 0.5, 0.4, 0.3, X - 2.5 - q * 0.9, 4.9, -10.8, iron); } box(g, 4.6, 0.3, 0.4, X - 3.9, 8, -11, wood); }
+      g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); }
+
+    // ---- 2. Cinder: Brokk and Tilly's house. Brick below, plaster above jutting out over the street, a red tile roof, a wing at the side, a swing in the yard ----
+    { const h = THOMES[1], g = house(h), W = h.w, D = h.d, H1 = 10, H2 = 9, brick = M('#a8563a'), plaster = M('#efdcb4'), timber = M('#4a3420'), tile = M('#a8462e'), door2 = M('#2f6a6a'), stone = M('#8d8676');
+      box(g, W + 0.8, 0.8, D + 0.8, 0, 0.4, 0, stone); box(g, W, H1, D, 0, H1 / 2, 0, brick); box(g, W + 1, H2, D + 2.4, 0, H1 + H2 / 2, 0, plaster);
+      for (let x = -W / 2; x <= W / 2 + 0.1; x += W / 6) [-1, 1].forEach(s => box(g, 0.5, H2, 0.3, x, H1 + H2 / 2, s * (D / 2 + 1.25), timber)); box(g, W + 1.4, 0.6, D + 2.8, 0, H1 + 0.2, 0, timber); box(g, W + 1.4, 0.5, D + 2.8, 0, H1 + H2, 0, timber);
+      [-1, 1].forEach(s => { const br = box(g, W - 2, 0.3, 0.3, 0, H1 + H2 / 2, s * (D / 2 + 1.3), timber); br.rotation.z = 0.32; });
+      gable(g, W + 1, D + 2.4, H1 + H2, 10, 1.4, tile, plaster, timber);
+      box(g, 3.4, 34, 3.4, -6, 17, -D / 2 + 1.7, brick);
+      // the wing: a kitchen on one floor with a roof that leans on the house
+      { const wx = W / 2 + 7, rf = box(g, 15, 0.5, 18, wx, 9.6, -3, tile); rf.rotation.z = -0.22; box(g, 14, 9, 16, wx, 4.5, -3, brick); win(g, wx, 5, 5.02, 3.6, 3.6, timber, 0, door2); rect(h, wx, -3, 7.2, 8.2); }
+      door(g, 0, D / 2, 4.6, 9.2, door2, timber); { const a = Math.atan(0.6); [-1, 1].forEach(s => { const r = box(g, 3.6, 0.35, 2.6, s * 1.5, 10.6, D / 2 + 1.2, tile); r.rotation.z = -s * a; }); }
+      [-10, 10].forEach(x => { win(g, x, 5.2, D / 2 + 0.02, 4, 4.4, timber, 0, door2); box(g, 4.8, 0.6, 0.9, x, 2.6, D / 2 + 0.55, timber); for (let q = 0; q < 6; q++) put(g, new THREE.SphereGeometry(0.33, 8, 6), M(q % 2 ? '#e68fb0' : '#f4d35e'), x - 1.8 + q * 0.72, 3.1, D / 2 + 0.6); });
+      [-11, 0, 11].forEach(x => win(g, x, H1 + 4.6, D / 2 + 1.27, 3.4, 3.8, timber)); [-8, 8].forEach(x => win(g, x, H1 + 4.6, -D / 2 - 1.27, 3.4, 3.8, timber, Math.PI));
+      sign(g, 'Cinder', 0, H1 + 1.4, D / 2 + 1.4, '#4a3420', '#f6e7c2', 5);
+      // the yard: a picket fence with a gate, a tree with a rope swing, a vegetable patch, and a washing line with small things on it
+      { const fz = D / 2 + 13, cream = M('#efe6d2'), fence = (x0, x1) => { box(g, x1 - x0, 0.2, 0.15, (x0 + x1) / 2, 1, fz, cream); box(g, x1 - x0, 0.2, 0.15, (x0 + x1) / 2, 2.2, fz, cream); for (let x = x0; x <= x1 + 0.01; x += 0.95) box(g, 0.5, 2.8, 0.12, x, 1.4, fz, cream); rect(h, (x0 + x1) / 2, fz, Math.abs(x1 - x0) / 2 + 0.2, 0.3); };
+        fence(-18, -3.2); fence(3.2, 18); [-18, 18].forEach(x => { box(g, 0.15, 0.2, 13, x, 1, D / 2 + 6.5, cream); box(g, 0.15, 0.2, 13, x, 2.2, D / 2 + 6.5, cream); rect(h, x, D / 2 + 6.5, 0.3, 6.6); });
+        const tx = -12, tz = D / 2 + 7.5; put(g, new THREE.CylinderGeometry(0.9, 1.3, 13, 9), M('#6b4a2b'), tx, 6.5, tz); [[0, 15, 0, 6], [-4, 13, 2, 4.5], [4, 13.5, -1.5, 4.8], [1, 18, 1, 4]].forEach(([a, y, b, r], q) => put(g, new THREE.IcosahedronGeometry(r, 1), M(q % 2 ? '#4a7a31' : '#5d8f3a', { flatShading: true }), tx + a, y, tz + b)); sol(h, tx, tz, 1.4);
+        const bough = box(g, 7, 0.6, 0.6, tx + 3.5, 10.5, tz, M('#6b4a2b')); bough.rotation.z = 0.08; [-0.9, 0.9].forEach(o => box(g, 0.08, 7.4, 0.08, tx + 4.8, 6.8, tz + o, M('#c9b48a'))); box(g, 2.2, 0.25, 1.1, tx + 4.8, 3.1, tz, M('#8a6438'));
+        for (let r = 0; r < 3; r++) { box(g, 7, 0.5, 1.4, 9, 0.25, D / 2 + 4 + r * 2.6, M('#5a3d22')); for (let q = 0; q < 6; q++) put(g, new THREE.SphereGeometry(0.45, 7, 5), M(r === 1 ? '#c4362e' : '#4f8a3a'), 6.2 + q * 1.1, 0.75, D / 2 + 4 + r * 2.6); }
+        [[16, D / 2 + 3], [16, D / 2 + 11]].forEach(([x, z]) => { box(g, 0.2, 6, 0.2, x, 3, z, M('#6b4a2b')); sol(h, x, z, 0.4); }); box(g, 0.05, 0.05, 8, 16, 5.8, D / 2 + 7, M('#dddddd'));
+        [['#e68fb0', 1.4, 1.6], ['#9fb7f0', 1, 1.2], ['#f4d35e', 1.2, 1.4], ['#ffffff', 0.9, 1]].forEach(([c, w, hh], i) => box(g, 0.08, hh, w, 16, 5.8 - hh / 2, D / 2 + 4.2 + i * 1.9, M(c))); }
+      g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); }
+
+    // ---- 3. Slagg: Hilda's house. Tall and narrow, three floors of pale stone with dark corners, a hipped roof, and a rock garden of every ore in the mountain ----
+    { const h = THOMES[2], g = house(h), W = h.w, D = h.d, H = 28, stone = M('#b9b2a2'), dark = M('#4a4a44'), slate = M('#3a4048'), green = M('#3e6a4a');
+      box(g, W + 1, 1, D + 1, 0, 0.5, 0, dark); box(g, W, H, D, 0, H / 2, 0, stone);
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => { for (let y = 1.2; y < H; y += 2.4) box(g, (y / 2.4) % 2 < 1 ? 2.2 : 1.4, 1.2, (y / 2.4) % 2 < 1 ? 1.4 : 2.2, a * (W / 2 - 0.5), y + 0.6, b * (D / 2 - 0.5), dark); });
+      [9.5, 19].forEach(y => box(g, W + 0.8, 0.6, D + 0.8, 0, y, 0, dark)); box(g, W + 1.6, 0.9, D + 1.6, 0, H + 0.4, 0, dark);
+      const rf = put(g, new THREE.ConeGeometry((W / 2 + 1.6) * Math.SQRT2, 10, 4), slate, 0, H + 5.6, 0); rf.rotation.y = Math.PI / 4; rf.scale.z = (D + 3.2) / (W + 3.2);
+      [-1, 1].forEach(s => { box(g, 2.4, 7, 2.4, s * 6, H + 5, -3, stone); box(g, 2.9, 0.5, 2.9, s * 6, H + 8.6, -3, dark); });
+      door(g, 0, D / 2, 4.2, 9.2, green, dark); { const fan = put(g, new THREE.CircleGeometry(2.1, 16, 0, Math.PI), pane, 0, 9.5, D / 2 + 0.05); box(g, 0.2, 2, 0.2, 0, 10.3, D / 2 + 0.1, dark); }
+      box(g, 7, 0.5, 2.6, 0, 0.25, D / 2 + 1.3, M('#8d8676'));
+      [5.2, 14.5, 23.5].forEach((y, f) => { [-7, 7].forEach(x => { if (!(f === 0)) win(g, x, y, D / 2 + 0.02, 2.6, 5, dark); win(g, x, y, -D / 2 - 0.02, 2.6, 5, dark, Math.PI); }); [-1, 1].forEach(s => win(g, s * (W / 2 + 0.02), y, 0, 2.6, 5, dark, s * Math.PI / 2)); });
+      // the bay window on the ground floor, where Hilda does her sums
+      { const bx = -7.6; box(g, 6.6, 6.6, 2.6, bx, 4.3, D / 2 + 1.3, stone); win(g, bx, 4.6, D / 2 + 2.62, 4.6, 4.6, dark); box(g, 7.2, 0.6, 3.2, bx, 7.9, D / 2 + 1.4, slate); rect(h, bx, D / 2 + 1.3, 3.4, 1.4); }
+      win(g, 7, 5.2, D / 2 + 0.02, 2.6, 5, dark);
+      sign(g, 'Slagg', 0, 12.4, D / 2 + 0.4, '#2a3a2a', '#e8e2d2', 5);
+      // the rock garden: a low wall round it and the ores in heaps, each with its name on a stake
+      { const wallM = M('#8d8676'); [[-11, D / 2 + 9, 8.6, 0.6], [11, D / 2 + 9, 8.6, 0.6]].forEach(([x, z, w, d]) => { box(g, w * 2, 1.6, d * 2, x, 0.8, z, wallM); rect(h, x, z, w, d); }); [-1, 1].forEach(s => { box(g, 1.2, 1.6, 8, s * 19, 0.8, D / 2 + 5, wallM); rect(h, s * 19, D / 2 + 5, 0.6, 4); });
+        [['#8a4a2a', -14, 4.5], ['#6b7a78', -9, 6], ['#4f8a6a', 10, 4.5], ['#b08a3a', 15, 6.2], ['#2a2a2e', 13, 3]].forEach(([c, x, z]) => { for (let q = 0; q < 6; q++) put(g, new THREE.DodecahedronGeometry(0.6 + (q % 3) * 0.3, 0), M(c, { flatShading: true }), x + Math.cos(q * 2.4) * 1.3, 0.5 + (q % 2) * 0.5, D / 2 + z + Math.sin(q * 2.4) * 1.1); box(g, 0.12, 1.6, 0.12, x + 1.6, 0.8, D / 2 + z + 1.3, M('#6b4a2b')); box(g, 0.9, 0.5, 0.08, x + 1.6, 1.6, D / 2 + z + 1.36, M('#efe6d2')); sol(h, x, D / 2 + z, 1.8); }); }
+      g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); }
+
+    // ---- 4. Flint: Odwin's cabin. Long and low, built of logs, with a deep porch along the front and a lantern lit between every post ----
+    { const h = THOMES[3], g = house(h), W = h.w, D = h.d, H = 10, log = M('#8a6438'), logEnd = M('#c9a06a'), shingle = M('#5a3d22'), stone = M('#8d8676'), blue = M('#3a4a9a'), dark = M('#3a2a18');
+      box(g, W + 1, 0.8, D + 1, 0, 0.4, 0, stone); box(g, W - 0.6, H, D - 0.6, 0, H / 2, 0, M('#7a5532'));
+      for (let y = 1.1; y < H; y += 1.05) { [-1, 1].forEach(s => { put(g, new THREE.CylinderGeometry(0.55, 0.55, W + 2.4, 8), log, 0, y, s * D / 2).rotation.z = Math.PI / 2; put(g, new THREE.CylinderGeometry(0.55, 0.55, D + 2.4, 8), log, s * W / 2, y + 0.5, 0).rotation.x = Math.PI / 2; });
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => put(g, new THREE.CircleGeometry(0.56, 8), logEnd, a * (W / 2 + 1.21), y, b * D / 2).rotation.y = a * Math.PI / 2); }
+      gable(g, W + 1.2, D + 1.2, H, 6, 2, shingle, log, dark);
+      box(g, 5, H + 9, 4, W / 2 + 2.6, (H + 9) / 2, 0, stone); box(g, 5.8, 0.6, 4.8, W / 2 + 2.6, H + 9.2, 0, M('#6b665c')); rect(h, W / 2 + 2.6, 0, 2.6, 2.1);
+      door(g, 0, D / 2 + 0.55, 4.4, 9, blue, dark); [-12, 12].forEach(x => win(g, x, 5.4, D / 2 + 0.6, 3.8, 3.8, dark, 0, M('#6b4a2b')));
+      // the porch, with a lantern on a chain between each pair of posts, and a rocking chair
+      { const PZ = D / 2 + 8; flatOn(W, 8.4, h.x, h.z + (h.face ? -1 : 1) * (D / 2 + 4.2), M('#9a7448'), 0.12); for (let x = -W / 2; x <= W / 2 + 0.1; x += W / 4) { box(g, 0.8, 8.2, 0.8, x, 4.1, PZ, dark); sol(h, x, PZ, 0.6); }
+        box(g, W + 1, 0.6, 0.8, 0, 8.3, PZ, dark); const rf = box(g, W + 2, 0.45, 9.4, 0, 9.1, D / 2 + 4.4, shingle); rf.rotation.x = 0.16;
+        const lampM = mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 0.6 }); NIGHT_GLOW.push(n => { lampM.emissiveIntensity = 0.6 + 1.2 * n; });
+        for (let x = -W / 2 + W / 8; x < W / 2; x += W / 4) { box(g, 0.08, 1.4, 0.08, x, 7.4, PZ, iron); box(g, 0.9, 1.2, 0.9, x, 6.2, PZ, lampM); box(g, 1.1, 0.15, 1.1, x, 6.85, PZ, iron); }
+        const pl = new THREE.PointLight('#ffc46a', 0.5, 30); const [lx, lz] = at(h, 0, PZ - 2); pl.position.set(lx, 6, lz); G.add(pl); }
+      { const cx = 9, cz = D / 2 + 3.5, wood = M('#6b4a2b'); box(g, 2.6, 0.3, 2.4, cx, 2.3, cz, wood); box(g, 2.6, 3.4, 0.3, cx, 4, cz - 1.2, wood); [-1.2, 1.2].forEach(o => { const rk = put(g, new THREE.TorusGeometry(1.6, 0.12, 6, 14, Math.PI / 2), wood, cx + o, 1.5, cz); rk.rotation.y = Math.PI / 2; rk.rotation.z = -Math.PI * 0.75; }); sol(h, cx, cz, 1.5); }
+      // the woodpile at the end of the porch
+      { for (let r = 0; r < 4; r++) for (let q = 0; q < 7 - r; q++) put(g, new THREE.CylinderGeometry(0.5, 0.5, 3, 7), log, -W / 2 - 3.5, 0.5 + r * 0.9, -5 + q * 1.05 + r * 0.5).rotation.x = Math.PI / 2; rect(h, -W / 2 - 3.5, -2, 1.8, 4.2); }
+      sign(g, 'Flint', 0, 10.6, D / 2 + 1.2, '#3a2a18', '#f6e7c2', 5);
+      g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); }
+
+    // ---- the ram shed, where the carriage is kept and Tuff and Biscuit sleep ----
+    { const g = new THREE.Group(); g.position.set(-112, 0, -28); G.add(g); const wd = M('#7a5230'), dk = M('#3e2a18'), hay = M('#c9a85a'), W = 30, D = 16, H = 10;
+      box(g, W, H, 0.8, 0, H / 2, -D / 2, wd); [-1, 1].forEach(s => box(g, 0.8, H, D, s * W / 2, H / 2, 0, wd)); [-W / 2, 0, W / 2].forEach(x => box(g, 1, H, 1, x, H / 2, D / 2 - 0.5, dk)); box(g, W + 1, 0.8, 1, 0, H, D / 2 - 0.5, dk);
+      gable(g, W, D, H, 5, 1.4, M('#5a3d22'), wd, dk);
+      for (let q = 0; q < 5; q++) box(g, 3.4, 2.4, 2.2, -10 + q * 2.6 - (q > 2 ? 0 : 0), 1.2 + (q > 2 ? 2.4 : 0), -5.5 + (q > 2 ? 0.2 : 0), hay); box(g, 8, 1.8, 2.2, 8, 0.9, -5.5, wd); box(g, 7.4, 0.2, 1.7, 8, 1.75, -5.5, mat('#4a7fb8', { roughness: 0.2 }));
+      BXS.push({ x: -112, z: -28 - D / 2, hw: W / 2 + 0.4, hd: 0.6 }, { x: -112 - W / 2, z: -28, hw: 0.6, hd: D / 2 }, { x: -112 + W / 2, z: -28, hw: 0.6, hd: D / 2 }, { x: -112, z: -33.5, hw: 12, hd: 1.4 });
+      sign(g, 'Tinderfold Carriage · Tuff & Biscuit', 0, H + 1.5, D / 2, '#3e2a18', '#f6e7c2', 11);
+      g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); }
+    // ---- the well on the green, with a bench either side ----
+    { const g = new THREE.Group(); g.position.set(-4, 0, 15); G.add(g); const st = M('#8d8676'), wd = M('#6b4a2b');
+      put(g, new THREE.CylinderGeometry(3, 3.2, 2.8, 18), st, 0, 1.4, 0); put(g, new THREE.CylinderGeometry(2.4, 2.4, 0.1, 18), mat('#2a3a4a', { roughness: 0.2 }), 0, 2.2, 0);
+      [-1, 1].forEach(s => box(g, 0.5, 8, 0.5, s * 3, 4, 0, wd)); box(g, 0.3, 0.3, 6.4, 0, 6.2, 0, wd).rotation.y = Math.PI / 2; const a = Math.atan(1.6 / 3.6); [-1, 1].forEach(s => { const r = box(g, 8, 0.35, 4.1, 0, 8.7, s * 1.8, M('#a8462e')); r.rotation.x = s * a; });
+      put(g, new THREE.CylinderGeometry(0.6, 0.5, 0.9, 10), wd, 0.6, 4.2, 0); S.push({ x: -4, z: 15, r: 3.3 });
+      g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); }
+    [[-14, 15, Math.PI / 2], [6, 15, -Math.PI / 2]].forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); G.add(b); S.push({ x, z, r: 1.8 }); const [wx, wz] = toWorld(frameT, x, z); seatSpot(worldScene, 'wild', wx, wz, yaw + frameT.yaw, 1.51, 'bench by the well', TF.y); });
+    // lamps along the street, and the signs: one where the lane leaves the Long Road, one at the village end of the lane
+    { const lg = new THREE.Group(); G.add(lg); [[-140, 7], [-90, -7], [-30, 7], [20, -7], [80, 7], [125, -7]].forEach(([x, z]) => lampPost(lg, x, z, 10, 26, S)); lg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(lg); }
+    { const post = (x, z, text, ry, w) => { const [wx, wz] = toWorld(frameT, x, z), y = worldH(wx, wz) - TF.y; const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; G.add(g); [-w / 2 + 0.4, w / 2 - 0.4].forEach(o => box(g, 0.35, 5.6, 0.35, o, 2.8, 0, M('#5a3d22'))); const sn = signBoard(text, w, 1.4, '#3e2a18', '#f6e7c2'); sn.position.set(0, 4.8, 0.25); g.add(sn); S.push({ x: x - w / 2 + 0.4, z, r: 0.5 }, { x: x + w / 2 - 0.4, z, r: 0.5 }); };
+      post(-150, -9, 'Tinderfold', 0, 7); post(-220, -9.5, 'To Tinderfold', -Math.PI / 2, 8); }
+  }
+  // ---- the carriage: two rams, a long open cart with benches down each side, and Gorse Tallow on the box ----
+  const TF_CART = (() => {
+    const g = new THREE.Group(); worldScene.add(g); const M = (c, o) => mat(c, Object.assign({ roughness: 1 }, o || {})), wood = M('#7a5230'), dark = M('#3e2a18'), iron = mat('#3a3a3a', { metalness: 0.6, roughness: 0.5 }), brass = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 });
+    const box = (p, w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); p.add(b); return b; };
+    box(g, 7.4, 0.6, 14, 0, 3.3, -2, wood); [-1, 1].forEach(s => { box(g, 0.4, 1.8, 14, s * 3.5, 4.5, -2, wood); box(g, 1.6, 0.4, 11, s * 2.3, 4.7, -3, dark); }); box(g, 7.4, 1.8, 0.4, 0, 4.5, -9, wood); box(g, 7.4, 2.8, 0.4, 0, 4.9, 5, wood);
+    box(g, 5.6, 0.5, 2.4, 0, 6.6, 6.4, wood); box(g, 5.6, 2, 0.3, 0, 7.6, 5.2, wood);
+    for (let q = 0; q < 4; q++) { const hp = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.13, 6, 18, Math.PI), dark); hp.position.set(0, 5.4, -7.5 + q * 3.6); g.add(hp); }
+    const wheels = []; [[-4, 2.5, -6.5], [4, 2.5, -6.5], [-4, 2.1, 2.6], [4, 2.1, 2.6]].forEach(([x, r, z]) => { const w = new THREE.Group(); w.position.set(x, r, z); g.add(w); const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.22, 6, 20), dark); rim.rotation.y = Math.PI / 2; w.add(rim); for (let k = 0; k < 6; k++) { const sp = box(w, 0.16, r * 2, 0.2, 0, 0, 0, wood); sp.rotation.x = k * Math.PI / 6; } box(w, 0.6, 0.7, 0.7, 0, 0, 0, iron); wheels.push([w, r]); });
+    [-1.6, 1.6].forEach(x => { const sh = box(g, 0.3, 0.3, 11, x * 1.6, 3.4, 10, wood); sh.rotation.x = -0.06; });
+    // the rams: big woolly mountain rams with curled horns and a bell each
+    const rams = [-2.6, 2.6].map((x, i) => { const r = new THREE.Group(); r.position.set(x, 0, 12.5); g.add(r); const wool = M(i ? '#e9e2d0' : '#d8cfb8'), face = M('#4a3a2e'), horn = M('#c9b48a');
+      const body = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), wool); body.scale.set(1.9, 1.7, 3.1); body.position.y = 4.4; r.add(body);
+      const head = new THREE.Group(); head.position.set(0, 5.9, 3.2); r.add(head); const hd = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), face); hd.scale.set(0.8, 0.95, 1.3); hd.position.z = 0.6; head.add(hd); const top = new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), wool); top.position.set(0, 0.6, 0.1); head.add(top);
+      [-1, 1].forEach(s => { const hn = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.32, 8, 16, Math.PI * 1.5), horn); hn.position.set(s * 0.95, 0.35, 0.2); hn.rotation.y = s * Math.PI / 2; head.add(hn); });
+      box(r, 0.2, 1.1, 0.2, 0, 4.2, 3.4, M('#8a2e22')); const bell = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.7, 10), brass); bell.position.set(0, 3.4, 3.5); r.add(bell);
+      const legs = [[-0.9, 1.9], [0.9, 1.9], [-0.9, -1.9], [0.9, -1.9]].map(([lx, lz]) => { const p = new THREE.Group(); p.position.set(lx, 3.3, lz); r.add(p); box(p, 0.5, 3.3, 0.5, 0, -1.65, 0, face); return p; });
+      box(r, 0.6, 0.5, 2.6, i ? -2.1 : 2.1, 4.3, 0.5, dark); r.userData.legs = legs; r.userData.head = head; return r; });
+    box(g, 6.2, 0.25, 0.25, 0, 4.6, 16, dark);
+    const look = [{ coat: '#5a3d22', skin: '#c9956a', hair: '#8a3a2a', hat: 'none', tall: 4.2, wide: 2.1 }, { coat: '#8a3a2a', skin: '#c9956a', hair: '#1b1b1b', tall: 4.4, wide: 2 }, { coat: '#3e6a4a', skin: '#f0c9a0', hair: '#c9a06a', tall: 4.2, wide: 1.9 }, { coat: '#3a4a9a', skin: '#d9a070', hair: '#dcdcdc', tall: 4.3, wide: 1.8 }];
+    const riders = look.map((o, i) => { const e = makeElfNPC(o); e.scale.setScalar(0.85); e.position.set(i % 2 ? 2.3 : -2.3, 3.1, -6 + Math.floor(i / 2) * 4.5); e.rotation.y = i % 2 ? -Math.PI / 2 : Math.PI / 2; g.add(e); return e; });
+    const driver = makeElfNPC({ coat: '#6b5a2a', skin: '#d9a97a', hair: '#7a5a3a', hat: 'cap', capColor: '#3e2a18', tall: 4.6, wide: 1.6 }); driver.position.set(0, 4.3, 6.4); g.add(driver);
+    g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    // the way it goes, in Emberdeep's frame: from the shed down the lane to the Long Road, then up the road to the door
+    const pts = [[130, -242], [80, -240], [8, -240], [4, -200], [2, -150], [0, -100], [-4, -66], [-11, -40]].map(([a, b]) => toWorld(frameE, a, b)), seg = [];
+    let L = 0; for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push([L, d]); L += d; }
+    const spot = new THREE.Object3D(); worldScene.add(spot);
+    return { g, rams, wheels, riders, driver, pts, seg, L, spot, yaw: null, s: -1 };
+  })();
+  function tinderTick(dt, t) {
+    const C = TF_CART, hr = clockHour(); let u, moving = false, back = false;
+    if (hr >= TF.morn && hr < TF.morn + TF.tm) { u = (hr - TF.morn) / TF.tm; moving = true; }
+    else if (hr >= TF.eve && hr < TF.eve + TF.tm) { u = 1 - (hr - TF.eve) / TF.tm; moving = true; back = true; }
+    else u = hr >= TF.morn + TF.tm && hr < TF.eve ? 1 : 0;
+    const s = clamp(u, 0, 1) * C.L; let i = C.seg.findIndex(([a, d]) => s <= a + d + 1e-6); if (i < 0) i = C.seg.length - 1; const [a, d] = C.seg[i], k = d ? (s - a) / d : 0, P = C.pts[i], Q = C.pts[i + 1];
+    const x = P[0] + (Q[0] - P[0]) * k, z = P[1] + (Q[1] - P[1]) * k; let yaw = Math.atan2(Q[0] - P[0], Q[1] - P[1]); if (back || (!moving && u === 0)) yaw += Math.PI;
+    if (C.yaw === null || !moving) C.yaw = yaw; else { let dy = yaw - C.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); C.yaw += dy * Math.min(1, dt * 2.5); }
+    const run = C.s < 0 ? 0 : Math.abs(s - C.s); C.s = s;
+    C.g.position.set(x, worldH(x, z), z); C.g.rotation.y = C.yaw;
+    C.wheels.forEach(([w, r]) => { w.rotation.x += (back ? -1 : 1) * run / r; });
+    C.rams.forEach((r, j) => r.userData.legs.forEach((l, q) => { l.rotation.x = moving ? Math.sin(t * 7 + q * 1.6 + j) * 0.5 : 0; }));
+    C.riders.forEach(e => { e.visible = moving; }); const awake = hr >= 6.3 && hr < 21.3; C.driver.visible = awake;
+    const sn = Math.sin(C.yaw), cs = Math.cos(C.yaw); C.spot.position.set(x + sn * 6.4 + cs * 4, 0, z + cs * 6.4 - sn * 4);   // beside the box, where you can call up to him C.spot.visible = awake;
+    TF.dyn.length = 0; TF.dyn.push({ x: x - sn * 2, z: z - cs * 2, r: 4.6 }, { x: x + sn * 6, z: z + cs * 6, r: 3 }, { x: x + sn * 12.5, z: z + cs * 12.5, r: 4.4 });
+  }
+  // walls, posts and doors in Tinderfold, in the village's own frame; and the carriage, wherever it is
+  function tinderCollide(p, prev) {
+    for (const s of TF.dyn.concat(TF.wsol)) { const dx = p.x - s.x, dz = p.z - s.z, dd = Math.hypot(dx, dz), min = s.r + 0.6; if (dd < min && dd > 0.001) { p.x = s.x + dx / dd * min; p.z = s.z + dz / dd * min; } }
+    if (Math.abs(p.x - frameT.ox) > 300 || Math.abs(p.z - frameT.oz) > 300) return;
+    let [lx, lz] = toLocal(frameT, p.x, p.z); const lx0 = lx, lz0 = lz, m = 0.6;
+    for (const s of TF.solids) { const dx = lx - s.x, dz = lz - s.z, dd = Math.hypot(dx, dz), min = s.r + m; if (dd < min && dd > 0.001) { lx = s.x + dx / dd * min; lz = s.z + dz / dd * min; } }
+    for (const b of TF.boxes) { const dx = lx - b.x, dz = lz - b.z, ex = b.hw + m, ez = b.hd + m; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (b.id && Math.hypot(lx - b.door.x, lz - b.door.z) < 2.6) { if (!fading && gameStarted) enterInterior(b.id); p.x = prev.x; p.z = prev.z; return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) lx = b.x + (dx < 0 ? -1 : 1) * ex; else lz = b.z + (dz < 0 ? -1 : 1) * ez; } }
+    if (lx !== lx0 || lz !== lz0) { const w = toWorld(frameT, lx, lz); p.x = w[0]; p.z = w[1]; }
+  }
+  // the four houses in Tinderfold: each its own shape inside, and nobody has a room for a child who is not there
+  function elfBed(wall, x, z, quilt, kid) { const wood = mat('#8a6438'), cream = mat('#f2ead8'), dark = mat('#5a3d22');
+    if (kid) { wall(7.2, 1.1, 4.2, x, 0.75, z, wood); wall(6.8, 0.5, 4, x + 0.1, 1.5, z, quilt); wall(1.4, 0.5, 3.1, x - 2.5, 1.9, z, cream); wall(0.3, 3.2, 4.4, x - 3.75, 1.6, z, dark); return [{ x: x - 1.8, z, r: 2.2 }, { x: x + 1.8, z, r: 2.2 }]; }
+    wall(12.4, 1.8, 7.4, x, 1.2, z, wood); wall(12, 0.9, 7, x + 0.1, 2.5, z, quilt); wall(2.4, 0.8, 5.4, x - 4.6, 3.1, z, cream); wall(0.5, 6, 7.8, x - 6.45, 3, z, dark); return [{ x: x - 3.4, z, r: 3.6 }, { x: x + 2.6, z, r: 3.6 }]; }
+  function roomFire(sc, wall, x, z, ry, size) { const stone = mat('#8d8676', { roughness: 1 }), g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; sc.add(g); const put = (w, h, d, px, py, pz, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(px, py, pz); g.add(b); return b; };
+    put(7 * size, 6 * size, 2.4, 0, 3 * size, 0, stone); put(3.4 * size, 2.8 * size, 0.3, 0, 1.6 * size, 1.22, mat('#1a1410')); put(7.8 * size, 0.35, 2.8, 0, 6 * size, 0.2, mat('#ffffff', { map: plankTex })); put(3.6 * size, 7, 1.8, 0, 6 * size + 3.5, -0.2, stone);
+    const fl = new THREE.PointLight('#ff8a3a', 0.9, 30); const v = new THREE.Vector3(0, 2, 3.2).applyAxisAngle(new THREE.Vector3(0, 1, 0), ry); fl.position.set(x + v.x, 2, z + v.z); sc.add(fl); const f = new THREE.Vector3(0, 0, 1.6).applyAxisAngle(new THREE.Vector3(0, 1, 0), ry); makeFire(sc, sc, x + f.x, 0.22, z + f.z, 1.3 * size, fl); return g; }
+  const TF_ROOMS = {
+    // Durna lives alone: one great room with the hearth in the middle of the back wall, her bed in an alcove behind a low wall, and her anvil for a table
+    durhome: { w: 60, d: 36, h: 16, wall: '#c9bfae', trim: '#2a2420', label: 'Ironvein House', hint: 'An anvil for a table, and it is the tidiest thing in the room.', dec: (sc, solids, k) => {
+      const { wall, W, D } = k, stone = mat('#7d776c', { roughness: 1 }), wood = mat('#6b4a2b'), steel = mat('#55585c', { metalness: 0.7, roughness: 0.35 }), dark = mat('#3c3a36');
+      roomFire(sc, wall, 0, -D / 2 + 1.2, 0, 1.3); [-3.5, 0, 3.5].forEach(x => solids.push({ x, z: -D / 2 + 1.4, r: 2.2 }));
+      [-2.4, -0.8, 0.8, 2.4].forEach((x, i) => { const hg = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.1, 6, 12), steel); hg.position.set(x, 8.4, -D / 2 + 1.6); sc.add(hg); });
+      // the anvil she eats off, on its stump, with her plate and mug on it
+      { const st = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 2.2, 2.6, 12), wood); st.position.set(0, 1.3, -1); sc.add(st); wall(5.2, 1.6, 2.2, 0, 3.4, -1, steel); const hn = new THREE.Mesh(new THREE.ConeGeometry(0.7, 2.2, 8), steel); hn.rotation.z = -Math.PI / 2; hn.position.set(3.7, 3.6, -1); sc.add(hn); solids.push({ x: 0, z: -1, r: 2.8 });
+        const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.8, 0.12, 14), mat('#e6dcc2')); pl.position.set(-1, 4.26, -1); sc.add(pl); const mg = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.32, 0.8, 10), mat('#8a6a3a', { metalness: 0.4 })); mg.position.set(1.3, 4.6, -1.2); sc.add(mg);
+        const sx = 0, sz = 3.4, s2 = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.9, 2.5, 12), wood); s2.position.set(sx, 1.25, sz); sc.add(s2); solids.push({ x: sx, z: sz, r: 1.1 }); k.seat(sx, sz, Math.PI, 2.5, 'stool'); }
+      // the alcove: a wall to shoulder height, the bed behind it, a chest at its foot
+      wall(0.7, 7, 17, -14, 3.5, -D / 2 + 8.5, stone); k.boxes.push({ x: -14, z: -D / 2 + 8.5, hw: 0.35, hd: 8.5 });
+      elfBed(wall, -22, -11, mat('#8a2e22', { roughness: 1 })).forEach(s => solids.push(s)); wall(4, 2.2, 2.4, -19, 1.1, -4.6, mat('#5a3d22')); solids.push({ x: -19, z: -4.6, r: 1.8 });
+      // the bench along the east wall, her tools hung above it in order of size, and a vice
+      wall(3.2, 4, 20, W / 2 - 1.9, 2, -3, wood); wall(3.4, 0.3, 20.2, W / 2 - 1.9, 4.15, -3, mat('#ffffff', { map: plankTex })); for (let z = -12; z <= 6; z += 3) solids.push({ x: W / 2 - 1.9, z, r: 1.9 });
+      wall(0.3, 5, 18, W / 2 - 0.2, 8.5, -3, wood); for (let q = 0; q < 9; q++) { const z = -11 + q * 2.1, hh = 1.4 + q * 0.18; wall(0.2, hh * 1.6, 0.25, W / 2 - 0.5, 8.6, z, wood); wall(0.5, 0.5, 1.1 + q * 0.05, W / 2 - 0.55, 8.6 + hh * 0.8, z, steel); }
+      wall(1.2, 1, 1.6, W / 2 - 2.2, 4.8, 4, steel);
+      // a rack of what she has made: hinges, a lamp bracket, a gate latch
+      wall(10, 0.3, 1.4, -6, 6.5, D / 2 - 1, wood); [[-9.5, 0.9], [-7, 0.6], [-4.5, 1.1], [-2.5, 0.7]].forEach(([x, s]) => wall(s, s * 1.6, 0.3, x, 7.4, D / 2 - 1, steel));
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.3, 3, 12), wood); bar.position.set(W / 2 - 4, 1.5, D / 2 - 4); sc.add(bar); solids.push({ x: W / 2 - 4, z: D / 2 - 4, r: 1.6 });
+      const rug = new THREE.Mesh(new THREE.CircleGeometry(5, 24), mat('#7a3e2a', { roughness: 1 })); rug.rotation.x = -Math.PI / 2; rug.position.set(0, 0.03, 0); sc.add(rug);
+    } },
+    // Brokk and his daughter Tilly: the hearth between two bedrooms at the back, Tilly's small room on the left and his on the right, a kitchen by the door, and a game of dominoes left half-played
+    brokhome: { w: 72, d: 40, h: 18, wall: '#e9d3a8', trim: '#5a3d22', label: 'Cinder House', hint: 'Warm as a bread oven, with small boots by the door.', dec: (sc, solids, k) => {
+      const { wall, W, D } = k, wm = mat('#e9d3a8', { roughness: 1 }), wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), cream = mat('#f2ead8');
+      const part = (x0, x1, z0, z1) => { const w = Math.max(0.5, x1 - x0), d = Math.max(0.5, z1 - z0); wall(w, 18, d, (x0 + x1) / 2, 9, (z0 + z1) / 2, wm); k.boxes.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: w / 2, hd: d / 2 }); };
+      // the two bedrooms, each with a doorway into the hall
+      part(-36, -22, -4.25, -3.75); part(-16, -14, -4.25, -3.75); part(-14.25, -13.75, -20, -4); wall(6, 8, 0.5, -19, 14, -4, wm);
+      part(14, 16, -4.25, -3.75); part(22, 36, -4.25, -3.75); part(13.75, 14.25, -20, -4); wall(6, 8, 0.5, 19, 14, -4, wm);
+      roomFire(sc, wall, 0, -D / 2 + 1.2, 0, 1.15); [-3, 0, 3].forEach(x => solids.push({ x, z: -D / 2 + 1.4, r: 2 }));
+      // Tilly's room: a little bed, a toy chest, her drawings pinned up, a small table and stool
+      elfBed(wall, -28, -12, mat('#f4d35e', { roughness: 1 }), true).forEach(s => solids.push(s));
+      wall(3.2, 1.8, 2, -18, 0.9, -17.5, mat('#b5562b')); wall(3.3, 0.2, 2.1, -18, 1.85, -17.5, mat('#8a3a2a')); solids.push({ x: -18, z: -17.5, r: 1.8 });
+      [['#9fb7f0', -32], ['#e68fb0', -29], ['#8fbf4a', -26], ['#f4d35e', -23]].forEach(([c, x], i) => { wall(2, 1.6, 0.05, x, 6 + (i % 2) * 0.6, -D / 2 + 0.3, cream); wall(1.1, 0.8, 0.06, x + (i % 2 ? 0.3 : -0.2), 6.1 + (i % 2) * 0.6, -D / 2 + 0.32, mat(c)); });
+      wall(3, 0.25, 2.2, -20, 2.2, -8, top); [[-1.3, -0.9], [1.3, -0.9], [-1.3, 0.9], [1.3, 0.9]].forEach(([a, b]) => wall(0.22, 2.1, 0.22, -20 + a, 1.05, -8 + b, dark)); solids.push({ x: -20, z: -8, r: 1.6 });
+      [acornPerson('#d23b4e'), acornTop(), acornCart()].forEach((t, i) => { t.position.set(-33 + i * 1.6, 0.03, -6.5); t.rotation.y = i; t.scale.setScalar(1.3); sc.add(t); });
+      // Brokk's room: his bed, and his furnace gloves on the chest
+      elfBed(wall, 26, -12, mat('#8a3a2a', { roughness: 1 })).forEach(s => solids.push(s)); wall(4.4, 2.4, 2.6, 33, 1.2, -6.5, dark); solids.push({ x: 33, z: -6.5, r: 2 }); [-0.7, 0.7].forEach(o => wall(0.9, 0.5, 1.4, 33 + o, 2.65, -6.5, mat('#4a3420')));
+      // the kitchen: a long counter along the west wall, a stove, bread on a board
+      wall(3, 4.3, 18, -W / 2 + 1.6, 2.15, 6, wood); wall(3.3, 0.3, 18.2, -W / 2 + 1.6, 4.45, 6, top); for (let z = -1.5; z <= 13.5; z += 2.5) solids.push({ x: -W / 2 + 1.6, z, r: 1.8 });
+      const br = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 8), mat('#c9955a', { roughness: 1 })); br.scale.set(1.5, 0.7, 1); br.position.set(-W / 2 + 1.8, 5, 2); sc.add(br);
+      [0, 1, 2, 3].forEach(i => { const j = jar(['#d9a33f', '#8fbf4a', '#b0203a', '#e9e2d0'][i], 1); j.position.set(-W / 2 + 1.7, 4.6, 8 + i * 1.6); sc.add(j); });
+      // the table, with the dominoes out, and three chairs: one of them with a cushion to sit higher on
+      { const tx = 14, tz = 8; wall(9, 0.4, 5.4, tx, 4.2, tz, top); [[-4, -2.3], [4, -2.3], [-4, 2.3], [4, 2.3]].forEach(([a, b]) => wall(0.4, 4, 0.4, tx + a, 2, tz + b, dark)); solids.push({ x: tx - 2.5, z: tz, r: 2.8 }, { x: tx + 2.5, z: tz, r: 2.8 });
+        for (let q = 0; q < 9; q++) { const dm = new THREE.Mesh(new THREE.BoxGeometry(1, 0.2, 0.5), cream); dm.position.set(tx - 3.4 + q * 0.85, 4.52, tz - 0.6 + (q % 3 === 2 ? 0.8 : 0)); dm.rotation.y = q % 3 === 2 ? Math.PI / 2 : 0; sc.add(dm); [-0.22, 0.22].forEach(o => { const dt = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 6), mat('#1a1410')); dt.position.set(dm.position.x + (q % 3 === 2 ? 0 : o), 4.64, dm.position.z + (q % 3 === 2 ? o : 0)); sc.add(dt); }); }
+        [[tx - 2.5, tz - 4.5, 0], [tx + 2.5, tz - 4.5, 0], [tx, tz + 4.5, Math.PI]].forEach(([x, z, yaw], i) => { wall(2.2, 0.3, 2.2, x, 2.6, z, wood); [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([a, b]) => wall(0.26, 2.5, 0.26, x + a, 1.25, z + b, dark)); wall(2.2, 3, 0.26, x, 4.2, z + (yaw ? 1 : -1), wood); if (i === 1) wall(2, 0.6, 2, x, 3, z, mat('#e68fb0', { roughness: 1 })); solids.push({ x, z, r: 1.2 }); k.seat(x, z, yaw, i === 1 ? 3.3 : 2.75, i === 1 ? 'chair with a cushion' : 'chair'); }); }
+      // small boots and a small coat by the door, beside the big ones
+      wall(6, 0.4, 0.3, 10, 7.4, D / 2 - 0.3, dark); wall(1.8, 4.6, 0.35, 8.5, 5, D / 2 - 0.6, mat('#8a3a2a', { roughness: 1 })); wall(1.1, 2.6, 0.35, 11.5, 6, D / 2 - 0.6, mat('#f4d35e', { roughness: 1 }));
+      [[7.6, 1], [8.8, 1], [11, 0.6], [11.8, 0.6]].forEach(([x, s]) => wall(0.7 * s + 0.2, 1.2 * s, 1.4 * s, x, 0.6 * s, D / 2 - 1.2, mat('#4a2f1a')));
+      const rug = new THREE.Mesh(new THREE.CircleGeometry(4.6, 24), mat('#3e6a4a', { roughness: 1 })); rug.rotation.x = -Math.PI / 2; rug.position.set(0, 0.03, -8); sc.add(rug);
+    } },
+    // Hilda lives alone, among her ores: shelves of samples to the ceiling down both walls, a desk with scales, a ledger and an abacus, a stove, and her bed behind a curtain
+    hilhome: { w: 48, d: 44, h: 22, wall: '#d6d0c2', trim: '#2a3a2a', label: 'Slagg House', hint: 'Ore samples along every shelf, each with a paper label.', dec: (sc, solids, k) => {
+      const { wall, W, D, H } = k, wood = mat('#6b4a2b'), dark = mat('#3a2a18'), top = mat('#ffffff', { map: plankTex }), cream = mat('#efe6d2'), brass = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 });
+      const ores = ['#8a4a2a', '#6b7a78', '#4f8a6a', '#b08a3a', '#2a2a2e', '#a86a4a', '#9a9aa2', '#5a6a3a'];
+      [-1, 1].forEach(s => { const x = s * (W / 2 - 1.2); wall(2.4, H - 2, 0.4, x, (H - 2) / 2, -20, wood); wall(2.4, H - 2, 0.4, x, (H - 2) / 2, 12, wood); k.boxes.push({ x, z: -4, hw: 1.3, hd: 16 });
+        for (let y = 1.4; y < H - 3; y += 3.1) { wall(2.4, 0.25, 32, x, y, -4, top); for (let z = -19; z < 11; z += 1.9) { if ((z * 7 + y * 3) % 5 < 0.6) continue; const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45 + ((z * 13 + y) % 3) * 0.12, 0), mat(ores[Math.abs(Math.round(z * 3 + y)) % ores.length], { flatShading: true, roughness: 1 })); r.position.set(x - s * 0.2, y + 0.55, z); sc.add(r); wall(0.05, 0.3, 0.6, x - s * 1.1, y + 0.05, z, cream); } } });
+      { const ld = new THREE.Group(); ld.position.set(W / 2 - 3.5, 0, 6); ld.rotation.z = 0.18; sc.add(ld); [-0.9, 0.9].forEach(o => { const rl = new THREE.Mesh(new THREE.BoxGeometry(0.25, 16, 0.25), wood); rl.position.set(0, 8, o); ld.add(rl); }); for (let y = 1; y < 16; y += 1.6) { const rg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.8, 5), wood); rg.rotation.x = Math.PI / 2; rg.position.set(0, y, 0); ld.add(rg); } }
+      // the desk in the middle, with everything she counts with on it
+      { const dx = 4, dz = -6; wall(10, 0.4, 5, dx, 4.2, dz, top); [[-4.6, -2.2], [4.6, -2.2], [-4.6, 2.2], [4.6, 2.2]].forEach(([a, b]) => wall(0.4, 4, 0.4, dx + a, 2, dz + b, dark)); solids.push({ x: dx - 2.6, z: dz, r: 2.7 }, { x: dx + 2.6, z: dz, r: 2.7 });
+        wall(3, 0.25, 2.2, dx - 2.4, 4.52, dz, cream); wall(0.05, 0.27, 2.2, dx - 2.4, 4.53, dz, dark);
+        wall(0.3, 2.2, 0.3, dx + 2, 5.5, dz - 1, brass); wall(3, 0.15, 0.15, dx + 2, 6.6, dz - 1, brass); [-1.4, 1.4].forEach(o => { const pn = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.5, 0.15, 12), brass); pn.position.set(dx + 2 + o, 5.4, dz - 1); sc.add(pn); });
+        const ab = new THREE.Group(); ab.position.set(dx + 2, 4.45, dz + 1.3); sc.add(ab); [[2.6, 0.15, 0.15, 0, 0.9], [2.6, 0.15, 0.15, 0, -0.1], [0.15, 1.15, 0.15, -1.25, 0.4], [0.15, 1.15, 0.15, 1.25, 0.4]].forEach(([w, h, d, x, y]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wood); b.position.set(x, y, 0); ab.add(b); });
+        for (let r = 0; r < 4; r++) for (let q = 0; q < 6; q++) { const bd = new THREE.Mesh(new THREE.SphereGeometry(0.11, 6, 4), mat(r % 2 ? '#b0203a' : '#e8b64c')); bd.position.set(-1 + q * 0.25 + (q > 2 ? 0.5 : 0), 0.1 + r * 0.25, 0); ab.add(bd); }
+        const ch = [dx, dz + 4.4]; wall(2.2, 0.3, 2.2, ch[0], 2.6, ch[1], wood); [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([a, b]) => wall(0.26, 2.5, 0.26, ch[0] + a, 1.25, ch[1] + b, dark)); wall(2.2, 3, 0.26, ch[0], 4.2, ch[1] + 1, wood); solids.push({ x: ch[0], z: ch[1], r: 1.2 }); k.seat(ch[0], ch[1], Math.PI, 2.75, 'chair'); }
+      // the stove in the corner
+      { const sx = -14, sz = -17, iron = mat('#2a2a2a', { metalness: 0.5, roughness: 0.6 }), st = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 2.1, 4.4, 14), iron); st.position.set(sx, 2.2, sz); sc.add(st); const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, H - 4.4, 8), iron); pipe.position.set(sx, 4.4 + (H - 4.4) / 2, sz); sc.add(pipe);
+        const win = new THREE.Mesh(new THREE.CircleGeometry(0.8, 12), new THREE.MeshBasicMaterial({ color: '#ff8a3a' })); win.position.set(sx, 2, sz + 2.02); sc.add(win); const sl = new THREE.PointLight('#ff8a3a', 0.8, 24); sl.position.set(sx, 2.4, sz + 3); sc.add(sl); solids.push({ x: sx, z: sz, r: 2.4 });
+        const kt = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 10), mat('#8a7a5a', { metalness: 0.6, roughness: 0.4 })); kt.position.set(sx + 0.8, 4.9, sz); sc.add(kt); }
+      // her bed, behind a curtain on a rail
+      elfBed(wall, 14, -15.5, mat('#3e6a4a', { roughness: 1 })).forEach(s => solids.push(s)); wall(14, 0.2, 0.2, 14, 13, -10, brass); for (let q = 0; q < 7; q++) wall(1.1, 12.6, 0.2, 15 + q * 1.15, 6.6, -10 + (q % 2) * 0.25, mat('#7a3e5a', { roughness: 1 })); k.boxes.push({ x: 18.5, z: -10, hw: 4.2, hd: 0.3 });
+      // tea, by the window, and the share she cannot stop explaining to people
+      { const tx = -10, tz = 9; const tp = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.3, 18), top); tp.position.set(tx, 3.4, tz); sc.add(tp); const pd = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.8, 3.3, 10), dark); pd.position.set(tx, 1.65, tz); sc.add(pd); solids.push({ x: tx, z: tz, r: 2.2 });
+        const pot = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 10), mat('#4f8a6a')); pot.scale.y = 0.8; pot.position.set(tx, 3.95, tz); sc.add(pot); const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.4, 10), cream); cup.position.set(tx + 1.1, 3.75, tz + 0.4); sc.add(cup);
+        const ar = mat('#7a3e5a', { roughness: 1 }); wall(2.6, 1.1, 2.4, tx - 4, 0.85, tz, ar); wall(0.6, 2.8, 2.4, tx - 5.1, 2.2, tz, ar); solids.push({ x: tx - 4, z: tz, r: 1.7 }); k.seat(tx - 4, tz, Math.PI / 2, 1.4, 'armchair'); }
+      const lb = signBoard('100 of ore = 30 of iron', 7, 0.9, '#efe3c4', '#1b1b1b'); lb.position.set(4, 9, -D / 2 + 0.3); sc.add(lb);
+    } },
+    // Odwin lives alone and likes it: a long low cabin with the fire at one end and his bed at the other, his lamp bench under the window, lanterns from every beam, a cat, and a game of patience laid out for one
+    odwhome: { w: 64, d: 32, h: 13, wall: '#a87c50', trim: '#4a3420', label: 'Flint Cabin', hint: 'A dozen lamps, trimmed and waiting, and a cat asleep by the fire.', dec: (sc, solids, k) => {
+      const { wall, W, D, H } = k, wood = mat('#6b4a2b'), dark = mat('#3a2a18'), top = mat('#ffffff', { map: plankTex }), cream = mat('#efe6d2'), seam = mat('#7a5532');
+      for (let y = 1.1; y < H; y += 1.1) { wall(W - 0.4, 0.12, 0.1, 0, y, -D / 2 + 0.05, seam); [-1, 1].forEach(s => wall(0.1, 0.12, D - 0.4, s * (W / 2 - 0.05), y, 0, seam)); }
+      roomFire(sc, wall, -W / 2 + 1.2, 1, Math.PI / 2, 1.1); [-2, 1, 4].forEach(z => solids.push({ x: -W / 2 + 1.4, z, r: 2 }));
+      { const ax = -21, az = 1, red = mat('#7a3e2a', { roughness: 1 }); wall(2.4, 1.1, 2.6, ax, 0.85, az, red); wall(0.6, 2.8, 2.6, ax + 1.2, 2.2, az, red); [-1, 1].forEach(s => wall(2.4, 1.2, 0.5, ax, 1.7, az + s * 1.4, red)); solids.push({ x: ax, z: az, r: 1.7 }); k.seat(ax, az, -Math.PI / 2, 1.4, 'armchair'); }
+      // patience, laid out on the little table for one
+      { const tx = -21, tz = -5; const tp = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 0.25, 16), top); tp.position.set(tx, 2.6, tz); sc.add(tp); const pd = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.6, 2.5, 8), dark); pd.position.set(tx, 1.25, tz); sc.add(pd); solids.push({ x: tx, z: tz, r: 1.8 });
+        for (let c = 0; c < 5; c++) for (let r = 0; r <= c % 3; r++) { const cd = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.03, 0.6), r === c % 3 ? cream : mat('#7a2e2e')); cd.position.set(tx - 1.1 + c * 0.55, 2.74 + r * 0.01, tz - 0.6 + r * 0.22); sc.add(cd); } }
+      // the cat, asleep on the rug
+      { const rug = new THREE.Mesh(new THREE.CircleGeometry(3.6, 24), mat('#8a3a2a', { roughness: 1 })); rug.rotation.x = -Math.PI / 2; rug.position.set(-24, 0.03, 6); sc.add(rug); const fur = mat('#5a5048', { roughness: 1 }), cat = new THREE.Group(); cat.position.set(-24, 0, 6.5); cat.rotation.y = 0.6; sc.add(cat);
+        const bd = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), fur); bd.scale.set(1.1, 0.55, 0.8); bd.position.y = 0.5; cat.add(bd); const hd = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 8), fur); hd.position.set(0.9, 0.55, 0.3); cat.add(hd); [-0.18, 0.18].forEach(o => { const e = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.35, 4), fur); e.position.set(1, 1, 0.3 + o); cat.add(e); }); const tl = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.13, 6, 12, Math.PI), fur); tl.rotation.x = Math.PI / 2; tl.position.set(-0.4, 0.2, 0.2); cat.add(tl); solids.push({ x: -24, z: 6.5, r: 1.2 }); }
+      // the lamp bench under the back window: lamps in pieces, glass chimneys, a can of oil
+      { const bx = 6, bz = -D / 2 + 2; wall(20, 4, 3, bx, 2, bz, wood); wall(20.4, 0.3, 3.2, bx, 4.15, bz, top); for (let x = bx - 8; x <= bx + 8; x += 4) solids.push({ x, z: bz, r: 2 });
+        const glass = new THREE.MeshStandardMaterial({ color: '#dfeff2', transparent: true, opacity: 0.4, roughness: 0.1 }), lampM = mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1 });
+        for (let q = 0; q < 6; q++) { const x = bx - 8 + q * 3.2; const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.6, 10), mat('#b08a3a', { metalness: 0.6 })); base.position.set(x, 4.6, bz); sc.add(base); if (q % 2 === 0) { const gl = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.3, 10), glass); gl.position.set(x, 5.55, bz); sc.add(gl); const fl = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), lampM); fl.position.set(x, 5.2, bz); sc.add(fl); } }
+        const can = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.4, 10), mat('#3a3a3a', { metalness: 0.6 })); can.position.set(bx + 9.4, 5, bz); sc.add(can); }
+      // lanterns from the beams, every one of them lit
+      { const lampM = mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1.1 }); [[-14, -6], [-6, 4], [2, -6], [10, 4], [18, -4], [26, 4]].forEach(([x, z]) => { wall(0.08, 1.6, 0.08, x, H - 0.8, z, dark); wall(0.9, 1.2, 0.9, x, H - 2.2, z, lampM); wall(1.1, 0.15, 1.1, x, H - 1.55, z, dark); }); [[-6, 0], [18, 0]].forEach(([x, z]) => { const l = new THREE.PointLight('#ffc46a', 0.5, 30); l.position.set(x, H - 3, z); sc.add(l); }); }
+      // his bed at the far end, under a quilt of every colour, and his hat on the peg
+      elfBed(wall, 22, -7, mat('#3a4a9a', { roughness: 1 })).forEach(s => solids.push(s)); [['#b0203a', 18.5], ['#f4d35e', 21.5], ['#4f8a3a', 24.5], ['#e68fb0', 27]].forEach(([c, x]) => wall(2.4, 0.06, 6.8, x, 2.98, -7, mat(c, { roughness: 1 })));
+      wall(0.3, 0.3, 4, W / 2 - 0.4, 7.5, 9, dark); const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.1, 1, 12), mat('#3a4a9a')); hat.position.set(W / 2 - 1, 7.9, 8); sc.add(hat); wall(0.3, 4.6, 1.8, W / 2 - 0.6, 5, 10.5, mat('#3a4a9a', { roughness: 1 }));
+    } } };
+  Object.entries(TF_ROOMS).forEach(([id, o]) => { const h = THOMES.find(q => q.id === id);
+    makeRoom(id, { w: o.w, d: o.d, h: o.h, doorH: 9.4, wall: o.wall, trim: o.trim, label: o.label, region: 'wild', out: 'Tinderfold', hint: o.hint, decorate: o.dec });
+    interiors[id].door = h.out; });
   lantBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); lantScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'garden bench', world: 'lantern' }; pickables.push(b); });
   cairnBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); cairnScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'garden bench', world: 'cairnhold' }; pickables.push(b); });
   fernBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); fernScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'garden bench', world: 'fernwater' }; pickables.push(b); });
@@ -8807,7 +9110,7 @@
     if (!reduce) aldHead.rotation.x = Math.sin(t * 0.7) * 0.04;
     if (inV && dAld < 7.5 && !nearAld && !talking() && ['towood', 'sortshapes', 'sacks'].includes(phase)) { nearAld = true; offer(reachAldric); }
     if (dAld > 10.5) nearAld = false;
-    nightLifeTick(dt, t); NET.tick(dt, t);
+    nightLifeTick(dt, t); tinderTick(dt, t); NET.tick(dt, t);
     grown.forEach(s => { const tg = s.userData.target; if (s.scale.x < tg) { s.scale.setScalar(Math.min(tg, s.scale.x + dt * 0.8)); } });
 
     // the orchards: Hollis and Pip, the mill wheel and its mice, bouncing trees
@@ -9012,32 +9315,32 @@
     hol: { g: hol, hd: holHead, n: 'Hollis Quern', post: HOLPOS, home: 'holhome', w: 'orchards', via: [[2, 86], [14, 100], [ORC.gx, 100]] },
     pip: { g: pip, hd: pipHead, n: 'Pip Willowby', post: PIPPOS, home: 'piphome', w: 'orchards', kid: true, noKnock: true, fire: [11, -8], via: [[8, 80], [10, 100], [ORC.gx, 100]] },
     astra: { g: astra, hd: astra.userData.head, n: 'Astra Vell', post: ASTPOS, home: 'asthome', w: 'lantern', yaw0: 2.4, via: [[3, 46]] },
-    durna: { g: durna, hd: durna.userData.head, n: 'Master Durna Ironvein', post: DURPOS, home: 'durhome', w: 'emberdeep', yaw0: 2.4, via: [[-10, 112]] },
+    durna: { g: durna, hd: durna.userData.head, n: 'Master Durna Ironvein', post: DURPOS, home: 'durhome', w: 'emberdeep', yaw0: 2.4, via: [[-6, 14]], gate: [0, 4], late: TF.late, knock: 'durhome', fire: [7, -10], bed: { x: -22, y: 0, z: -11 }, wi: 3 },
     tam: { g: tam, hd: tam.userData.head, n: 'Tamsin Gearwright', post: TAMPOS, home: 'tamhome', w: 'cogsworth', yaw0: 2.2, via: [[-12, 66], [-20, 80]] },
     wren: { g: wren, hd: wren.userData.head, n: 'Wren Ashcombe', post: WRENPOS, home: 'wrenhome', w: 'cairnhold', gx: CRN.w, yaw0: 2.4, via: [[-13, 50], [CRN.w, 50]] },
     pip2: { g: pip2, hd: pip2.userData.head, n: 'Pip Willowby', post: PIP2POS, home: 'wrenhome', w: 'cairnhold', gx: CRN.w, yaw0: -2.2, kid: true, noKnock: true, fire: [11, -8], via: [[13, 50], [CRN.w, 50]] },
     ori: { g: ori, hd: oriHead, n: 'Captain Oriel Tideknot', post: ORIPOS, py: 1.65, home: 'orihome', w: 'fernwater', via: [[17, 57], [17, 50], [0, 50]] },
     maud: { g: maud, hd: maudHead, n: 'Maudie Crumb', post: maud.position.clone(), home: 'maudhome', w: 'fernwater', indoor: 'bakery', via: [], solid: interiors.bakery.solids.find(q => q.x === maud.position.x && q.z === maud.position.z) } };
-  const FTOWN = { village: { homes: HOMES, lane: LANE.z, gx: 3, sc: scene, sol: solids }, orchards: { homes: OHOMES, lane: ORC.lane, gx: ORC.gx, sc: orchScene, sol: orchSolids }, fernwater: { homes: FHOMES, lane: FRN.lane, gx: 0, sc: fernScene, sol: fernSolids, gy: fernY }, cairnhold: { homes: CHOMES, lane: CRN.lane, gx: CRN.e, sc: cairnScene, sol: cairnSolids }, cogsworth: { homes: GHOMES, lane: CGW.lane, gx: CGW.gx, sc: cogScene, sol: cogSolids }, emberdeep: { homes: EHOMES, lane: EMBW.lane, gx: EMBW.gx, sc: embScene, sol: embSolids }, lantern: { homes: LHOMES, lane: LNT.lane, gx: -2, sc: lantScene, sol: lantSolids, gy: lantH } };
+  const FTOWN = { village: { homes: HOMES, lane: LANE.z, gx: 3, sc: scene, sol: solids }, orchards: { homes: OHOMES, lane: ORC.lane, gx: ORC.gx, sc: orchScene, sol: orchSolids }, fernwater: { homes: FHOMES, lane: FRN.lane, gx: 0, sc: fernScene, sol: fernSolids, gy: fernY }, cairnhold: { homes: CHOMES, lane: CRN.lane, gx: CRN.e, sc: cairnScene, sol: cairnSolids }, cogsworth: { homes: GHOMES, lane: CGW.lane, gx: CGW.gx, sc: cogScene, sol: cogSolids }, emberdeep: { homes: THOMES, lane: 0, gx: 0, sc: embScene, sol: embSolids }, wild: { homes: THOMES, lane: 0, gx: 0, sc: worldScene, sol: TF.wsol, gy: (x, z) => worldH(x, z) }, lantern: { homes: LHOMES, lane: LNT.lane, gx: -2, sc: lantScene, sol: lantSolids, gy: lantH } };
   const lyingQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0)));
   const BED = { x: -38 + 7.2, z: -9.5, y: 10 };   // the grown elves' bed, upstairs in every house
   const KIDBED = { x: -38 + 4.4, z: 2, y: 10 };   // the child's bed, in the little room at the head of the stair
-  function folkInit(id, i) { const f = FOLK[id], T = FTOWN[f.w || 'village'], h = T.homes.find(q => q.id === f.home), lz = T.lane; f.T = T; f.id = id; f.h = h; f.i = i; f.mode = null; f.pose = null;
-    f.route = [[f.post.x, f.post.z], ...f.via, [f.gx !== undefined ? f.gx : T.gx, lz], [h.x, lz], [h.x, h.z + h.sg * 30], [h.x, h.z + h.sg * 17]];
+  function folkInit(id, i) { const f = FOLK[id], T = FTOWN[f.w || 'village'], h = f.knock ? THOMES.find(q => q.id === f.knock) : T.homes.find(q => q.id === f.home), lz = T.lane; f.T = T; f.id = id; f.h = h; f.i = i; f.mode = null; f.pose = null;
+    f.route = f.route0 || (f.gate ? [[f.post.x, f.post.z], ...f.via, f.gate] : [[f.post.x, f.post.z], ...f.via, [f.gx !== undefined ? f.gx : T.gx, lz], [h.x, lz], [h.x, h.z + h.sg * 30], [h.x, h.z + h.sg * 17]]);   // the mountain's people walk to the cave's gate, where the carriage is
     f.solid = f.solid || T.sol.find(s => s.x === f.post.x && s.z === f.post.z);
     const ud = f.g.userData; f.g.userData = {}; const c = f.g.clone(true); f.g.userData = ud; c.visible = false; c.position.y = 0; interiors[f.home].scene.add(c); f.in = c;   // the same figure again, for indoors
     { const bg = new THREE.Group(); bg.visible = false; interiors[f.home].scene.add(bg); f.abed = bg; const hu = f.hd.userData; f.hd.userData = {}; const hc = f.hd.clone(true); f.hd.userData = hu; const md = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), mat('#f2ead8', { roughness: 1 }));
-      if (f.kid) { hc.position.set(KIDBED.x - 2.5, KIDBED.y + 2.55, KIDBED.z); md.scale.set(2.3, 0.5, 1.4); md.position.set(KIDBED.x + 0.5, KIDBED.y + 1.9, KIDBED.z); } else { hc.position.set(BED.x - 4.1, BED.y + 3.5 + 0.55, BED.z); md.scale.set(4.3, 0.85, 2.3); md.position.set(BED.x + 0.3, BED.y + 2.95, BED.z); }
+      const B = f.bed || (f.kid ? KIDBED : BED); if (f.kid) { hc.position.set(B.x - 2.5, B.y + 2.55, B.z); md.scale.set(2.3, 0.5, 1.4); md.position.set(B.x + 0.5, B.y + 1.9, B.z); } else { hc.position.set(B.x - 4.1, B.y + 3.5 + 0.55, B.z); md.scale.set(4.3, 0.85, 2.3); md.position.set(B.x + 0.3, B.y + 2.95, B.z); }
       hc.quaternion.copy(lyingQ); bg.add(hc); md.castShadow = true; bg.add(md); }
     const sp = new THREE.Object3D(); interiors[f.home].scene.add(sp); sp.userData = { pickable: true, kind: 'resident', who: id, world: 'in:' + f.home }; pickables.push(sp); f.inSpot = sp;
-    const kn = new THREE.Object3D(); kn.position.set(h.x, 0, h.z + h.sg * 19.6); T.sc.add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: f.w || 'village' }; if (!f.noKnock) pickables.push(kn); }
+    const kn = new THREE.Object3D(); if (f.knock) { kn.position.set(h.knock.x, TF.y, h.knock.z); worldScene.add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: 'wild' }; } else { kn.position.set(h.x, 0, h.z + h.sg * 19.6); T.sc.add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: f.w || 'village' }; } if (!f.noKnock) pickables.push(kn); }
   Object.keys(FOLK).forEach(folkInit);
   const abedNow = () => hollowAbed() && phase === 'free';
   function folkSettle(f, mode) { f.mode = mode; f.g.visible = mode === 'post'; f.g.rotation.z = 0; if (mode === 'post') { f.g.position.x = f.post.x; f.g.position.z = f.post.z; f.g.position.y = f.py || 0; if (f.yaw0 !== undefined) f.g.rotation.set(0, f.yaw0, 0); } if (f.solid) f.solid.x = mode === 'post' ? f.post.x : 1e6; }
   // people who are not teachers: the two who keep the inn, the travellers staying in it, the lamplighter and the watchman. Each is only there at the hours they would be, and each will tell you why.
   const folk = [];
   function addFolk(sc, world, o, x, z, yaw, n, lines, on) { const g = makeElfNPC(o); g.position.set(x, o.sit ? -2.5 : 0, z); g.rotation.y = yaw; g.traverse(m => { if (m.isMesh) m.castShadow = true; }); sc.add(g); Object.assign(g.userData, { pickable: true, kind: 'folk', world, fi: folk.length }); pickables.push(g);
-    const F = { g, n, lines, on, k: 0, solid: o.sit || o.walks ? null : { x, z, r: 1.7 } }; if (F.solid) (world === 'village' ? solids : world === 'orchards' ? orchSolids : world === 'fernwater' ? fernSolids : world === 'cairnhold' ? cairnSolids : world === 'cogsworth' ? cogSolids : world === 'emberdeep' ? embSolids : world === 'lantern' ? lantSolids : interiors[world.slice(3)].solids).push(F.solid); F.sx = x; folk.push(F); return F; }
+    const F = { g, n, lines, on, k: 0, solid: o.sit || o.walks ? null : { x, z, r: 1.7 } }; if (F.solid) (world === 'village' ? solids : world === 'orchards' ? orchSolids : world === 'fernwater' ? fernSolids : world === 'cairnhold' ? cairnSolids : world === 'cogsworth' ? cogSolids : world === 'emberdeep' ? embSolids : world === 'wild' ? TF.wsol : world === 'lantern' ? lantSolids : interiors[world.slice(3)].solids).push(F.solid); F.sx = x; folk.push(F); return F; }
   const day = (a, b) => h => a < b ? h >= a && h < b : h >= a || h < b;
   { const [kx, kz, ky] = INN_SEATS.keeper, isc = interiors.inn.scene;
     addFolk(isc, 'in:inn', { coat: '#a8563a', skin: '#e8b890', hair: '#8a4a2a' }, kx, kz, ky, 'Posy Underbough', ['Posy Underbough. Welcome to the Sleepy Beetle. If you are hungry, ring the bell on the barrel.', 'I keep the day and my brother Moss keeps the night, so there is always somebody awake here.', 'The beetle over the mantel? My grandfather carved him. He has been asleep for sixty years and I have never once seen him wake.'], day(7, 19));
@@ -9068,11 +9371,18 @@
     mk('reef', { coat: '#8a3a2a', skin: '#c9956a', hair: '#3a2a1e', tall: 6.9, wide: 1.2 }, -9, 72, Math.PI / 2, 'Rowan Reef', ['Rowan Reef. The chandlery is mine: rope, lamps, hooks, oil. Ring the bell inside if you want something.', 'Rope is sold by the fathom. A fathom is as far as a grown elf can stretch both arms, so every chandler has their own, and every customer says mine is short.', 'A compass has three hundred and sixty degrees, north at nought. East is ninety. If somebody tells you a bearing bigger than three sixty, they have been round more than once.', 'Number two, Windward Row. The red door on the south side.'], 'reefhome', [[-3, 76]]);
     mk('ebb', { coat: '#3e6a6a', skin: '#f0c9a0', hair: '#c9a06a', tall: 6.7, wide: 1.15 }, -9, 112, Math.PI / 2, 'Marnie Ebb', ['Marnie Ebb, of the Tide Office. I can tell you where the water will be at any hour you care to name.', 'High water is eight on the gauge and low is two. Halfway is five. It goes from one to the other and back about every twelve hours, and it has never once been late.', 'It does not go up in a straight line. It is slow at the top, slow at the bottom, and quick in the middle. Astra calls that a sine wave. I call it the tide.', 'Number three, Windward Row, on the north side. I can see the gauge from my bedroom, which is either handy or a curse.'], 'ebbhome', [[-3, 106]]);
     mk('wick', { coat: '#b8323a', skin: '#d9a070', hair: '#dcdcdc', tall: 7, wide: 1.25 }, 20, 27, -Math.PI / 2, 'Jory Wick', ['Jory Wick. I keep the light. One turn every twelve seconds, and it has not missed one in my time.', 'It is always night here, so the lamp never goes out. I trim it, I fill it, and I polish the glass, and then it is time to trim it again.', 'Thirty degrees a second, that beam. Twelve seconds, three hundred and sixty degrees. A ship that counts the seconds between flashes knows it is us and nobody else.', 'Number four, Windward Row, the far house. You will know it by the lamp glasses in the window.'], 'wickhome', [[4, 27]]); }
-  // Emberdeep's own people
-  { const mk = (id, o, x, z, yaw, n, lines, home, via) => { const F = addFolk(embScene, 'emberdeep', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'emberdeep', via, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
-    mk('brok', { coat: '#8a3a2a', skin: '#c9956a', hair: '#1b1b1b', tall: 4.4, wide: 2 }, -41, 30, Math.PI / 2, 'Brokk Cinder', ['Brokk Cinder. I keep the furnaces. Too cool and the ore only sulks. Too hot and you burn the iron you were after.', 'Iron is in the rock already. All a furnace does is get it hot enough to let go, and give it charcoal to let go to.', 'The bellows are the trick. More air, more heat. A fire is only as hot as the air you feed it.', 'Number two, Hearth Gallery. Warmest hold in the mountain, and I like it that way.'], 'brokhome', [[-41, 112]]);
-    mk('hil', { coat: '#3e6a4a', skin: '#f0c9a0', hair: '#c9a06a', tall: 4.2, wide: 1.9 }, -34, 118, Math.PI, 'Hilda Slagg', ['Hilda Slagg. Every cart of ore that comes off the rails, I weigh and I write down.', 'Ore is rock with some metal in it. A hundred weights of this seam gives about thirty of iron. The other seventy is slag, which is my name, and no, it is not funny.', 'Thirty in a hundred. Three in ten. It is the same share whichever way you say it.', 'Number three, Hearth Gallery. The green door.'], 'hilhome', [[-60, 112]]);
-    mk('odw', { coat: '#3a4a9a', skin: '#d9a070', hair: '#dcdcdc', tall: 4.3, wide: 1.8 }, -19, 101.5, Math.PI, 'Odwin Flint', ['Odwin Flint. I trim the lamps and I keep the forge-grid swept. Nobody can read a square with clinker on it.', 'Every square on the grid has two numbers: how far along, then how far up. Along first. Always along first.', 'Under a mountain there is no sun to tell the hour by. So we go by the clock like everybody else, and the lamps are how you know it is evening.', 'Number four, Hearth Gallery, at the far end. I light my way home, naturally.'], 'odwhome', [[-40, 108], [-60, 112]]); }
+  // Emberdeep's own people: they work in the mountain and live down the hill in Tinderfold, and the carriage takes them up and back
+  { const via = { brok: [[-24, 14]], hil: [[-28, 104], [-20, 60], [-8, 14]], odw: [[-20, 60], [-8, 14]] }, fire = { brok: [5, -13], hil: [-10, -12], odw: [-25, -2] }, bed = { brok: [26, -12], hil: [14, -15.5], odw: [22, -7] };
+    const mk = (id, o, x, z, yaw, n, lines, home) => { const F = addFolk(embScene, 'emberdeep', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'emberdeep', via: via[id], gate: [0, 4], late: TF.late, knock: home, fire: fire[id], bed: { x: bed[id][0], y: 0, z: bed[id][1] }, wi: { brok: 1, hil: 0, odw: 2 }[id], solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
+    mk('brok', { coat: '#8a3a2a', skin: '#c9956a', hair: '#1b1b1b', tall: 4.4, wide: 2 }, -41, 30, Math.PI / 2, 'Brokk Cinder', ['Brokk Cinder. I keep the furnaces. Too cool and the ore only sulks. Too hot and you burn the iron you were after.', 'Iron is in the rock already. All a furnace does is get it hot enough to let go, and give it charcoal to let go to.', 'The bellows are the trick. More air, more heat. A fire is only as hot as the air you feed it.', 'I live in Tinderfold, down the hill: the house with the swing. The carriage takes us home at nine, and my Tilly is at the gate waiting for it every night, whatever I tell her.'], 'brokhome');
+    mk('hil', { coat: '#3e6a4a', skin: '#f0c9a0', hair: '#c9a06a', tall: 4.2, wide: 1.9 }, -34, 118, Math.PI, 'Hilda Slagg', ['Hilda Slagg. Every cart of ore that comes off the rails, I weigh and I write down.', 'Ore is rock with some metal in it. A hundred weights of this seam gives about thirty of iron. The other seventy is slag, which is my name, and no, it is not funny.', 'Thirty in a hundred. Three in ten. It is the same share whichever way you say it.', 'I live in Tinderfold, in the tall house with the rocks out the front. Every one of them is from this mountain, and every one of them has been weighed.'], 'hilhome');
+    mk('odw', { coat: '#3a4a9a', skin: '#d9a070', hair: '#dcdcdc', tall: 4.3, wide: 1.8 }, -19, 101.5, Math.PI, 'Odwin Flint', ['Odwin Flint. I trim the lamps and I keep the forge-grid swept. Nobody can read a square with clinker on it.', 'Every square on the grid has two numbers: how far along, then how far up. Along first. Always along first.', 'Under a mountain there is no sun to tell the hour by. So we go by the clock like everybody else, and the lamps are how you know it is evening.', 'I live at the end of the street in Tinderfold, in the cabin with the lanterns along the porch. You can see them from the road.'], 'odwhome'); }
+  // Tinderfold's own: Tilly Cinder, who is too small to go up the mountain yet, and Gorse Tallow, who drives the carriage
+  { const [px, pz] = toWorld(frameT, 47, 9.5), yaw = frameT.yaw + Math.PI;
+    const F = addFolk(worldScene, 'wild', { coat: '#e68fb0', skin: '#c9956a', hair: '#1b1b1b', hat: 'point', capColor: '#f4d35e', tall: 3, wide: 1 }, px, pz, yaw, 'Tilly Cinder', ['Tilly Cinder. My dad keeps the furnaces up in Emberdeep. I am not allowed in the mountain till I am bigger.', 'The rams are Tuff and Biscuit. Biscuit bites, but only if you have an apple and you do not give it to him.', 'Every morning the carriage goes up the hill, and every night at nine it comes back down. You can hear the rams\u2019 bells from the gate.', 'I tried to count every window in Tinderfold. Miss Slagg\u2019s house has so many that I lost count twice.'], () => F.g.visible); F.g.position.y = TF.y;
+    FOLK.tilly = { g: F.g, hd: F.g.userData.head, n: 'Tilly Cinder', post: new THREE.Vector3(px, 0, pz), py: TF.y, home: 'brokhome', w: 'wild', kid: true, noKnock: true, route0: [[47, 9.5], [40, 9], [40, 16.5]].map(([a, b]) => toWorld(frameT, a, b)), via: [], fire: [-5, -12], bed: { x: -28, y: 0, z: -12 }, solid: F.solid, yaw0: yaw }; folkInit('tilly', Object.keys(FOLK).length - 1);
+    const D = TF_CART.spot; D.userData = { pickable: true, kind: 'folk', world: 'wild', fi: folk.length }; pickables.push(D);
+    folk.push({ g: D, n: 'Gorse Tallow', lines: ['Gorse Tallow. I drive the Tinderfold carriage: up to Emberdeep before the forges are lit, and home again when they are banked.', 'That is Tuff on the left and Biscuit on the right. Mind Biscuit.', 'Rams, not horses. A horse is quicker on the flat, but a ram never once stopped on a hill.', 'It is workers only, I am afraid. The Guild has not said I can take anybody else yet, and I do not argue with the Guild.'], on: () => D.visible, k: 0, solid: null }); }
   // Cogsworth's own people
   { const mk = (id, o, x, z, yaw, n, lines, home, via) => { const F = addFolk(cogScene, 'cogsworth', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'cogsworth', via, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
     mk('ode', { coat: '#c8384a', skin: '#f0c9a0', hair: '#5a3d22' }, 17, 50, -Math.PI / 2, 'Odette Spindle', ['Odette Spindle. I build the bicycles. Tamsin does the sums and I do the wheels, and we argue about which matters more.', 'A wheel is spokes pulling, never pushing. Every spoke pulls the rim toward the hub, and they all pull equally, or the wheel wobbles.', 'Big ring at the pedals, small at the back wheel: one turn of your legs is several turns of the wheel. That is all a gear is.', 'Number two, Cliff Row. The red door.'], 'odehome', [[10, 66], [-20, 80]]);
@@ -9107,6 +9417,7 @@
       reef: asleep ? ['Shop is shut. It will be just as shut in five minutes. Good night.'] : ['Shut up shop for the day. Come by the chandlery tomorrow.'],
       ebb: asleep ? ['Low water is at four. I intend to be asleep for it. Good night.'] : ['The office is closed, but the tide is not. Mind the pier in the dark.'],
       wick: asleep ? ['The lamp is trimmed and turning, and it will turn without me till morning. Good night.'] : ['Lamp is filled for the night. I can watch it go round from my chair, so I do.'],
+      tilly: asleep ? ['Mm. Is it morning? It is not morning.'] : ['Dad is reading me the furnace book. It is mostly about how hot things are.'],
       durna: asleep ? ['HRM. Who hammers on my door? Oh. The small one. Well, iron does not sleep, and nor, it seems, do I. What is it?'] : ['The forge is banked. But a master is a master at any hour. Come in, and mind the anvil.'],
       brok: asleep ? ['Furnaces are banked. So am I. Morning.'] : ['Fires are low for the night. Come to the furnaces tomorrow and I will show you the colour iron goes when it is ready.'],
       hil: asleep ? ['The scales are locked. Nothing gets weighed in the dark. Good night.'] : ['Day’s tally is written up. Come by the carts tomorrow.'],
@@ -9126,11 +9437,11 @@
   }
   let shutNow = null;
   function nightLifeTick(dt, t) {
-    const abed = abedNow(), hr = clockHour(), live = gameStarted && !titleUp, seen = where === 'village' && live, seenO = (where === 'orchards' || where === 'fernwater' || where === 'cairnhold' || where === 'cogsworth' || where === 'emberdeep' || where === 'lantern') && live, want = abed ? 'home' : 'post';
-    Object.values(FOLK).forEach(f => { const R = f.route;
+    const abed = abedNow(), hr = clockHour(), live = gameStarted && !titleUp, seen = where === 'village' && live, seenO = (where === 'orchards' || where === 'fernwater' || where === 'cairnhold' || where === 'cogsworth' || where === 'emberdeep' || where === 'lantern') && live, want0 = abed ? 'home' : 'post';
+    Object.values(FOLK).forEach(f => { const R = f.route, want = f.late && want0 === 'post' && hr >= 6 && hr < TF.morn + f.late ? 'home' : want0;   // the mountain's people are not at work till the carriage has brought them up
       if (f.indoor) { if (f.mode === null || (f.mode !== want && !(live && where === 'in' && interior && interior.id === f.indoor))) folkSettle(f, want); }   // somebody who works indoors stays till you have left the shop
       else if (f.mode === null || (f.mode !== want && !(live && where === (f.w || 'village')))) folkSettle(f, want);
-      else if ((f.mode === 'post' || f.mode === 'home') && f.mode !== want) { f.dir = want === 'home' ? 1 : -1; const k0 = f.dir > 0 ? 0 : R.length - 1; f.wx = R[k0][0]; f.wz = R[k0][1]; f.k = k0 + f.dir; f.wait = f.i * 3; f.yaw = f.g.rotation.y; f.mode = 'walk'; f.g.visible = true; if (f.solid) f.solid.x = 1e6; }
+      else if ((f.mode === 'post' || f.mode === 'home') && f.mode !== want) { f.dir = want === 'home' ? 1 : -1; const k0 = f.dir > 0 ? 0 : R.length - 1; f.wx = R[k0][0]; f.wz = R[k0][1]; f.k = k0 + f.dir; f.wait = (f.wi !== undefined ? f.wi : f.i) * 3; f.yaw = f.g.rotation.y; f.mode = 'walk'; f.g.visible = true; if (f.solid) f.solid.x = 1e6; }
       if (f.mode === 'walk') {
         if ((f.dir > 0) !== (want === 'home')) { f.dir = -f.dir; f.k += f.dir; }
         if (f.wait > 0) { f.wait -= dt; if (f.dir < 0) f.g.visible = f.wait <= 0; }
@@ -9139,10 +9450,11 @@
       // indoors: by the fire for the first hour, then upstairs in bed
       const home = f.mode === 'home', pose = !home ? 'out' : (hr >= 22 || hr < 6.6) ? 'bed' : 'fire';
       if (pose !== f.pose) { f.pose = pose; f.in.visible = pose === 'fire'; f.abed.visible = pose === 'bed';
-        if (pose === 'bed') { if (f.kid) f.inSpot.position.set(KIDBED.x + 1, KIDBED.y, KIDBED.z + 2.6); else f.inSpot.position.set(BED.x - 0.5, BED.y, BED.z + 2.4); }
+        if (pose === 'bed') { const B = f.bed || (f.kid ? KIDBED : BED); if (f.kid) f.inSpot.position.set(B.x + 1, B.y, B.z + 2.6); else f.inSpot.position.set(B.x - 0.5, B.y, B.z + 2.4); }
         else if (pose === 'fire') { const [fx, fz] = f.fire || [5, -12.5]; f.in.position.set(fx, 0, fz); f.in.rotation.set(0, 0.5, 0); f.inSpot.position.set(fx, 0, fz); } } });
     // shutting-up time, said once as it happens
-    { const shut = abed; if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { const fw = where === 'fernwater', ch = where === 'cairnhold'; if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : where === 'lantern' ? 'Nine by the clock. The sky never changes here, but everyone is walking home to Windward Row.' : where === 'emberdeep' ? 'The forges are banked for the night, and everyone is walking home to Hearth Gallery.' : where === 'cogsworth' ? 'The works are shut for the night, and everyone is walking home to Cliff Row.' : ch ? 'The Lodge is shut for the night, and everyone is walking home to Rim Row.' : fw ? 'The shops are shut, and everyone is walking home over the bridge to Heron Row.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : where === 'lantern' ? 'Seven by the clock, and Lanternreach is up, under the same stars.' : where === 'emberdeep' ? 'Emberdeep is waking up. The forges are lit at seven.' : where === 'cogsworth' ? 'Cogsworth is waking up. The works open at seven.' : ch ? 'Cairnhold is waking up. The Lodge opens at seven.' : fw ? 'The Crossing is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
+    { const shut = abed; if (shutNow !== null && shut !== shutNow && where === 'wild' && live && Math.hypot(player.position.x - frameT.ox, player.position.z - frameT.oz) < 320 && !talking()) flash(shut ? 'Nine o\u2019clock. The carriage is coming down the hill to bring Emberdeep\u2019s people home to Tinderfold.' : 'Tinderfold is up. The carriage leaves for Emberdeep before seven.', 6000);
+      if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { const fw = where === 'fernwater', ch = where === 'cairnhold'; if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : where === 'lantern' ? 'Nine by the clock. The sky never changes here, but everyone is walking home to Windward Row.' : where === 'emberdeep' ? 'The forges are banked for the night. Everyone is going out to the carriage at the west gate, to ride home to Tinderfold.' : where === 'cogsworth' ? 'The works are shut for the night, and everyone is walking home to Cliff Row.' : ch ? 'The Lodge is shut for the night, and everyone is walking home to Rim Row.' : fw ? 'The shops are shut, and everyone is walking home over the bridge to Heron Row.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : where === 'lantern' ? 'Seven by the clock, and Lanternreach is up, under the same stars.' : where === 'emberdeep' ? 'The carriage is bringing everyone up from Tinderfold. The forges are lit at seven.' : where === 'cogsworth' ? 'Cogsworth is waking up. The works open at seven.' : ch ? 'Cairnhold is waking up. The Lodge opens at seven.' : fw ? 'The Crossing is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
     folk.forEach(F => { const on = F.on(hr); if (on !== F.g.visible) { F.g.visible = on; if (F.solid) F.solid.x = on ? F.sx : 1e6; } });
     if (WICK.g.visible && seen) { const g = WICK.g, L = LANE.x1 - 28, u = (netNow() * 3.2) % (2 * L); WICK.dir = u < L ? 1 : -1; g.position.x = 10 + (u < L ? u : 2 * L - u); g.rotation.y = WICK.dir * Math.PI / 2; g.position.y = Math.abs(Math.sin(t * 5)) * 0.1; }
     if (where === 'in' && interior) roomNight(interior);
