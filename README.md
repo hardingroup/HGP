@@ -143,8 +143,20 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Honesty boxes.** A shop that is shut and sells food (the Stores, Dewberry's stall) still lets you buy the food from an honesty box; nothing else, and nobody is there to buy from you. A shop with no food (the potting shed, the woodshop) says it is shut till seven.
 - **The Sleepy Beetle** is the inn on the green, and it never shuts. Posy Underbough keeps it from 7 in the morning to 7 in the evening and her brother Moss through the night. It sells hot cocoa and barley stew (both made here), and bread, pie, cider and nut mix. Inside there is a great hearth with the carved beetle asleep over it, two settles by the fire, four tables with stools, and the bar; ring the bell on the barrel. Three travellers sit in from 5 in the evening until 11: a carter, a road surveyor and a pedlar.
 - **Anyone out at night has a reason,** and will tell you it. Wick Tallow the lamplighter walks the lane from dusk to dawn. Bryn Ashlock minds the gate from 9 until the Hollow wakes. Both sleep by day at the inn.
-- **Not yet:** only the Hollow keeps hours. The other towns' shops stay open and their people stay put until they have homes to go to (Hearthmoor is next). The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
+- **Not yet:** only the Hollow and Mallow Orchards keep hours. The other towns' shops stay open and their people stay put until they have homes to go to. The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
 - How it works: `daySecs()` reads the clock in `ZONE`; `hollowAbed()` and `shopsShut()` are the hours. `FOLK` holds the four with their post, their home and the way between; `nightLifeTick` walks them, puts their indoor figures by the fire or in bed, and shows or hides everyone in `folk` (each has an `on(hour)` test). `shopShut(id)` and `shopRing(id)` decide between the shop, the honesty box and a shut door. `roomNight(room)` darkens a room's windows.
+
+## Mallow Orchards at full size, the Library Tower, and books
+
+- **Mallow Orchards is built for grown elves now.** The town is about twice as wide and three times as long as it was (218 by 340 units), inside a tall hedge. The two gates are stone pillars seventeen units high with a lintel and a board that reads one way going in and the other going out. The apple and hazel rows, Hollis, Pip, the press and the crates are where they were, so every lesson starts where it always did.
+- **Quern Mill** is a stone tower 50 units across and 46 to the eaves, with a porch and a door a grown elf walks through, and a treadwheel 28 units across on its west side with four mice in it. Inside it is one room 34 by 34: the stones in the middle, the big gear and the axle from the wheel overhead, the meal bin, grain and flour sacks, cider barrels, and a counter with the shop bell.
+- **Windfall Lane** runs east and west beyond the mill, with four houses on their own fenced plots, the same houses as Lantern Lane: no. 1 Quern (Hollis), no. 2 Willowby (Pip and his mother Nell, the cooper), no. 3 Honeywell (Bram, the beekeeper), no. 4 Applegarth (Tansy, who picks the pears). You can go into all four.
+- **New places to walk:** a pear orchard of four rows of six, the bee yard (six skeps in a strip of flowers, with bees over it by day), and the cooperage, an open shed where Nell makes the barrels and crates. Nell, Bram and Tansy each stand at their work by day and will talk.
+- **Hours.** The mill shuts at 9 and opens at 7, with an honesty box for apples and cider in between. At 9 all five walk home along the lanes; they are by the fire till 10, then in bed (Pip in the small bed). Knock at a door and whoever is in answers; Hollis will teach at any hour. A lesson under way keeps Hollis and Pip at their places.
+- **The Library Tower** in Hearthmoor is now 70 units across and 124 to the parapet, wide enough to hold the reading room you walk into, with buttresses, a porch and a spire.
+- **Books can be read.** Twelve are out in the Library: four lying on the reading tables and eight on the two low shelves (stand at a shelf and choose). A book opens to its cover, then turns page by page, forwards or back. Each is five pages of true things written for a young reader: plants, knots, the water wheel, the Moon, bread, bees, rain, place value, the Long Road, rocks, seeds, and finding north. The game remembers which you have finished and ticks them on the shelf.
+- **Not yet:** the other five towns are still at their old size. Books cannot be carried out of the Library, and there are none anywhere else. The tall shelves and the tower's upper floors are not open.
+- How it works: `ORC` holds the town's bounds, `OHOMES` its houses (built by the same `buildHouse` as the Hollow, which now takes a scene and solid lists), `orchBoxes` the straight-sided things. `FOLK` now covers both towns; `folkInit` gives each person a route, an indoor figure and a bed. Books are `BOOKS`, read with `readBook(id)`; shelves call `shelfBrowse`.
 
 ## Inside Hearthmoor, your room, and storage
 
@@ -164,9 +176,25 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - How it works: `CITY.doors` lists every door with the room it leads to (`inside`) or the reason it does not (`msg`); `cityCollide` notices you walking at one and `cityDoor` takes you in. City rooms are ordinary rooms (`makeRoom`) whose way out is set to whichever door you used. `openStore`, `storeOf(id)` and the `take`, `put` and `lock` actions are the storage; the contents are in `save.stores`.
 - Not yet: nothing can be put on a table or a shelf where you can see it (storage is a list, not objects in the room), and the letter racks are waiting for the post.
 
+## Accounts
+
+- **Nobody plays without an account.** Signed out, the title screen shows only the sign-in box. This is so every elf, room, chest and lot has an owner, and so progress lives in the account and not on one device.
+- **An elf belongs to its account, not to the device.** The save kept on a device is stamped with the account it belongs to (`save.owner`).
+  - **Signing out** sends the save to the account and then removes it from the device, along with which room is yours. If the cloud cannot be reached it refuses to sign out, and says why, so nothing is lost.
+  - **Signing in** as a different account never picks up an elf left behind by another. This was the fault where a second account found "Jake" waiting on the device and offered to replace him.
+  - **An elf from before saves had owners** (one made on a device before this change) is taken into the first account that signs in there, but only if that account has no elf of its own. If the account already has one, the account's elf is used and the leftover is dropped.
+  - The same account on two devices still works as before: whichever save is further along, or newer, wins.
+- **Making an account asks the year of birth first** (unless the device already knows it). Under 13, the form asks for **a parent's email** and says a parent must make the account; 13 and over use their own. The year, and whether it was a parent's address, are stored with the account, and a new device picks the year up from the account on sign-in.
+- **Two things to check in the Supabase dashboard, under Authentication**, because the game cannot see or set them:
+  1. **Confirm email is switched on.** With it off, an account works the moment it is made and the parent's link means nothing.
+  2. **Site URL is the game's address** (`https://hardingroup.github.io/HGP/`), so the link in the email comes back to the game.
+- **A parent's email with a link is the usual first step, not the whole of it.** US children's privacy law asks for more than that before a child under 13 can share anything with other people. That still needs proper advice before the game is offered to the public.
+- **Testing without an account:** set `long-road-dev` to `1` in the browser's local storage for the game's address. Nothing in the game sets it.
+
 ## Other players, the age question, and parental controls
 
-- **Seeing each other.** Players in the same place see each other's elves walk about, with the elf's name over its head and its own colours, hair, hat, face and height. "The same place" is a town, the open land, or the inside of one building. It is on unless switched off in Settings, and it works whether or not you are signed in.
+- **Other elves glide.** Each game sends its position ten times a second (and once more when it stops). Everyone else is drawn 180 milliseconds in the past, sliding between the two positions either side of that moment, so they move evenly instead of in steps; their legs swing by how fast they are really moving. `SEND` and `BEHIND` in `NET` are the two numbers.
+- **Seeing each other.** Players in the same place see each other's elves walk about, with the elf's name over its head and its own colours, hair, hat, face and height. "The same place" is a town, the open land, or the inside of one building. It is on unless switched off in Settings.
   - How to try it: open the game on two devices (or two browser windows), go to the same town on both, and walk. Settings, under **Other players**, says whether it is connected and how many others are here; if it cannot connect it says why.
   - **This has not been run against the real server.** It was built and tested against a stand-in, because the place it was built in cannot reach Supabase. The first two-device try is the real test. If Settings says it could not connect, the likeliest cause is the Realtime service or public channels being switched off for the project in the Supabase dashboard.
   - What is shared is only where the elf is and what it looks like. Lessons, coins, the satchel, chests and the beetle stay your own. Other players' elves cannot be bumped into or spoken to yet.
@@ -180,7 +208,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 
 ## A room of your own, and a lot
 
-- **Each account has its own room.** There are three lodging houses with four rooms each, twelve places in all. Signing in asks the Guild's register (the database) for your room; the first time, it gives you the first free one and that room is yours from then on. Jake's account already holds Room 2 of Rowan House. Signed out, a device uses Room 2 of Rowan House on its own.
+- **Each account has its own room.** There are three lodging houses with four rooms each, twelve places in all. Signing in asks the Guild's register (the database) for your room; the first time, it gives you the first free one and that room is yours from then on. Jake's account already holds Room 2 of Rowan House. 
   - In your house your door stands open and has a "yours" plate; the other doors are shut. In the other two houses every door is shut and the hint tells you where your room is. Each house has its own warden, who will tell you the same.
   - If all twelve are taken, a new account is told so honestly and gets no room. More houses, or upper floors, are the fix.
 - **The rooms are not all alike.**
