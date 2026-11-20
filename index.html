@@ -369,6 +369,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 97 · 19 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -5239,7 +5240,7 @@
       if (m.bye) { if (p) { p.k.g.parent && p.k.g.parent.remove(p.k.g); peers.delete(m.id); } return; }
       if (![m.x, m.y, m.z, m.r].every(Number.isFinite)) return;
       if (!p) { if (peers.size >= 24) return; const k = makeKid(); k.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); k.satchel.visible = true; p = { k, x: m.x, y: m.y, z: m.z, r: m.r, name: '', tag: null, seen: 0, mv: 0, buf: [], sp: 0 }; k.g.position.set(m.x, m.y, m.z); peers.set(m.id, p); curScene().add(k.g); }
-      p.x = m.x; p.y = m.y; p.z = m.z; p.r = m.r; p.mv = m.m ? 1 : 0; p.sit = !!m.s; p.seen = performance.now(); { const B = p.buf, L = B[B.length - 1]; if (L && Math.hypot(m.x - L.x, m.z - L.z) > 30) B.length = 0; B.push({ t: p.seen, x: m.x, y: m.y, z: m.z, r: m.r }); if (B.length > 16) B.shift(); }
+      p.x = m.x; p.y = m.y; p.z = m.z; p.r = m.r; p.mv = m.m ? 1 : 0; p.sit = !!m.s; p.seen = performance.now(); { const B = p.buf, L = B[B.length - 1]; if (L && Math.hypot(m.x - L.x, m.z - L.z) > 30) B.length = 0; let ts = p.seen; if (Number.isFinite(m.t)) { const d = p.seen - m.t; p.off = p.off === undefined || Math.abs(d - p.off) > 3000 ? d : Math.min(p.off + 0.4, d); ts = m.t + p.off; if (L && ts <= L.t) ts = L.t + 1; } p.run = !!m.u; B.push({ t: ts, x: m.x, y: m.y, z: m.z, r: m.r }); if (B.length > 16) B.shift(); }
       if (m.l && typeof m.l === 'object') { applyLookTo(p.k, m.l, typeof m.h === 'string' ? m.h : ''); const nm = String(m.n || 'Elfling').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16) || 'Elfling'; if (nm !== p.name) { if (p.tag) p.k.g.remove(p.tag); p.name = nm; p.tag = nameTag(nm); p.k.g.add(p.tag); if (!p.hello) { p.hello = true; if (!talking()) flash(`${nm} is here.`, 3500); } } if (p.tag) p.tag.position.y = (3.9 * p.k.tall + 0.6) / p.k.g.scale.x; }
     }
     function open(t) {
@@ -5261,20 +5262,21 @@
       if (ws && state === 'on') {
         beat -= dt; if (beat <= 0) { beat = 25; push('phoenix', 'heartbeat', {}); }
         sendT -= dt; lookT -= dt; const P = player.position, moved = Math.hypot(P.x - last[0], P.z - last[2]) > 0.03 || Math.abs(P.y - last[1]) > 0.03 || Math.abs(bodyYaw - last[3]) > 0.02;
-        if (sendT <= 0 && (moved || wasMoving || lookT <= 0 || sendT < -1)) { sendT = SEND; wasMoving = moved; const m = { id: myId, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), r: +bodyYaw.toFixed(2), m: moved ? 1 : 0, s: sitting ? 1 : 0 };
+        if (sendT <= 0 && (moved || wasMoving || lookT <= 0 || sendT < -1)) { sendT = SEND; wasMoving = moved; const m = { id: myId, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), r: +bodyYaw.toFixed(2), m: moved ? 1 : 0, s: sitting ? 1 : 0, t: Math.round(performance.now()), u: running ? 1 : 0 };
           if (lookT <= 0) { lookT = 4; m.n = save.name || 'Elfling'; m.l = Object.assign({}, DEFAULT_LOOK, save.look || {}); m.h = save.hatStyle || ''; }
           last = [P.x, P.y, P.z, bodyYaw]; push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: m }); } }
       // draw the others: ease each toward where it was last heard to be, swing its legs while it walks, and let go of anyone not heard from for a while
       const now = performance.now(), sc = curScene();
       peers.forEach((p, id) => { if (now - p.seen > 7000) { p.k.g.parent && p.k.g.parent.remove(p.k.g); peers.delete(id); return; } const g = p.k.g; if (g.parent !== sc) sc.add(g);
-        const B = p.buf, rt = now - BEHIND, ox = g.position.x, oz = g.position.z; let tx = p.x, ty = p.y, tz = p.z, tr = p.r;
+        const B = p.buf, rt = now - BEHIND, ox = g.position.x, oz = g.position.z; let tx = p.x, ty = p.y, tz = p.z, tr = p.r, vv = 0;
         if (B.length) { let i = B.length - 1; while (i > 0 && B[i].t > rt) i--; const a = B[i], b = B[i + 1];
-          if (b && a.t <= rt) { const f = Math.min(1, (rt - a.t) / Math.max(1, b.t - a.t)); let dr = b.r - a.r; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); tx = a.x + (b.x - a.x) * f; ty = a.y + (b.y - a.y) * f; tz = a.z + (b.z - a.z) * f; tr = a.r + dr * f; }
+          if (b && a.t <= rt) { const f = Math.min(1, (rt - a.t) / Math.max(1, b.t - a.t)); let dr = b.r - a.r; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); tx = a.x + (b.x - a.x) * f; ty = a.y + (b.y - a.y) * f; tz = a.z + (b.z - a.z) * f; tr = a.r + dr * f; vv = Math.hypot(b.x - a.x, b.z - a.z) / Math.max(0.03, (b.t - a.t) / 1000); }
           else { tx = a.x; ty = a.y; tz = a.z; tr = a.r; } }
         if (Math.hypot(tx - ox, tz - oz) > 30) g.position.set(tx, ty, tz); else { const kx = Math.min(1, dt * 22); g.position.x += (tx - ox) * kx; g.position.y += (ty - g.position.y) * kx; g.position.z += (tz - oz) * kx; }
         { let dr = tr - g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); g.rotation.y += dr * Math.min(1, dt * 16); }
-        p.sp += (Math.hypot(g.position.x - ox, g.position.z - oz) / Math.max(dt, 0.001) - p.sp) * Math.min(1, dt * 8);
-        p.ph = (p.ph || 0) + dt * (7 + Math.min(p.sp, 14) * 0.3); p.amp = (p.amp || 0) + ((p.sit ? 0 : Math.min(1, p.sp / 4)) - (p.amp || 0)) * Math.min(1, dt * 6); const sw = Math.sin(p.ph) * 0.6 * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; });
+        // the legs: the same stride the elf's own player sees, paced by how fast it is going between the two positions, never by one frame's movement
+        p.sp += (Math.min(vv, 20) - p.sp) * Math.min(1, dt * 5); const going = p.sp > 0.5 && !p.sit;
+        p.ph = (p.ph || 0) + (going ? dt * (p.run ? 16 : 11) * Math.min(1.2, Math.max(0.45, p.sp / 7.5)) : 0); p.amp = (p.amp || 0) + ((going ? (p.run ? 1.0 : 0.7) : 0) - (p.amp || 0)) * Math.min(1, dt * 7); const sw = Math.sin(p.ph) * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; });
     }
     return { tick, hear, peers, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
       note: () => state === 'on' ? `Connected. ${peers.size ? peers.size + (peers.size === 1 ? ' other elf is' : ' other elves are') + ' in this place with you.' : 'Nobody else is in this place just now.'}` : state === 'connecting' ? 'Connecting…' : state === 'failed' ? `Could not connect (${why}). It will keep trying.` : 'Not connected: it joins when you are in the game.' };
