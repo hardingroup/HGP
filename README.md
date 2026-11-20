@@ -143,7 +143,7 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Honesty boxes.** A shop that is shut and sells food (the Stores, Dewberry's stall) still lets you buy the food from an honesty box; nothing else, and nobody is there to buy from you. A shop with no food (the potting shed, the woodshop) says it is shut till seven.
 - **The Sleepy Beetle** is the inn on the green, and it never shuts. Posy Underbough keeps it from 7 in the morning to 7 in the evening and her brother Moss through the night. It sells hot cocoa and barley stew (both made here), and bread, pie, cider and nut mix. Inside there is a great hearth with the carved beetle asleep over it, two settles by the fire, four tables with stools, and the bar; ring the bell on the barrel. Three travellers sit in from 5 in the evening until 11: a carter, a road surveyor and a pedlar.
 - **Anyone out at night has a reason,** and will tell you it. Wick Tallow the lamplighter walks the lane from dusk to dawn. Bryn Ashlock minds the gate from 9 until the Hollow wakes. Both sleep by day at the inn.
-- **Not yet:** every town but Skyhaven keeps hours. Skyhaven's people stay put until they have homes to go to. The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
+- **Not yet:** every town keeps hours. The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
 - How it works: `daySecs()` reads the clock in `ZONE`; `hollowAbed()` and `shopsShut()` are the hours. `FOLK` holds the four with their post, their home and the way between; `nightLifeTick` walks them, puts their indoor figures by the fire or in bed, and shows or hides everyone in `folk` (each has an `on(hour)` test). `shopShut(id)` and `shopRing(id)` decide between the shop, the honesty box and a shut door. `roomNight(room)` darkens a room's windows.
 
 ## Fixes in build 107
@@ -162,6 +162,25 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The cove path** now lies on the ground from the lane to the head of the boardwalk. The old flat strip that stuck out over the cliff is gone.
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
+
+## Knees and elbows (build 110)
+
+- **Your elf and other players** have a thigh, knee and shin in each leg, and an upper arm, elbow and forearm in each arm. Knees bend as each leg swings back and fold square when you sit or ride Bracken. Elbows bend more as the arm swings forward.
+- **Every townsperson has legs now.** The long robes and dresses that went to the ground stop at the knee, with trousers or stockings and boots below. The Hollow's own people (Old Bramblewick, Fen, Marigold, Aldric, Hollis, Pip, Orrin and Maud) were made by hand, so they were given the same legs and elbows one by one.
+- **People stride when they walk.** Anyone who walks anywhere, such as going home at nine, swings their legs and arms in step with how far they go. People carried along in the carriage or the lift do not.
+- **Animals.** The deer, Bracken and the other dogs, the foxes, the badgers and the Tinderfold rams have jointed legs. Front legs fold back at the knee as the foot lifts. Hind legs are in three parts with the hock bent back, the way a real deer's or dog's are. The pheasants' legs bend that way too.
+- **Not yet:** squirrels, rabbits, birds other than pheasants, and the beetles are unchanged.
+
+## Skyhaven at full size, and the sky-lift as a commute (build 109)
+
+- **Everything on the islands is 1.8 times bigger:** the islands themselves, the rope bridges, the Glider Guild, the Balloon Works, the Engine House, the wind tunnel, the launch rail, the balloons and the lift station. The three buildings have grown-elf doors and rooms 1.6 times bigger inside. The Guild's bell is on a low shelf at the front of its counter.
+- **The gondola is grown-elf size too.** It still waits with its floor level with the pier at the bottom and with the deck at the top.
+- **Two new people, both invented:** Corvin Gale keeps the Guild's counter, and Mabel Spoke sews the balloons.
+- **Hours.** At nine Professor Quill, Fen, Pip, Corvin and Mabel walk to the lift station. The car goes up empty, waits, and brings the five of them down; you can see them in it. At 6:36 it takes them back up, and they are at their places a few seconds after it arrives. Overnight Skyhaven is empty. The Guild is shut at night.
+- **Their homes are in Lanternreach.** Windward Row runs on west, and its four new houses are each different. Professor Quill's is a round stone house two floors high with a glider weathervane. The Gales' is shingled, with a barn-shaped roof, dormers, a porch, a kite on a pole and a sandbox. Fen and Pip share a workshop with big doors, their rooms above and a glider frame in the yard. Mabel's is a long whitewashed cottage under a thatched roof. Inside, each is laid out differently, and only the Gales have a child's room.
+- **Lark Gale**, Corvin's daughter, plays outside their house by day. She is Lanternreach's only child.
+- **Knock on Professor Quill's door** in Lanternreach at night and she will still teach.
+- **Not yet:** you can't ride down with them on the evening run (if you take the lift yourself, it is yours). The lesson that flies you home is unchanged.
 
 ## Emberdeep and Tinderfold (build 108)
 

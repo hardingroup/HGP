@@ -369,7 +369,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 108 · 20 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 110 · 20 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -1559,15 +1559,47 @@
   solids.push({ x: BWPOS.x, z: BWPOS.z, r: 2.4 });
 
   // ---------- the player: a little elf child ----------
+  // knees and elbows. Whatever turns a hip or a shoulder, the joint below it follows: a knee bends as the leg goes back, and folds square when the thigh comes up to sit or ride; an elbow bends more as the arm comes forward
+  function kneeFlex(hip) { const s = hip.rotation.x; hip.userData.knee.rotation.x = 0.04 + (s > 0 ? s * 1.3 : s < -0.5 ? Math.min(-s, (-s - 0.5) * 2) : 0); }
+  function elbowFlex(sh) { sh.userData.elbow.rotation.x = -(0.12 + Math.max(0, -sh.rotation.x) * 0.55); }
+  // a grown elf walking: the legs swing with the distance they cover, so anyone who walks anywhere strides, and anyone carried along (in a cart, in the lift) does not
+  function elfStride(g) { const u = g.userData, now = performance.now(); if (u.sT === now) return; const dt = Math.min(0.1, u.sT ? (now - u.sT) / 1000 : 0); u.sT = now;
+    if (!u.sP) { u.sP = g.position.clone(); return; } const d = Math.hypot(g.position.x - u.sP.x, g.position.z - u.sP.z); u.sP.copy(g.position); if (d > 3 || !dt) return;
+    const want = d / dt > 0.5 ? 0.5 : 0; u.amp = (u.amp || 0) + (want - (u.amp || 0)) * Math.min(1, dt * 8); u.ph = (u.ph || 0) + d / (u.tall * 0.36) * Math.PI;
+    const sw = Math.sin(u.ph) * u.amp; u.legs[0].rotation.x = sw; u.legs[1].rotation.x = -sw;
+    if (u.arms && u.arms.length === 2) { const r0 = u.arms[0].userData.rx0 || 0, r1 = u.arms[1].userData.rx0 || 0; if (u.amp > 0.03) { u.arms[0].rotation.x = r0 - sw * 0.8; u.arms[1].rotation.x = r1 + sw * 0.8; u.swung = true; } else if (u.swung) { u.arms[0].rotation.x = r0; u.arms[1].rotation.x = r1; u.swung = false; } } }
+  // the Hollow's own people were each made by hand, so they are given knees and elbows after the fact: robes and dresses are cut off at the knee, the old straight legs and boots come away, jointed legs go on, and each arm is split at the elbow
+  function jointify(g, o) { const { hem, hipY, x, r, legC, bootR, bootC } = o; let hemR = null;
+    g.children.slice().forEach(c => { if (!c.isMesh) return; const gp = c.geometry.parameters || {}, ty = c.geometry.type;
+      if (ty === 'SphereGeometry' && c.scale.z > 1.3 && c.position.y < 0.5) g.remove(c);
+      else if (ty === 'CylinderGeometry' && c.position.y + gp.height / 2 <= hipY + 0.06 && gp.radiusTop < 0.35) g.remove(c);
+      else if (hem && ty === 'LatheGeometry' && c.position.y < 0.01 && gp.points[0].y < 0.05) { const Pp = gp.points, pts = []; for (let i = 0; i < Pp.length; i++) { const a = Pp[i]; if (a.y >= hem) { if (!pts.length && i > 0) { const b = Pp[i - 1], t = (hem - b.y) / (a.y - b.y); pts.push(new THREE.Vector2(b.x + (a.x - b.x) * t, hem)); } pts.push(a.clone()); } } if (pts.length > 1) { hemR = pts[0].x; c.geometry.dispose(); c.geometry = new THREE.LatheGeometry(pts, gp.segments); } } });
+    if (hem) g.children.forEach(c => { if (c.isMesh && c.geometry.type === 'TorusGeometry' && c.position.y < 0.5 && hemR) { c.position.y = hem; c.scale.setScalar(hemR / c.geometry.parameters.radius); } });
+    const legM = mat(legC), bootM = mat(bootC), kneeY = hipY * 0.5, L1 = hipY - kneeY, L2 = kneeY - bootR * 0.6;
+    g.userData.legs = [-1, 1].map(d => { const hip = new THREE.Group(); hip.position.set(d * x, hipY, 0); g.add(hip);
+      const th = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.1, r, L1, 8), legM); th.position.y = -L1 / 2; hip.add(th);
+      const knee = new THREE.Group(); knee.position.y = -L1; hip.add(knee); knee.add(new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), legM));
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.85, L2, 8), legM); shin.position.y = -L2 / 2; knee.add(shin);
+      const boot = new THREE.Mesh(new THREE.SphereGeometry(bootR, 10, 8), bootM); boot.scale.set(1, 0.6, 1.6); boot.position.set(0, -L2, bootR * 0.7); knee.add(boot);
+      hip.userData.knee = knee; th.castShadow = shin.castShadow = boot.castShadow = true; th.onBeforeRender = () => { if (d < 0) elfStride(g); kneeFlex(hip); }; return hip; });
+    const arms = []; g.children.filter(c => c.isGroup && c.children.some(m => m.isMesh && m.geometry.type === 'CylinderGeometry') && c.children.some(m => m.isMesh && m.geometry.type === 'SphereGeometry')).forEach(sh => {
+      const arm = sh.children.find(m => m.isMesh && m.geometry.type === 'CylinderGeometry'), hand = sh.children.find(m => m.isMesh && m.geometry.type === 'SphereGeometry'), gp = arm.geometry.parameters, H = gp.height, rm = (gp.radiusTop + gp.radiusBottom) / 2;
+      if (Math.abs(arm.position.y + H / 2) > 0.05 || hand.position.y > -H * 0.9) return;
+      arm.geometry = new THREE.CylinderGeometry(gp.radiusTop, rm, H / 2 + 0.05, 8); arm.position.y = -H / 4;
+      const el = new THREE.Group(); el.position.y = -H / 2; sh.add(el); el.add(new THREE.Mesh(new THREE.SphereGeometry(rm, 8, 6), arm.material)); const fo = new THREE.Mesh(new THREE.CylinderGeometry(rm, gp.radiusBottom, H / 2, 8), arm.material); fo.position.y = -H / 4; fo.castShadow = true; el.add(fo);
+      sh.remove(hand); hand.position.y += H / 2; el.add(hand); sh.userData.elbow = el; sh.userData.rx0 = sh.rotation.x; arm.onBeforeRender = () => elbowFlex(sh); arms.push(sh); });
+    if (arms.length === 2) g.userData.arms = arms.sort((a, b) => a.position.x - b.position.x); g.userData.tall = hipY / 0.46; }
   function makeKid() {
     const player = new THREE.Group(), kid = { g: player };
     const tunicM = mat('#6f9a3a'), skinK = mat('#f0c9a0'), bootM = mat('#5a3a1e'), hairM = mat('#8a4b22');
     const legs = [];
     [-1, 1].forEach(d => {
-      const hip = new THREE.Group(); hip.position.set(d * 0.28, 1.15, 0); player.add(hip);
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.95, 8), mat('#4b5a3a')); leg.position.y = -0.5; hip.add(leg);
-      const boot = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 8), bootM); boot.scale.set(1, 0.7, 1.45); boot.position.set(0, -1.0, 0.1); hip.add(boot);
-      legs.push(hip);
+      const hip = new THREE.Group(); hip.position.set(d * 0.28, 1.15, 0); player.add(hip); const legM = mat('#4b5a3a');
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.155, 0.52, 8), legM); thigh.position.y = -0.26; hip.add(thigh);
+      const knee = new THREE.Group(); knee.position.y = -0.5; hip.add(knee); knee.add(new THREE.Mesh(new THREE.SphereGeometry(0.155, 8, 6), legM));
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.14, 0.48, 8), legM); shin.position.y = -0.24; knee.add(shin);
+      const boot = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 8), bootM); boot.scale.set(1, 0.7, 1.45); boot.position.set(0, -0.5, 0.1); knee.add(boot);
+      hip.userData.knee = knee; thigh.onBeforeRender = () => kneeFlex(hip); legs.push(hip);
     });
     const tprof = []; for (let i = 0; i <= 8; i++) { const t = i / 8; tprof.push(new THREE.Vector2(0.75 - t * 0.35 + (t < 0.15 ? 0.08 : 0), 0.9 + t * 1.15)); }
     const tunic = new THREE.Mesh(new THREE.LatheGeometry(tprof, 18), tunicM); player.add(tunic);
@@ -1582,8 +1614,11 @@
     const arms = [];
     [-1, 1].forEach(d => {
       const sh = new THREE.Group(); sh.position.set(d * 0.5, 1.9, 0); player.add(sh);
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.8, 8), tunicM); arm.position.y = -0.4; sh.add(arm);
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), skinK); hand.position.y = -0.85; sh.add(hand);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.14, 0.44, 8), tunicM); arm.position.y = -0.22; sh.add(arm);
+      const elbow = new THREE.Group(); elbow.position.y = -0.42; sh.add(elbow); elbow.add(new THREE.Mesh(new THREE.SphereGeometry(0.135, 8, 6), tunicM));
+      const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.15, 0.38, 8), tunicM); fore.position.y = -0.19; elbow.add(fore);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), skinK); hand.position.y = -0.43; elbow.add(hand);
+      sh.userData.elbow = elbow; arm.onBeforeRender = () => elbowFlex(sh);
       sh.rotation.z = d * 0.18; arms.push(sh);
     });
     const hd = new THREE.Group(); hd.position.y = 2.55; player.add(hd);
@@ -2002,8 +2037,15 @@
   const GW = { zc: 115, hw: 8, depth: 34, half: 1800, rim: 20, out: 46 };
   // Cogsworth sits at the foot of a crag, its east gate pointing at Emberdeep. The crag is real: you can climb its back and look down on the town.
   const yawG = Math.atan2(-(EMBER_AT[1] - COG_AT[1]), EMBER_AT[0] - COG_AT[0]);
-  const LNT = { x0: -236, lane: 86 };   // Lanternreach: Windward Row runs west from the lane, two houses a side
+  const LNT = { x0: -420, lane: 86 };   // Lanternreach: Windward Row runs west from the lane, two houses a side
   const lantHB = [], lantBenches = [];
+  // the far end of Windward Row: four more houses, none alike, for the people who work up in Skyhaven and ride the lift home
+  const LXHOMES = [
+    { id: 'ilshome', kind: 'round', x: -268, sg: 1, w: 22, d: 22, sign: 'Quill' },
+    { id: 'galehome', kind: 'gambrel', x: -268, sg: -1, w: 34, d: 24, sign: 'Gale' },
+    { id: 'fphome', kind: 'workshop', x: -352, sg: 1, w: 46, d: 24, sign: 'Fen & Pip' },
+    { id: 'mabhome', kind: 'thatch', x: -352, sg: -1, w: 40, d: 20, sign: 'Spoke' }];
+  LXHOMES.forEach(h => { h.face = h.sg > 0 ? 0 : Math.PI; h.z = LNT.lane - h.sg * 38; h.dz = h.z + h.sg * h.d / 2; h.out = { x: h.x, z: h.dz + h.sg * 4.5, yaw: h.face }; h.knock = { x: h.x, z: h.dz + h.sg * 1.6, y: 0, w: 'lantern' }; });
   const LHOMES = [
     { id: 'asthome', no: 1, x: -100, sg: 1, yard: 'frame', sign: 'Vell', wall: '#e9e6dc', trim: '#1f3a5a', roof: '#3f4a58', door: '#1f3a5a', flower: '#9fb7f0' },
     { id: 'reefhome', no: 2, x: -100, sg: -1, yard: 'wood', sign: 'Reef', wall: '#e6ddc8', trim: '#4a3420', roof: '#4a5560', door: '#8a3a2a', flower: '#f4d35e' },
@@ -2034,13 +2076,14 @@
   // The sky-lift is a real cable from the end of Lanternreach's pier, and Skyhaven really floats where the cable ends: 233 units out to sea and 300 up.
   // Neither is land: nothing below them is flattened, and you cannot walk into them; the gondola is the only way.
   const tileLift = makeTile('lift', null, tileL.ox + 118, tileL.oz + 118, 0, [-30, 260, -20, 20]); tileLift.air = true; tileLift.noTrim = true;
-  const tileS = makeTile('skyhaven', null, tileLift.ox + 233, tileLift.oz, Math.PI / 2, [-100, 115, -6, 135]); tileS.air = true; tileS.noTrim = true; tileS.oy = 300; tileS.m.setPosition(tileS.ox, 300, tileS.oz); tileS.inv = tileS.m.clone().invert();
+  const SKY_K = 1.8;   // Skyhaven is drawn first at its old size, then everything on it is made this much bigger
+  const tileS = makeTile('skyhaven', null, tileLift.ox + 233, tileLift.oz, Math.PI / 2, [-100 * SKY_K, 115 * SKY_K, -6 * SKY_K, 135 * SKY_K]); tileS.air = true; tileS.noTrim = true; tileS.oy = 300; tileS.m.setPosition(tileS.ox, 300, tileS.oz); tileS.inv = tileS.m.clone().invert();
   STITCHED.push(tileLift, tileS);
   STITCHED.forEach(t => { const R = t.rect; [t.cx, t.cz] = toWorld(t, (R[0] + R[1]) / 2, (R[2] + R[3]) / 2); });
   const SEA_L = -16;
   // the coast: a level plain behind a sea cliff, the cove by the town, and the seabed beyond. Near the town this is exactly the town's own ground.
   // where Windward Row stands the plain is level, so the houses sit square on it
-  function lantFlat(lx, lz) { return ss(-46, -58, lx) * ss(-264, -242, lx) * ss(-26, -6, lz) * ss(198, 176, lz); }
+  function lantFlat(lx, lz) { return ss(-46, -58, lx) * ss(LNT.x0 - 28, LNT.x0 - 6, lx) * ss(-26, -6, lz) * ss(198, 176, lz); }
   function coast(x, z, h) {
     const [lx, lz] = toLocal(tileL, x, z); if (lx < -900) return h;
     const w = ss(-900, -250, lx); h = h * (1 - w) + (0.5 * Math.sin(lx / 9) * Math.cos(lz / 11) + 0.3 * Math.sin(lx / 4 + 1) * Math.sin(lz / 5)) * (1 - lantFlat(lx, lz)) * w;
@@ -2064,7 +2107,8 @@
     { id: 'hilhome', kind: 'tall', x: -48, z: -28, w: 24, d: 22, face: 0, sign: 'Slagg' },
     { id: 'odwhome', kind: 'cabin', x: 50, z: -28, w: 44, d: 20, face: 0, sign: 'Flint' }];
   THOMES.forEach(h => { h.sg = h.face ? -1 : 1; h.dz = h.z + h.sg * h.d / 2; const [x, z] = toWorld(frameT, h.x, h.dz + h.sg * 4.5); h.out = { x, z, yaw: yawE + h.face }; const [kx, kz] = toWorld(frameT, h.x, h.dz + h.sg * 1.6); h.knock = { x: kx, z: kz }; });
-  TF.late = TF.tm + 0.004;   // the mountain's people are not at work till the carriage has brought them up
+  TF.late = TF.tm + 0.004;
+  const KHOMES = THOMES.concat(LXHOMES);   // homes whose people work somewhere else, and whose door you knock on there   // the mountain's people are not at work till the carriage has brought them up
   function tinderFlat(x, z) { const [lx, lz] = toLocal(frameT, x, z); if (Math.abs(lx) > 200 || Math.abs(lz) > 120) return 0; return ss(-190, -150, lx) * ss(180, 140, lx) * ss(-112, -74, lz) * ss(112, 74, lz); }
   // where nothing grows: the street and the lane to the road, the houses and their yards, the ram shed, the well
   const TF_BLOCK = [[-235, 150, -6, 6], [-132, -92, -40, -8], [-16, 8, 8, 22]].concat(THOMES.map(h => [h.x - h.w / 2 - 20, h.x + h.w / 2 + 20, h.z - h.d / 2 - 6, h.z + h.d / 2 + 6]));
@@ -3054,6 +3098,86 @@
     const dust = new THREE.PointLight('#ffe9c0', 0.6, 60); dust.position.set(0, 11, 6); sc.add(dust);
   } });
   interiors.mill.door = { x: MILL.x, z: MILL.z - MILLR - 3 - 4.5, yaw: Math.PI };
+  // inside the houses at the far end of Windward Row
+  const LX_ROOMS = {
+    // Professor Quill lives alone among her drawings: a drafting table, model gliders from every beam, flight logs to the ceiling, an armchair by the fire and her bed in the corner
+    ilshome: { w: 56, d: 40, h: 18, wall: '#e6e0f0', trim: '#3a2a5a', label: 'Quill House', hint: 'Model gliders hang from every beam, and every one of them has a date on its wing.', dec: (sc, solids, k) => {
+      const { wall, W, D, H } = k, wood = mat('#6b4a2b'), dark = mat('#3a2a18'), top = mat('#ffffff', { map: plankTex }), cream = mat('#efe6d2');
+      roomFire(sc, wall, 0, -D / 2 + 1.2, 0, 1.2); [-3, 0, 3].forEach(x => solids.push({ x, z: -D / 2 + 1.4, r: 2.1 }));
+      { const ax = -6, az = -9, red = mat('#5a3d8a', { roughness: 1 }); wall(2.6, 1.1, 2.4, ax, 0.85, az, red); wall(2.6, 2.8, 0.6, ax, 2.2, az + 1.2, red); solids.push({ x: ax, z: az, r: 1.7 }); k.seat(ax, az, Math.PI, 1.4, 'armchair'); }
+      // the drafting table, tilted, with a wing drawn out on it
+      { const dx = 14, dz = -2; [[-2.8, -1.6], [2.8, -1.6], [-2.8, 1.6], [2.8, 1.6]].forEach(([a, b]) => wall(0.3, 4.4 + (b > 0 ? 0 : 1.2), 0.3, dx + a, (4.4 + (b > 0 ? 0 : 1.2)) / 2, dz + b, dark)); const tp = wall(6.6, 0.25, 4, dx, 5.2, dz, top); tp.rotation.x = 0.35; const pp = wall(5.8, 0.03, 3.4, dx, 5.38, dz - 0.05, cream); pp.rotation.x = 0.35;
+        const wl = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 0.9), mat('#2a3a6a')); wl.position.set(dx, 5.44, dz - 0.1); wl.rotation.x = -Math.PI / 2 + 0.35; sc.add(wl); solids.push({ x: dx - 1.6, z: dz, r: 2.2 }, { x: dx + 1.6, z: dz, r: 2.2 });
+        wall(2.2, 0.3, 2.2, dx, 3.2, dz + 3.6, wood); [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([a, b]) => wall(0.26, 3.1, 0.26, dx + a, 1.55, dz + 3.6 + b, dark)); solids.push({ x: dx, z: dz + 3.6, r: 1.2 }); k.seat(dx, dz + 3.6, Math.PI, 3.35, 'tall stool'); }
+      // model gliders hung from the beams, each a different shape
+      [[-14, -6, '#c8384a', 6], [-6, 4, '#e8b64c', 4.5], [4, -10, '#3f6f4a', 5.5], [10, 8, '#9fc8e8', 3.8], [18, -8, '#efe3c4', 5]].forEach(([x, z, c, span], i) => { const g = new THREE.Group(); g.position.set(x, H - 3.5 - (i % 2), z); g.rotation.y = i * 0.9; sc.add(g); const f = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, span * 0.6), mat('#efe3c4')); g.add(f); const wg = new THREE.Mesh(new THREE.BoxGeometry(span, 0.08, 0.8), mat(c, { side: THREE.DoubleSide })); g.add(wg); const tl = new THREE.Mesh(new THREE.BoxGeometry(span * 0.3, 0.06, 0.4), mat(c)); tl.position.z = -span * 0.28; g.add(tl); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 2.5, 4), dark); st.position.y = 1.4; g.add(st); });
+      // flight logs, floor to ceiling on the west wall
+      wall(1.6, H - 4, 18, -W / 2 + 0.9, (H - 4) / 2, -2, wood); for (let y = 1.6; y < H - 4; y += 2.3) { wall(1.7, 0.2, 18, -W / 2 + 0.95, y, -2, top); for (let z = -10.5; z < 6.5; z += 0.45) { if ((z * 11 + y * 7) % 9 < 1) continue; const hh = 1 + ((z * 13 + y) % 3) * 0.2; wall(1, hh, 0.36, -W / 2 + 1, y + 0.1 + hh / 2, z, mat(['#2a3a6a', '#7a2e2e', '#3e6b52', '#5a3d8a', '#8a6a3c'][Math.abs(Math.round(z * 3 + y)) % 5])); } } k.boxes.push({ x: -W / 2 + 0.9, z: -2, hw: 0.9, hd: 9 });
+      // her bed in the north-east corner, under a quilt of sky colours
+      elfBed(wall, 20, -13, mat('#9fb7f0', { roughness: 1 })).forEach(s => solids.push(s)); wall(4.4, 2.4, 2.6, 22, 1.2, -6.6, wood); solids.push({ x: 22, z: -6.6, r: 2 });
+      const rug = new THREE.Mesh(new THREE.CircleGeometry(5.5, 32), mat('#3a2a5a', { roughness: 1 })); rug.rotation.x = -Math.PI / 2; rug.position.set(-2, 0.03, -2); sc.add(rug);
+      const lb = signBoard('The lift: 300 up, 233 out', 6.6, 0.9, '#efe3c4', '#1b1b1b'); lb.position.set(12, 9, -D / 2 + 0.3); sc.add(lb);
+    } },
+    // Corvin Gale and his daughter Lark: Lark's room with her kites, his room beyond the hearth, a long table with a jigsaw half done, and small boots by the door
+    galehome: { w: 64, d: 38, h: 16, wall: '#dfe6ec', trim: '#3e4a56', label: 'Gale House', hint: 'Kites on every wall, and a jigsaw of the whole Long Road on the table.', dec: (sc, solids, k) => {
+      const { wall, W, D } = k, wm = mat('#dfe6ec', { roughness: 1 }), wood = mat('#8a6438'), dark = mat('#4a3420'), top = mat('#ffffff', { map: plankTex }), cream = mat('#f2ead8');
+      const part = (x0, x1, z0, z1) => { const w = Math.max(0.5, x1 - x0), d = Math.max(0.5, z1 - z0); wall(w, 16, d, (x0 + x1) / 2, 8, (z0 + z1) / 2, wm); k.boxes.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: w / 2, hd: d / 2 }); };
+      part(-32, -20, -3.25, -2.75); part(-14, -12, -3.25, -2.75); part(-12.25, -11.75, -19, -3); wall(6, 6, 0.5, -17, 13, -3, wm);
+      part(12, 14, -3.25, -2.75); part(20, 32, -3.25, -2.75); part(11.75, 12.25, -19, -3); wall(6, 6, 0.5, 17, 13, -3, wm);
+      roomFire(sc, wall, 0, -D / 2 + 1.2, 0, 1.1); [-3, 0, 3].forEach(x => solids.push({ x, z: -D / 2 + 1.4, r: 2 }));
+      // Lark's room: a small bed, kites pinned up, a box of string and paper
+      elfBed(wall, -25, -11, mat('#e8b64c', { roughness: 1 }), true).forEach(s => solids.push(s));
+      [['#e8b64c', -28], ['#c8384a', -22], ['#9fb7f0', -16]].forEach(([c, x], i) => { const kt = new THREE.Mesh(new THREE.CircleGeometry(1.2, 4), mat(c, { side: THREE.DoubleSide })); kt.scale.y = 1.4; kt.position.set(x, 7 + (i % 2), -D / 2 + 0.3); sc.add(kt); });
+      wall(3, 1.6, 2, -15, 0.8, -15, mat('#3e6a6a')); solids.push({ x: -15, z: -15, r: 1.8 }); [acornTop(), acornCart()].forEach((t, i) => { t.position.set(-30 + i * 1.5, 0.03, -5); t.scale.setScalar(1.3); sc.add(t); });
+      // Corvin's room
+      elfBed(wall, 24, -11, mat('#3e4a56', { roughness: 1 })).forEach(s => solids.push(s)); wall(5, 8, 2.4, 29, 4, -17.5, dark); solids.push({ x: 29, z: -17.5, r: 2 });
+      // the table, and the jigsaw: the Long Road, every town along it, with a hole where Skyhaven goes
+      { const tx = -10, tz = 9; wall(12, 0.4, 6, tx, 4.2, tz, top); [[-5.4, -2.6], [5.4, -2.6], [-5.4, 2.6], [5.4, 2.6]].forEach(([a, b]) => wall(0.4, 4, 0.4, tx + a, 2, tz + b, dark)); solids.push({ x: tx - 3.5, z: tz, r: 3 }, { x: tx + 3.5, z: tz, r: 3 });
+        wall(7, 0.06, 3.6, tx, 4.43, tz, mat('#6f9a52')); for (let q = 0; q < 14; q++) wall(0.9, 0.08, 0.9, tx - 3.2 + (q % 7) * 1.05, 4.46, tz - 1.2 + Math.floor(q / 7) * 2.2, mat(['#8a6438', '#2f5f8a', '#9a978f', '#b5562b'][q % 4])); wall(1, 0.09, 0.4, tx + 2.8, 4.47, tz + 1.5, mat('#9fc4ea'));
+        [[tx - 3, tz - 4.6, 0], [tx + 3, tz - 4.6, 0], [tx, tz + 4.6, Math.PI]].forEach(([x, z, yaw], i) => { wall(2.2, 0.3, 2.2, x, 2.6, z, wood); [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([a, b]) => wall(0.26, 2.5, 0.26, x + a, 1.25, z + b, dark)); wall(2.2, 3, 0.26, x, 4.2, z + (yaw ? 1 : -1), wood); if (i === 1) wall(2, 0.6, 2, x, 3, z, mat('#e8b64c', { roughness: 1 })); solids.push({ x, z, r: 1.2 }); k.seat(x, z, yaw, i === 1 ? 3.3 : 2.75, i === 1 ? 'chair with a cushion' : 'chair'); }); }
+      // a kitchen along the east wall
+      wall(3, 4.3, 14, W / 2 - 1.6, 2.15, 9, wood); wall(3.3, 0.3, 14.2, W / 2 - 1.6, 4.45, 9, top); for (let z = 3; z <= 15; z += 3) solids.push({ x: W / 2 - 1.6, z, r: 1.8 });
+      [0, 1, 2].forEach(i => { const j = jar(['#d9a33f', '#8fbf4a', '#e9e2d0'][i], 1); j.position.set(W / 2 - 1.7, 4.6, 5 + i * 1.8); sc.add(j); });
+      wall(5, 0.4, 0.3, -8, 7.4, D / 2 - 0.3, dark); wall(1.7, 4.6, 0.35, -9.4, 5, D / 2 - 0.6, mat('#3e4a56', { roughness: 1 })); wall(1.1, 2.6, 0.35, -6.6, 6, D / 2 - 0.6, mat('#e8b64c', { roughness: 1 })); [[-10, 1], [-9, 1], [-7, 0.6], [-6.2, 0.6]].forEach(([x, s]) => wall(0.7 * s + 0.2, 1.2 * s, 1.4 * s, x, 0.6 * s, D / 2 - 1.2, mat('#4a2f1a')));
+    } },
+    // Fen and Pip, grown: two rooms off a workroom, an engine in pieces on the bench, drawings everywhere, and a game of chess they have been playing for a month
+    fphome: { w: 68, d: 40, h: 18, wall: '#e3d8c4', trim: '#3a2a18', label: 'Fen & Pip’s', hint: 'An engine in pieces on the bench, and a game of chess that has been going on for a month.', dec: (sc, solids, k) => {
+      const { wall, W, D } = k, wm = mat('#e3d8c4', { roughness: 1 }), wood = mat('#8a6438'), dark = mat('#3a2a18'), top = mat('#ffffff', { map: plankTex }), steel = mat('#55585c', { metalness: 0.7, roughness: 0.35 }), cream = mat('#efe6d2');
+      const part = (x0, x1, z0, z1) => { const w = Math.max(0.5, x1 - x0), d = Math.max(0.5, z1 - z0); wall(w, 18, d, (x0 + x1) / 2, 9, (z0 + z1) / 2, wm); k.boxes.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: w / 2, hd: d / 2 }); };
+      part(-34, -24, -2.25, -1.75); part(-18, -14, -2.25, -1.75); part(-14.25, -13.75, -20, -2); wall(6, 9, 0.5, -21, 13.5, -2, wm);
+      part(14, 18, -2.25, -1.75); part(24, 34, -2.25, -1.75); part(13.75, 14.25, -20, -2); wall(6, 9, 0.5, 21, 13.5, -2, wm);
+      elfBed(wall, -24, -11, mat('#2e6b3a', { roughness: 1 })).forEach(s => solids.push(s)); elfBed(wall, 25, -11, mat('#8a4a2a', { roughness: 1 })).forEach(s => solids.push(s));
+      roomFire(sc, wall, 0, -D / 2 + 1.2, 0, 1.1); [-3, 0, 3].forEach(x => solids.push({ x, z: -D / 2 + 1.4, r: 2 }));
+      // the bench with the engine on it
+      { const bx = -W / 2 + 2, bz = 9; wall(3.4, 4, 16, bx, 2, bz, wood); wall(3.6, 0.3, 16.2, bx, 4.15, bz, top); for (let z = bz - 6; z <= bz + 6; z += 3) solids.push({ x: bx, z, r: 2 }); const cy = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 2.4, 12), steel); cy.position.set(bx, 5.5, bz - 2); sc.add(cy); const fl = makeGear(1.2, 14, '#b08a3a'); fl.position.set(bx + 0.3, 5.5, bz + 1.6); fl.rotation.y = Math.PI / 2; sc.add(fl); [0, 1, 2, 3].forEach(q => wall(0.5, 0.3, 0.8, bx + 0.6, 4.45, bz + 4 + q * 0.9, steel)); }
+      // drawings pinned up, of things that fly and things that do not yet
+      [[-6, '#2a3a6a'], [0, '#7a2e2e'], [6, '#3e6b52']].forEach(([x, c]) => { wall(4, 3, 0.05, x, 9, -D / 2 + 0.3, cream); wall(3, 0.15, 0.06, x, 9.2, -D / 2 + 0.33, mat(c)); wall(0.15, 1.6, 0.06, x, 9, -D / 2 + 0.33, mat(c)); });
+      // the chess
+      { const tx = 12, tz = 10; const tp = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.3, 18), top); tp.position.set(tx, 3.4, tz); sc.add(tp); const pd = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 3.3, 10), dark); pd.position.set(tx, 1.65, tz); sc.add(pd); solids.push({ x: tx, z: tz, r: 2.6 });
+        wall(2.4, 0.1, 2.4, tx, 3.6, tz, cream); for (let q = 0; q < 64; q++) if ((q + (q >> 3)) % 2) wall(0.3, 0.11, 0.3, tx - 1.05 + (q % 8) * 0.3, 3.61, tz - 1.05 + (q >> 3) * 0.3, dark);
+        for (let q = 0; q < 10; q++) { const pc = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.1, q % 3 ? 0.3 : 0.5, 8), mat(q < 5 ? '#efe6d2' : '#2a2a2a')); pc.position.set(tx - 0.9 + (q * 7 % 8) * 0.3, 3.8, tz - 0.9 + (q * 3 % 8) * 0.3); sc.add(pc); }
+        [[tx, tz - 4.2, 0], [tx, tz + 4.2, Math.PI]].forEach(([x, z, yaw]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.9, 2.5, 12), wood); st.position.set(x, 1.25, z); sc.add(st); solids.push({ x, z, r: 1.1 }); k.seat(x, z, yaw, 2.5, 'stool'); }); }
+    } },
+    // Mabel lives alone: one long room, her sewing table under the window with silk and spools, a big work basket, a rocking chair, a canary, and her bed at the far end
+    mabhome: { w: 60, d: 34, h: 14, wall: '#f2efe6', trim: '#4a3420', label: 'Spoke Cottage', hint: 'Balloon silk in every colour, folded and labelled, and a canary who sings when the kettle does.', dec: (sc, solids, k) => {
+      const { wall, W, D } = k, wood = mat('#8a6438'), dark = mat('#4a3420'), top = mat('#ffffff', { map: plankTex }), cream = mat('#efe6d2');
+      roomFire(sc, wall, -W / 2 + 1.2, -2, Math.PI / 2, 1.1); [-5, -2, 1].forEach(z => solids.push({ x: -W / 2 + 1.4, z, r: 2 }));
+      { const cx = -21, cz = 1, wd = mat('#6b4a2b'); wall(2.6, 0.3, 2.4, cx, 2.3, cz, wd); wall(0.3, 3.4, 2.6, cx + 1.2, 4, cz, wd); [-1.2, 1.2].forEach(o => { const rk = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.12, 6, 14, Math.PI / 2), wd); rk.position.set(cx, 1.5, cz + o); rk.rotation.z = -Math.PI * 0.75; sc.add(rk); }); solids.push({ x: cx, z: cz, r: 1.6 }); k.seat(cx, cz, -Math.PI / 2, 2.4, 'rocking chair'); }
+      // the sewing table, with silk, spools and a pincushion
+      { const tx = 2, tz = -D / 2 + 3.5; wall(14, 0.4, 4.4, tx, 4.2, tz, top); [[-6.6, -2], [6.6, -2], [-6.6, 2], [6.6, 2]].forEach(([a, b]) => wall(0.4, 4, 0.4, tx + a, 2, tz + b, dark)); solids.push({ x: tx - 4, z: tz, r: 2.5 }, { x: tx, z: tz, r: 2.5 }, { x: tx + 4, z: tz, r: 2.5 });
+        [['#c8384a', -4], ['#e8b64c', 0], ['#3f6f4a', 4]].forEach(([c, x]) => wall(3.4, 0.5, 3, tx + x, 4.65, tz, mat(c))); for (let q = 0; q < 6; q++) { const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.6, 10), mat(['#c8384a', '#e8b64c', '#3f6f4a', '#9fc8e8', '#ffffff', '#5a3d8a'][q])); sp.position.set(tx - 5 + q * 0.7, 4.7, tz + 1.6); sc.add(sp); }
+        const pc = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 8), mat('#c8384a')); pc.scale.y = 0.6; pc.position.set(tx + 6, 4.6, tz + 1.2); sc.add(pc);
+        wall(2.2, 0.3, 2.2, tx, 2.6, tz + 4, wood); [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([a, b]) => wall(0.26, 2.5, 0.26, tx + a, 1.25, tz + 4 + b, dark)); solids.push({ x: tx, z: tz + 4, r: 1.2 }); k.seat(tx, tz + 4, Math.PI, 2.75, 'chair'); }
+      // the work basket, full of folded silk
+      { const bk = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2, 2.4, 14, 1, true), mat('#b89a6a', { side: THREE.DoubleSide })); bk.position.set(14, 1.2, 4); sc.add(bk); [0, 1, 2].forEach(q => wall(3, 0.4, 2.4, 14, 2 + q * 0.42, 4, mat(['#9fc8e8', '#e68fb0', '#f4d35e'][q]))); solids.push({ x: 14, z: 4, r: 2.6 }); }
+      // the canary in its cage, on a stand
+      { const cs = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.4, 7, 8), dark); cs.position.set(-12, 3.5, -10); sc.add(cs); const cage = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 2, 12, 1, true), mat('#b08a3a', { metalness: 0.6, wireframe: true })); cage.position.set(-12, 8, -10); sc.add(cage); const bird = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 8), mat('#f4d35e')); bird.scale.set(1, 0.9, 1.4); bird.position.set(-12, 7.8, -10); sc.add(bird); solids.push({ x: -12, z: -10, r: 0.8 }); }
+      elfBed(wall, 21, -9, mat('#e68fb0', { roughness: 1 })).forEach(s => solids.push(s)); [['#c8384a', 18], ['#e8b64c', 21], ['#9fc8e8', 24]].forEach(([c, x]) => wall(2.8, 0.06, 6.8, x, 2.98, -9, mat(c, { roughness: 1 })));
+      const rug = new THREE.Mesh(new THREE.CircleGeometry(4, 24), mat('#3a5a8a', { roughness: 1 })); rug.rotation.x = -Math.PI / 2; rug.position.set(-21, 0.03, 1); sc.add(rug);
+    } } };
+  Object.entries(LX_ROOMS).forEach(([id, o]) => { const h = LXHOMES.find(q => q.id === id);
+    makeRoom(id, { w: o.w, d: o.d, h: o.h, doorH: 9.4, wall: o.wall, trim: o.trim, label: o.label, region: 'lantern', hint: o.hint, decorate: o.dec });
+    interiors[id].door = h.out; });
   // the four houses on Windward Row, Lanternreach
   [['asthome', 'Vell House', 'Star charts pinned over the mantel, and a sextant in its box by the door.'], ['reefhome', 'Reef Cottage', 'Coils of rope on pegs, each one whipped at both ends.'], ['ebbhome', 'Ebb Cottage', 'A tide table on the wall, with today circled.'], ['wickhome', 'Wick Cottage', 'A row of polished lamp glasses on the sill, and the smell of oil.']].forEach(([id, label, hintT]) => { const h = LHOMES.find(q => q.id === id);
     makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'lantern', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.door, kidQuilt: h.flower, rug: '#5a6a8a' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.door, quilt: h.roof }); }) });
@@ -3414,11 +3538,21 @@
   // a plain elf builder for the highland folk
   function makeElfNPC(o) {
     const g = new THREE.Group(), skin = mat(o.skin || '#c9956a'), coat = mat(o.coat || '#5a6b7a');
-    const prof = []; for (let i = 0; i <= 8; i++) { const t = i / 8; prof.push(new THREE.Vector2((o.wide || 1.6) - t * 0.55, t * (o.tall || 6))); }
+    const T = o.tall || 6, Wd = o.wide || 1.6, hem = T * 0.36; g.userData.tall = T;
+    const prof = []; for (let i = 0; i <= 8; i++) { const y = hem + (i / 8) * (T - hem); prof.push(new THREE.Vector2(Wd - (y / T) * 0.55, y)); }
     g.add(new THREE.Mesh(new THREE.LatheGeometry(prof, 20), coat));
+    // legs under the coat: a thigh, a knee, a shin and a boot, the boot's sole on the ground
+    { const trou = mat(o.trou || '#3a3430'), bootM = mat('#2a2a2a'), L1 = T * 0.23, L2 = T * 0.23 - 0.27, lr = Math.max(0.24, Wd * 0.2);
+      g.userData.legs = [-1, 1].map(d => { const hip = new THREE.Group(); hip.position.set(d * Wd * 0.36, T * 0.46, 0); g.add(hip);
+        const th = new THREE.Mesh(new THREE.CylinderGeometry(lr * 1.1, lr, L1, 8), trou); th.position.y = -L1 / 2; hip.add(th);
+        const knee = new THREE.Group(); knee.position.y = -L1; hip.add(knee); knee.add(new THREE.Mesh(new THREE.SphereGeometry(lr, 8, 6), trou));
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(lr, lr * 0.85, L2, 8), trou); shin.position.y = -L2 / 2; knee.add(shin);
+        const boot = new THREE.Mesh(new THREE.SphereGeometry(0.45 * Math.max(0.7, Wd / 1.6), 10, 8), bootM); boot.scale.set(1, 0.6, 1.6); boot.position.set(0, -L2, 0.35); knee.add(boot);
+        hip.userData.knee = knee; th.onBeforeRender = () => { if (d < 0) elfStride(g); kneeFlex(hip); }; return hip; }); }
     const belt = new THREE.Mesh(new THREE.TorusGeometry((o.wide || 1.6) * 0.78, 0.14, 8, 20), mat('#3a2a1e')); belt.rotation.x = Math.PI / 2; belt.position.y = (o.tall || 6) * 0.55; g.add(belt);
-    [-0.6, 0.6].forEach(x => { const boot = new THREE.Mesh(new THREE.SphereGeometry(0.45, 10, 8), mat('#2a2a2a')); boot.scale.set(1, 0.6, 1.6); boot.position.set(x, 0.15, 1.1); g.add(boot); });
-    g.userData.arms = [-1, 1].map(d => { const sh = new THREE.Group(); sh.position.set(d * ((o.wide || 1.6) - 0.1), (o.tall || 6) * 0.9, 0); g.add(sh); const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 2.6, 8), coat); arm.position.y = -1.3; sh.add(arm); const hand = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), skin); hand.position.y = -2.7; sh.add(hand); return sh; });
+    g.userData.arms = [-1, 1].map(d => { const sh = new THREE.Group(); sh.position.set(d * (Wd - 0.1), T * 0.9, 0); g.add(sh); const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.33, 1.35, 8), coat); arm.position.y = -0.67; sh.add(arm);
+      const elbow = new THREE.Group(); elbow.position.y = -1.3; sh.add(elbow); elbow.add(new THREE.Mesh(new THREE.SphereGeometry(0.31, 8, 6), coat)); const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.36, 1.3, 8), coat); fore.position.y = -0.65; elbow.add(fore);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), skin); hand.position.y = -1.4; elbow.add(hand); sh.userData.elbow = elbow; arm.onBeforeRender = () => elbowFlex(sh); return sh; });
     const head = new THREE.Group(); head.position.y = (o.tall || 6) + 1.2; g.add(head); g.userData.head = head;
     head.add(new THREE.Mesh(new THREE.SphereGeometry(0.95, 20, 16), skin));
     [-1, 1].forEach(d => { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.26, 1.5, 8), skin); ear.position.set(d * 1.0, 0.3, -0.05); ear.rotation.z = -d * 1.25; head.add(ear); const eyeW = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), mat('#eee8dc')); eyeW.position.set(d * 0.35, 0.12, 0.85); head.add(eyeW); const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), mat('#1b1b1b')); pupil.position.set(d * 0.35, 0.12, 0.98); head.add(pupil); });
@@ -3750,7 +3884,7 @@
     // stars, and a low moon over the sea
     { const n = 900, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const a = rnd(0, 6.3), e = rnd(0.05, 1.5), r = 640; pos[i * 3] = Math.cos(a) * Math.cos(e) * r; pos[i * 3 + 1] = Math.sin(e) * r; pos[i * 3 + 2] = Math.sin(a) * Math.cos(e) * r; } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const stars = new THREE.Points(g, new THREE.PointsMaterial({ color: '#ffffff', size: 2.2, sizeAttenuation: false, fog: false })); stars.position.set(0, 0, 70); lantScene.add(stars); lantScene.userData.stars = stars;
       const moon = new THREE.Mesh(new THREE.SphereGeometry(18, 16, 12), new THREE.MeshBasicMaterial({ color: '#f4efd8', fog: false })); moon.position.set(420, 160, 380); lantScene.add(moon); }
-    const geo = new THREE.PlaneGeometry(440, 220, 200, 100); geo.rotateX(-Math.PI / 2); geo.translate(-80, 0, LANT_LEN / 2);
+    const geo = new THREE.PlaneGeometry(620, 220, 280, 100); geo.rotateX(-Math.PI / 2); geo.translate(-170, 0, LANT_LEN / 2);
     const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i), h = lantH(x, z); pos.setY(i, h); c.set(h < SEA_Y + 2.5 ? '#c9b98a' : h < -2 ? '#6e6a62' : pick(['#4f7a4a', '#5a8452', '#6a8a5a'])); c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b; }
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
@@ -3760,9 +3894,9 @@
     // the path from the lane to the head of the boardwalk lies on the ground all the way
     { const verts = [], uvs = [], idx = []; let n = 0; for (let x = 3.4; x <= 37.4; x += 2) { [[-2.4, 0], [2.4, 1]].forEach(([o, u]) => { verts.push(x, lantH(x, PIER.z + o) + 0.07, PIER.z + o); uvs.push(u, x / 5); }); if (n > 0) { const a = (n - 1) * 2, b = n * 2; idx.push(a, b, a + 1, a + 1, b, b + 1); } n++; } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(idx); g.computeVertexNormals(); const cp = new THREE.Mesh(g, mat('#ffffff', { map: dirtTex, color: '#8a8478', side: THREE.DoubleSide })); cp.receiveShadow = true; cp.userData.flatGround = true; lantScene.add(cp); }
     const gg = new THREE.ConeGeometry(0.22, 1, 3); gg.translate(0, 0.5, 0);
-    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 5200);
+    const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 7400);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
-    for (let i = 0; i < 5200; i++) { if (i < 3000) pv.set(rnd(-56, 56), 0, rnd(2, LANT_LEN - 2)); else pv.set(rnd(LNT.x0, -56), 0, rnd(2, 178)); if (Math.abs(pv.x) < 5 || lantH(pv.x, pv.z) < -1 || (pv.x < 0 && Math.abs(pv.z - LNT.lane) < 5.5) || LHOMES.some(h => Math.abs(pv.x - h.x) < 41.5 && Math.abs(pv.z - (h.z - h.sg * 6)) < 37.5)) { i--; continue; } pv.y = lantH(pv.x, pv.z) - 0.1; q.setFromEuler(new THREE.Euler(rnd(-0.3, 0.3), rnd(0, 6.3), rnd(-0.3, 0.3))); sv.set(1, rnd(1, 2.4), 1); grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#5a8452', '#4f7a4a', '#7a9a6a']))); }
+    for (let i = 0; i < 7400; i++) { if (i < 3000) pv.set(rnd(-56, 56), 0, rnd(2, LANT_LEN - 2)); else pv.set(rnd(LNT.x0, -56), 0, rnd(2, 178)); if (Math.abs(pv.x) < 5 || lantH(pv.x, pv.z) < -1 || (pv.x < 0 && Math.abs(pv.z - LNT.lane) < 5.5) || LHOMES.concat(LXHOMES).some(h => Math.abs(pv.x - h.x) < 41.5 && Math.abs(pv.z - (h.z - h.sg * 6)) < 37.5)) { i--; continue; } pv.y = lantH(pv.x, pv.z) - 0.1; q.setFromEuler(new THREE.Euler(rnd(-0.3, 0.3), rnd(0, 6.3), rnd(-0.3, 0.3))); sv.set(1, rnd(1, 2.4), 1); grass.setMatrixAt(i, m4.compose(pv, q, sv)); grass.setColorAt(i, col.set(pick(['#5a8452', '#4f7a4a', '#7a9a6a']))); }
     lantScene.add(grass);
     const whiteM = mat('#f2efe6', { roughness: 0.8 }), redM = mat('#b8323a'), ironM = mat('#3a3a3a', { metalness: 0.6, roughness: 0.5 }), brassM = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 }), stoneM = mat('#8c8577');
     // the lighthouse: about 7½ feet tall at the elf's scale (one game unit is about 2¼ inches), red bands, a lantern room, and the beam that goes round
@@ -3850,7 +3984,71 @@
       const end = new THREE.Mesh(new THREE.CircleGeometry(9, 24), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); end.rotation.x = -Math.PI / 2; end.position.set(LNT.x0 + 10, 0.06, LNT.lane); end.receiveShadow = true; end.userData.flatGround = true; lantScene.add(end);
       LHOMES.forEach(h => { h.sc = lantScene; h.sol = lantSolids; h.bx = lantHB; h.benches = lantBenches; const pth = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 5), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); pth.rotation.x = -Math.PI / 2; pth.position.set(h.x, 0.05, LNT.lane - h.sg * 5.8); pth.receiveShadow = true; pth.userData.flatGround = true; lantScene.add(pth); });
       LHOMES.forEach(buildHouse);
-      const lg = new THREE.Group(); lantScene.add(lg); [[-30, 81], [-58, 91], [-80, 81], [-120, 91], [-142, 81], [-164, 91], [-204, 81], [LNT.x0 + 8, 97]].forEach(([x, z]) => lampPost(lg, x, z, 10, 26, lantSolids, lantH(x, z))); lg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(lg);
+      // the far end of the row: Professor Quill's round house, the Gales' shingled house, Fen and Pip's workshop, and Mabel Spoke's thatched cottage
+      { const S = lantSolids, BXS = lantHB, M = (c, o) => mat(c, Object.assign({ roughness: 1 }, o || {}));
+        const pane = mat('#f6cf72', { emissive: '#e09a2a', emissiveIntensity: 1.3 }), iron = mat('#3a3a3a', { metalness: 0.6, roughness: 0.5 }), brass = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 });
+        const box = (g, w, hh, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m); b.position.set(x, y, z); g.add(b); return b; };
+        const put = (g, geo, m, x, y, z) => { const b = new THREE.Mesh(geo, m); b.position.set(x, y, z); g.add(b); return b; };
+        const prism = (g, pts, depth, m, y) => { const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(([a, b]) => sh.lineTo(a, b)); sh.lineTo(pts[0][0], pts[0][1]); const gb = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: false }); gb.translate(0, 0, -depth / 2); const q = put(g, gb, m, 0, y, 0); q.rotation.y = Math.PI / 2; return q; };
+        const slab = (g, x0, y0, z0, x1, y1, z1, len, th, m) => { const L = Math.hypot(z1 - z0, y1 - y0), q = box(g, len, th, L, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, m); q.rotation.x = -Math.atan2(y1 - y0, z1 - z0); return q; };
+        const win = (g, x, y, z, w, hh, trim, ry, shut) => { const q = new THREE.Group(); q.position.set(x, y, z); q.rotation.y = ry || 0; g.add(q); const p = new THREE.Mesh(new THREE.PlaneGeometry(w, hh), pane); p.position.z = 0.03; q.add(p); [[w + 0.5, 0.3, 0, hh / 2], [w + 0.7, 0.35, 0, -hh / 2], [0.3, hh, -w / 2, 0], [0.3, hh, w / 2, 0], [0.14, hh, 0, 0], [w, 0.14, 0, 0]].forEach(([a, b, u, v]) => box(q, a, b, 0.3, u, v, 0.12, trim)); if (shut) [-1, 1].forEach(s => box(q, w * 0.45, hh, 0.14, s * (w / 2 + w * 0.24 + 0.2), 0, 0.1, shut)); return q; };
+        const door = (g, x, z, w, hh, m, trim) => { const dm = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.3), m); dm.position.set(x, hh / 2, z + 0.12); g.add(dm); hingeDoor(dm, g); box(g, w + 1.1, 0.55, 0.5, x, hh + 0.27, z + 0.15, trim); [-1, 1].forEach(s => box(g, 0.5, hh, 0.5, x + s * (w / 2 + 0.25), hh / 2, z + 0.15, trim)); };
+        const sign = (g, text, y, z, bg, fg) => { const sn = signBoard(text, 5.6, 1.15, bg, fg); sn.position.set(0, y, z); g.add(sn); };
+        const at = (h, x, z) => [h.x + (h.face ? -x : x), h.z + (h.face ? -z : z)], sol = (h, x, z, r) => { const [a, b] = at(h, x, z); S.push({ x: a, z: b, r }); }, rect = (h, x, z, hw, hd) => { const [a, b] = at(h, x, z); BXS.push({ x: a, z: b, hw, hd }); };
+        const house = (h, roundR) => { const g = new THREE.Group(); g.position.set(h.x, 0, h.z); g.rotation.y = h.face; lantScene.add(g); if (roundR) { S.push({ x: h.x, z: h.z, r: roundR + 0.4 }); BXS.push({ id: h.id, x: h.x, z: h.z + h.sg * (roundR - 1), hw: 2.6, hd: 2.6, door: { x: h.x, z: h.dz } }); } else BXS.push({ id: h.id, x: h.x, z: h.z, hw: h.w / 2 + 0.2, hd: h.d / 2 + 0.2, door: { x: h.x, z: h.dz } }); const pth = new THREE.Mesh(new THREE.PlaneGeometry(5, Math.abs(h.dz - LNT.lane) - 4.6), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); pth.rotation.x = -Math.PI / 2; pth.position.set(h.x, 0.05, (h.dz + LNT.lane - h.sg * 4.6) / 2); pth.receiveShadow = true; pth.userData.flatGround = true; lantScene.add(pth); return g; };
+        const done = g => g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+        // ---- Professor Quill: a round stone house two floors high, a pointed slate roof, a weathervane shaped like a glider, and a wind sock in the garden ----
+        { const h = LXHOMES[0], R = 11, g = house(h, R), stone = M('#d8d2c4'), dark = M('#4a4a54'), slate = M('#3a4a5a'), purple = M('#5a3d8a');
+          put(g, new THREE.CylinderGeometry(R + 0.6, R + 0.9, 1, 28), dark, 0, 0.5, 0); put(g, new THREE.CylinderGeometry(R, R, 22, 28), stone, 0, 11, 0); put(g, new THREE.CylinderGeometry(R + 0.3, R + 0.3, 0.6, 28), dark, 0, 11, 0); put(g, new THREE.CylinderGeometry(R + 0.5, R + 0.5, 0.7, 28), dark, 0, 22, 0);
+          put(g, new THREE.ConeGeometry(R + 1.8, 11, 28), slate, 0, 27.5, 0); put(g, new THREE.CylinderGeometry(0.12, 0.12, 4, 6), iron, 0, 34.5, 0);
+          { const v = new THREE.Group(); v.position.set(0, 36, 0); v.rotation.y = 0.7; g.add(v); box(v, 3.6, 0.12, 0.7, 0, 0, 0.3, brass); box(v, 0.4, 0.4, 3, 0, 0, 0, brass); box(v, 1.4, 0.1, 0.5, 0, 0, -1.3, brass); }
+          door(g, 0, R - 0.1, 4.4, 9.2, purple, dark); sign(g, 'Quill', 10.6, R + 0.35, '#5a3d8a', '#f6e7c2');
+          [[0.75, 6], [-0.75, 6], [2.1, 6], [-2.1, 6], [Math.PI, 6], [0.9, 16.5], [-0.9, 16.5], [2.2, 16.5], [-2.2, 16.5], [Math.PI, 16.5]].forEach(([a, y]) => win(g, Math.sin(a) * (R + 0.05), y, Math.cos(a) * (R + 0.05), 2.4, 4, dark, a));
+          { const rw = put(g, new THREE.CircleGeometry(2.6, 24), pane, 0, 16.5, R + 0.08); const rr = put(g, new THREE.TorusGeometry(2.6, 0.3, 8, 28), dark, 0, 16.5, R + 0.1); box(g, 5.2, 0.16, 0.2, 0, 16.5, R + 0.15, dark); box(g, 0.16, 5.2, 0.2, 0, 16.5, R + 0.15, dark); }
+          { const px = 9, pz = R + 7; box(g, 0.25, 12, 0.25, px, 6, pz, iron); const sock = put(g, new THREE.ConeGeometry(0.8, 3.6, 10, 1, true), M('#e8732a', { side: THREE.DoubleSide }), px + 1.9, 11.6, pz); sock.rotation.z = -Math.PI / 2; sol(h, px, pz, 0.5); }
+          [-1, 1].forEach(s => { for (let q = 0; q < 5; q++) put(g, new THREE.IcosahedronGeometry(1.1, 0), M(q % 2 ? '#3e6b3a' : '#4f7a4a', { flatShading: true }), s * (6 + q * 1.8), 1, R + 3 + (q % 2) * 0.5); });
+          done(g); }
+        // ---- the Gales: a shingled house with a barn-shaped roof, dormers, a porch, a kite flying from a pole in the yard, and a sandbox ----
+        { const h = LXHOMES[1], g = house(h), W = h.w, D = h.d, H = 10, sh = M('#6a7f94'), white = M('#efe9dc'), roof = M('#3e4a56'), red = M('#a8323a');
+          box(g, W + 0.8, 0.8, D + 0.8, 0, 0.4, 0, M('#8d8676')); box(g, W, H, D, 0, H / 2, 0, sh); for (let y = 1.2; y < H; y += 1.2) [-1, 1].forEach(s => box(g, W + 0.1, 0.12, 0.12, 0, y, s * (D / 2 + 0.03), M('#5a6e82')));
+          [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => box(g, 0.8, H, 0.8, a * W / 2, H / 2, b * D / 2, white));
+          prism(g, [[-D / 2, 0], [-D / 2 + 3.5, 8], [0, 12], [D / 2 - 3.5, 8], [D / 2, 0]], W - 0.1, sh, H);
+          [-1, 1].forEach(s => { slab(g, 0, H - 0.3, s * (D / 2 + 1.2), 0, H + 8, s * (D / 2 - 3.5), W + 2.4, 0.7, roof); slab(g, 0, H + 8, s * (D / 2 - 3.5), 0, H + 12.3, 0, W + 2.4, 0.7, roof); });
+          [-8, 8].forEach(x => { box(g, 4.4, 4.6, 4, x, H + 4.2, D / 2 - 1.2, sh); const dr = box(g, 5.2, 0.5, 4.8, x, H + 6.9, D / 2 - 1.2, roof); win(g, x, H + 4, D / 2 + 0.85, 2.6, 3, white); });
+          box(g, 3.2, 26, 3.2, -W / 2 + 4, 13, -D / 2 + 3, M('#8a4a3a'));
+          door(g, 0, D / 2, 4.4, 9.2, red, white); [-10, 10].forEach(x => win(g, x, 5.2, D / 2 + 0.02, 4, 4.2, white, 0, M('#3e4a56')));
+          { const pz = D / 2 + 3.4; box(g, 12, 0.25, 6.8, 0, 0.12, D / 2 + 3.4, M('#9a8a70')); [-5.4, 5.4].forEach(x => { box(g, 0.6, 9.6, 0.6, x, 4.8, pz + 3, white); sol(h, x, pz + 3, 0.5); }); const pr = box(g, 13, 0.4, 7.6, 0, 10.2, pz, roof); pr.rotation.x = 0.12; }
+          sign(g, 'Gale', H + 1.2, D / 2 + 0.9, '#3e4a56', '#efe9dc');
+          // Lark's things: the kite on its pole, a sandbox, chalk squares on the path
+          { const kx = -11, kz = D / 2 + 9; box(g, 0.25, 16, 0.25, kx, 8, kz, M('#6b4a2b')); sol(h, kx, kz, 0.5); const k = new THREE.Group(); k.position.set(kx + 2, 15.5, kz); k.rotation.set(0, 0.4, 0.5); g.add(k); const kite = new THREE.Mesh(new THREE.CircleGeometry(1.5, 4), M('#e8b64c', { side: THREE.DoubleSide })); kite.scale.y = 1.4; k.add(kite); for (let q = 0; q < 5; q++) box(k, 0.5, 0.3, 0.05, (q % 2 ? 0.3 : -0.3), -2.4 - q * 0.8, 0, M(q % 2 ? '#c8384a' : '#9fb7f0')); box(g, 0.04, 0.04, 2.6, kx + 1, 14.5, kz, M('#dddddd')).rotation.x = 0.8;
+            const sx = 10, sz = D / 2 + 9; [[0, -2.5, 6, 0.4], [0, 2.5, 6, 0.4], [-3, 0, 0.4, 5.4], [3, 0, 0.4, 5.4]].forEach(([a, b, w, d]) => box(g, w, 0.8, d, sx + a, 0.4, sz + b, M('#8a6438'))); box(g, 5.6, 0.2, 4.6, sx, 0.5, sz, M('#e3d3a0')); put(g, new THREE.ConeGeometry(0.5, 0.8, 8), M('#c8384a'), sx - 1.2, 0.9, sz + 0.5); rect(h, sx, sz, 3.2, 2.8);
+            for (let q = 0; q < 6; q++) box(g, 1.8, 0.03, 1.8, (q % 2 ? 1 : -1) * (q > 1 && q < 4 ? 1 : 0) * 1, 0.07, D / 2 + 7 + q * 1.9, M('#efe6d2')); }
+          done(g); }
+        // ---- Fen and Pip: a workshop with big doors on the ground, their rooms above in timber, a propeller over the doors, and a glider frame half built in the yard ----
+        { const h = LXHOMES[2], g = house(h), W = h.w, D = h.d, H1 = 11, H2 = 8, brick = M('#9a5a3a'), timber = M('#7a5a3a'), dark = M('#3a2a18'), roof = M('#4a3a2a');
+          box(g, W + 0.8, 0.8, D + 0.8, 0, 0.4, 0, M('#8d8676')); box(g, W, H1, D, 0, H1 / 2, 0, brick); box(g, W, H2, D, 0, H1 + H2 / 2, 0, timber); for (let x = -W / 2 + 1; x < W / 2; x += 2) [-1, 1].forEach(s => box(g, 0.15, H2, 0.15, x, H1 + H2 / 2, s * (D / 2 + 0.05), dark));
+          box(g, W + 0.6, 0.6, D + 0.6, 0, H1, 0, dark);
+          prism(g, [[-D / 2, 0], [0, 8], [D / 2, 0]], W - 0.1, timber, H1 + H2); [-1, 1].forEach(s => slab(g, 0, H1 + H2 - 0.3, s * (D / 2 + 1.4), 0, H1 + H2 + 8.4, 0, W + 2.4, 0.7, roof));
+          { const dx = 0; box(g, 26, 5, 6, dx, H1 + H2 + 1.6, D / 2 - 3, timber); box(g, 27, 0.5, 7, dx, H1 + H2 + 4.3, D / 2 - 2.8, roof); [-9, -3, 3, 9].forEach(x => win(g, x, H1 + H2 + 1.6, D / 2 + 0.05, 3.4, 2.8, dark)); }
+          { const bx = -14; box(g, 11, 9.4, 0.4, bx, 4.7, D / 2 + 0.1, M('#3e6a6a')); box(g, 0.2, 9.4, 0.5, bx, 4.7, D / 2 + 0.3, dark); [-1, 1].forEach(s => box(g, 0.25, 9.4, 0.5, bx + s * 2.5, 4.7, D / 2 + 0.3, dark)); box(g, 12, 0.6, 0.6, bx, 9.7, D / 2 + 0.3, dark);
+            const p = new THREE.Group(); p.position.set(bx, 10.6, D / 2 + 0.8); p.rotation.z = 0.4; g.add(p); [0, 1].forEach(k => { const bl = box(p, 0.7, 7, 0.25, 0, 0, 0, M('#8a6438')); bl.rotation.z = k * Math.PI / 2; }); put(p, new THREE.SphereGeometry(0.5, 10, 8), brass, 0, 0, 0.2); }
+          door(g, 0, D / 2, 4.4, 9.2, M('#c8384a'), dark); [12, 18].forEach(x => win(g, x, 5.6, D / 2 + 0.02, 3.4, 4, dark));
+          box(g, 3, 30, 3, W / 2 - 3, 15, -D / 2 + 3, brick); sign(g, 'Fen & Pip', 10.6, D / 2 + 0.4, '#3a2a18', '#f6e7c2');
+          { const fx = 8, fz = D / 2 + 10, wood = M('#c9a06a'); [-5, 5].forEach(o => { box(g, 3, 3, 1, fx + o, 1.5, fz, M('#6b4a2b')); sol(h, fx + o, fz, 1.4); }); box(g, 0.4, 0.4, 14, fx, 3.4, fz, wood).rotation.y = Math.PI / 2; for (let q = 0; q < 6; q++) { const r = box(g, 0.2, 1.4, 0.2, fx - 5 + q * 2, 4, fz, wood); } box(g, 16, 0.12, 2, fx, 4.6, fz + 0.2, M('#efe3c4', { side: THREE.DoubleSide })); }
+          done(g); }
+        // ---- Mabel Spoke: a long whitewashed cottage under a deep thatch, flowers at every window, a bench by the round-topped door, and balloon silk on the line ----
+        { const h = LXHOMES[3], g = house(h), W = h.w, D = h.d, H = 8.5, white = M('#f2efe6'), straw = M('#c9a85a'), timber = M('#4a3420'), blue = M('#3a5a8a');
+          box(g, W + 0.8, 0.8, D + 0.8, 0, 0.4, 0, M('#8d8676')); box(g, W, H, D, 0, H / 2, 0, white); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => box(g, 0.7, H, 0.7, a * W / 2, H / 2, b * D / 2, timber));
+          prism(g, [[-D / 2, 0], [0, 10], [D / 2, 0]], W - 0.1, white, H);
+          [-1, 1].forEach(s => slab(g, 0, H - 1, s * (D / 2 + 2.6), 0, H + 10.4, 0, W + 4.4, 2.2, straw)); { const cap = put(g, new THREE.CylinderGeometry(1.4, 1.4, W + 4.4, 12), M('#b8964a'), 0, H + 10.6, 0); cap.rotation.z = Math.PI / 2; }
+          door(g, 0, D / 2, 4.2, 8.2, blue, timber); put(g, new THREE.CircleGeometry(2.35, 16, 0, Math.PI), blue, 0, 8.2, D / 2 + 0.28);
+          [-13, -6.5, 6.5, 13].forEach((x, i) => { win(g, x, 5, D / 2 + 0.02, 3, 3, timber); box(g, 3.8, 0.6, 0.9, x, 3.1, D / 2 + 0.5, timber); for (let q = 0; q < 5; q++) put(g, new THREE.SphereGeometry(0.34, 8, 6), M(['#e68fb0', '#f4d35e', '#ffffff', '#c8384a'][(q + i) % 4]), x - 1.4 + q * 0.7, 3.55, D / 2 + 0.55); });
+          box(g, 2.4, 6, 2.4, W / 2 - 4, H + 9, -2, M('#8d8676')); sign(g, 'Spoke', 9.6, D / 2 + 0.6, '#3a5a8a', '#f6e7c2');
+          { const b = makeBench(true); b.position.set(-6, 0, D / 2 + 2.4); g.add(b); sol(h, -6, D / 2 + 2.4, 1.6); }
+          { const lz = D / 2 + 10; [-14, 6].forEach(x => { box(g, 0.25, 7, 0.25, x, 3.5, lz, timber); sol(h, x, lz, 0.4); }); box(g, 20, 0.05, 0.05, -4, 6.8, lz, M('#dddddd')); [['#c8384a', -11], ['#e8b64c', -6], ['#3f6f4a', -1], ['#9fc8e8', 3]].forEach(([c, x]) => box(g, 3, 3.6, 0.06, x, 5, lz, M(c, { side: THREE.DoubleSide }))); }
+          done(g); }
+      }
+      const lg = new THREE.Group(); lantScene.add(lg); [[-30, 81], [-58, 91], [-80, 81], [-120, 91], [-142, 81], [-164, 91], [-204, 81], [-226, 91], [-310, 81], [-310, 91], [-394, 81], [LNT.x0 + 8, 97]].forEach(([x, z]) => lampPost(lg, x, z, 10, 26, lantSolids, lantH(x, z))); lg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(lg);
       [[-100, 0], [-184, 0]].forEach(([x]) => { const l = new THREE.PointLight('#ffc46a', 0.7, 70); l.position.set(x, 11, LNT.lane); lantScene.add(l); });
       const rs = signBoard('Windward Row', 7, 1.2, '#1f3a5a', '#f6e7c2'); rs.position.set(-8, 5.4, LNT.lane - 5.2); lantScene.add(rs); [-11, -5].forEach(x => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 5.4, 6), ironM); p.position.set(x, 2.7, LNT.lane - 5.2); lantScene.add(p); }); lantSolids.push({ x: -11, z: LNT.lane - 5.2, r: 0.5 }, { x: -5, z: LNT.lane - 5.2, r: 0.5 }); }
     // the gate in from the Sea Road, and the far end
@@ -3909,10 +4107,10 @@
     // the pier end, the Pillar Rocks with the upper pylon, and the cable
     const pierEnd = new THREE.Mesh(new THREE.BoxGeometry(24, 0.6, 4.4), mat('#ffffff', { map: plankTex })); pierEnd.position.set(-8, PIER.y - 0.36, 0); pierEnd.scale.z = 0.97; liftScene.add(pierEnd);   // a hair under Lanternreach's own pier, which runs over the same spot
     const pylon = (x, z, h) => { const p = new THREE.Mesh(new THREE.BoxGeometry(3, h, 3), mat('#3a3a3a', { metalness: 0.5 })); p.position.set(x, SEA_Y + h / 2, z); liftScene.add(p); const arm = new THREE.Mesh(new THREE.BoxGeometry(8, 1, 1), mat('#3a3a3a', { metalness: 0.5 })); arm.position.set(x, SEA_Y + h, z); liftScene.add(arm); return SEA_Y + h; };
-    const y0 = pylon(0, 3, PIER.y - SEA_Y + 6.02);   // the gondola waits with its floor level with the pier, so you walk straight in
+    const GS = 1.6, y0 = pylon(0, 3, PIER.y - SEA_Y + 0.5 + 5.5 * GS + 0.02);   // the gondola is grown-elf size, and waits with its floor level with the pier   // the gondola waits with its floor level with the pier, so you walk straight in
     [[300, 40, 12, 60], [330, 70, 10, 48], [280, 110, 14, 70]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r, h, 9), mat('#4e4a44', { flatShading: true, roughness: 1 })); st.position.set(x - 70, SEA_Y + h / 2 - 6, z - 40); liftScene.add(st); const top = new THREE.PointLight('#8fd0ff', 1.4, 90); top.position.set(x - 70, SEA_Y + h - 4, z - 40); liftScene.add(top); });
     const y1 = pylon(230, 3, 80);
-    const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1, 6), mat('#2a2a2a', { metalness: 0.6 })); const a = new THREE.Vector3(0, y0 + 0.5, 3), b = LIFT_TOP.clone().add(new THREE.Vector3(0, 6, 3)); const len = a.distanceTo(b); cable.scale.y = len; cable.position.copy(a).lerp(b, 0.5); cable.lookAt(b); cable.rotateX(Math.PI / 2); liftScene.add(cable);
+    const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1, 6), mat('#2a2a2a', { metalness: 0.6 })); const a = new THREE.Vector3(0, y0 + 0.5, 3), b = LIFT_TOP.clone().add(new THREE.Vector3(0, 5.5 * GS + 0.5, 3)); const len = a.distanceTo(b); cable.scale.y = len; cable.position.copy(a).lerp(b, 0.5); cable.lookAt(b); cable.rotateX(Math.PI / 2); liftScene.add(cable);
     const cable2 = cable.clone(); cable2.position.z += 1.4; liftScene.add(cable2);
     // the gondola: a brass-ribbed basket hung from a wheel on the cable
     const wheel = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.3, 8, 20), mat('#b08a3a', { metalness: 0.6 })); wheel.position.set(0, 5.5, 3.7); gondola.add(wheel);
@@ -3922,11 +4120,11 @@
     const rail = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.12, 6, 28), mat('#b08a3a', { metalness: 0.6 })); rail.rotation.x = Math.PI / 2; rail.position.y = 3; gondola.add(rail);
     const roof = new THREE.Mesh(new THREE.ConeGeometry(3.6, 1.6, 14), mat('#1f3a5a')); roof.position.y = 5.6; gondola.add(roof);
     const lamp = new THREE.PointLight('#ffc46a', 0.9, 20); lamp.position.y = 4.5; gondola.add(lamp);
-    gondola.position.set(0, y0 - 6, 0);
+    gondola.scale.setScalar(GS); gondola.position.set(0, y0 - 0.5 - 5.5 * GS, 0);
     // clouds you rise through
     const cloudM = new THREE.MeshStandardMaterial({ color: '#dfe6ee', transparent: true, opacity: 0.85, roughness: 1 });
     for (let i = 0; i < 40; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(rnd(10, 26), 10, 7), cloudM); c.scale.y = 0.35; c.position.set(rnd(-200, 400), rnd(120, 230), rnd(-200, 200)); liftScene.add(c); }
-    gondola.userData.y0 = y0 - 6;
+    gondola.userData.y0 = y0 - 0.5 - 5.5 * GS;
   }
   function liftPos(t) { const k = sstep(0, 1, t), y0 = gondola.userData.y0; return new THREE.Vector3(LIFT_TOP.x * k, y0 + (LIFT_TOP.y - y0) * (k * k * 0.6 + k * 0.4), 0); }
   function goToLift(down) {
@@ -3956,12 +4154,13 @@
   const skyScene = new THREE.Scene();
   skyScene.fog = new THREE.Fog('#cfe0f2', 160, 900); skyScene.background = new THREE.Color('#9fc4ea');
   skyScene.add(new THREE.HemisphereLight('#ffffff', '#6f8fb0', 1.0));
-  const skySun = new THREE.DirectionalLight('#fff8ec', 1.1); skySun.castShadow = true; Object.assign(skySun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); skySun.shadow.mapSize.set(4096, 4096); skySun.shadow.radius = 2; skyScene.add(skySun); skyScene.add(skySun.target);
+  const skySun = new THREE.DirectionalLight('#fff8ec', 1.1); skySun.castShadow = true; Object.assign(skySun.shadow.camera, { left: -280, right: 280, top: 280, bottom: -280, near: 1, far: 900 }); skySun.shadow.mapSize.set(4096, 4096); skySun.shadow.radius = 2; skyScene.add(skySun); skyScene.add(skySun.target);
   const skySolids = [], skyBoxes = [], spinnersSky = [];
   let ilsa = null, fenSky = null, pipSky = null, glider = null, windFan = null;
-  function onIsland(x, z) { return ISLANDS.some(i => Math.hypot(x - i.x, z - i.z) < i.r - 1.2); }
-  function onBridge(x, z) { return BRIDGES.some(([ax, az, bx, bz]) => { const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), t = ((x - ax) * dx + (z - az) * dz) / (L * L); if (t < 0 || t > 1) return false; const px = ax + dx * t, pz = az + dz * t; return Math.hypot(x - px, z - pz) < 2.3; }); }
-  function skyH(x, z) { if (onIsland(x, z)) return 0; const b = BRIDGES.find(([ax, az, bx, bz]) => { const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), t = ((x - ax) * dx + (z - az) * dz) / (L * L); return t >= -0.05 && t <= 1.05 && Math.hypot(x - (ax + dx * t), z - (az + dz * t)) < 3; }); if (b) { const [ax, az, bx, bz] = b, dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), t = clamp(((x - ax) * dx + (z - az) * dz) / (L * L), 0, 1); return -Math.sin(t * Math.PI) * 2.2; } return 0; }
+  function onIsland(x, z) { return ISLANDS.some(i => Math.hypot(x - i.x, z - i.z) < i.r - 1.2 * SKY_K); }
+  function onBridge(x, z) { return BRIDGES.some(([ax, az, bx, bz]) => { const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), t = ((x - ax) * dx + (z - az) * dz) / (L * L); if (t < 0 || t > 1) return false; const px = ax + dx * t, pz = az + dz * t; return Math.hypot(x - px, z - pz) < 2.3 * SKY_K; }); }
+  function skyH(x, z) { if (onIsland(x, z)) return 0; const b = BRIDGES.find(([ax, az, bx, bz]) => { const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), t = ((x - ax) * dx + (z - az) * dz) / (L * L); return t >= -0.05 && t <= 1.05 && Math.hypot(x - (ax + dx * t), z - (az + dz * t)) < 3 * SKY_K; }); if (b) { const [ax, az, bx, bz] = b, dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), t = clamp(((x - ax) * dx + (z - az) * dz) / (L * L), 0, 1); return -Math.sin(t * Math.PI) * 2.2 * SKY_K; } return 0; }
+  const SKY_G = new THREE.Group(); SKY_G.scale.setScalar(SKY_K); skyScene.add(SKY_G);   // everything on the islands, at the size grown elves need
   {
     const skyTexHi = canvasTex(512, 256, (gg, w, h) => { const gr = gg.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#4f8fd8'); gr.addColorStop(0.55, '#a9cdf0'); gr.addColorStop(1, '#e8f0f8'); gg.fillStyle = gr; gg.fillRect(0, 0, w, h); }, [1, 1]);
     const dome = new THREE.Mesh(new THREE.SphereGeometry(800, 24, 16), new THREE.MeshBasicMaterial({ map: skyTexHi, side: THREE.BackSide, fog: false })); dome.position.set(0, -200, 60); skyScene.add(dome); skyScene.userData.dome = dome;
@@ -3970,28 +4169,28 @@
       const geo = new THREE.CircleGeometry(isl.r, 40); geo.rotateX(-Math.PI / 2); const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3), c = new THREE.Color();
       for (let i = 0; i < pos.count; i++) { c.set(pick(['#6f9a52', '#7aa45a', '#8aae62'])); c.offsetHSL(0, 0, rnd(-0.03, 0.03)); colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b; }
       geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      const top = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); top.position.set(isl.x, 0, isl.z); top.receiveShadow = true; skyScene.add(top);
-      const rim = new THREE.Mesh(new THREE.CylinderGeometry(isl.r, isl.r * 0.9, 4, 40, 1, true), stoneM); rim.position.set(isl.x, -2, isl.z); skyScene.add(rim);
-      const under = new THREE.Mesh(new THREE.ConeGeometry(isl.r * 0.92, isl.r * 1.6, 14), rockM); under.rotation.x = Math.PI; under.position.set(isl.x, -4 - isl.r * 0.8, isl.z); skyScene.add(under);
-      for (let i = 0; i < 6; i++) { const root = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.5, rnd(14, 30), 6), woodM); const a = rnd(0, 6.3); root.position.set(isl.x + Math.cos(a) * isl.r * 0.6, -12 - rnd(0, 10), isl.z + Math.sin(a) * isl.r * 0.6); root.rotation.set(rnd(-0.3, 0.3), 0, rnd(-0.3, 0.3)); skyScene.add(root); }
+      const top = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); top.position.set(isl.x, 0, isl.z); top.receiveShadow = true; SKY_G.add(top);
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(isl.r, isl.r * 0.9, 4, 40, 1, true), stoneM); rim.position.set(isl.x, -2, isl.z); SKY_G.add(rim);
+      const under = new THREE.Mesh(new THREE.ConeGeometry(isl.r * 0.92, isl.r * 1.6, 14), rockM); under.rotation.x = Math.PI; under.position.set(isl.x, -4 - isl.r * 0.8, isl.z); SKY_G.add(under);
+      for (let i = 0; i < 6; i++) { const root = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.5, rnd(14, 30), 6), woodM); const a = rnd(0, 6.3); root.position.set(isl.x + Math.cos(a) * isl.r * 0.6, -12 - rnd(0, 10), isl.z + Math.sin(a) * isl.r * 0.6); root.rotation.set(rnd(-0.3, 0.3), 0, rnd(-0.3, 0.3)); SKY_G.add(root); }
       // a fence of rope posts round the edge, with gaps at the bridges and the lift
-      for (let a = 0; a < 6.283; a += 0.22) { const px = isl.x + Math.cos(a) * (isl.r - 1), pz = isl.z + Math.sin(a) * (isl.r - 1); if (onBridge(px, pz) || (k === 0 && pz < isl.z - isl.r + 6 && Math.abs(px) < 7)) continue; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.6, 5), woodM); p.position.set(px, 0.8, pz); skyScene.add(p); }
-      const rope = new THREE.Mesh(new THREE.TorusGeometry(isl.r - 1, 0.06, 4, 60), mat('#b89a6a')); rope.rotation.x = Math.PI / 2; rope.position.set(isl.x, 1.4, isl.z); skyScene.add(rope);
+      for (let a = 0; a < 6.283; a += 0.22) { const px = isl.x + Math.cos(a) * (isl.r - 1), pz = isl.z + Math.sin(a) * (isl.r - 1); if (onBridge(px, pz) || (k === 0 && pz < isl.z - isl.r + 6 && Math.abs(px) < 7)) continue; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.6, 5), woodM); p.position.set(px, 0.8, pz); SKY_G.add(p); }
+      const rope = new THREE.Mesh(new THREE.TorusGeometry(isl.r - 1, 0.06, 4, 60), mat('#b89a6a')); rope.rotation.x = Math.PI / 2; rope.position.set(isl.x, 1.4, isl.z); SKY_G.add(rope);
     });
     // rope bridges: planks that sag between the islands
     BRIDGES.forEach(([ax, az, bx, bz]) => { const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), ang = Math.atan2(dx, dz); const a0 = ISLANDS[0].r - 2, b0 = (bx > 0 ? ISLANDS[1] : ISLANDS[2]).r - 2;
-      for (let d = a0; d < L - b0; d += 1.6) { const t = d / L; const pl = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.18, 1.3), mat('#ffffff', { map: plankTex })); pl.position.set(ax + dx * t, -Math.sin(t * Math.PI) * 2.2 - 0.1, az + dz * t); pl.rotation.y = ang; pl.rotation.x = -Math.cos(t * Math.PI) * 0.09; pl.castShadow = true; skyScene.add(pl); }
-      [-1.9, 1.9].forEach(o => { const pts = []; for (let d = a0; d <= L - b0; d += 2) { const t = d / L; pts.push(new THREE.Vector3(ax + dx * t + Math.cos(ang) * o, -Math.sin(t * Math.PI) * 2.2 + 1.4, az + dz * t - Math.sin(ang) * o)); } const curve = new THREE.CatmullRomCurve3(pts); const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.07, 5), mat('#b89a6a')); skyScene.add(tube); for (let d = a0; d <= L - b0; d += 6) { const t = d / L; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 4), woodM); p.position.set(ax + dx * t + Math.cos(ang) * o, -Math.sin(t * Math.PI) * 2.2 + 0.7, az + dz * t - Math.sin(ang) * o); skyScene.add(p); } });
+      for (let d = a0; d < L - b0; d += 1.6) { const t = d / L; const pl = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.18, 1.3), mat('#ffffff', { map: plankTex })); pl.position.set(ax + dx * t, -Math.sin(t * Math.PI) * 2.2 - 0.1, az + dz * t); pl.rotation.y = ang; pl.rotation.x = -Math.cos(t * Math.PI) * 0.09; pl.castShadow = true; SKY_G.add(pl); }
+      [-1.9, 1.9].forEach(o => { const pts = []; for (let d = a0; d <= L - b0; d += 2) { const t = d / L; pts.push(new THREE.Vector3(ax + dx * t + Math.cos(ang) * o, -Math.sin(t * Math.PI) * 2.2 + 1.4, az + dz * t - Math.sin(ang) * o)); } const curve = new THREE.CatmullRomCurve3(pts); const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.07, 5), mat('#b89a6a')); SKY_G.add(tube); for (let d = a0; d <= L - b0; d += 6) { const t = d / L; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 4), woodM); p.position.set(ax + dx * t + Math.cos(ang) * o, -Math.sin(t * Math.PI) * 2.2 + 0.7, az + dz * t - Math.sin(ang) * o); SKY_G.add(p); } });
     });
     // the upper lift station, at the near edge of the main island
-    { const st = new THREE.Mesh(new THREE.BoxGeometry(3, 16, 3), ironM); st.position.set(-6, 8, 0); skyScene.add(st); const arm = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1), ironM); arm.position.set(0, 16, 0); skyScene.add(arm); const st2 = st.clone(); st2.position.x = 6; skyScene.add(st2); skySolids.push({ x: -6, z: 0, r: 2 }, { x: 6, z: 0, r: 2 });
-      const sg = signBoard('The sky-lift — down to Lanternreach', 8, 1.1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 10, 1.6); skyScene.add(sg);
-      const sg2 = signBoard('SKYHAVEN', 8, 1.8, '#f6e7c2', '#1f3a5a'); sg2.position.set(0, 12.6, 1.6); skyScene.add(sg2);
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(12, 0.3, 8), mat('#ffffff', { map: plankTex })); deck.position.set(0, 0.1, 2); skyScene.add(deck); }
-    const lane = new THREE.Mesh(new THREE.PlaneGeometry(6, 76), mat('#ffffff', { map: dirtTex, color: '#b9b2a4' })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.04, 42); skyScene.add(lane);
+    { const st = new THREE.Mesh(new THREE.BoxGeometry(3, 16, 3), ironM); st.position.set(-6, 8, 0); SKY_G.add(st); const arm = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1), ironM); arm.position.set(0, 16, 0); SKY_G.add(arm); const st2 = st.clone(); st2.position.x = 6; SKY_G.add(st2); skySolids.push({ x: -6, z: 0, r: 2 }, { x: 6, z: 0, r: 2 });
+      const sg = signBoard('The sky-lift — down to Lanternreach', 8, 1.1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 10, 1.6); SKY_G.add(sg);
+      const sg2 = signBoard('SKYHAVEN', 8, 1.8, '#f6e7c2', '#1f3a5a'); sg2.position.set(0, 12.6, 1.6); SKY_G.add(sg2);
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(12, 0.3, 8), mat('#ffffff', { map: plankTex })); deck.position.set(0, 0.1, 2); SKY_G.add(deck); }
+    const lane = new THREE.Mesh(new THREE.PlaneGeometry(6, 76), mat('#ffffff', { map: dirtTex, color: '#b9b2a4' })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.04, 42); SKY_G.add(lane);
     // buildings with insides
     function skyBuilding(id, x, z, facing, label, W, D, H, color) {
-      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = facing; skyScene.add(g);
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = facing; SKY_G.add(g);
       const body = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mat(color, { roughness: 0.9 })); body.position.y = H / 2; body.castShadow = true; body.receiveShadow = true; g.add(body);
       const roof = new THREE.Mesh(new THREE.CylinderGeometry(D / 2 + 1, D / 2 + 1, W + 2, 12, 1, false, 0, Math.PI), canvasM); roof.rotation.z = Math.PI / 2; roof.position.y = H; roof.scale.set(1, 0.42, 1); g.add(roof);
       for (let k = 0; k < 5; k++) { const rib = new THREE.Mesh(new THREE.TorusGeometry(D / 2 + 1.1, 0.12, 5, 16, Math.PI), woodM); rib.position.set(-W / 2 + k * (W / 4), H, 0); rib.rotation.y = Math.PI / 2; rib.scale.set(1, 0.42, 1); g.add(rib); }
@@ -3999,23 +4198,23 @@
       [-1, 1].forEach(d => { const w = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), mat('#cfe4f4', { emissive: '#9fc4ea', emissiveIntensity: 0.3 })); w.position.set(d * (W / 4 + 1), 5.2, D / 2 + 0.02); g.add(w); });
       const sign = signBoard(label, 10, 1.4, '#1f3a5a', '#f6e7c2'); sign.position.set(0, H + 1.2, D / 2 + 0.5); g.add(sign);
       const doorX = x + Math.sin(facing) * (D / 2), doorZ = z + Math.cos(facing) * (D / 2);
-      { const bx = { id, x, z, hw: Math.abs(Math.cos(facing)) > 0.5 ? W / 2 + 0.3 : D / 2 + 0.3, hd: Math.abs(Math.cos(facing)) > 0.5 ? D / 2 + 0.3 : W / 2 + 0.3, door: { x: doorX, z: doorZ } }; skyBoxes.push(bx); growBuilding(g, facing, D, bx, 1.15, 1.7, 1.1); }
+      { const bx = { id, x, z, hw: Math.abs(Math.cos(facing)) > 0.5 ? W / 2 + 0.3 : D / 2 + 0.3, hd: Math.abs(Math.cos(facing)) > 0.5 ? D / 2 + 0.3 : W / 2 + 0.3, door: { x: doorX, z: doorZ } }; skyBoxes.push(bx); }
       interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
       return g;
     }
-    makeRoom('guild', { w: 22, d: 16, h: 10, wall: '#e9e2d2', trim: '#1f3a5a', label: 'The Glider Guild', region: 'skyhaven', hint: 'Wings hang from the rafters. Every one of them has flown.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+    makeRoom('guild', { grow: 1.6, w: 22, d: 16, h: 10, wall: '#e9e2d2', trim: '#1f3a5a', label: 'The Glider Guild', region: 'skyhaven', hint: 'Wings hang from the rafters. Every one of them has flown.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
       for (let k = 0; k < 4; k++) { const wing = new THREE.Mesh(new THREE.BoxGeometry(9, 0.15, 1.6), mat(pick(['#efe3c4', '#c8384a', '#9fc8e8']), { side: THREE.DoubleSide })); wing.position.set(-6 + k * 4, H - 2 - (k % 2), -2 + k * 1.2); wing.rotation.z = 0.15; sc.add(wing); }
-      wall(10, 2.2, 3, 0, 1.1, -3, mat('#4a3a2a')); solids.push({ x: -3, z: -3, r: 2.4 }, { x: 3, z: -3, r: 2.4 });
+      wall(10, 2.2, 3, 0, 1.1, -3, mat('#4a3a2a')); solids.push({ x: -3, z: -3, r: 2.4 }, { x: 3, z: -3, r: 2.4 }); wall(1.6, 0.12, 0.9, 3, 1.45, -1.3, trimM);   // a low shelf on the counter's front, for small customers
       const board = new THREE.Mesh(new THREE.PlaneGeometry(8, 4), mat('#1b2a44')); board.position.set(0, 5, -D / 2 + 0.15); sc.add(board); const pts = []; for (let x = -3.8; x <= 3.8; x += 0.2) pts.push(new THREE.Vector3(x, 5 + 1.2 - x * x * 0.12, -D / 2 + 0.18)); sc.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: '#e8b64c' }))); const tl = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-3.5, 5 + 1.2 - 2 * 2 * 0.12 + 0.48 * 1.5, -D / 2 + 0.18), new THREE.Vector3(0.5, 5 + 1.2 - 2 * 2 * 0.12 - 0.48 * 2.5, -D / 2 + 0.18)]), new THREE.LineBasicMaterial({ color: '#c8384a' })); sc.add(tl);
       const lb = signBoard('The tangent: the slope at one instant', 7.4, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(0, 7.6, -D / 2 + 0.3); sc.add(lb);
       const bw = new THREE.Mesh(new THREE.BoxGeometry(5, 0.3, 1.2), woodM); bw.position.set(6, 1.8, 3); sc.add(bw); solids.push({ x: 6, z: 3, r: 2.6 }); const half = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.12, 1.3), mat('#efe3c4', { side: THREE.DoubleSide })); half.position.set(6, 2.1, 3); half.rotation.z = -0.4; sc.add(half); const lb2 = signBoard('The broken wing', 4, 0.8, '#efe3c4', '#1b1b1b'); lb2.position.set(6, 4.2, 3); sc.add(lb2);
     } });
-    makeRoom('balloonworks', { w: 18, d: 14, h: 11, wall: '#d9e4ec', trim: '#1f3a5a', label: 'The Balloon Works', region: 'skyhaven', hint: 'Half-sewn envelopes and a thousand feet of cable.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+    makeRoom('balloonworks', { grow: 1.6, w: 18, d: 14, h: 11, wall: '#d9e4ec', trim: '#1f3a5a', label: 'The Balloon Works', region: 'skyhaven', hint: 'Half-sewn envelopes and a thousand feet of cable.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
       const env = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 12), mat('#c8384a', { side: THREE.DoubleSide })); env.scale.y = 1.3; env.position.set(-4, 5.5, -2); sc.add(env); solids.push({ x: -4, z: -2, r: 3.4 });
       for (let k = 0; k < 5; k++) { const coil = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.3, 8, 16), mat('#3a3a3a', { metalness: 0.5 })); coil.rotation.x = Math.PI / 2; coil.position.set(2 + k * 1.6, 0.3, 4); sc.add(coil); }
       const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 4, 14), mat('#9a9a9a', { metalness: 0.6 })); tank.rotation.z = Math.PI / 2; tank.position.set(5, 1.3, -3); sc.add(tank); solids.push({ x: 5, z: -3, r: 2.4 }); const lb = signBoard('A tank is a curve, spun round', 6, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(5, 3.4, -D / 2 + 0.3); sc.add(lb);
     } });
-    makeRoom('enginehouse', { w: 16, d: 13, h: 9, wall: '#d8d2c0', trim: '#2a2420', label: 'The Engine House', region: 'skyhaven', hint: 'Your engine from Emberdeep, on a bench, with a timing table chalked beside it.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+    makeRoom('enginehouse', { grow: 1.6, w: 16, d: 13, h: 9, wall: '#d8d2c0', trim: '#2a2420', label: 'The Engine House', region: 'skyhaven', hint: 'Your engine from Emberdeep, on a bench, with a timing table chalked beside it.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
       wall(8, 2, 3, 0, 1, -2.5, mat('#4a3a2a')); solids.push({ x: 0, z: -2.5, r: 3.6 }); const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 2.5, 12), mat('#3a3a3a', { metalness: 0.6 })); cyl.position.set(-1.5, 3.2, -2.5); sc.add(cyl); const fly = makeGear(1.3, 14, '#b08a3a'); fly.position.set(1.5, 3.3, -2.5); fly.userData.spin = 2; sc.add(fly); spinners.push(fly);
       const lb = signBoard('Timing: 1 + x + x²/2 + x³/6 …', 6.6, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(0, 5, -D / 2 + 0.3); sc.add(lb);
       for (let k = 0; k < 4; k++) { const can = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.2, 10), mat('#8a3a2a')); can.position.set(W / 2 - 1.2, 0.6, -3 + k * 2); sc.add(can); }
@@ -4024,10 +4223,10 @@
     skyBuilding('balloonworks', 84, 86, -Math.PI / 2, 'The Balloon Works', 18, 14, 11, '#d9e4ec');
     skyBuilding('enginehouse', -70, 94, Math.PI / 2, 'The Engine House', 16, 13, 9, '#d8d2c0');
     // the wind tunnel: a great fan in a drum, and the lift curve chalked on its side
-    { const g = new THREE.Group(); g.position.set(22, 0, 70); g.rotation.y = -0.6; skyScene.add(g); const drum = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 14, 18, 1, true), mat('#9a9a9a', { metalness: 0.5, side: THREE.DoubleSide })); drum.rotation.z = Math.PI / 2; drum.position.y = 4.5; g.add(drum); windFan = new THREE.Group(); windFan.position.set(-7, 4.5, 0); g.add(windFan); for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.4, 0.8), brassM); bl.position.y = 1.8; const piv = new THREE.Group(); piv.rotation.x = k / 6 * 6.283; piv.add(bl); windFan.add(piv); } windFan.rotation.y = Math.PI / 2; const legs = new THREE.Mesh(new THREE.BoxGeometry(12, 0.6, 5), woodM); legs.position.y = 0.3; g.add(legs); skySolids.push({ x: 22, z: 70, r: 7.6 }); const sg = signBoard('The wind tunnel', 5, 1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 10, 0); g.add(sg); }
+    { const g = new THREE.Group(); g.position.set(22, 0, 70); g.rotation.y = -0.6; SKY_G.add(g); const drum = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 14, 18, 1, true), mat('#9a9a9a', { metalness: 0.5, side: THREE.DoubleSide })); drum.rotation.z = Math.PI / 2; drum.position.y = 4.5; g.add(drum); windFan = new THREE.Group(); windFan.position.set(-7, 4.5, 0); g.add(windFan); for (let k = 0; k < 6; k++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.4, 0.8), brassM); bl.position.y = 1.8; const piv = new THREE.Group(); piv.rotation.x = k / 6 * 6.283; piv.add(bl); windFan.add(piv); } windFan.rotation.y = Math.PI / 2; const legs = new THREE.Mesh(new THREE.BoxGeometry(12, 0.6, 5), woodM); legs.position.y = 0.3; g.add(legs); skySolids.push({ x: 22, z: 70, r: 7.6 }); const sg = signBoard('The wind tunnel', 5, 1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 10, 0); g.add(sg); }
     // the launch rail, running off the edge of the main island into open air
-    { const rail = new THREE.Mesh(new THREE.BoxGeometry(40, 0.6, 3), ironM); rail.position.set(20, 0.5, 20); rail.rotation.y = 0.5; skyScene.add(rail); for (let k = 0; k < 6; k++) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.6, 3, 0.6), ironM); leg.position.set(20 + Math.cos(0.5) * (k * 7 - 17), 1.5, 20 - Math.sin(0.5) * (k * 7 - 17)); skyScene.add(leg); } const sg = signBoard('The launch rail', 5, 1, '#1f3a5a', '#f6e7c2'); sg.position.set(8, 4.4, 26); skyScene.add(sg);
-      glider = new THREE.Group(); glider.position.set(10, 1.1, 25); glider.rotation.y = 0.5; skyScene.add(glider);
+    { const rail = new THREE.Mesh(new THREE.BoxGeometry(40, 0.6, 3), ironM); rail.position.set(20, 0.5, 20); rail.rotation.y = 0.5; SKY_G.add(rail); for (let k = 0; k < 6; k++) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.6, 3, 0.6), ironM); leg.position.set(20 + Math.cos(0.5) * (k * 7 - 17), 1.5, 20 - Math.sin(0.5) * (k * 7 - 17)); SKY_G.add(leg); } const sg = signBoard('The launch rail', 5, 1, '#1f3a5a', '#f6e7c2'); sg.position.set(8, 4.4, 26); SKY_G.add(sg);
+      glider = new THREE.Group(); glider.position.set(10, 1.1, 25); glider.rotation.y = 0.5; SKY_G.add(glider);
       const fus = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.25, 9, 10), mat('#efe3c4')); fus.rotation.x = Math.PI / 2; fus.position.y = 1; glider.add(fus);
       const wing = new THREE.Mesh(new THREE.BoxGeometry(16, 0.14, 2.2), mat('#c8384a', { side: THREE.DoubleSide })); wing.position.set(0, 1.5, 0.5); glider.add(wing);
       const tail = new THREE.Mesh(new THREE.BoxGeometry(5, 0.12, 1.4), mat('#c8384a')); tail.position.set(0, 1.3, -4); glider.add(tail); const fin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2, 1.6), mat('#c8384a')); fin.position.set(0, 2.2, -4); glider.add(fin);
@@ -4035,26 +4234,28 @@
       const prop = new THREE.Group(); prop.position.set(0, 1, 4.8); glider.add(prop); [0, 1].forEach(k => { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.4, 0.12), woodM); bl.rotation.z = k * Math.PI / 2; prop.add(bl); }); glider.userData.prop = prop; glider.userData.engine = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1, 1.2), ironM); glider.userData.engine.position.set(0, 1, 3.8); glider.userData.engine.visible = false; glider.add(glider.userData.engine); prop.visible = false;
       glider.traverse(o => { if (o.isMesh) o.castShadow = true; }); skySolids.push({ x: 10, z: 25, r: 4 }); }
     // balloon docks on the east island
-    for (let k = 0; k < 3; k++) { const x = 70 + k * 10, z = 110 + (k % 2) * 6; const post = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5, 8), woodM); post.position.set(x, 2.5, z); skyScene.add(post); const bal = new THREE.Mesh(new THREE.SphereGeometry(5, 16, 12), mat(pick(['#c8384a', '#e8b64c', '#3f6f4a']))); bal.scale.y = 1.25; bal.position.set(x, 24 + k * 3, z); bal.userData.bob = rnd(0, 6); skyScene.add(bal); spinnersSky.push(bal); const bk = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1, 1.4, 10), woodM); bk.position.set(x, 16 + k * 3, z); skyScene.add(bk); const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 11 + k * 3, 4), mat('#b89a6a')); rope.position.set(x, 10 + (k * 3) / 2, z); skyScene.add(rope); skySolids.push({ x, z, r: 0.6 }); }
+    for (let k = 0; k < 3; k++) { const x = 70 + k * 10, z = 110 + (k % 2) * 6; const post = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5, 8), woodM); post.position.set(x, 2.5, z); SKY_G.add(post); const bal = new THREE.Mesh(new THREE.SphereGeometry(5, 16, 12), mat(pick(['#c8384a', '#e8b64c', '#3f6f4a']))); bal.scale.y = 1.25; bal.position.set(x, 24 + k * 3, z); bal.userData.bob = rnd(0, 6); SKY_G.add(bal); spinnersSky.push(bal); const bk = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1, 1.4, 10), woodM); bk.position.set(x, 16 + k * 3, z); SKY_G.add(bk); const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 11 + k * 3, 4), mat('#b89a6a')); rope.position.set(x, 10 + (k * 3) / 2, z); SKY_G.add(rope); skySolids.push({ x, z, r: 0.6 }); }
     // flags and wind socks
-    [[30, 50], [-20, 20], [60, 80]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 9, 6), woodM); p.position.set(x, 4.5, z); skyScene.add(p); const sock = new THREE.Mesh(new THREE.ConeGeometry(0.7, 3.4, 8, 1, true), mat('#e8732a', { side: THREE.DoubleSide })); sock.rotation.z = -Math.PI / 2; sock.position.set(x + 1.8, 8.6, z); sock.userData.sock = true; skyScene.add(sock); spinnersSky.push(sock); skySolids.push({ x, z, r: 0.5 }); });
+    [[30, 50], [-20, 20], [60, 80]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 9, 6), woodM); p.position.set(x, 4.5, z); SKY_G.add(p); const sock = new THREE.Mesh(new THREE.ConeGeometry(0.7, 3.4, 8, 1, true), mat('#e8732a', { side: THREE.DoubleSide })); sock.rotation.z = -Math.PI / 2; sock.position.set(x + 1.8, 8.6, z); sock.userData.sock = true; SKY_G.add(sock); spinnersSky.push(sock); skySolids.push({ x, z, r: 0.5 }); });
     // clouds around and below; the whole world below, small
     const cloudM = new THREE.MeshStandardMaterial({ color: '#f4f7fb', roughness: 1 });
-    for (let i = 0; i < 50; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(rnd(12, 30), 10, 7), cloudM); c.scale.y = 0.35; c.position.set(rnd(-400, 400), rnd(-110, -40), rnd(-300, 400)); skyScene.add(c); }
-    { const far = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400), mat('#6f8f5a', { roughness: 1 })); far.rotation.x = -Math.PI / 2; far.position.set(0, -300, 60); skyScene.add(far); const sea = new THREE.Mesh(new THREE.PlaneGeometry(1200, 2400), mat('#3a5f86', { roughness: 0.4 })); sea.rotation.x = -Math.PI / 2; sea.position.set(900, -299, 60); skyScene.add(sea);
-      [[-300, -200, '#6f8a4a'], [-150, 200, '#8c8577'], [200, 500, '#9a978f'], [-500, 400, '#5f8a4a']].forEach(([x, z, c]) => mound(skyScene, x, z - 240, 180, 90, 200, c)); }
+    for (let i = 0; i < 50; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(rnd(12, 30), 10, 7), cloudM); c.scale.y = 0.35; c.position.set(rnd(-400, 400), rnd(-110, -40), rnd(-300, 400)); SKY_G.add(c); }
+    { const far = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400), mat('#6f8f5a', { roughness: 1 })); far.rotation.x = -Math.PI / 2; far.position.set(0, -300, 60); SKY_G.add(far); const sea = new THREE.Mesh(new THREE.PlaneGeometry(1200, 2400), mat('#3a5f86', { roughness: 0.4 })); sea.rotation.x = -Math.PI / 2; sea.position.set(900, -299, 60); SKY_G.add(sea);
+      [[-300, -200, '#6f8a4a'], [-150, 200, '#8c8577'], [200, 500, '#9a978f'], [-500, 400, '#5f8a4a']].forEach(([x, z, c]) => mound(SKY_G, x, z - 240, 180, 90, 200, c)); }
     skyScene.traverse(o => { if (o.isMesh && !o.isPoints && o.geometry.type !== 'CircleGeometry') o.castShadow = true; });
   }
+  // ...and everything that says where things are on the islands, made the same size
+  { const K = SKY_K; ISLANDS.forEach(i => { i.x *= K; i.z *= K; i.r *= K; }); BRIDGES.forEach(b => { for (let q = 0; q < 4; q++) b[q] *= K; }); skySolids.forEach(q => { q.x *= K; q.z *= K; q.r *= K; }); skyBoxes.forEach(q => { q.x *= K; q.z *= K; q.hw *= K; q.hd *= K; q.door.x *= K; q.door.z *= K; }); ['guild', 'balloonworks', 'enginehouse'].forEach(id => { const d = interiors[id].door; d.x *= K; d.z *= K; }); ILSPOS.multiplyScalar(K); }
   // Professor Ilsabet Quill: goggles, a flying coat, a scarf; Fen and Pip, grown, at the engine house
   ilsa = makeElfNPC({ coat: '#4a3a5a', skin: '#d8b89a', hair: '#2a2a2a', hat: 'cap', capColor: '#5a3d22', tall: 6.2, wide: 1.2 }); ilsa.position.copy(ILSPOS); ilsa.rotation.y = 2.6; skyScene.add(ilsa); skySolids.push({ x: ILSPOS.x, z: ILSPOS.z, r: 1.3 });
   { const gog = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.12, 6, 16), mat('#b08a3a', { metalness: 0.6 })); gog.position.set(0, 0.7, 0.4); gog.rotation.x = 0.5; ilsa.userData.head.add(gog); const scarf = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3, 0.2), mat('#c8384a')); scarf.position.set(-0.9, 4.6, -0.9); scarf.rotation.x = 0.5; ilsa.add(scarf); ilsa.userData.scarf = scarf; }
-  fenSky = makeElfNPC({ coat: '#2e6b3a', skin: '#c9956a', hair: '#8a5a2a', hat: 'point', capColor: '#2e6b3a', tall: 6, wide: 1.3 }); fenSky.position.set(-62, 0, 112); fenSky.rotation.y = 2.6; skyScene.add(fenSky); skySolids.push({ x: -62, z: 112, r: 1.3 });
-  pipSky = makeElfNPC({ coat: '#8a4a2a', skin: '#b98a63', hair: '#1b1b1b', hat: 'none', tall: 5.8, wide: 1.2 }); pipSky.position.set(-56, 0, 108); pipSky.rotation.y = 2.2; skyScene.add(pipSky); skySolids.push({ x: -56, z: 108, r: 1.3 });
+  fenSky = makeElfNPC({ coat: '#2e6b3a', skin: '#c9956a', hair: '#8a5a2a', hat: 'point', capColor: '#2e6b3a', tall: 6, wide: 1.3 }); fenSky.position.set(-62 * SKY_K, 0, 112 * SKY_K); fenSky.rotation.y = 2.6; skyScene.add(fenSky); skySolids.push({ x: -62 * SKY_K, z: 112 * SKY_K, r: 1.3 });
+  pipSky = makeElfNPC({ coat: '#8a4a2a', skin: '#b98a63', hair: '#1b1b1b', hat: 'none', tall: 5.8, wide: 1.2 }); pipSky.position.set(-56 * SKY_K, 0, 108 * SKY_K); pipSky.rotation.y = 2.2; skyScene.add(pipSky); skySolids.push({ x: -56 * SKY_K, z: 108 * SKY_K, r: 1.3 });
   function goToSky() {
     fadeTo('Skyhaven', () => {
-      moveCompany(where === 'lift' ? liftScene : curScene(), skyScene); where = 'skyhaven'; if (riding) setRiding(false); player.position.set(0, 0, 6); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 3);
+      moveCompany(where === 'lift' ? liftScene : curScene(), skyScene); where = 'skyhaven'; if (riding) setRiding(false); player.position.set(0, 0, 9); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 3);
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => { hint('Skyhaven. Islands in the air, roped together. Professor Quill is by the launch rail, ahead on the right.'); if (phase === 'tosky') phase = 'toilsa'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(8, 0, 42); bodyYaw = camYaw = 0.6; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
+    }, () => { hint('Skyhaven. Islands in the air, roped together. Professor Quill is by the launch rail, ahead on the right.'); if (phase === 'tosky') phase = 'toilsa'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(8 * SKY_K, 0, 42 * SKY_K); bodyYaw = camYaw = 0.6; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
   }
   function goToLiftDown() { goToLift(true); }
 
@@ -4209,7 +4410,13 @@
   // a small kit for building animals out of blobs
   function blob(g, geo, m, x, y, z, sx = 1, sy = 1, sz = 1) { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.castShadow = true; g.add(o); return o; }
   const sph = (r, a = 10, b = 8) => new THREE.SphereGeometry(r, a, b);
-  function legSet(g, m, pairs, len, r) { return pairs.map(([x, z]) => { const piv = new THREE.Group(); piv.position.set(x, len, z); const l = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.8, len, 6), m); l.position.y = -len / 2; l.castShadow = true; piv.add(l); g.add(piv); return piv; }); }
+  function legSet(g, m, pairs, len, r) { return pairs.map(([x, z]) => { const front = z > 0, piv = new THREE.Group(); piv.position.set(x, len, z); g.add(piv);
+    const seg = (parent, L, r0, r1, ang) => { const j = new THREE.Group(); j.rotation.x = ang; parent.add(j); const c = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, L, 6), m); c.position.y = -L / 2; c.castShadow = true; j.add(c); const k = new THREE.Mesh(new THREE.SphereGeometry(r1, 6, 5), m); k.position.y = -L; j.add(k); const e = new THREE.Group(); e.position.y = -L; j.add(e); return [j, e, c]; };
+    let flex;
+    if (front) { const [, e1, c1] = seg(piv, len * 0.52, r * 1.1, r * 0.85, 0.08), [b] = seg(e1, len * 0.49, r * 0.8, r * 0.65, -0.08); flex = () => { b.rotation.x = -0.08 + Math.max(0, piv.rotation.x) * 1.1; }; c1.onBeforeRender = flex; }
+    else { const k = 1.03, [, e1, c1] = seg(piv, len * 0.36 * k, r * 1.25, r * 0.9, -0.35), [b, e2] = seg(e1, len * 0.34 * k, r * 0.85, r * 0.7, 0.75), [c] = seg(e2, len * 0.3 * k, r * 0.7, r * 0.6, -0.4);
+      flex = () => { const s = Math.max(0, -piv.rotation.x); b.rotation.x = 0.75 + s * 0.9; c.rotation.x = -0.4 - s * 0.5; }; c1.onBeforeRender = flex; }
+    return piv; }); }
   function makeDeer(buck) {
     const g = new THREE.Group(); g.userData.buck = buck; const m = mat(pick(['#8c6b45', '#9a7a52', '#7d5f3c']), { roughness: 1 }), dark = mat('#1b1b1b'), pale = mat('#d9c6a0');
     // body: chest deeper than the rump, a pale belly
@@ -4981,7 +5188,7 @@
       const head = new THREE.Group(); head.position.set(0, 5.9, 3.2); r.add(head); const hd = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), face); hd.scale.set(0.8, 0.95, 1.3); hd.position.z = 0.6; head.add(hd); const top = new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), wool); top.position.set(0, 0.6, 0.1); head.add(top);
       [-1, 1].forEach(s => { const hn = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.32, 8, 16, Math.PI * 1.5), horn); hn.position.set(s * 0.95, 0.35, 0.2); hn.rotation.y = s * Math.PI / 2; head.add(hn); });
       box(r, 0.2, 1.1, 0.2, 0, 4.2, 3.4, M('#8a2e22')); const bell = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.7, 10), brass); bell.position.set(0, 3.4, 3.5); r.add(bell);
-      const legs = [[-0.9, 1.9], [0.9, 1.9], [-0.9, -1.9], [0.9, -1.9]].map(([lx, lz]) => { const p = new THREE.Group(); p.position.set(lx, 3.3, lz); r.add(p); box(p, 0.5, 3.3, 0.5, 0, -1.65, 0, face); return p; });
+      const legs = legSet(r, face, [[-0.9, 1.9], [0.9, 1.9], [-0.9, -1.9], [0.9, -1.9]], 3.3, 0.26);
       box(r, 0.6, 0.5, 2.6, i ? -2.1 : 2.1, 4.3, 0.5, dark); r.userData.legs = legs; r.userData.head = head; return r; });
     box(g, 6.2, 0.25, 0.25, 0, 4.6, 16, dark);
     const look = [{ coat: '#5a3d22', skin: '#c9956a', hair: '#8a3a2a', hat: 'none', tall: 4.2, wide: 2.1 }, { coat: '#8a3a2a', skin: '#c9956a', hair: '#1b1b1b', tall: 4.4, wide: 2 }, { coat: '#3e6a4a', skin: '#f0c9a0', hair: '#c9a06a', tall: 4.2, wide: 1.9 }, { coat: '#3a4a9a', skin: '#d9a070', hair: '#dcdcdc', tall: 4.3, wide: 1.8 }];
@@ -5417,7 +5624,7 @@
   // ---------- the satchel, and the counter when you are at one ----------
   let bagOpen = false, bagShop = null, bagTab = 'all', bagMsg = '';
   const BIKE_PARTS = [['gear', 2], ['bell', 1], ['rope', 1]], BIKE_COINS = 30;
-  function shopShut(id) { const sh = SHOPS[id]; return !!sh && sh.t <= 6 && !sh.always && shopsShut() && phase === 'free'; }
+  function shopShut(id) { const sh = SHOPS[id]; return !!sh && sh.t <= 7 && !sh.always && shopsShut() && phase === 'free'; }
   const honestStock = sh => sh.stock.filter(q => ITEMS[q].c === 'food');
   // a shop that has shut for the night still has its honesty box, if it sells anything to eat
   function shopRing(id) { if (!shopShut(id)) return openBag(id); const sh = SHOPS[id]; if (honestStock(sh).length) openBag(id, true); else flash(`${sh.n} is shut. It opens at seven in the morning.`, 5000); }
@@ -6050,7 +6257,7 @@
     if (k === 'sci') return where === 'village' && phase === 'sci' && !!sciActive && sciActive.left.has(o.userData.id) && !talking();
     if (k === 'readteach') return FOLK.fen.mode === 'post' && where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
     if (k === 'sciteach') return FOLK.mari.mode === 'post' && where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
-    if (k === 'teacher') return (o.userData.i > 6 || FOLK[['bw', 'hol', 'ori', 'wren', 'tam', 'durna', 'astra'][o.userData.i]].mode === 'post') && TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
+    if (k === 'teacher') return (o.userData.i > 7 || FOLK[['bw', 'hol', 'ori', 'wren', 'tam', 'durna', 'astra', 'ilsa'][o.userData.i]].mode === 'post') && TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
     if (k === 'quest') return where === 'village' && phase === 'free' && !save.beetle && !beetle && !parked;
     if (k === 'ferry') return o.userData.world === where && !ferryRide;
     if (k === 'follower') return (o === beetle && !!beetleName && beetle.userData.follow) || (!!parked && o === parked.obj && !parked.leave && parked.world === curWorld());
@@ -8488,7 +8695,7 @@
       { num: ['From Durna, in Emberdeep: “2x − 3 = 11.”', 7, scaleSvg('2x − 3', '11'), ['2x = 14', 'x = ' + G(7)]] },
       { num: ['From Astra, in Lanternreach: “sin 90°.”', 1, unitSvg(90, 'straight up: (0, 1)'), ['sin 90° = ' + G(1)]] },
       { say: ['Seven for seven. Then build. Fen! Pip! Bring the wing and the engine.'] },
-      { do: () => { if (fenSky) { fenSky.position.set(4, 0, 38); fenSky.lookAt(player.position.x, 0, player.position.z); } if (pipSky) { pipSky.position.set(18, 0, 38); pipSky.lookAt(player.position.x, 0, player.position.z); } } },
+      { do: () => { if (fenSky) { fenSky.position.set(4 * SKY_K, 0, 38 * SKY_K); fenSky.lookAt(player.position.x, 0, player.position.z); } if (pipSky) { pipSky.position.set(18 * SKY_K, 0, 38 * SKY_K); pipSky.lookAt(player.position.x, 0, player.position.z); } } },
       { who: 'Fen', say: ['It’s been a while. You were seven inches tall and I was counting your acorns. Here’s the wing. Span 8, chord 1.5. Area first: a wing’s lift goes with its area.'] },
       { num: ['Wing span 8, chord 1.5. Wing area?', 12, rectSvg(8, 1.5), ['8 × 1.5 = ' + G(12)]] },
       { who: 'Pip', say: ['And the tunnel numbers: at the best angle the wing makes 24 of lift for 2 of drag. Lift over drag is the <b>glide ratio</b>: how far forward for each unit of height you lose.'] },
@@ -8725,7 +8932,7 @@
     if (where === 'lantern') return onPier(x, z) ? PIER.y : Math.max(lantH(x, z), SEA_Y - 1.45);   // you float at swimming depth, and the seabed lifts you out smoothly where it shoals
     if (where === 'lift') return gondola.position.y;
     if (where === 'flight') return flier.position.y + 0.9;
-    if (where === 'skyhaven') return (onIsland(x, z) || onBridge(x, z) || (z < 4 && Math.abs(x) < 6)) ? skyH(x, z) : -600;
+    if (where === 'skyhaven') return (onIsland(x, z) || onBridge(x, z) || (z < 4 * SKY_K && Math.abs(x) < 6 * SKY_K)) ? skyH(x, z) : -600;
     if (where !== 'fernwater') return 0;
     { const dk = fernDeck(x, z); if (dk !== null) return dk; }
     if (inRiver(x, z)) return -1.45;
@@ -8829,14 +9036,14 @@
       lantBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
     }
     if (where === 'lift') {
-      const dx = p.x - gondola.position.x, dz = p.z - gondola.position.z, d = Math.hypot(dx, dz); if (d > 2.2) { p.x = gondola.position.x + dx / d * 2.2; p.z = gondola.position.z + dz / d * 2.2; }
+      const dx = p.x - gondola.position.x, dz = p.z - gondola.position.z, d = Math.hypot(dx, dz); if (d > 3.5) { p.x = gondola.position.x + dx / d * 3.5; p.z = gondola.position.z + dz / d * 3.5; }
     }
     if (where === 'flight') { p.x = flier.position.x; p.z = flier.position.z; }
     if (where === 'skyhaven') {
       skySolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       // the ropes hold you: at the rim of every island and along both sides of every bridge. Jumping does not get you over them.
-      { const firm = (x, z) => onIsland(x, z) || onBridge(x, z) || (z < 4 && Math.abs(x) < 6); if (!firm(p.x, p.z) && firm(prev.x, prev.z)) { if (firm(p.x, prev.z)) p.z = prev.z; else if (firm(prev.x, p.z)) p.x = prev.x; else { p.x = prev.x; p.z = prev.z; } } }
-      if (p.z < 0.5 && Math.abs(p.x) < 3 && !fading) goToLiftDown(); else if (p.z < -1) p.z = -1;
+      { const firm = (x, z) => onIsland(x, z) || onBridge(x, z) || (z < 4 * SKY_K && Math.abs(x) < 6 * SKY_K); if (!firm(p.x, p.z) && firm(prev.x, prev.z)) { if (firm(p.x, prev.z)) p.z = prev.z; else if (firm(prev.x, p.z)) p.x = prev.x; else { p.x = prev.x; p.z = prev.z; } } }
+      if (p.z < 0.5 && Math.abs(p.x) < 5 && !fading) goToLiftDown(); else if (p.z < -1.8) p.z = -1.8;
       skyBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
     }
     if (where === 'in') {
@@ -9110,7 +9317,7 @@
     if (!reduce) aldHead.rotation.x = Math.sin(t * 0.7) * 0.04;
     if (inV && dAld < 7.5 && !nearAld && !talking() && ['towood', 'sortshapes', 'sacks'].includes(phase)) { nearAld = true; offer(reachAldric); }
     if (dAld > 10.5) nearAld = false;
-    nightLifeTick(dt, t); tinderTick(dt, t); NET.tick(dt, t);
+    nightLifeTick(dt, t); tinderTick(dt, t); liftRunTick(); NET.tick(dt, t);
     grown.forEach(s => { const tg = s.userData.target; if (s.scale.x < tg) { s.scale.setScalar(Math.min(tg, s.scale.x + dt * 0.8)); } });
 
     // the orchards: Hollis and Pip, the mill wheel and its mice, bouncing trees
@@ -9201,7 +9408,7 @@
     if (where === 'flight') flightTick(dt, t);
     if (where === 'skyhaven') {
       const dI = Math.hypot(player.position.x - ILSPOS.x, player.position.z - ILSPOS.z);
-      if (dI < 30) ilsa.lookAt(player.position.x, 0, player.position.z); if (!reduce) { ilsa.userData.scarf.rotation.x = 0.5 + Math.sin(t * 3) * 0.3; ilsa.userData.arms[0].rotation.x = -0.3 + Math.sin(t * 1.1) * 0.2; }
+      if (dI < 30 && FOLK.ilsa.mode === 'post') ilsa.lookAt(player.position.x, 0, player.position.z); if (!reduce) { ilsa.userData.scarf.rotation.x = 0.5 + Math.sin(t * 3) * 0.3; ilsa.userData.arms[0].rotation.x = -0.3 + Math.sin(t * 1.1) * 0.2; }
       if (dI < 7.5 && !nearIls && !talking() && ['toilsa', 'tosky'].includes(phase)) { nearIls = true; offer(reachIlsa); }
       if (dI > 10.5) nearIls = false;
       if (windFan) windFan.rotation.x += dt * 6; spinnersSky.forEach(o => { if (o.userData.sock) o.rotation.y = Math.sin(t * 0.7) * 0.4; else o.position.y += Math.sin(t * 0.6 + o.userData.bob) * dt * 0.4; });
@@ -9278,7 +9485,7 @@
   // the sky-lift and Skyhaven join the continent: one sea, one sky; the stars and the moon belong to the night below the cloud
   tileLift.scene = liftScene; tileLift.sun = liftSun; tileLift.hemi = liftScene.children.find(o => o.isHemisphereLight); liftScene.background = null;
   tileS.scene = skyScene; tileS.sun = skySun; tileS.hemi = skyScene.children.find(o => o.isHemisphereLight); skyScene.background = null; skyScene.userData.dome.visible = false;
-  skyScene.children.forEach(o => { if (o.isMesh && ((o.geometry.type === 'PlaneGeometry' && o.geometry.parameters.width >= 1200) || (o.geometry.type === 'SphereGeometry' && o.scale.x >= 150))) o.visible = false; });   // the painted land and sea far below give way to the real ones
+  skyScene.children.concat(SKY_G.children).forEach(o => { if (o.isMesh && ((o.geometry.type === 'PlaneGeometry' && o.geometry.parameters.width >= 1200) || (o.geometry.type === 'SphereGeometry' && o.scale.x >= 150))) o.visible = false; });   // the painted land and sea far below give way to the real ones
   liftScene.userData.sea.visible = false; liftScene.userData.stars.visible = false;
   liftScene.children.forEach(o => { if (o.isMesh && o.geometry.type === 'SphereGeometry' && o.material.fog === false) o.visible = false; if (o.isMesh && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.width === 24 && o.geometry.parameters.depth === 4.4) o.visible = false; });
   worldScene.userData.nightOnly = lantScene.children.filter(o => o.isPoints || (o.isMesh && o.geometry.type === 'SphereGeometry' && o.material.fog === false));
@@ -9307,6 +9514,15 @@
   trimTowns();
   // ---------- teachers to speak to, the grub's heap, and the ferry bells ----------
   // ---------- the Hollow by the clock: shops shut at nine, everyone walks home to bed, and anyone out after dark has a reason to be ----------
+  // knees and elbows for the Hollow's own people
+  jointify(fen, { hipY: 2.3, x: 0.32, r: 0.2, legC: '#4a5a7a', bootR: 0.3, bootC: '#5a3a1e' });
+  jointify(mari, { hem: 1.9, hipY: 2.4, x: 0.45, r: 0.24, legC: '#5a4a3a', bootR: 0.4, bootC: '#4a2f1a' });
+  jointify(ald, { hem: 3.4, hipY: 3.8, x: 0.6, r: 0.42, legC: '#4a4a5a', bootR: 0.5, bootC: '#3a2a1a' });
+  jointify(bw, { hem: 2.6, hipY: 3.0, x: 0.7, r: 0.45, legC: '#4a3a2a', bootR: 0.55, bootC: '#4a2f1a' });
+  jointify(hol, { hem: 2.4, hipY: 2.8, x: 0.8, r: 0.5, legC: '#5a4a3a', bootR: 0.55, bootC: '#4a2f1a' });
+  jointify(pip, { hipY: 1.1, x: 0.28, r: 0.17, legC: '#6b5a3a', bootR: 0.25, bootC: '#5a3a1e' });
+  jointify(ori, { hem: 2.3, hipY: 2.8, x: 0.6, r: 0.36, legC: '#3a3430', bootR: 0.45, bootC: '#2a2a2a' });
+  jointify(maud, { hem: 1.9, hipY: 2.3, x: 0.55, r: 0.3, legC: '#5a4a3a', bootR: 0.45, bootC: '#4a2f1a' });
   const FOLK = {
     bw: { g: bw, hd: head, n: 'Old Bramblewick', post: BWPOS, home: 'bwhome', via: [[0, 3], [0, 14]] },
     mari: { g: mari, hd: mariHead, n: 'Marigold Fernsby', post: MARIPOS, home: 'marihome', via: [[-24, 48], [-19, 46], [0, 46]] },
@@ -9321,11 +9537,11 @@
     pip2: { g: pip2, hd: pip2.userData.head, n: 'Pip Willowby', post: PIP2POS, home: 'wrenhome', w: 'cairnhold', gx: CRN.w, yaw0: -2.2, kid: true, noKnock: true, fire: [11, -8], via: [[13, 50], [CRN.w, 50]] },
     ori: { g: ori, hd: oriHead, n: 'Captain Oriel Tideknot', post: ORIPOS, py: 1.65, home: 'orihome', w: 'fernwater', via: [[17, 57], [17, 50], [0, 50]] },
     maud: { g: maud, hd: maudHead, n: 'Maudie Crumb', post: maud.position.clone(), home: 'maudhome', w: 'fernwater', indoor: 'bakery', via: [], solid: interiors.bakery.solids.find(q => q.x === maud.position.x && q.z === maud.position.z) } };
-  const FTOWN = { village: { homes: HOMES, lane: LANE.z, gx: 3, sc: scene, sol: solids }, orchards: { homes: OHOMES, lane: ORC.lane, gx: ORC.gx, sc: orchScene, sol: orchSolids }, fernwater: { homes: FHOMES, lane: FRN.lane, gx: 0, sc: fernScene, sol: fernSolids, gy: fernY }, cairnhold: { homes: CHOMES, lane: CRN.lane, gx: CRN.e, sc: cairnScene, sol: cairnSolids }, cogsworth: { homes: GHOMES, lane: CGW.lane, gx: CGW.gx, sc: cogScene, sol: cogSolids }, emberdeep: { homes: THOMES, lane: 0, gx: 0, sc: embScene, sol: embSolids }, wild: { homes: THOMES, lane: 0, gx: 0, sc: worldScene, sol: TF.wsol, gy: (x, z) => worldH(x, z) }, lantern: { homes: LHOMES, lane: LNT.lane, gx: -2, sc: lantScene, sol: lantSolids, gy: lantH } };
+  const FTOWN = { village: { homes: HOMES, lane: LANE.z, gx: 3, sc: scene, sol: solids }, orchards: { homes: OHOMES, lane: ORC.lane, gx: ORC.gx, sc: orchScene, sol: orchSolids }, fernwater: { homes: FHOMES, lane: FRN.lane, gx: 0, sc: fernScene, sol: fernSolids, gy: fernY }, cairnhold: { homes: CHOMES, lane: CRN.lane, gx: CRN.e, sc: cairnScene, sol: cairnSolids }, cogsworth: { homes: GHOMES, lane: CGW.lane, gx: CGW.gx, sc: cogScene, sol: cogSolids }, emberdeep: { homes: THOMES, lane: 0, gx: 0, sc: embScene, sol: embSolids }, wild: { homes: THOMES, lane: 0, gx: 0, sc: worldScene, sol: TF.wsol, gy: (x, z) => worldH(x, z) }, skyhaven: { homes: KHOMES, lane: 0, gx: 0, sc: skyScene, sol: skySolids }, lantern: { homes: LHOMES, lane: LNT.lane, gx: -2, sc: lantScene, sol: lantSolids, gy: lantH } };
   const lyingQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0)));
   const BED = { x: -38 + 7.2, z: -9.5, y: 10 };   // the grown elves' bed, upstairs in every house
   const KIDBED = { x: -38 + 4.4, z: 2, y: 10 };   // the child's bed, in the little room at the head of the stair
-  function folkInit(id, i) { const f = FOLK[id], T = FTOWN[f.w || 'village'], h = f.knock ? THOMES.find(q => q.id === f.knock) : T.homes.find(q => q.id === f.home), lz = T.lane; f.T = T; f.id = id; f.h = h; f.i = i; f.mode = null; f.pose = null;
+  function folkInit(id, i) { const f = FOLK[id], T = FTOWN[f.w || 'village'], h = f.knock ? KHOMES.find(q => q.id === f.knock) : T.homes.find(q => q.id === f.home), lz = T.lane; f.T = T; f.id = id; f.h = h; f.i = i; f.mode = null; f.pose = null;
     f.route = f.route0 || (f.gate ? [[f.post.x, f.post.z], ...f.via, f.gate] : [[f.post.x, f.post.z], ...f.via, [f.gx !== undefined ? f.gx : T.gx, lz], [h.x, lz], [h.x, h.z + h.sg * 30], [h.x, h.z + h.sg * 17]]);   // the mountain's people walk to the cave's gate, where the carriage is
     f.solid = f.solid || T.sol.find(s => s.x === f.post.x && s.z === f.post.z);
     const ud = f.g.userData; f.g.userData = {}; const c = f.g.clone(true); f.g.userData = ud; c.visible = false; c.position.y = 0; interiors[f.home].scene.add(c); f.in = c;   // the same figure again, for indoors
@@ -9333,14 +9549,14 @@
       const B = f.bed || (f.kid ? KIDBED : BED); if (f.kid) { hc.position.set(B.x - 2.5, B.y + 2.55, B.z); md.scale.set(2.3, 0.5, 1.4); md.position.set(B.x + 0.5, B.y + 1.9, B.z); } else { hc.position.set(B.x - 4.1, B.y + 3.5 + 0.55, B.z); md.scale.set(4.3, 0.85, 2.3); md.position.set(B.x + 0.3, B.y + 2.95, B.z); }
       hc.quaternion.copy(lyingQ); bg.add(hc); md.castShadow = true; bg.add(md); }
     const sp = new THREE.Object3D(); interiors[f.home].scene.add(sp); sp.userData = { pickable: true, kind: 'resident', who: id, world: 'in:' + f.home }; pickables.push(sp); f.inSpot = sp;
-    const kn = new THREE.Object3D(); if (f.knock) { kn.position.set(h.knock.x, TF.y, h.knock.z); worldScene.add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: 'wild' }; } else { kn.position.set(h.x, 0, h.z + h.sg * 19.6); T.sc.add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: f.w || 'village' }; } if (!f.noKnock) pickables.push(kn); }
+    const kn = new THREE.Object3D(); if (f.knock) { const kw = h.knock.w || 'wild'; kn.position.set(h.knock.x, h.knock.y !== undefined ? h.knock.y : TF.y, h.knock.z); (kw === 'lantern' ? lantScene : worldScene).add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: kw }; } else if (h) { kn.position.set(h.x, 0, h.z + h.sg * 19.6); T.sc.add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: f.w || 'village' }; } if (!f.noKnock) pickables.push(kn); }
   Object.keys(FOLK).forEach(folkInit);
   const abedNow = () => hollowAbed() && phase === 'free';
   function folkSettle(f, mode) { f.mode = mode; f.g.visible = mode === 'post'; f.g.rotation.z = 0; if (mode === 'post') { f.g.position.x = f.post.x; f.g.position.z = f.post.z; f.g.position.y = f.py || 0; if (f.yaw0 !== undefined) f.g.rotation.set(0, f.yaw0, 0); } if (f.solid) f.solid.x = mode === 'post' ? f.post.x : 1e6; }
   // people who are not teachers: the two who keep the inn, the travellers staying in it, the lamplighter and the watchman. Each is only there at the hours they would be, and each will tell you why.
   const folk = [];
   function addFolk(sc, world, o, x, z, yaw, n, lines, on) { const g = makeElfNPC(o); g.position.set(x, o.sit ? -2.5 : 0, z); g.rotation.y = yaw; g.traverse(m => { if (m.isMesh) m.castShadow = true; }); sc.add(g); Object.assign(g.userData, { pickable: true, kind: 'folk', world, fi: folk.length }); pickables.push(g);
-    const F = { g, n, lines, on, k: 0, solid: o.sit || o.walks ? null : { x, z, r: 1.7 } }; if (F.solid) (world === 'village' ? solids : world === 'orchards' ? orchSolids : world === 'fernwater' ? fernSolids : world === 'cairnhold' ? cairnSolids : world === 'cogsworth' ? cogSolids : world === 'emberdeep' ? embSolids : world === 'wild' ? TF.wsol : world === 'lantern' ? lantSolids : interiors[world.slice(3)].solids).push(F.solid); F.sx = x; folk.push(F); return F; }
+    const F = { g, n, lines, on, k: 0, solid: o.sit || o.walks ? null : { x, z, r: 1.7 } }; if (F.solid) (world === 'village' ? solids : world === 'orchards' ? orchSolids : world === 'fernwater' ? fernSolids : world === 'cairnhold' ? cairnSolids : world === 'cogsworth' ? cogSolids : world === 'emberdeep' ? embSolids : world === 'wild' ? TF.wsol : world === 'skyhaven' ? skySolids : world === 'lantern' ? lantSolids : interiors[world.slice(3)].solids).push(F.solid); F.sx = x; folk.push(F); return F; }
   const day = (a, b) => h => a < b ? h >= a && h < b : h >= a || h < b;
   { const [kx, kz, ky] = INN_SEATS.keeper, isc = interiors.inn.scene;
     addFolk(isc, 'in:inn', { coat: '#a8563a', skin: '#e8b890', hair: '#8a4a2a' }, kx, kz, ky, 'Posy Underbough', ['Posy Underbough. Welcome to the Sleepy Beetle. If you are hungry, ring the bell on the barrel.', 'I keep the day and my brother Moss keeps the night, so there is always somebody awake here.', 'The beetle over the mantel? My grandfather carved him. He has been asleep for sixty years and I have never once seen him wake.'], day(7, 19));
@@ -9366,6 +9582,15 @@
     mk('nell', { coat: '#3a4a9a', skin: '#f0c9a0', hair: '#2a2a2a' }, 102, 130, Math.PI, 'Nell Willowby', ['Nell Willowby, cooper. Every crate and every cider barrel in the Orchards came off this bench.', 'A barrel is staves, hoops and nothing else. No nails and no glue. The cider swells the wood and the wood holds the cider.', 'Pip is mine. The stacking in rows comes from me, and I will not hear a word against it.', 'I work till the light goes. Then it is home to Windfall Lane, number two.'], 'piphome', [[76, 118], [ORC.gx, 118]]);
     mk('bram', { coat: '#b08a3a', skin: '#d9a070', hair: '#dcdcdc' }, 124, 37, -Math.PI / 2, 'Bram Honeywell', ['Bram Honeywell. These are my bees, though the bees would put it the other way about.', 'No bees, no apples. A blossom that no bee visits sets no fruit. Hollis knows it, which is why he lets me have this corner.', 'Walk slowly near the skeps and they will not mind you. It is flapping that upsets them.', 'I wrote it all down once. The Library at Hearthmoor has the book.'], 'bramhome', [[124, 66], [60, 100], [ORC.gx, 104]]);
     mk('tan', { coat: '#4f6b3a', skin: '#c9956a', hair: '#8a4a2a' }, 73, 40.5, -Math.PI / 2, 'Tansy Applegarth', ['Tansy Applegarth. I pick the pears. Apples you can shake down. A pear you must take off by hand, or it bruises.', 'Four rows of six. You will have that worked out before I finish saying it, if Hollis has had you.', 'A pear is picked hard and ripens indoors. One left to go soft on the tree is brown in the middle.', 'Number four, Windfall Lane, with the berry bushes at the back. That is me.'], 'tanhome', [[58, 70], [50, 96], [ORC.gx, 104]]); }
+  // ---- the sky-lift's working runs: the first car of the morning takes Skyhaven's people up, and the last at night brings them down ----
+  const LIFTRUN = { tm: LIFT_T / 3600 }; LIFTRUN.late = LIFTRUN.tm + 0.004;
+  const liftRiders = [{ coat: '#4a3a5a', skin: '#d8b89a', hair: '#2a2a2a', hat: 'cap', capColor: '#5a3d22', tall: 6.2, wide: 1.2 }, { coat: '#2e6b3a', skin: '#c9956a', hair: '#8a5a2a', hat: 'point', capColor: '#2e6b3a', tall: 6, wide: 1.3 }, { coat: '#8a4a2a', skin: '#b98a63', hair: '#1b1b1b', hat: 'none', tall: 5.8, wide: 1.2 }, { coat: '#3e4a56', skin: '#e8c8a8', hair: '#6a4a2a', hat: 'cap', capColor: '#e8b64c', tall: 6.4, wide: 1.25 }, { coat: '#3a5a8a', skin: '#e8d0b8', hair: '#e0dcd4', tall: 5.9, wide: 1.4 }].map((o, i) => { const e = makeElfNPC(o); e.scale.setScalar(0.6); const a = i / 5 * Math.PI * 2; e.position.set(Math.cos(a) * 1.7, 0, Math.sin(a) * 1.7); e.rotation.y = -a + Math.PI / 2; e.visible = false; gondola.add(e); return e; });
+  function liftRunTick() { if (where === 'lift') { liftRiders.forEach(e => { e.visible = false; }); return; }
+    const hr = clockHour(), T = LIFTRUN.tm, m1 = TF.morn, m2 = m1 + T + 0.004, e1 = 21, e2 = e1 + T + 0.006; let u = null, ride = false;
+    if (hr >= m1 && hr < m1 + T) { u = (hr - m1) / T; ride = true; } else if (hr >= m1 + T && hr < m2) u = 1; else if (hr >= m2 && hr < m2 + T) u = 1 - (hr - m2) / T;
+    else if (hr >= e1 && hr < e1 + T) u = (hr - e1) / T; else if (hr >= e1 + T && hr < e2) u = 1; else if (hr >= e2 && hr < e2 + T) { u = 1 - (hr - e2) / T; ride = true; }
+    if (u === null && LIFTRUN.on) u = 0;   // a run just ended: the car is back at the pier, ready for anyone
+    LIFTRUN.on = u !== null && (u > 0 || ride); liftRiders.forEach(e => { e.visible = ride; }); if (u !== null) gondola.position.copy(liftPos(u)); }
   // Lanternreach's own people
   { const mk = (id, o, x, z, yaw, n, lines, home, via) => { const F = addFolk(lantScene, 'lantern', o, x, z, yaw, n, lines, () => F.g.visible); F.g.position.y = lantH(x, z); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), py: lantH(x, z), home, w: 'lantern', via, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
     mk('reef', { coat: '#8a3a2a', skin: '#c9956a', hair: '#3a2a1e', tall: 6.9, wide: 1.2 }, -9, 72, Math.PI / 2, 'Rowan Reef', ['Rowan Reef. The chandlery is mine: rope, lamps, hooks, oil. Ring the bell inside if you want something.', 'Rope is sold by the fathom. A fathom is as far as a grown elf can stretch both arms, so every chandler has their own, and every customer says mine is short.', 'A compass has three hundred and sixty degrees, north at nought. East is ninety. If somebody tells you a bearing bigger than three sixty, they have been round more than once.', 'Number two, Windward Row. The red door on the south side.'], 'reefhome', [[-3, 76]]);
@@ -9383,6 +9608,19 @@
     FOLK.tilly = { g: F.g, hd: F.g.userData.head, n: 'Tilly Cinder', post: new THREE.Vector3(px, 0, pz), py: TF.y, home: 'brokhome', w: 'wild', kid: true, noKnock: true, route0: [[47, 9.5], [40, 9], [40, 16.5]].map(([a, b]) => toWorld(frameT, a, b)), via: [], fire: [-5, -12], bed: { x: -28, y: 0, z: -12 }, solid: F.solid, yaw0: yaw }; folkInit('tilly', Object.keys(FOLK).length - 1);
     const D = TF_CART.spot; D.userData = { pickable: true, kind: 'folk', world: 'wild', fi: folk.length }; pickables.push(D);
     folk.push({ g: D, n: 'Gorse Tallow', lines: ['Gorse Tallow. I drive the Tinderfold carriage: up to Emberdeep before the forges are lit, and home again when they are banked.', 'That is Tuff on the left and Biscuit on the right. Mind Biscuit.', 'Rams, not horses. A horse is quicker on the flat, but a ram never once stopped on a hill.', 'It is workers only, I am afraid. The Guild has not said I can take anybody else yet, and I do not argue with the Guild.'], on: () => D.visible, k: 0, solid: null }); }
+  // Skyhaven's people: they work on the islands and live at the far end of Windward Row in Lanternreach, and the lift takes them up and back
+  { const gate = [0, 8], toE = [[122, 160], [0, 72]], toW = [[-93, 162], [0, 72]], late = LIFTRUN.late;
+    const sky = (id, F, g, n, post, home, via, wi, fire, bed, yaw) => { FOLK[id] = { g, hd: g.userData.head, n, post, home, w: 'skyhaven', via, gate, late, knock: home, fire, bed: { x: bed[0], y: 0, z: bed[1] }, wi, solid: F ? F.solid : skySolids.find(s => s.x === post.x && s.z === post.z), yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); };
+    sky('ilsa', null, ilsa, 'Professor Ilsabet Quill', ILSPOS, 'ilshome', [[0, 60]], 0, [6, -12], [20, -13], 2.6);
+    sky('fensky', null, fenSky, 'Fen', fenSky.position.clone(), 'fphome', toW, 1, [-5, -12], [-24, -11], 2.6);
+    sky('pipsky', null, pipSky, 'Pip', pipSky.position.clone(), 'fphome', toW, 2, [5, -12], [25, -11], 2.2);
+    const C = addFolk(skyScene, 'skyhaven', { coat: '#3e4a56', skin: '#e8c8a8', hair: '#6a4a2a', hat: 'cap', capColor: '#e8b64c', tall: 6.4, wide: 1.25 }, -22, 70, Math.PI / 2, 'Corvin Gale', ['Corvin Gale. I keep the Guild’s counter: goggles, kites, silk, and tea for anyone just down from a long glide.', 'Every wing hanging in the Guild has flown. The ones that did not are firewood.', 'Up here the wind does most of the work. You only have to know which way it is going.', 'I go down on the lift at nine like everybody else. My Lark is waiting at the bottom, and she wants to know how high everyone flew.'], () => C.g.visible);
+    sky('corvin', C, C.g, 'Corvin Gale', new THREE.Vector3(-22, 0, 70), 'galehome', [[0, 60]], 3, [5, -12], [24, -11], Math.PI / 2);
+    const Mb = addFolk(skyScene, 'skyhaven', { coat: '#3a5a8a', skin: '#e8d0b8', hair: '#e0dcd4', tall: 5.9, wide: 1.4 }, 140, 190, Math.PI, 'Mabel Spoke', ['Mabel Spoke. I sew the balloons. Silk, a needle, and more patience than you would think.', 'A balloon goes up because the air inside it is warmer than the air outside. That is all there is to it, and it has taken me forty years to get good at it.', 'Mind the bridges in a cross-wind. Hold the rope, not your hat.', 'At nine I go down on the lift to my cottage in Lanternreach. Thatched roof. The only one in town.'], () => Mb.g.visible);
+    sky('mabel', Mb, Mb.g, 'Mabel Spoke', new THREE.Vector3(140, 0, 190), 'mabhome', toE, 4, [-22, -4], [21, -9], Math.PI);
+    // Lark Gale, who is too small to go up yet, plays outside her house in Lanternreach
+    const L = addFolk(lantScene, 'lantern', { coat: '#e8b64c', skin: '#e8c8a8', hair: '#6a4a2a', hat: 'point', capColor: '#3e4a56', tall: 3, wide: 1 }, -282, 100, Math.PI, 'Lark Gale', ['Lark Gale. My dad works up in Skyhaven, at the Guild. I am going to fly a glider when I am bigger.', 'Every morning I watch the lift go up. You can see it from the end of the pier.', 'That is my kite on the pole. It is the highest thing in Lanternreach that is not the lighthouse.', 'Professor Quill lives on our street. She lets me look at her drawings if I promise not to touch.'], () => L.g.visible);
+    FOLK.lark = { g: L.g, hd: L.g.userData.head, n: 'Lark Gale', post: new THREE.Vector3(-282, 0, 100), home: 'galehome', w: 'lantern', kid: true, noKnock: true, route0: [[-282, 100], [-268, 96], [-268, 106.5]], via: [], fire: [-6, -12], bed: { x: -25, y: 0, z: -11 }, solid: L.solid, yaw0: Math.PI }; folkInit('lark', Object.keys(FOLK).length - 1); }
   // Cogsworth's own people
   { const mk = (id, o, x, z, yaw, n, lines, home, via) => { const F = addFolk(cogScene, 'cogsworth', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'cogsworth', via, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
     mk('ode', { coat: '#c8384a', skin: '#f0c9a0', hair: '#5a3d22' }, 17, 50, -Math.PI / 2, 'Odette Spindle', ['Odette Spindle. I build the bicycles. Tamsin does the sums and I do the wheels, and we argue about which matters more.', 'A wheel is spokes pulling, never pushing. Every spoke pulls the rim toward the hub, and they all pull equally, or the wheel wobbles.', 'Big ring at the pedals, small at the back wheel: one turn of your legs is several turns of the wheel. That is all a gear is.', 'Number two, Cliff Row. The red door.'], 'odehome', [[10, 66], [-20, 80]]);
@@ -9417,6 +9655,12 @@
       reef: asleep ? ['Shop is shut. It will be just as shut in five minutes. Good night.'] : ['Shut up shop for the day. Come by the chandlery tomorrow.'],
       ebb: asleep ? ['Low water is at four. I intend to be asleep for it. Good night.'] : ['The office is closed, but the tide is not. Mind the pier in the dark.'],
       wick: asleep ? ['The lamp is trimmed and turning, and it will turn without me till morning. Good night.'] : ['Lamp is filled for the night. I can watch it go round from my chair, so I do.'],
+      ilsa: asleep ? ['Hm? I was dreaming about a wing with no tail. It flew, too. What is it?'] : ['I am done with the islands for today. But I am never done teaching. Come in.'],
+      fensky: asleep ? ['Fen here. Pip is asleep, or pretending. Come back in the morning and we will show you the engine.'] : ['Kettle is on. Pip has taken the clock apart again.'],
+      pipsky: asleep ? ['Mm? No. No, I was not asleep. Fen was.'] : ['Do not touch the bench. Everything on it is exactly where I put it, even if it does not look like it.'],
+      corvin: asleep ? ['Lark is asleep, and so was I. Good night.'] : ['We are in for the night. Lark has been telling me about every cloud she saw from the pier.'],
+      mabel: asleep ? ['Is something on fire? No? Then good night, dear.'] : ['Come in out of the dark. Mind the silk; it is folded.'],
+      lark: asleep ? ['Is it morning? Is the lift going up?'] : ['Dad says I can stay up till nine, and it is nine, so I am going.'],
       tilly: asleep ? ['Mm. Is it morning? It is not morning.'] : ['Dad is reading me the furnace book. It is mostly about how hot things are.'],
       durna: asleep ? ['HRM. Who hammers on my door? Oh. The small one. Well, iron does not sleep, and nor, it seems, do I. What is it?'] : ['The forge is banked. But a master is a master at any hour. Come in, and mind the anvil.'],
       brok: asleep ? ['Furnaces are banked. So am I. Morning.'] : ['Fires are low for the night. Come to the furnaces tomorrow and I will show you the colour iron goes when it is ready.'],
@@ -9433,11 +9677,11 @@
       pip2: asleep ? ['…a hundred links. I counted them twice. Good night.'] : ['Wren says I may lodge here while I am learning the chain. I have my own bed and everything.'],
       pell: asleep ? ['Is the river up? No? Then it can wait till I read the gauge at dawn. Good night.'] : ['Bridge is sound and the gauge is read. That is my day done. Good night.'] }[who];
     L[0] = pre + L[0];
-    say(L, () => { if (who === 'bw') teacherMenu(0); else if (who === 'mari') sciMenu(); else if (who === 'fen') readMenu(); else if (who === 'hol') teacherMenu(1); else if (who === 'ori') teacherMenu(2); else if (who === 'wren') teacherMenu(3); else if (who === 'tam') teacherMenu(4); else if (who === 'durna') teacherMenu(5); else if (who === 'astra') teacherMenu(6); }, f.n);
+    say(L, () => { if (who === 'bw') teacherMenu(0); else if (who === 'mari') sciMenu(); else if (who === 'fen') readMenu(); else if (who === 'hol') teacherMenu(1); else if (who === 'ori') teacherMenu(2); else if (who === 'wren') teacherMenu(3); else if (who === 'tam') teacherMenu(4); else if (who === 'durna') teacherMenu(5); else if (who === 'astra') teacherMenu(6); else if (who === 'ilsa') teacherMenu(7); }, f.n);
   }
   let shutNow = null;
   function nightLifeTick(dt, t) {
-    const abed = abedNow(), hr = clockHour(), live = gameStarted && !titleUp, seen = where === 'village' && live, seenO = (where === 'orchards' || where === 'fernwater' || where === 'cairnhold' || where === 'cogsworth' || where === 'emberdeep' || where === 'lantern') && live, want0 = abed ? 'home' : 'post';
+    const abed = abedNow(), hr = clockHour(), live = gameStarted && !titleUp, seen = where === 'village' && live, seenO = (where === 'orchards' || where === 'fernwater' || where === 'cairnhold' || where === 'cogsworth' || where === 'emberdeep' || where === 'lantern' || where === 'skyhaven') && live, want0 = abed ? 'home' : 'post';
     Object.values(FOLK).forEach(f => { const R = f.route, want = f.late && want0 === 'post' && hr >= 6 && hr < TF.morn + f.late ? 'home' : want0;   // the mountain's people are not at work till the carriage has brought them up
       if (f.indoor) { if (f.mode === null || (f.mode !== want && !(live && where === 'in' && interior && interior.id === f.indoor))) folkSettle(f, want); }   // somebody who works indoors stays till you have left the shop
       else if (f.mode === null || (f.mode !== want && !(live && where === (f.w || 'village')))) folkSettle(f, want);
@@ -9454,7 +9698,7 @@
         else if (pose === 'fire') { const [fx, fz] = f.fire || [5, -12.5]; f.in.position.set(fx, 0, fz); f.in.rotation.set(0, 0.5, 0); f.inSpot.position.set(fx, 0, fz); } } });
     // shutting-up time, said once as it happens
     { const shut = abed; if (shutNow !== null && shut !== shutNow && where === 'wild' && live && Math.hypot(player.position.x - frameT.ox, player.position.z - frameT.oz) < 320 && !talking()) flash(shut ? 'Nine o\u2019clock. The carriage is coming down the hill to bring Emberdeep\u2019s people home to Tinderfold.' : 'Tinderfold is up. The carriage leaves for Emberdeep before seven.', 6000);
-      if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { const fw = where === 'fernwater', ch = where === 'cairnhold'; if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : where === 'lantern' ? 'Nine by the clock. The sky never changes here, but everyone is walking home to Windward Row.' : where === 'emberdeep' ? 'The forges are banked for the night. Everyone is going out to the carriage at the west gate, to ride home to Tinderfold.' : where === 'cogsworth' ? 'The works are shut for the night, and everyone is walking home to Cliff Row.' : ch ? 'The Lodge is shut for the night, and everyone is walking home to Rim Row.' : fw ? 'The shops are shut, and everyone is walking home over the bridge to Heron Row.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : where === 'lantern' ? 'Seven by the clock, and Lanternreach is up, under the same stars.' : where === 'emberdeep' ? 'The carriage is bringing everyone up from Tinderfold. The forges are lit at seven.' : where === 'cogsworth' ? 'Cogsworth is waking up. The works open at seven.' : ch ? 'Cairnhold is waking up. The Lodge opens at seven.' : fw ? 'The Crossing is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
+      if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { const fw = where === 'fernwater', ch = where === 'cairnhold'; if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : where === 'skyhaven' ? 'Nine o\u2019clock. The Guild is shut, and everyone is going down on the lift to their homes in Lanternreach.' : where === 'lantern' ? 'Nine by the clock. The sky never changes here, but everyone is walking home to Windward Row.' : where === 'emberdeep' ? 'The forges are banked for the night. Everyone is going out to the carriage at the west gate, to ride home to Tinderfold.' : where === 'cogsworth' ? 'The works are shut for the night, and everyone is walking home to Cliff Row.' : ch ? 'The Lodge is shut for the night, and everyone is walking home to Rim Row.' : fw ? 'The shops are shut, and everyone is walking home over the bridge to Heron Row.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : where === 'skyhaven' ? 'The first car of the morning is bringing everyone up from Lanternreach. The Guild opens at seven.' : where === 'lantern' ? 'Seven by the clock, and Lanternreach is up, under the same stars.' : where === 'emberdeep' ? 'The carriage is bringing everyone up from Tinderfold. The forges are lit at seven.' : where === 'cogsworth' ? 'Cogsworth is waking up. The works open at seven.' : ch ? 'Cairnhold is waking up. The Lodge opens at seven.' : fw ? 'The Crossing is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
     folk.forEach(F => { const on = F.on(hr); if (on !== F.g.visible) { F.g.visible = on; if (F.solid) F.solid.x = on ? F.sx : 1e6; } });
     if (WICK.g.visible && seen) { const g = WICK.g, L = LANE.x1 - 28, u = (netNow() * 3.2) % (2 * L); WICK.dir = u < L ? 1 : -1; g.position.x = 10 + (u < L ? u : 2 * L - u); g.rotation.y = WICK.dir * Math.PI / 2; g.position.y = Math.abs(Math.sin(t * 5)) * 0.1; }
     if (where === 'in' && interior) roomNight(interior);
@@ -9475,7 +9719,7 @@
     shopBell(scene, 'village', -1.2, 2.41, -4.6, 'stores', { hidden: true });   // Bramblewick's counter already has its bell
     shopBell(scene, 'village', FEN.x - 0.9, 3.05, FEN.z + 3.3, 'fen');
     shopBell(scene, 'village', WOOD.x - 5.5, 2.3, WOOD.z + 6.5, 'wood', { post: true }); solids.push({ x: WOOD.x - 5.5, z: WOOD.z + 6.5, r: 0.9 });
-    [['potting', 1.3, 2.33, -7.1, 'nursery'], ['bakery', 3.2, 2.5, -1.2, 'bakery'], ['ropes', 4.5, 2.4, -2.8, 'ropes'], ['nets', 4, 2.4, -2.3, 'nets'], ['lodge', 5, 2.2, 4.4, 'lodge'], ['clockworks', 3.5, 2.6, -2.2, 'clockworks'], ['bikeworks', 3, 2.2, -2.4, 'bikeworks'], ['chandlery', 4.8, 2.44, -2.1, 'chandlery'], ['guild', 3, 2.2, -2.2, 'guild']].forEach(([room, x, y, z, shop]) => { if (interiors[room]) shopBell(interiors[room].scene, 'in:' + room, x, y, z, shop); });
+    [['potting', 1.3, 2.33, -7.1, 'nursery'], ['bakery', 3.2, 2.5, -1.2, 'bakery'], ['ropes', 4.5, 2.4, -2.8, 'ropes'], ['nets', 4, 2.4, -2.3, 'nets'], ['lodge', 5, 2.2, 4.4, 'lodge'], ['clockworks', 3.5, 2.6, -2.2, 'clockworks'], ['bikeworks', 3, 2.2, -2.4, 'bikeworks'], ['chandlery', 4.8, 2.44, -2.1, 'chandlery'], ['guild', 4.8, 2.44, -2.1, 'guild']].forEach(([room, x, y, z, shop]) => { if (interiors[room]) shopBell(interiors[room].scene, 'in:' + room, x, y, z, shop); });
     shopBell(interiors.mill.scene, 'in:mill', 5, 2.3, 12.6, 'mill', { post: true }); interiors.mill.solids.push({ x: 5, z: 12.6, r: 0.9 });
     shopBell(embScene, 'emberdeep', DURPOS.x + 4.6, 2.3, DURPOS.z - 3, 'durna', { post: true }); embSolids.push({ x: DURPOS.x + 4.6, z: DURPOS.z - 3, r: 0.9 });
     // Hearthmoor: a barrel and bell before each trade hall, and a bell on each market stall
@@ -9947,7 +10191,7 @@
   function youAreHere() {
     // the player's spot on the parchment
     if (where === 'in') { const saved = where, px = player.position.x, pz = player.position.z; where = interior.region; player.position.x = interior.door.x; player.position.z = interior.door.z; const r = youAreHere(); where = saved; player.position.x = px; player.position.z = pz; return r; }
-    if (where === 'skyhaven') { const [cx, cy] = MAPPOS[7]; return [cx + player.position.x * 0.1, cy - (player.position.z - 60) * 0.1]; }
+    if (where === 'skyhaven') { const [cx, cy] = MAPPOS[7]; return [cx + player.position.x * 0.1 / SKY_K, cy - (player.position.z / SKY_K - 60) * 0.1]; }
     if (where === 'lift' || where === 'flight') { const tt = where === 'lift' ? liftT : 1 - flightT, a = MAPPOS[6], b = MAPPOS[7]; if (where === 'flight') { const h = MAPPOS[0]; return [b[0] + (h[0] - b[0]) * flightT, b[1] + (h[1] - b[1]) * flightT]; } return [a[0] + (b[0] - a[0]) * tt, a[1] + (b[1] - a[1]) * tt]; }
     { const [wx, wz] = playerWorldXZ(), [x, y] = mapXY(wx, wz); if (x > 0 && x < 1000 && y > 0 && y < 640) return [x, y]; }
     return MAPPOS[currentRegionIndex()];
