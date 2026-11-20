@@ -369,7 +369,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 106 · 20 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 107 · 20 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -652,13 +652,13 @@
   }, 0.24);
   grassField(12000, 0.2, 0.6, p => {
     p.set(rnd(FENCE.x0 + 1, FENCE.x1 - 1), 0, rnd(FENCE.z0 + 1, FENCE.z1 - 1));
-    return Math.hypot(p.x, p.z) > R + 0.8 && !onPath(p.x, p.z, -0.5) && Math.hypot(p.x - OAK.x, p.z - OAK.z) > 6.5 && Math.hypot(p.x - BUSH.x, p.z - BUSH.z) > 5 && Math.hypot(p.x - NURS.x, p.z - NURS.z) > 20 && Math.hypot(p.x - WOOD.x, p.z - WOOD.z) > 9 && !nearHome(p.x, p.z, -1);
+    return Math.hypot(p.x, p.z) > R + 0.8 && !onPath(p.x, p.z, -0.5) && Math.hypot(p.x - OAK.x, p.z - OAK.z) > 6.5 && Math.hypot(p.x - BUSH.x, p.z - BUSH.z) > 5 && Math.hypot(p.x - NURS.x, p.z - NURS.z) > 20 && Math.hypot(p.x - WOOD.x, p.z - WOOD.z) > 9 && !nearHome(p.x, p.z, -1) && !inStableYard(p.x, p.z);
   }, 0.07);
   {
     const mesh = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.5, 0), mat('#ffffff', { roughness: 1 }), 260);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
     for (let i = 0; i < 260; i++) {
-      let guard = 0; do { p.set(rnd(FENCE.x0, FENCE.x1), 0.1, rnd(FENCE.z0, FENCE.z1)); } while (guard++ < 30 && (Math.hypot(p.x, p.z) < R + 1 || Math.hypot(p.x - NURS.x, p.z - NURS.z) < 20 || Math.hypot(p.x - WOOD.x, p.z - WOOD.z) < 9 || nearHome(p.x, p.z, 1) || onPath(p.x, p.z, 0.5)));
+      let guard = 0; do { p.set(rnd(FENCE.x0, FENCE.x1), 0.1, rnd(FENCE.z0, FENCE.z1)); } while (guard++ < 30 && (Math.hypot(p.x, p.z) < R + 1 || Math.hypot(p.x - NURS.x, p.z - NURS.z) < 20 || Math.hypot(p.x - WOOD.x, p.z - WOOD.z) < 9 || nearHome(p.x, p.z, 1) || onPath(p.x, p.z, 0.5) || inStableYard(p.x, p.z)));
       q.setFromEuler(new THREE.Euler(rnd(0, 3), rnd(0, 3), rnd(0, 3)));
       const k = rnd(0.4, 1.6); s.set(k, k * 0.6, k * rnd(0.8, 1.2));
       mesh.setMatrixAt(i, m4.compose(p, q, s)); mesh.setColorAt(i, col.set(pick(['#9b9789', '#86826f', '#b1ab98', '#7c786a'])));
@@ -680,6 +680,7 @@
   }
 
   // ---------- flowers and toadstools ----------
+  function inStableYard(x, z) { return x > -57.5 && x < -14.5 && z > -46 && z < -21; }   // nothing grows through the stable floor
   function makeFlower(color) {
     const g = new THREE.Group(), h = rnd(2.5, 5.5);
     const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, h, 6), mat('#4f7a2f')); stem.position.y = h / 2; g.add(stem);
@@ -706,7 +707,7 @@
   const flowerColors = ['#f0e6f5', '#e68fb0', '#f4d35e', '#9fb7f0', '#ffffff'];
   for (let i = 0, guard = 0; i < 130 && guard < 4000; guard++) {
     const x = rnd(FENCE.x0 + 3, FENCE.x1 - 3), z = rnd(FENCE.z0 + 3, FENCE.z1 - 3);
-    if (nearBig(x, z, -1) || onPath(x, z, 1.5)) continue;
+    if (nearBig(x, z, -1) || onPath(x, z, 1.5) || inStableYard(x, z)) continue;
     const f = makeFlower(pick(flowerColors)); f.position.set(x, 0, z); f.rotation.y = rnd(0, 6.3); scene.add(f); i++;
   }
   for (let i = 0, guard = 0; i < 40 && guard < 900; guard++) {
@@ -1470,7 +1471,7 @@
   { const tg = new THREE.Group(); scene.add(tg);
     const put = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); tg.add(q); return q; };
     const tree = (x, z, s) => { put(new THREE.CylinderGeometry(1.1 * s, 1.6 * s, 12 * s, 9), gBark, x, 6 * s, z); [[0, 17, 0, 8.5], [-5.5, 14, 2.5, 6], [6, 14.5, -2, 6.5], [1, 13.5, 6, 5.5], [-1, 21, -1, 5.5]].forEach(([a, y, b, r], q) => put(new THREE.IcosahedronGeometry(r * s, 1), q % 2 ? gBushB : gBushA, x + a * s, y * s, z + b * s)); solids.push({ x, z, r: 1.8 * s }); };
-    [[-40, -42, 1], [-8, -46, 0.8], [10, -40, 1], [64, 4, 0.8], [90, 136, 1], [150, 130, 1.15], [202, 140, 0.9], [258, 128, 1], [274, -22, 1.05], [163, 132, 0.7]].forEach(([x, z, s]) => tree(x, z, s));
+    [[-8, -46, 0.8], [10, -40, 1], [64, 4, 0.8], [90, 136, 1], [150, 130, 1.15], [202, 140, 0.9], [258, 128, 1], [274, -22, 1.05], [163, 132, 0.7]].forEach(([x, z, s]) => tree(x, z, s));
     const wx = 28, wz = 8, roofM = mat('#a8563a', { roughness: 1 });
     put(new THREE.CylinderGeometry(3.2, 3.4, 2.6, 18), gStone, wx, 1.3, wz); put(new THREE.CylinderGeometry(2.5, 2.5, 2.7, 18), mat('#2a3a4a', { roughness: 0.3 }), wx, 1.3, wz); put(new THREE.CylinderGeometry(3.5, 3.5, 0.3, 18), gStone, wx, 2.7, wz); put(new THREE.CylinderGeometry(2.45, 2.45, 0.34, 18), mat('#3a6a8a', { roughness: 0.2 }), wx, 2.56, wz);
     [-1, 1].forEach(s => put(new THREE.BoxGeometry(0.5, 8, 0.5), gBark, wx + s * 3, 4, wz)); put(new THREE.CylinderGeometry(0.25, 0.25, 6.4, 8), gBark, wx, 6.6, wz).rotation.z = Math.PI / 2;
@@ -2627,7 +2628,7 @@
 
   // ---------- interiors: every building is its own room, loaded when you walk through its door ----------
   function makeRoom(id, o) {
-    const sc = new THREE.Scene(); const W = o.w, D = o.d, H = o.h || 9, DH = o.doorH || clamp(H - 1.4, 6.4, 9);   // the way out is as tall as the room allows, up to a grown elf's door
+    const sc = new THREE.Scene(); const G = o.grow || 1, W = o.w * G, D = o.d * G, H = (o.h || 9) * G, DH = o.doorH || clamp(H - 1.4, 6.4, 9);   // the way out is as tall as the room allows, up to a grown elf's door
     const night = o.region === 'lantern';   // it is always night outside in Lanternreach
     const skyM = new THREE.Mesh(new THREE.SphereGeometry(200, 16, 12), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, color: night ? '#16223c' : '#ffffff' })); sc.add(skyM);
     const winM = mat('#fff0c8', { emissive: '#ffd27a', emissiveIntensity: 0.8, side: THREE.DoubleSide });
@@ -2653,7 +2654,9 @@
     // windows along the side walls
     [-1, 1].forEach(d => { for (let z = -D / 2 + 4; z < D / 2 - 2; z += 6) { const w = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), winM); w.position.set(d * (W / 2 - 0.05), H * 0.55, z); w.rotation.y = -d * Math.PI / 2; sc.add(w); [[0, 0, 3, 0.2], [0, 0, 0.2, 3]].forEach(([ox, oy, ww, hh]) => { const fr = new THREE.Mesh(new THREE.BoxGeometry(0.25, hh, ww), trimM); fr.position.set(d * (W / 2 - 0.1), H * 0.55 + oy, z + ox); sc.add(fr); }); } });
     const it = { id, scene: sc, w: W, d: D, h: H, solids: [], boxes: [], label: o.label, region: o.region, hint: o.hint || '', door: null, hinge, doorA: 0, out: o.out, city: !!o.city, sky: skyM, win: winM, dayl, ground: outside, nn: -1 };
-    o.decorate && o.decorate(sc, it.solids, { wall, W, D, H, trimM, id, boxes: it.boxes, room: it, seat: (x, z, yaw, top, label, y0) => seatSpot(sc, 'in:' + id, x, z, yaw, top, label, y0) });
+    const n0 = sc.children.length;
+    o.decorate && o.decorate(sc, it.solids, { wall, W: W / G, D: D / G, H: H / G, trimM, id, boxes: it.boxes, room: it, seat: (x, z, yaw, top, label, y0) => seatSpot(sc, 'in:' + id, x, z, yaw, top, label, y0) });
+    if (G !== 1) { sc.children.slice(n0).forEach(c => { c.position.multiplyScalar(G); c.scale.multiplyScalar(G); }); it.solids.forEach(q => { q.x *= G; q.z *= G; q.r *= G; }); it.boxes.forEach(q => { q.x *= G; q.z *= G; q.hw *= G; q.hd *= G; }); }   // a room first drawn small, made the size grown elves need, with everything in it
     sc.traverse(m => { if (m.isMesh && m !== outside && m !== floor) { m.castShadow = true; m.receiveShadow = true; } });
     interiors[id] = it; return it;
   }
@@ -3506,7 +3509,7 @@
     const lane = new THREE.Mesh(new THREE.PlaneGeometry(7, CLIFFWALL - 12), mat('#ffffff', { map: dirtTex, color: '#b9b2a4' })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.03, (CLIFFWALL - 12) / 2); cogScene.add(lane);
     townGate(cogScene, cogSolids, 0, 0, 'To Cairnhold', 'Cogsworth', '#b08a3a', 1);
     const bigGear = makeGear(2.4, 16, '#b08a3a'); bigGear.position.set(0, 21.6, 0); bigGear.rotation.x = Math.PI / 2; bigGear.userData.spin = 0.4; cogScene.add(bigGear); spinners.push(bigGear);
-    const hillSign = signBoard('To Emberdeep \u2014 over the hill', 7, 1.1, '#f2e6c8', '#3a2a18'); hillSign.position.set(52, 3.6, 70); hillSign.rotation.y = -Math.PI / 2; cogScene.add(hillSign); const hp = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 4, 6), mat('#5a4a3a')); hp.position.set(52, 2, 70); cogScene.add(hp);
+    const hillSign = signBoard('To Emberdeep \u2014 over the hill', 7, 1.1, '#f2e6c8', '#3a2a18'); hillSign.position.set(52, 7.6, 77.5); hillSign.rotation.y = -Math.PI / 2; hillSign.scale.set(1.5, 1.5, 1); cogScene.add(hillSign); [-4, 4].forEach(o => { const hp = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.32, 8.6, 8), mat('#5a4a3a')); hp.position.set(52.2, 4.3, 77.5 + o); hp.castShadow = true; cogScene.add(hp); cogSolids.push({ x: 52.2, z: 77.5 + o, r: 0.6 }); });
     // the two works, built against the cliff
     function cogBuilding(id, x, z, facing, label, W, D, H, color) {
       const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = facing; cogScene.add(g);
@@ -3609,7 +3612,7 @@
     const dg = mount === 'dog';
     if (on && ((!dg && !bikeOwned) || where === 'in' || inRiver(player.position.x, player.position.z) || sitting)) return;
     riding = on; bike.visible = on && !dg; py = 0; kid.legs.forEach(l => { l.rotation.x = 0; l.rotation.z = 0; });
-    if (on) { if (dg) { kid.body.position.set(0, DOG_SEAT, -0.5); kid.body.rotation.x = 0.06; } else { kid.body.position.set(0, 0.98, -0.7); kid.body.rotation.x = 0.3; } } else { kid.body.position.set(0, 0, 0); kid.body.rotation.x = 0; player.rotation.z = 0; if (dg) { dogDrop = true; mount = 'bike'; } }
+    if (on) { if (dg) { kid.body.position.set(0, DOG_TOP * 0.66 / player.scale.x - 0.7, -0.5); kid.body.rotation.x = 0.06; } else { kid.body.position.set(0, 0.98, -0.7); kid.body.rotation.x = 0.3; } } else { kid.body.position.set(0, 0, 0); kid.body.rotation.x = 0; player.rotation.z = 0; if (dg) { dogDrop = true; mount = 'bike'; } }
     flash(on ? (dg ? `Riding ${DOGNAME}. Press the ride key again to get down.` : 'Riding. Press the ride key again to get off.') : 'On foot.');
   }
   function goToCogsworth() {
@@ -3619,7 +3622,7 @@
     }, () => { hint('Cogsworth. The Clockworks is on the right as you face the cliff; Tamsin Gearwright is outside it, covered in oil.'); if (phase === 'tocog') phase = 'totam'; if (pendingStart) { const f = pendingStart; pendingStart = null; player.position.set(-4, 0, 42); bodyYaw = camYaw = -1.2; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); setTimeout(f, 300); } });
   }
 
-  { const gx = 149, gh = cogH(gx, 70); [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), mat('#8c8577')); gp.position.set(gx, gh + 3.5, 70 + o); cogScene.add(gp); cogSolids.push({ x: gx, z: 70 + o, r: 1 }); }); const lin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1, 12), mat('#7a7468')); lin.position.set(gx, gh + 7.3, 70); cogScene.add(lin); const sg = signBoard('To Emberdeep', 5.4, 1.3, '#8a3a2a', '#f6e7c2'); sg.position.set(gx - 0.2, gh + 8.6, 70); sg.rotation.y = -Math.PI / 2; cogScene.add(sg); }
+  { const gx = 149, gh = cogH(gx, 70); [-6.5, 6.5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(2.2, 14, 2.2), mat('#8c8577')); gp.position.set(gx, gh + 7, 70 + o); gp.castShadow = true; cogScene.add(gp); cogSolids.push({ x: gx, z: 70 + o, r: 1.5 }); }); const lin = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, 16.4), mat('#7a7468')); lin.position.set(gx, gh + 14.8, 70); lin.castShadow = true; cogScene.add(lin); const sg = signBoard('To Emberdeep', 9, 2, '#8a3a2a', '#f6e7c2'); sg.position.set(gx - 0.2, gh + 16.9, 70); sg.rotation.y = -Math.PI / 2; cogScene.add(sg); }
 
   // ---------- Region 6: Emberdeep, the dwarven forges under the mountain ----------
   const EMB_LEN = 120, DURPOS = new THREE.Vector3(-10, 0, 42), LAVA_X = 34, EMBW = { x0: -230, wall: 128, lane: 112, gx: -62 };   // the hall now runs on westward into Hearth Gallery, where its people live
@@ -3743,7 +3746,8 @@
     const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); ground.receiveShadow = true; lantScene.add(ground);
     const sea = seaPlane(lantScene, 560, LANT_LEN / 2, 1100, 1400, SEA_Y); sea.material.color.set('#3a5f86'); lantScene.userData.sea = sea;
     const lane = new THREE.Mesh(new THREE.PlaneGeometry(7, LANT_LEN), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.05, LANT_LEN / 2); lantScene.add(lane);
-    const covePath = new THREE.Mesh(new THREE.PlaneGeometry(4, 56), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); covePath.rotation.x = -Math.PI / 2; covePath.position.set(28, 0.06, COVE.z); covePath.rotation.z = Math.PI / 2; lantScene.add(covePath);
+    // the path from the lane to the head of the boardwalk lies on the ground all the way
+    { const verts = [], uvs = [], idx = []; let n = 0; for (let x = 3.4; x <= 37.4; x += 2) { [[-2.4, 0], [2.4, 1]].forEach(([o, u]) => { verts.push(x, lantH(x, PIER.z + o) + 0.07, PIER.z + o); uvs.push(u, x / 5); }); if (n > 0) { const a = (n - 1) * 2, b = n * 2; idx.push(a, b, a + 1, a + 1, b, b + 1); } n++; } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(idx); g.computeVertexNormals(); const cp = new THREE.Mesh(g, mat('#ffffff', { map: dirtTex, color: '#8a8478', side: THREE.DoubleSide })); cp.receiveShadow = true; cp.userData.flatGround = true; lantScene.add(cp); }
     const gg = new THREE.ConeGeometry(0.22, 1, 3); gg.translate(0, 0.5, 0);
     const grass = new THREE.InstancedMesh(gg, mat('#ffffff', { roughness: 0.9 }), 5200);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), col = new THREE.Color();
@@ -3764,7 +3768,7 @@
       const cone = new THREE.Mesh(new THREE.ConeGeometry(14, 240, 16, 1, true), new THREE.MeshBasicMaterial({ color: '#ffe9a0', transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false, fog: false })); cone.rotation.z = Math.PI / 2; cone.position.x = 120; cone.rotation.y = 0; beam.add(cone);
       beamLight = new THREE.SpotLight('#ffe9a0', 1.6, 500, 0.12, 0.6, 0.5); beamLight.position.set(0, 0, 0); beamLight.target.position.set(200, -30, 0); beam.add(beamLight); beam.add(beamLight.target);
       const door = new THREE.Mesh(new THREE.BoxGeometry(2.6, 4.6, 0.3), mat('#3a2a1e')); door.position.set(0, 2.3, 5.3); g.add(door); hingeDoor(door, g);
-      lantSolids.push({ x: LIGHT.x, z: LIGHT.z, r: 7.4 });
+      g.scale.setScalar(2); lantSolids.push({ x: LIGHT.x, z: LIGHT.z, r: 15 });   // a light that grown elves keep: twice the size it was first drawn
       const sg = signBoard('Lanternreach Light', 6, 1.1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 7, 7); g.add(sg); }
     // the observatory: a stone drum, a brass dome, a telescope poking out
     { const g = new THREE.Group(); g.position.set(-34, 0, 32); lantScene.add(g);
@@ -3774,7 +3778,8 @@
       const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 9, 10), brassM); scope.position.set(0, 12, 3); scope.rotation.x = -0.9; g.add(scope);
       const door = new THREE.Mesh(new THREE.BoxGeometry(2.6, 4.6, 0.3), mat('#3a2a1e')); door.position.set(0, 2.3, 7.45); g.add(door); hingeDoor(door, g); const step = new THREE.Mesh(new THREE.BoxGeometry(4, 0.4, 2), stoneM); step.position.set(0, 0.2, 8.2); g.add(step);
       const sg = signBoard('The Observatory', 5.4, 1, '#1f3a5a', '#f6e7c2'); sg.position.set(0, 6.4, 7.6); g.add(sg);
-      lantSolids.push({ x: -34, z: 32, r: 8 }); }
+      g.scale.setScalar(2); g.rotation.y = Math.PI / 2; lantSolids.push({ x: -34, z: 32, r: 16 });   // its door faces the lane
+      const op = new THREE.Mesh(new THREE.PlaneGeometry(12, 4), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); op.rotation.x = -Math.PI / 2; op.position.set(-9.5, 0.06, 32); op.userData.flatGround = true; lantScene.add(op); }
     // the cottages, each with its own inside
     function lantBuilding(id, x, z, facing, label, W, D, H, color) {
       const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = facing; lantScene.add(g);
@@ -3788,11 +3793,11 @@
       const steps = new THREE.Mesh(new THREE.BoxGeometry(5, 0.5, 2.2), stoneM); steps.position.set(0, 0.25, D / 2 + 1.4); g.add(steps);
       const doorX = x + Math.sin(facing) * (D / 2), doorZ = z + Math.cos(facing) * (D / 2);
       const path = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(doorX) - 3.5, 3), mat('#ffffff', { map: dirtTex, color: '#8a8478' })); path.rotation.x = -Math.PI / 2; path.position.set((doorX + (facing > 0 ? -3.5 : 3.5)) / 2, 0.06, doorZ); lantScene.add(path);
-      { const bx = { id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } }; lantBoxes.push(bx); growBuilding(g, facing, D, bx); }
+      { const bx = { id, x, z, hw: D / 2 + 0.3, hd: W / 2 + 0.3, door: { x: doorX, z: doorZ } }; lantBoxes.push(bx); growBuilding(g, facing, D, bx, 1.8, 1.9, 1.8); }
       interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
       return g;
     }
-    makeRoom('observatory', { w: 16, d: 16, h: 12, wall: '#cfc8b6', trim: '#1f3a5a', label: 'The Observatory', region: 'lantern', hint: 'A great brass telescope, star charts, and an orrery that turns on its own.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+    makeRoom('observatory', { grow: 1.6, w: 16, d: 16, h: 12, wall: '#cfc8b6', trim: '#1f3a5a', label: 'The Observatory', region: 'lantern', hint: 'A great brass telescope, star charts, and an orrery that turns on its own.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
       const brass = mat('#b08a3a', { metalness: 0.6, roughness: 0.4 });
       const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.6, 2.4, 12), mat('#4a3a2a')); base.position.set(0, 1.2, -1); sc.add(base); solids.push({ x: 0, z: -1, r: 1.8 });
       const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.7, 7, 14), brass); scope.position.set(0, 5, -2.6); scope.rotation.x = -0.9; sc.add(scope);
@@ -3803,31 +3808,31 @@
       const lb = signBoard('The pole star: as high as you are north', 7, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(-W / 2 + 0.3, 7.6, 0); lb.rotation.y = Math.PI / 2; sc.add(lb);
       wall(5, 2, 2.4, -4, 1, 5, mat('#5a3d22')); solids.push({ x: -4, z: 5, r: 2.4 }); const book = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.3, 1.2), mat('#7a2e2e')); book.position.set(-4, 2.15, 5); sc.add(book);
     } });
-    interiors.observatory.door = { x: -34, z: 32 + 7.4 + 4.5, yaw: 0 };
-    makeRoom('keepers', { w: 16, d: 13, h: 8, wall: '#e6ddc8', trim: '#2a3a5a', label: 'The Keeper’s Cottage', region: 'lantern', hint: 'Oil lamps, a log book open on the table, and the smell of the sea.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+    interiors.observatory.door = { x: -34 + 14.9 + 6, z: 32, yaw: Math.PI / 2 };
+    makeRoom('keepers', { grow: 1.6, w: 16, d: 13, h: 8, wall: '#e6ddc8', trim: '#2a3a5a', label: 'The Keeper’s Cottage', region: 'lantern', hint: 'Oil lamps, a log book open on the table, and the smell of the sea.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
       wall(6, 2, 3, -3, 1, -2, mat('#5a3d22')); solids.push({ x: -3, z: -2, r: 3 }); const book = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 1.8), mat('#efe3c4')); book.position.set(-3, 2.2, -2); sc.add(book);
       const lb = signBoard('Oil per night: 2, 4, 6, 8 …', 5.6, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(-3, 4.2, -D / 2 + 0.3); sc.add(lb);
       for (let k = 0; k < 4; k++) { const can = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.3, 10), mat('#3a3a3a', { metalness: 0.6 })); can.position.set(W / 2 - 1.2, 0.65, -4 + k * 2); sc.add(can); }
       const bed = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 6), mat('#4a5a7a')); bed.position.set(W / 2 - 2, 0.5, 2.5); sc.add(bed); solids.push({ x: W / 2 - 2, z: 2.5, r: 3.2 });
       const chart = new THREE.Mesh(new THREE.PlaneGeometry(5, 3.4), mat('#1b2a44')); chart.position.set(3, 4.8, -D / 2 + 0.15); sc.add(chart); for (let k = 0; k < 30; k++) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 3), mat('#ffffff', { emissive: '#ffffff' })); st.position.set(3 + rnd(-2.3, 2.3), 4.8 + rnd(-1.5, 1.5), -D / 2 + 0.2); sc.add(st); }
     } });
-    makeRoom('chandlery', { w: 18, d: 14, h: 8, wall: '#d8d2c0', trim: '#2a3a5a', label: 'Reef & Rope Chandlery', region: 'lantern', hint: 'Rope, lanterns, hooks, and a compass rose painted on the floor.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
-      wall(10, 2.2, 2.6, 0, 1.1, -3, mat('#4a3a2a')); solids.push({ x: -3, z: -3, r: 2.4 }, { x: 3, z: -3, r: 2.4 });
+    makeRoom('chandlery', { grow: 1.6, w: 18, d: 14, h: 8, wall: '#d8d2c0', trim: '#2a3a5a', label: 'Reef & Rope Chandlery', region: 'lantern', hint: 'Rope, lanterns, hooks, and a compass rose painted on the floor.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+      wall(10, 2.2, 2.6, 0, 1.1, -3, mat('#4a3a2a')); solids.push({ x: -3, z: -3, r: 2.4 }, { x: 3, z: -3, r: 2.4 }); wall(1.6, 0.12, 0.9, 3, 1.45, -1.3, trimM);   // a low shelf on the front of the counter, so a small customer can reach the bell
       for (let k = 0; k < 6; k++) { const coil = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.3, 8, 16), mat('#b89a6a')); coil.rotation.x = Math.PI / 2; coil.position.set(-7 + k * 2.6, 0.3, 4); sc.add(coil); }
       for (let k = 0; k < 5; k++) { const ln = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 1.2, 8), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 0.6 })); ln.position.set(-6 + k * 3, 5.5, -D / 2 + 0.6); sc.add(ln); }
       const rose = new THREE.Mesh(new THREE.CircleGeometry(2.6, 8), mat('#2a3a5a')); rose.rotation.x = -Math.PI / 2; rose.position.set(4, 0.02, 1); sc.add(rose); const ros2 = new THREE.Mesh(new THREE.CircleGeometry(1.2, 4), mat('#efe3c4')); ros2.rotation.x = -Math.PI / 2; ros2.position.set(4, 0.03, 1); sc.add(ros2);
       const lb = signBoard('N 0°  E 90°  S 180°  W 270°', 6.4, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(4, 3.8, -D / 2 + 0.3); sc.add(lb);
     } });
-    makeRoom('tides', { w: 16, d: 12, h: 8, wall: '#dfe6e8', trim: '#2a3a5a', label: 'The Tide Office', region: 'lantern', hint: 'Tide tables on every wall, and a brass gauge that goes up and down all day.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+    makeRoom('tides', { grow: 1.6, w: 16, d: 12, h: 8, wall: '#dfe6e8', trim: '#2a3a5a', label: 'The Tide Office', region: 'lantern', hint: 'Tide tables on every wall, and a brass gauge that goes up and down all day.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
       wall(7, 2, 2.4, 0, 1, -2.5, mat('#4a3a2a')); solids.push({ x: 0, z: -2.5, r: 3.4 });
       const lb = signBoard('High 8 · Low 2 · Mid 5 · every 12 h', 7.4, 0.8, '#efe3c4', '#1b1b1b'); lb.position.set(0, 4.6, -D / 2 + 0.3); sc.add(lb);
       const board = new THREE.Mesh(new THREE.PlaneGeometry(8, 3.6), mat('#efe3c4')); board.position.set(0, 2.9, -D / 2 + 0.12); sc.add(board);
       const pts = []; for (let x = -3.8; x <= 3.8; x += 0.2) pts.push(new THREE.Vector3(x, 2.9 + Math.sin(x * 1.6) * 1.3, -D / 2 + 0.14)); const curve = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: '#1f3a5a' })); sc.add(curve);
       const gauge = new THREE.Mesh(new THREE.BoxGeometry(0.8, 6, 0.4), mat('#b08a3a', { metalness: 0.6 })); gauge.position.set(W / 2 - 1, 3, 0); sc.add(gauge); const fl = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 0.6), mat('#c8384a')); fl.position.set(W / 2 - 1, 3, 0); fl.userData.tide = true; sc.add(fl); sc.userData.tideFloat = fl;
     } });
-    lantBuilding('keepers', 22, 60, -Math.PI / 2, 'The Keeper’s Cottage', 16, 13, 8, '#e6ddc8');
-    lantBuilding('chandlery', -24, 70, Math.PI / 2, 'Reef & Rope Chandlery', 18, 14, 8, '#d8d2c0');
-    lantBuilding('tides', -22, 100, Math.PI / 2, 'The Tide Office', 16, 12, 8, '#dfe6e8');
+    lantBuilding('keepers', 22, 64, -Math.PI / 2, 'The Keeper’s Cottage', 16, 13, 8, '#e6ddc8');
+    lantBuilding('chandlery', -24, 65, Math.PI / 2, 'Reef & Rope Chandlery', 18, 14, 8, '#d8d2c0');
+    lantBuilding('tides', -22, 106, Math.PI / 2, 'The Tide Office', 16, 12, 8, '#dfe6e8');
     // Windward Row: a street west from the lane, with two family houses on each side of it
     { const verts = [], uvs = [], idx = []; let n = 0; for (let x = -3.4; x >= LNT.x0 + 6; x -= 2) { const h = lantH(x, LNT.lane) + 0.07; [[-3.5, 0], [3.5, 1]].forEach(([o, u]) => { verts.push(x, Math.max(h, lantH(x, LNT.lane + o) + 0.07), LNT.lane + o); uvs.push(u, x / 7); }); if (n > 0) { const a = (n - 1) * 2, b = n * 2; idx.push(a, a + 1, b, a + 1, b + 1, b); } n++; }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(idx); g.computeVertexNormals(); const row = new THREE.Mesh(g, mat('#ffffff', { map: dirtTex, color: '#8a8478', side: THREE.DoubleSide })); row.receiveShadow = true; row.userData.flatGround = true; lantScene.add(row);
@@ -3893,7 +3898,7 @@
     // the pier end, the Pillar Rocks with the upper pylon, and the cable
     const pierEnd = new THREE.Mesh(new THREE.BoxGeometry(24, 0.6, 4.4), mat('#ffffff', { map: plankTex })); pierEnd.position.set(-8, PIER.y - 0.36, 0); pierEnd.scale.z = 0.97; liftScene.add(pierEnd);   // a hair under Lanternreach's own pier, which runs over the same spot
     const pylon = (x, z, h) => { const p = new THREE.Mesh(new THREE.BoxGeometry(3, h, 3), mat('#3a3a3a', { metalness: 0.5 })); p.position.set(x, SEA_Y + h / 2, z); liftScene.add(p); const arm = new THREE.Mesh(new THREE.BoxGeometry(8, 1, 1), mat('#3a3a3a', { metalness: 0.5 })); arm.position.set(x, SEA_Y + h, z); liftScene.add(arm); return SEA_Y + h; };
-    const y0 = pylon(0, 3, 24);
+    const y0 = pylon(0, 3, PIER.y - SEA_Y + 6.02);   // the gondola waits with its floor level with the pier, so you walk straight in
     [[300, 40, 12, 60], [330, 70, 10, 48], [280, 110, 14, 70]].forEach(([x, z, r, h]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r, h, 9), mat('#4e4a44', { flatShading: true, roughness: 1 })); st.position.set(x - 70, SEA_Y + h / 2 - 6, z - 40); liftScene.add(st); const top = new THREE.PointLight('#8fd0ff', 1.4, 90); top.position.set(x - 70, SEA_Y + h - 4, z - 40); liftScene.add(top); });
     const y1 = pylon(230, 3, 80);
     const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1, 6), mat('#2a2a2a', { metalness: 0.6 })); const a = new THREE.Vector3(0, y0 + 0.5, 3), b = LIFT_TOP.clone().add(new THREE.Vector3(0, 6, 3)); const len = a.distanceTo(b); cable.scale.y = len; cable.position.copy(a).lerp(b, 0.5); cable.lookAt(b); cable.rotateX(Math.PI / 2); liftScene.add(cable);
@@ -4764,7 +4769,8 @@
     [[-15, -5.5], [-12.4, -5.6], [-13.7, -5.5, 2.3], [14, -5.4]].forEach(([x, z, y]) => { const bl = put(new THREE.BoxGeometry(2.6, 2.2, 3.6), straw, x, (y || 0) + 1.1, z); bl.rotation.y = (x * 7 % 5) * 0.05; });
     put(new THREE.BoxGeometry(5, 1.8, 2), wd, 3.4, 0.9, -6.4); put(new THREE.BoxGeometry(4.4, 0.16, 1.5), mat('#4a7fb8', { roughness: 0.2 }), 3.4, 1.75, -6.4);
     put(new THREE.CylinderGeometry(1.5, 1.2, 0.9, 12), mat('#8f8a7a', { roughness: 1 }), -3.6, 0.45, -6.2); put(new THREE.CylinderGeometry(1.3, 1.3, 0.1, 12), mat('#6b4a2b'), -3.6, 0.92, -6.2);
-    const sn = signBoard('The Hollow Stables', 12, 2, '#5a3d22', '#f6e7c2'); sn.position.set(X, H + 1.6, Z + D / 2 + 0.2); scene.add(sn);
+    const sn = signBoard('The Hollow Stables', 12, 2, '#5a3d22', '#f6e7c2'); sn.position.set(X, H + 0.35, Z + 10.75); scene.add(sn); [-5.2, 5.2].forEach(x => put(new THREE.BoxGeometry(0.5, 2.2, 0.5), wd, x, H + 0.35, 10.45));   // on the edge of the eave, where the roof does not cut across it
+    [-4, 4].forEach(x => chain(scene, X + x, H - 0.45, 10.35, Z + 7.75));   // the name board under the beam hangs on two chains
     sg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(sg);
     hollowBoxes.push({ x: X, z: Z - D / 2, hw: W / 2 + 0.4, hd: 0.6 }, { x: X - W / 2, z: Z, hw: 0.6, hd: D / 2 }, { x: X + W / 2, z: Z, hw: 0.6, hd: D / 2 }, { x: X - 6, z: Z - 1.5, hw: 0.4, hd: D / 2 - 1.5 }, { x: X + 6, z: Z - 1.5, hw: 0.4, hd: D / 2 - 1.5 });
     solids.push({ x: X - 6, z: Z + D / 2 - 0.4, r: 0.8 }, { x: X + 6, z: Z + D / 2 - 0.4, r: 0.8 }, { x: X - 14, z: Z - 5.5, r: 2.6 }, { x: X + 14, z: Z - 5.4, r: 2 }, { x: X + 3.4, z: Z - 6.4, r: 2.2 }, { x: X - 3.6, z: Z - 6.2, r: 1.5 });
@@ -4776,7 +4782,7 @@
   async function dogFetch() { dogSt.at = performance.now(); if (dogLocal()) { dogSt.mine = !!save.dogMine; dogSt.owner = dogSt.mine ? (save.name || 'Elfling') : ''; dogSt.home = !save.dog; dogBoardSet(); return; }
     try { const rows = await rpcOpen('game_mounts_list'), q = Array.isArray(rows) ? rows.find(r => r && r.id === 'bracken') : null; dogSt.owner = q ? String(q.name || 'Elfling').slice(0, 16) : ''; dogSt.mine = !!(q && q.mine); dogSt.home = q ? q.home !== false : true; dogBoardSet(); if (dogSt.mine && !dogSt.home && !save.dog && !(riding && mount === 'dog')) dogHomeFlag(true); } catch (e) {} }
   function dogHomeFlag(home) { dogSt.home = home; if (!dogLocal() && dogSt.mine) rpc('game_mount_home', { p_id: 'bracken', p_home: home }).catch(() => {}); }
-  function dogPut(sc, x, y, z, r, world) { if (rdog.parent !== sc) sc.add(rdog); rdog.position.set(x, y, z); rdog.rotation.set(0, r, 0); rdog.visible = true; rdog.userData.world = world; }
+  function dogPut(sc, x, y, z, r, world) { rdog.scale.setScalar(0.66); if (rdog.parent !== sc) sc.add(rdog); rdog.position.set(x, y, z); rdog.rotation.set(0, r, 0); rdog.visible = true; rdog.userData.world = world; }
   function dogMount() { if (!dogSt.mine || riding || where === 'in' || sitting || talking()) return; mount = 'dog'; const wasHome = !save.dog; player.add(rdog); rdog.position.set(0, 0, 0); rdog.rotation.set(0, 0, 0); rdog.visible = true; setRiding(true); if (!riding) { mount = 'bike'; return; } save.dog = { w: where, p: [0, 0, 0], r: 0, on: 1 }; if (wasHome) dogHomeFlag(false); persist(); }
   function dogSendHome(quiet) { if (riding && mount === 'dog') { riding = false; bike.visible = false; kid.body.position.set(0, 0, 0); kid.body.rotation.x = 0; player.rotation.z = 0; py = 0; mount = 'bike'; dogDrop = false; } save.dog = null; persist(); dogHomeFlag(true); dogPut(scene, DOG_HOME[0], 0, DOG_HOME[2], 0, 'village'); if (!quiet) flash(DOGNAME + ' is back in his stall.', 4500); }
   function rideKey() { if (talking()) return; if (riding) { setRiding(false); return; }
@@ -4815,7 +4821,7 @@
     const sp = mineOn ? vel.length() : (rdog.userData.gait || 0), L = rdog.userData.legs; dogPh += dt * Math.min(22, 3 + sp * 0.62);
     const amp = Math.min(0.85, sp / 22); L.forEach((l, q) => { l.rotation.x = sp > 0.5 ? Math.sin(dogPh + (q < 2 ? 0 : Math.PI * 0.85) + (q % 2) * 0.5) * amp : 0; });
     rdog.userData.tail.rotation.z = Math.sin(t * (sp > 0.5 ? 9 : 4)) * (sp > 0.5 ? 0.25 : 0.4);
-    if (mineOn) { rdog.position.y = Math.abs(Math.sin(dogPh)) * 0.16 * amp; kid.body.position.y = DOG_SEAT + rdog.position.y; }
+    if (mineOn) { const ps = player.scale.x; rdog.scale.setScalar(0.66 / ps); rdog.position.y = Math.abs(Math.sin(dogPh)) * 0.16 * amp; kid.body.position.y = DOG_TOP * 0.66 / ps - 0.7 + rdog.position.y; }   // he is one size whoever rides him, however tall they have grown
     const free = rdog.visible && rdog.parent && rdog.parent !== player && rdog.userData.world !== 'ridden'; dogSpot.visible = !!free; if (free) { if (dogSpot.parent !== rdog.parent) rdog.parent.add(dogSpot); dogSpot.position.set(rdog.position.x + Math.sin(rdog.rotation.y) * 3.2, rdog.position.y + 3, rdog.position.z + Math.cos(rdog.rotation.y) * 3.2); dogSpot.userData.world = rdog.userData.world; }
   }
   embBenches.forEach(([x, z, yaw]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.5, 1.8), mat('#55504a', { roughness: 1 })); b.position.set(x, 0.75, z); b.rotation.y = yaw; b.castShadow = true; embScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.5, label: 'stone by the brazier', world: 'emberdeep' }; pickables.push(b); embSolids.push({ x, z, r: 1.6 }); });
@@ -8516,7 +8522,7 @@
       // from the water or the sand below, you get onto the pier only at a ladder
       if (onPier(p.x, p.z) && !onPier(prev.x, prev.z) && groundAt(prev.x, prev.z) + py < PIER.y - 0.9 && !atLadder(prev.x, prev.z)) { p.x = prev.x; p.z = prev.z; }
       if (onPier(p.x, p.z) && p.x > PIER.x1 - 2.5 && !fading) goToLift(false);
-      if (Math.hypot(p.x - (-34), p.z - (32 + 7.4)) < 2.6 && !fading) enterInterior('observatory');
+      if (Math.hypot(p.x - (-34 + 15.6), p.z - 32) < 3 && !fading) enterInterior('observatory');
       lantBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
     }
     if (where === 'lift') {
@@ -8568,7 +8574,7 @@
     const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' || rh ? 0.62 : ZOOMS[zoom]) * (1 + (kid.tall - 1) * 0.5), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
     const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4 * kid.tall;
     // when ground or a wall is in the way, the camera comes closer; it never climbs, so your view keeps the tilt you chose
-    const floorY = where === 'wild' ? (toLocal(tileL, player.position.x, player.position.z)[0] > 30 ? SEA_L : -1000) : where === 'lantern' || where === 'sea' ? SEA_Y : where === 'cairnhold' ? -GORGE.depth : where === 'skyhaven' ? -600 : -0.1; // the lowest the camera may go: water, or the bottom of what you fell into
+    const floorY = where === 'wild' ? (toLocal(tileL, player.position.x, player.position.z)[0] > 30 ? SEA_L : -1000) : where === 'lantern' || where === 'sea' || where === 'lift' ? SEA_Y : where === 'cairnhold' ? -GORGE.depth : where === 'skyhaven' ? -600 : -0.1; // the lowest the camera may go: water, or the bottom of what you fell into
     const groundOk = p => where === 'in' || p.y >= Math.max(groundAt(p.x, p.z), floorY) + 0.7;
     let dd = dist, pos;
     for (let i = 0; i < 24; i++) {
@@ -8898,7 +8904,7 @@
       if (windFan) windFan.rotation.x += dt * 6; spinnersSky.forEach(o => { if (o.userData.sock) o.rotation.y = Math.sin(t * 0.7) * 0.4; else o.position.y += Math.sin(t * 0.6 + o.userData.bob) * dt * 0.4; });
       if (glider && glider.userData.prop.visible) glider.userData.prop.rotation.z += dt * 12;
     }
-    if (where === 'in' && interior.id === 'tides' && interior.scene.userData.tideFloat) interior.scene.userData.tideFloat.position.y = 3 + Math.sin(t * 0.5) * 2.4;
+    if (where === 'in' && interior.id === 'tides' && interior.scene.userData.tideFloat) interior.scene.userData.tideFloat.position.y = (3 + Math.sin(t * 0.5) * 2.4) * 1.6;
     if (where === 'in' && interior.id === 'mill') { const u = interior.scene.userData; u.runner.rotation.y += dt * wheelSpeed * 1.5; u.shaft.rotation.y += dt * wheelSpeed * 1.5; u.gear.rotation.y += dt * wheelSpeed * 1.5; u.axle.rotation.x += dt * wheelSpeed; }
     if (gameStarted && !mapOpen && keysShown < 99) { keysShown += dt; if (keysShown > 9) { keysEl.classList.add('gone'); keysShown = 99; } }
     if (canvas.clientWidth !== shownW || canvas.clientHeight !== shownH) resize();
@@ -9059,9 +9065,9 @@
     mk('tan', { coat: '#4f6b3a', skin: '#c9956a', hair: '#8a4a2a' }, 73, 40.5, -Math.PI / 2, 'Tansy Applegarth', ['Tansy Applegarth. I pick the pears. Apples you can shake down. A pear you must take off by hand, or it bruises.', 'Four rows of six. You will have that worked out before I finish saying it, if Hollis has had you.', 'A pear is picked hard and ripens indoors. One left to go soft on the tree is brown in the middle.', 'Number four, Windfall Lane, with the berry bushes at the back. That is me.'], 'tanhome', [[58, 70], [50, 96], [ORC.gx, 104]]); }
   // Lanternreach's own people
   { const mk = (id, o, x, z, yaw, n, lines, home, via) => { const F = addFolk(lantScene, 'lantern', o, x, z, yaw, n, lines, () => F.g.visible); F.g.position.y = lantH(x, z); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), py: lantH(x, z), home, w: 'lantern', via, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
-    mk('reef', { coat: '#8a3a2a', skin: '#c9956a', hair: '#3a2a1e', tall: 6.9, wide: 1.2 }, -8, 76.5, Math.PI / 2, 'Rowan Reef', ['Rowan Reef. The chandlery is mine: rope, lamps, hooks, oil. Ring the bell inside if you want something.', 'Rope is sold by the fathom. A fathom is as far as a grown elf can stretch both arms, so every chandler has their own, and every customer says mine is short.', 'A compass has three hundred and sixty degrees, north at nought. East is ninety. If somebody tells you a bearing bigger than three sixty, they have been round more than once.', 'Number two, Windward Row. The red door on the south side.'], 'reefhome', [[-3, 80]]);
-    mk('ebb', { coat: '#3e6a6a', skin: '#f0c9a0', hair: '#c9a06a', tall: 6.7, wide: 1.15 }, -8, 105.5, Math.PI / 2, 'Marnie Ebb', ['Marnie Ebb, of the Tide Office. I can tell you where the water will be at any hour you care to name.', 'High water is eight on the gauge and low is two. Halfway is five. It goes from one to the other and back about every twelve hours, and it has never once been late.', 'It does not go up in a straight line. It is slow at the top, slow at the bottom, and quick in the middle. Astra calls that a sine wave. I call it the tide.', 'Number three, Windward Row, on the north side. I can see the gauge from my bedroom, which is either handy or a curse.'], 'ebbhome', [[-3, 100]]);
-    mk('wick', { coat: '#b8323a', skin: '#d9a070', hair: '#dcdcdc', tall: 7, wide: 1.25 }, 35, 43, -Math.PI / 2, 'Jory Wick', ['Jory Wick. I keep the light. One turn every twelve seconds, and it has not missed one in my time.', 'It is always night here, so the lamp never goes out. I trim it, I fill it, and I polish the glass, and then it is time to trim it again.', 'Thirty degrees a second, that beam. Twelve seconds, three hundred and sixty degrees. A ship that counts the seconds between flashes knows it is us and nobody else.', 'Number four, Windward Row, the far house. You will know it by the lamp glasses in the window.'], 'wickhome', [[4, 43]]); }
+    mk('reef', { coat: '#8a3a2a', skin: '#c9956a', hair: '#3a2a1e', tall: 6.9, wide: 1.2 }, -9, 72, Math.PI / 2, 'Rowan Reef', ['Rowan Reef. The chandlery is mine: rope, lamps, hooks, oil. Ring the bell inside if you want something.', 'Rope is sold by the fathom. A fathom is as far as a grown elf can stretch both arms, so every chandler has their own, and every customer says mine is short.', 'A compass has three hundred and sixty degrees, north at nought. East is ninety. If somebody tells you a bearing bigger than three sixty, they have been round more than once.', 'Number two, Windward Row. The red door on the south side.'], 'reefhome', [[-3, 76]]);
+    mk('ebb', { coat: '#3e6a6a', skin: '#f0c9a0', hair: '#c9a06a', tall: 6.7, wide: 1.15 }, -9, 112, Math.PI / 2, 'Marnie Ebb', ['Marnie Ebb, of the Tide Office. I can tell you where the water will be at any hour you care to name.', 'High water is eight on the gauge and low is two. Halfway is five. It goes from one to the other and back about every twelve hours, and it has never once been late.', 'It does not go up in a straight line. It is slow at the top, slow at the bottom, and quick in the middle. Astra calls that a sine wave. I call it the tide.', 'Number three, Windward Row, on the north side. I can see the gauge from my bedroom, which is either handy or a curse.'], 'ebbhome', [[-3, 106]]);
+    mk('wick', { coat: '#b8323a', skin: '#d9a070', hair: '#dcdcdc', tall: 7, wide: 1.25 }, 20, 27, -Math.PI / 2, 'Jory Wick', ['Jory Wick. I keep the light. One turn every twelve seconds, and it has not missed one in my time.', 'It is always night here, so the lamp never goes out. I trim it, I fill it, and I polish the glass, and then it is time to trim it again.', 'Thirty degrees a second, that beam. Twelve seconds, three hundred and sixty degrees. A ship that counts the seconds between flashes knows it is us and nobody else.', 'Number four, Windward Row, the far house. You will know it by the lamp glasses in the window.'], 'wickhome', [[4, 27]]); }
   // Emberdeep's own people
   { const mk = (id, o, x, z, yaw, n, lines, home, via) => { const F = addFolk(embScene, 'emberdeep', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'emberdeep', via, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
     mk('brok', { coat: '#8a3a2a', skin: '#c9956a', hair: '#1b1b1b', tall: 4.4, wide: 2 }, -41, 30, Math.PI / 2, 'Brokk Cinder', ['Brokk Cinder. I keep the furnaces. Too cool and the ore only sulks. Too hot and you burn the iron you were after.', 'Iron is in the rock already. All a furnace does is get it hot enough to let go, and give it charcoal to let go to.', 'The bellows are the trick. More air, more heat. A fire is only as hot as the air you feed it.', 'Number two, Hearth Gallery. Warmest hold in the mountain, and I like it that way.'], 'brokhome', [[-41, 112]]);
@@ -9157,7 +9163,7 @@
     shopBell(scene, 'village', -1.2, 2.41, -4.6, 'stores', { hidden: true });   // Bramblewick's counter already has its bell
     shopBell(scene, 'village', FEN.x - 0.9, 3.05, FEN.z + 3.3, 'fen');
     shopBell(scene, 'village', WOOD.x - 5.5, 2.3, WOOD.z + 6.5, 'wood', { post: true }); solids.push({ x: WOOD.x - 5.5, z: WOOD.z + 6.5, r: 0.9 });
-    [['potting', 1.3, 2.33, -7.1, 'nursery'], ['bakery', 3.2, 2.5, -1.2, 'bakery'], ['ropes', 4.5, 2.4, -2.8, 'ropes'], ['nets', 4, 2.4, -2.3, 'nets'], ['lodge', 5, 2.2, 4.4, 'lodge'], ['clockworks', 3.5, 2.6, -2.2, 'clockworks'], ['bikeworks', 3, 2.2, -2.4, 'bikeworks'], ['chandlery', 3, 2.2, -2.4, 'chandlery'], ['guild', 3, 2.2, -2.2, 'guild']].forEach(([room, x, y, z, shop]) => { if (interiors[room]) shopBell(interiors[room].scene, 'in:' + room, x, y, z, shop); });
+    [['potting', 1.3, 2.33, -7.1, 'nursery'], ['bakery', 3.2, 2.5, -1.2, 'bakery'], ['ropes', 4.5, 2.4, -2.8, 'ropes'], ['nets', 4, 2.4, -2.3, 'nets'], ['lodge', 5, 2.2, 4.4, 'lodge'], ['clockworks', 3.5, 2.6, -2.2, 'clockworks'], ['bikeworks', 3, 2.2, -2.4, 'bikeworks'], ['chandlery', 4.8, 2.44, -2.1, 'chandlery'], ['guild', 3, 2.2, -2.2, 'guild']].forEach(([room, x, y, z, shop]) => { if (interiors[room]) shopBell(interiors[room].scene, 'in:' + room, x, y, z, shop); });
     shopBell(interiors.mill.scene, 'in:mill', 5, 2.3, 12.6, 'mill', { post: true }); interiors.mill.solids.push({ x: 5, z: 12.6, r: 0.9 });
     shopBell(embScene, 'emberdeep', DURPOS.x + 4.6, 2.3, DURPOS.z - 3, 'durna', { post: true }); embSolids.push({ x: DURPOS.x + 4.6, z: DURPOS.z - 3, r: 0.9 });
     // Hearthmoor: a barrel and bell before each trade hall, and a bell on each market stall
@@ -9559,7 +9565,7 @@
       out.push(`<line x1="${X(0)}" y1="${Z(0)}" x2="${X(0)}" y2="${Z(138)}" stroke="#8a8478" stroke-width="5" stroke-linecap="round"/><line x1="${X(4)}" y1="${Z(COVE.z)}" x2="${X(58)}" y2="${Z(COVE.z)}" stroke="#8a8478" stroke-width="3"/>`);
       out.push(`<rect x="${X(PIER.x0)}" y="${Z(PIER.z) - 2}" width="${X(PIER.x1) - X(PIER.x0)}" height="4" fill="#b89a6a"/>`);
       const spot = (x, z, r, fill, label) => `<circle cx="${X(x)}" cy="${Z(z)}" r="${r}" fill="${fill}" stroke="#f6e7c2" stroke-width="1"/><text x="${X(x)}" y="${Z(z) + r + 9}" text-anchor="middle" font-size="8" fill="#f6e7c2">${label}</text>`;
-      out.push(spot(LIGHT.x, LIGHT.z, 6, '#f2efe6', 'The Light'), spot(-34, 32, 5, '#b08a3a', 'Observatory'), spot(ASTPOS.x, ASTPOS.z, 3.5, '#9fb8e8', 'Astra'), spot(22, 60, 4, '#e6ddc8', 'Keeper\u2019s'), spot(-24, 70, 4, '#d8d2c0', 'Chandlery'), spot(-22, 100, 4, '#dfe6e8', 'Tide Office'), spot(150, 86, 2.5, '#b8323a', 'Bell buoy'));
+      out.push(spot(LIGHT.x, LIGHT.z, 6, '#f2efe6', 'The Light'), spot(-34, 32, 5, '#b08a3a', 'Observatory'), spot(ASTPOS.x, ASTPOS.z, 3.5, '#9fb8e8', 'Astra'), spot(22, 64, 4, '#e6ddc8', 'Keeper\u2019s'), spot(-24, 65, 4, '#d8d2c0', 'Chandlery'), spot(-22, 106, 4, '#dfe6e8', 'Tide Office'), spot(150, 86, 2.5, '#b8323a', 'Bell buoy'));
       out.push(`<rect x="${X(-5)}" y="${Z(0) - 2}" width="${X(5) - X(-5)}" height="4" fill="#cfc8b6"/><text x="${X(0)}" y="${Z(0) + 12}" text-anchor="middle" font-size="8" fill="#f6e7c2">Gate</text>`);
       return { svg: out.join(''), X, Z };
     },

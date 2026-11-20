@@ -146,13 +146,22 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Not yet:** every town but Skyhaven keeps hours. Skyhaven's people stay put until they have homes to go to. The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
 - How it works: `daySecs()` reads the clock in `ZONE`; `hollowAbed()` and `shopsShut()` are the hours. `FOLK` holds the four with their post, their home and the way between; `nightLifeTick` walks them, puts their indoor figures by the fire or in bed, and shows or hides everyone in `folk` (each has an `on(hour)` test). `shopShut(id)` and `shopRing(id)` decide between the shop, the honesty box and a shut door. `roomNight(room)` darkens a room's windows.
 
+## Fixes in build 107
+
+- **The Hollow Stables.** The tree that grew through the roof is gone. Flowers, grass and stones no longer come up through the stable floor. The stable's sign sits on the edge of the eave where the roof does not cut it, and Bracken's name board hangs from the beam on two chains.
+- **Bracken stays one size.** He used to grow when a taller elf got on, because he took on the rider's size. He is now the same size ridden or standing, whoever rides him.
+- **Cogsworth.** The "To Emberdeep, over the hill" sign stands beside the path on two solid posts instead of in the middle of it. The arch at the top of the hill is twice as tall and wider, for grown elves.
+
 ## Lanternreach at full size
 
 - **Windward Row.** A new street runs west from the lane, between the chandlery and the Tide Office, with two full-size family houses on each side: Vell, Reef, Ebb and Wick. Each has its fenced garden, gate, letterbox and a walk-in home inside, the same as the houses in the Hollow. The town's ground now reaches 180 units further west, and the plain is levelled under the row so the houses sit square. It meets the open land with no edge.
 - **Three new people.** Rowan Reef keeps the chandlery, Marnie Ebb the Tide Office, and Jory Wick the light. They talk about fathoms and compass bearings, the tide as a wave, and the beam's thirty degrees a second.
 - **Hours.** It is always night in Lanternreach, so people go by the clock: home along the row at nine, by the fire, then bed, and back at seven. The chandlery bell is shut at night. Knock on Astra's door and she will still teach.
 - **Taller lamps** down the lane, to suit grown elves.
-- **Not yet:** the lighthouse, observatory, keeper's cottage, chandlery and Tide Office are the size they were, which is small beside the new houses. The two painted hills that stood west of the town are gone, because the row stands where they were.
+- **Every building is grown-elf size (build 107).** The lighthouse and the observatory are twice the size they were, and the observatory's door now faces the lane. The keeper's cottage, the chandlery and the Tide Office are nearly twice as wide and deep, with doors a grown elf walks through. Inside, all four rooms and everything in them are 1.6 times bigger. The chandlery bell sits on a low shelf on the front of the counter so a small elf can still reach it.
+- **The cove path** now lies on the ground from the lane to the head of the boardwalk. The old flat strip that stuck out over the cliff is gone.
+- **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
+- **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
 ## Emberdeep at full size
 
