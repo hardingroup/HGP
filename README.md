@@ -143,8 +143,18 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Honesty boxes.** A shop that is shut and sells food (the Stores, Dewberry's stall) still lets you buy the food from an honesty box; nothing else, and nobody is there to buy from you. A shop with no food (the potting shed, the woodshop) says it is shut till seven.
 - **The Sleepy Beetle** is the inn on the green, and it never shuts. Posy Underbough keeps it from 7 in the morning to 7 in the evening and her brother Moss through the night. It sells hot cocoa and barley stew (both made here), and bread, pie, cider and nut mix. Inside there is a great hearth with the carved beetle asleep over it, two settles by the fire, four tables with stools, and the bar; ring the bell on the barrel. Three travellers sit in from 5 in the evening until 11: a carter, a road surveyor and a pedlar.
 - **Anyone out at night has a reason,** and will tell you it. Wick Tallow the lamplighter walks the lane from dusk to dawn. Bryn Ashlock minds the gate from 9 until the Hollow wakes. Both sleep by day at the inn.
-- **Not yet:** only the Hollow, Mallow Orchards and Fernwater keep hours. The other towns' shops stay open and their people stay put until they have homes to go to. The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
+- **Not yet:** only the Hollow, Mallow Orchards, Fernwater and Cairnhold keep hours. The other towns' shops stay open and their people stay put until they have homes to go to. The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
 - How it works: `daySecs()` reads the clock in `ZONE`; `hollowAbed()` and `shopsShut()` are the hours. `FOLK` holds the four with their post, their home and the way between; `nightLifeTick` walks them, puts their indoor figures by the fire or in bed, and shows or hides everyone in `folk` (each has an `on(hour)` test). `shopShut(id)` and `shopRing(id)` decide between the shop, the honesty box and a shut door. `roomNight(room)` darkens a room's windows.
+
+## Cairnhold at full size
+
+- **The town is now 448 wide** (it was 120), still 150 long, still up on its plateau with the gorge across it. The lodge, the stone yard, the pasture, the odd field, the cairn ring and the cisterns are exactly where and what size they were, because the lessons measure them.
+- **Rim Row** is a lane along the near side of the gorge, with two houses east of the old town and two west, all looking across the gorge: no. 1 Ashcombe (Wren, with Pip lodging while he learns the chain), no. 2 Fellwick (Una, who keeps the pasture), no. 3 Scree (Garth, the mason), no. 4 Marl (Tobias, who carries the other end of the surveyor's chain). A path leaves the main lane on each side and runs up to it. There is a low drystone wall along the rim in front of the houses; the rim by the old town is as open as it was.
+- The houses are on the near side on purpose: the bridge is not there until a learner builds it, and nobody should have to cross a gorge to get home.
+- **Both gates** are the grown-elf kind, and there are full-height lamps on the lane, the two paths and Rim Row.
+- **Hours.** The Lodge shuts at 9 and opens at 7. Wren, Pip, Una, Garth and Tobias walk home at 9, sit by the fire till 10, then bed. Knock and whoever is in answers; Wren will teach at any hour. A lesson under way keeps Wren and Pip at their places.
+- **Not yet:** the Lodge itself is the size it was.
+- How it works: `CRN` holds the width, the lane and the two paths; `CHOMES` the houses; `cairnHB` their walls and fences. A person can now have their own way onto the lane (`gx` on a `FOLK` entry).
 
 ## Fernwater Crossing at full size
 

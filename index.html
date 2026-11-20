@@ -369,7 +369,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 102 · 20 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 103 · 20 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -1988,7 +1988,15 @@
   function wildRiver(x, z) { const [rd, lx] = riverD(x, z); return rd < riverHW(lx) && Math.abs(lx) >= FRN.x && cityDeck(x, z) === null; }
   // Cairnhold stands on a highland 26 units up, open on every side, facing on toward Cogsworth. Its gorge runs out across the country both ways.
   const yawC = Math.atan2(COG_AT[0] - CAIRN_AT[0], COG_AT[1] - CAIRN_AT[1]);
-  const tileC = makeTile('cairnhold', null, 0, 0, yawC, [-60, 60, 0, 150]); tileC.open = true; tileC.oy = 26; tileC.blend = 1000; tileC.noCrop = true;
+  const CRN = { x: 224, lane: 96, e: 46, w: -52 };   // Cairnhold: Rim Row runs along the near side of the gorge, reached by a path either side of the old town
+  const cairnHB = [], cairnBenches = [];
+  const CHOMES = [
+    { id: 'wrenhome', no: 1, x: -92, face: 0, yard: 'frame', sign: 'Ashcombe', wall: '#d9d4c8', trim: '#4a5560', roof: '#5a6b7a', door: '#4a5560', flower: '#9fb7f0' },
+    { id: 'unahome', no: 2, x: -176, face: 0, yard: 'berries', sign: 'Fellwick', wall: '#e0dccf', trim: '#5a4a3a', roof: '#8a6a9a', door: '#5a4a3a', flower: '#e68fb0' },
+    { id: 'garhome', no: 3, x: 92, face: 0, yard: 'wood', sign: 'Scree', wall: '#cfcabb', trim: '#4a3420', roof: '#6e6a62', door: '#4a3420', flower: '#f4d35e' },
+    { id: 'tobhome', no: 4, x: 176, face: 0, yard: 'hive', sign: 'Marl', wall: '#dcd6c4', trim: '#3e5a4a', roof: '#4f7a5a', door: '#3e5a4a', flower: '#ffffff' }];
+  CHOMES.forEach(h => { h.hw = 26; h.hd = 16; h.sg = 1; h.z = CRN.lane - 38; });
+  const tileC = makeTile('cairnhold', null, 0, 0, yawC, [-CRN.x, CRN.x, 0, 150]); tileC.open = true; tileC.oy = 26; tileC.blend = 1000; tileC.noCrop = true;
   { const [cx, cz] = toWorld(tileC, 0, 75); tileC.ox += CAIRN_AT[0] - cx; tileC.oz += CAIRN_AT[1] - cz; tileC.m.setPosition(tileC.ox, tileC.oy, tileC.oz); tileC.inv = tileC.m.clone().invert(); }
   const GW = { zc: 115, hw: 8, depth: 34, half: 1800, rim: 20, out: 46 };
   // Cogsworth sits at the foot of a crag, its east gate pointing at Emberdeep. The crag is real: you can climb its back and look down on the town.
@@ -2194,7 +2202,7 @@
   // the gorge outside the town: clean rock walls, a floor with the torrent, and a grass rim, all following the land
   {
     const rimV = [], rimUV = [], rimI = [], rockV = [], rockI = [], watV = [], watI = [];
-    [-1, 1].forEach(sd => { let first = true; for (let a = 69; a <= GW.half; a += 6) { const lx = sd * a, G = gorgeG(lx) + 0.04, F = G - 0.04 - gorgeDepth(lx), z = GW.zc;
+    [-1, 1].forEach(sd => { let first = true; for (let a = CRN.x + 9; a <= GW.half; a += 6) { const lx = sd * a, G = gorgeG(lx) + 0.04, F = G - 0.04 - gorgeDepth(lx), z = GW.zc;
       const r0 = rimV.length / 3; [[z - GW.rim], [z - GW.hw], [z + GW.hw], [z + GW.rim]].forEach(([lz]) => { rimV.push(lx, G, lz); rimUV.push(lx / 14.4, lz / 14.4); });
       const k0 = rockV.length / 3; rockV.push(lx, G, z - GW.hw, lx, F, z - GW.hw, lx, F, z + GW.hw, lx, G, z + GW.hw);
       const w0 = watV.length / 3; watV.push(lx, F + 0.1, z - 2.5, lx, F + 0.1, z + 2.5);
@@ -2702,7 +2710,7 @@
   // Off its west side is a wing of three rooms, each with its own doorway: the kitchen at the front, the child's room in the middle, the parents' room at the back.
   // Only the child's room is furnished at a child's size.
   function familyHome(o, inner) { return (sc, solids, k) => {
-    const owner = { bwhome: 'Old Bramblewick', marihome: 'the Fernsbys', aldhome: 'the Boughs', fenhome: 'the Dewberrys', holhome: 'Hollis Quern', piphome: 'the Willowbys', bramhome: 'Bram Honeywell', tanhome: 'Tansy Applegarth', orihome: 'the Tideknots', maudhome: 'Maudie Crumb', corhome: 'Corwin Sedge', pellhome: 'Pell Reedmace' }[k.id] || 'the family who live here';
+    const owner = { bwhome: 'Old Bramblewick', marihome: 'the Fernsbys', aldhome: 'the Boughs', fenhome: 'the Dewberrys', holhome: 'Hollis Quern', piphome: 'the Willowbys', bramhome: 'Bram Honeywell', tanhome: 'Tansy Applegarth', wrenhome: 'Wren Ashcombe', unahome: 'Una Fellwick', garhome: 'Garth Scree', tobhome: 'Tobias Marl', orihome: 'the Tideknots', maudhome: 'Maudie Crumb', corhome: 'Corwin Sedge', pellhome: 'Pell Reedmace' }[k.id] || 'the family who live here';
     const { wall, W, D, H, trimM } = k, S = 1.6, PX = -W / 2 + 22, lx = (PX + W / 2) / 2, wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 }), wm = mat(o.wall, { roughness: 1 }), cream = mat('#f2ead8');
     const lg = new THREE.Group(); lg.position.set(lx, 0, 0); lg.scale.setScalar(S); sc.add(lg);
     const vs = [], vwall = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; lg.add(b); return b; };
@@ -3010,6 +3018,10 @@
     const dust = new THREE.PointLight('#ffe9c0', 0.6, 60); dust.position.set(0, 11, 6); sc.add(dust);
   } });
   interiors.mill.door = { x: MILL.x, z: MILL.z - MILLR - 3 - 4.5, yaw: Math.PI };
+  // the four houses on Rim Row, Cairnhold
+  [['wrenhome', 'Ashcombe House', 'A plumb line hangs in the window, and every picture is dead level.'], ['unahome', 'Fellwick Cottage', 'Fleeces drying on a rack, and a crook by the door.'], ['garhome', 'Scree Cottage', 'Stone dust on the sill, and a mallet on the table.'], ['tobhome', 'Marl Cottage', 'Rolled maps in a rack, and a chain coiled on its peg.']].forEach(([id, label, hintT]) => { const h = CHOMES.find(q => q.id === id);
+    makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'cairnhold', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.roof, kidQuilt: h.flower, rug: '#b8a070' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.door, quilt: h.roof }); }) });
+    interiors[id].door = { x: h.x, z: h.z + h.hd + 0.2 + 4.5, yaw: 0 }; });
   // the four houses on Heron Row, Fernwater
   [['orihome', 'Tideknot House', 'Charts on the wall, and a coil of rope by every door.'], ['maudhome', 'Crumb Cottage', 'It smells of yesterday’s baking, and tomorrow’s is rising by the hearth.'], ['corhome', 'Sedge Cottage', 'A half-mended net hangs across one corner.'], ['pellhome', 'Reedmace Cottage', 'River marks pencilled up the door frame, with a date beside each.']].forEach(([id, label, hintT]) => { const h = FHOMES.find(q => q.id === id);
     makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'fernwater', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.roof, kidQuilt: h.flower, rug: '#b8a070' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.door, quilt: h.roof }); }) });
@@ -3249,25 +3261,24 @@
   Object.assign(cairnSun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 }); cairnSun.shadow.mapSize.set(4096, 4096); cairnSun.shadow.radius = 2;
   cairnScene.add(cairnSun); cairnScene.add(cairnSun.target);
   const cairnSolids = [], cairnBoxes = [];
+  CHOMES.forEach(h => { h.sc = cairnScene; h.sol = cairnSolids; h.bx = cairnHB; h.benches = cairnBenches; });
   let bridgeBuilt = false, bridgeGroup = null, ropeBarrier = null;
   {
     const heathTex = canvasTex(256, 256, (gg, w, h) => { gg.fillStyle = '#6f8a4a'; gg.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { gg.fillStyle = pick(['#7a9452', '#657f42', '#8a9a5a', '#7f7b72', '#8a6a9a']); gg.fillRect(Math.random() * w, Math.random() * h, 3, 3); } }, [24, 24]);
     const cstone = canvasTex(256, 256, (gg, w, h) => { gg.fillStyle = '#8f8a7a'; gg.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 32) for (let x = (y / 32) % 2 ? 24 : 0; x < w; x += 48) { gg.fillStyle = pick(['#9b9789', '#86826f', '#a8a394', '#7c786a']); gg.fillRect(x + 2, y + 2, 44, 28); } }, [2, 2]);
     const stoneM = mat('#ffffff', { map: cstone }), greyM = mat('#8c8577', { roughness: 1 });
     // the plateau, split by the gorge
-    const near = new THREE.Mesh(new THREE.PlaneGeometry(240, GORGE.z0 + 60), mat('#ffffff', { map: heathTex })); near.rotation.x = -Math.PI / 2; near.position.set(0, 0, (GORGE.z0 - 60) / 2); near.receiveShadow = true; cairnScene.add(near);
-    const far = new THREE.Mesh(new THREE.PlaneGeometry(240, 80), mat('#ffffff', { map: heathTex })); far.rotation.x = -Math.PI / 2; far.position.set(0, 0, GORGE.z1 + 40); far.receiveShadow = true; cairnScene.add(far);
-    const gorgeFloor = new THREE.Mesh(new THREE.PlaneGeometry(240, GORGE.z1 - GORGE.z0), mat('#5a5a52')); gorgeFloor.rotation.x = -Math.PI / 2; gorgeFloor.position.set(0, -GORGE.depth, (GORGE.z0 + GORGE.z1) / 2); cairnScene.add(gorgeFloor);
-    const torrent = new THREE.Mesh(new THREE.PlaneGeometry(240, 5), mat('#6f9fd0', { roughness: 0.4 })); torrent.rotation.x = -Math.PI / 2; torrent.position.set(0, -GORGE.depth + 0.1, (GORGE.z0 + GORGE.z1) / 2); cairnScene.add(torrent);
-    [[GORGE.z0, 0], [GORGE.z1, Math.PI]].forEach(([z, ry]) => { const wall = new THREE.Mesh(new THREE.PlaneGeometry(240, GORGE.depth), mat('#ffffff', { map: cstone, color: '#8a8478' })); wall.position.set(0, -GORGE.depth / 2, z); wall.rotation.y = ry; cairnScene.add(wall); });
+    const near = new THREE.Mesh(new THREE.PlaneGeometry(CRN.x * 2 + 120, GORGE.z0 + 60), mat('#ffffff', { map: heathTex })); near.rotation.x = -Math.PI / 2; near.position.set(0, 0, (GORGE.z0 - 60) / 2); near.receiveShadow = true; cairnScene.add(near);
+    const far = new THREE.Mesh(new THREE.PlaneGeometry(CRN.x * 2 + 120, 80), mat('#ffffff', { map: heathTex })); far.rotation.x = -Math.PI / 2; far.position.set(0, 0, GORGE.z1 + 40); far.receiveShadow = true; cairnScene.add(far);
+    const gorgeFloor = new THREE.Mesh(new THREE.PlaneGeometry(CRN.x * 2 + 120, GORGE.z1 - GORGE.z0), mat('#5a5a52')); gorgeFloor.rotation.x = -Math.PI / 2; gorgeFloor.position.set(0, -GORGE.depth, (GORGE.z0 + GORGE.z1) / 2); cairnScene.add(gorgeFloor);
+    const torrent = new THREE.Mesh(new THREE.PlaneGeometry(CRN.x * 2 + 120, 5), mat('#6f9fd0', { roughness: 0.4 })); torrent.rotation.x = -Math.PI / 2; torrent.position.set(0, -GORGE.depth + 0.1, (GORGE.z0 + GORGE.z1) / 2); cairnScene.add(torrent);
+    [[GORGE.z0, 0], [GORGE.z1, Math.PI]].forEach(([z, ry]) => { const wall = new THREE.Mesh(new THREE.PlaneGeometry(CRN.x * 2 + 120, GORGE.depth), mat('#ffffff', { map: cstone, color: '#8a8478' })); wall.position.set(0, -GORGE.depth / 2, z); wall.rotation.y = ry; cairnScene.add(wall); });
     const lane = new THREE.Mesh(new THREE.PlaneGeometry(7, GORGE.z0 + 2), mat('#ffffff', { map: dirtTex, color: '#b9b2a4' })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0.03, (GORGE.z0 - 2) / 2); cairnScene.add(lane);
     // the gate in from the High Road
-    [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), greyM); gp.position.set(o, 3.5, 0); gp.castShadow = true; cairnScene.add(gp); cairnSolids.push({ x: o, z: 0, r: 1 }); });
-    const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lintel.position.set(0, 7.3, 0); cairnScene.add(lintel);
-    const gsign = signBoard('Cairnhold', 7, 1.6, '#6e6a62', '#f6e7c2'); gsign.position.set(0, 8.6, 0.2); cairnScene.add(gsign);
+    townGate(cairnScene, cairnSolids, 0, 0, 'To Fernwater', 'Cairnhold', '#6e6a62', 1);
     // drystone walls line the lane and the fields
     function wallRun(ax, az, bx, bz, hgt = 1.6) { const len = Math.hypot(bx - ax, bz - az), n = Math.floor(len / 2.2); for (let k = 0; k <= n; k++) { const t = k / n, x = ax + (bx - ax) * t, z = az + (bz - az) * t; const st = new THREE.Mesh(new THREE.BoxGeometry(2.3, hgt, 1.2), mat(pick(['#8c8577', '#9b958a', '#7a7468']), { roughness: 1 })); st.position.set(x, hgt / 2, z); st.rotation.y = -Math.atan2(bz - az, bx - ax) + rnd(-0.08, 0.08); st.castShadow = true; st.receiveShadow = true; cairnScene.add(st); cairnSolids.push({ x, z, r: 1.1 }); } }
-    wallRun(-6, 4, -6, 24); wallRun(6, 4, 6, 18); wallRun(-40, 4, -8, 4); wallRun(8, 4, 40, 4);
+    wallRun(-6, 4, -6, 24); wallRun(6, 4, 6, 18); wallRun(-40, 4, -11, 4); wallRun(11, 4, 40, 4);
     // the Surveyors' Lodge: a squat stone hall with a lookout tower, door toward the lane
     function stoneBuilding(id, x, z, facing, label, W, D, H, tower) {
       const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = facing; cairnScene.add(g);
@@ -3329,10 +3340,18 @@
     const warn = signBoard('No crossing: the gorge needs a bridge', 7, 1, '#c8384a', '#f6e7c2'); warn.position.set(0, 3.4, GORGE.z0 - 3.2); ropeBarrier.add(warn);
     [[-5, GORGE.z0 - 1], [5, GORGE.z0 - 1], [-5, GORGE.z1 + 1], [5, GORGE.z1 + 1]].forEach(([x, z]) => { const a = new THREE.Mesh(new THREE.BoxGeometry(1.6, 4, 1.6), greyM); a.position.set(x, 2, z); a.castShadow = true; cairnScene.add(a); cairnSolids.push({ x, z, r: 1.2 }); });
     const farLane = new THREE.Mesh(new THREE.PlaneGeometry(7, CAIRN_LEN + 20 - GORGE.z1), mat('#ffffff', { map: dirtTex, color: '#b9b2a4' })); farLane.rotation.x = -Math.PI / 2; farLane.position.set(0, 0.03, (GORGE.z1 + CAIRN_LEN + 20) / 2); cairnScene.add(farLane);
-    [-5, 5].forEach(o => { const gp = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), greyM); gp.position.set(o, 3.5, CAIRN_LEN + 20); cairnScene.add(gp); cairnSolids.push({ x: o, z: CAIRN_LEN + 20, r: 1 }); });
-    { const lin = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 1.6), mat('#7a7468')); lin.position.set(0, 7.3, CAIRN_LEN + 20); cairnScene.add(lin); const sg = signBoard('To Cogsworth', 5.4, 1.3, '#b08a3a', '#1b1b1b'); sg.position.set(0, 8.6, CAIRN_LEN + 20 - 0.2); sg.rotation.y = Math.PI; cairnScene.add(sg); }
+    townGate(cairnScene, cairnSolids, 0, CAIRN_LEN + 20, 'To Cogsworth', 'Cairnhold', '#b08a3a', -1);
+    // Rim Row: a path out either side of the old town, up to a lane along the gorge, and four houses that look across it
+    { const croad = (x0, z0, x1, z1, w, y = 0.035) => { const len = Math.hypot(x1 - x0, z1 - z0), tx = dirtTex.clone(); tx.needsUpdate = true; tx.repeat.set(w / 5, len / 5); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), mat('#ffffff', { map: tx, color: '#b9b2a4' })); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.atan2(x1 - x0, z1 - z0); m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); m.receiveShadow = true; cairnScene.add(m); };
+      croad(3.5, 30, CRN.e + 2.5, 30, 5); croad(CRN.e, 27.5, CRN.e, CRN.lane, 5, 0.037); croad(CRN.e - 2.5, CRN.lane, CRN.x - 6, CRN.lane, 9, 0.039);
+      croad(-3.5, 50, CRN.w - 2.5, 50, 5); croad(CRN.w, 47.5, CRN.w, CRN.lane, 5, 0.037); croad(CRN.w + 2.5, CRN.lane, -CRN.x + 6, CRN.lane, 9, 0.039);
+      CHOMES.forEach(h => croad(h.x, h.z + 30, h.x, CRN.lane - 4, 7.4, 0.033));
+      CHOMES.forEach(buildHouse);
+      const lg = new THREE.Group(); cairnScene.add(lg); [[-5.5, 14], [5.5, 40], [-5.5, 66], [5.5, 100], [-5.5, 134], [28, 33.5], [CRN.e + 4, 60], [CRN.e + 4, 90], [70, 102], [134, 102], [198, 102], [-30, 53.5], [CRN.w - 4, 72], [-70, 102], [-134, 102], [-198, 102]].forEach(([x, z]) => lampPost(lg, x, z, 10, 26, cairnSolids)); lg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(lg);
+      // a low drystone wall along the rim by the houses, so nobody steps out of a front gate and into the gorge
+      [[CRN.e + 6, CRN.x - 6], [-CRN.x + 6, CRN.w - 6]].forEach(([a, b]) => { wallRun(a, 104, b, 104, 2.6); cairnHB.push({ x: (a + b) / 2, z: 104, hw: (b - a) / 2 + 1.1, hd: 0.7 }); }); }
     // hills on the horizon
-    [[-270, 40, 160, 34, 110], [280, 70, 170, 40, 120], [60, 330, 240, 46, 130], [-260, 230, 180, 36, 120], [-80, 360, 200, 52, 120]].forEach(([x, z, rx, h, rz]) => mound(cairnScene, x, z, rx, h, rz, pick(['#7a8a5a', '#6f7f52', '#8a9a6a'])));
+    [[-470, 40, 160, 34, 110], [480, 70, 170, 40, 120], [60, 330, 240, 46, 130], [-420, 250, 180, 36, 120], [-80, 360, 200, 52, 120]].forEach(([x, z, rx, h, rz]) => mound(cairnScene, x, z, rx, h, rz, pick(['#7a8a5a', '#6f7f52', '#8a9a6a'])));
   }
   function buildBridge() {
     bridgeBuilt = true; if (ropeBarrier) ropeBarrier.visible = false; if (bridgeGroup) { bridgeGroup.visible = true; return; }
@@ -4701,6 +4720,7 @@
     if (mineOn) { rdog.position.y = Math.abs(Math.sin(dogPh)) * 0.16 * amp; kid.body.position.y = DOG_SEAT + rdog.position.y; }
     const free = rdog.visible && rdog.parent && rdog.parent !== player && rdog.userData.world !== 'ridden'; dogSpot.visible = !!free; if (free) { if (dogSpot.parent !== rdog.parent) rdog.parent.add(dogSpot); dogSpot.position.set(rdog.position.x + Math.sin(rdog.rotation.y) * 3.2, rdog.position.y + 3, rdog.position.z + Math.cos(rdog.rotation.y) * 3.2); dogSpot.userData.world = rdog.userData.world; }
   }
+  cairnBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); cairnScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'garden bench', world: 'cairnhold' }; pickables.push(b); });
   fernBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); fernScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'garden bench', world: 'fernwater' }; pickables.push(b); });
   orchBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); orchScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'garden bench', world: 'orchards' }; pickables.push(b); });
   addSeat(makeBench(true), 5.5, R + 3.2, 0, 1.51, 'bench by the shop');
@@ -4987,7 +5007,7 @@
   // ---------- the satchel, and the counter when you are at one ----------
   let bagOpen = false, bagShop = null, bagTab = 'all', bagMsg = '';
   const BIKE_PARTS = [['gear', 2], ['bell', 1], ['rope', 1]], BIKE_COINS = 30;
-  function shopShut(id) { const sh = SHOPS[id]; return !!sh && sh.t <= 2 && !sh.always && shopsShut() && phase === 'free'; }
+  function shopShut(id) { const sh = SHOPS[id]; return !!sh && sh.t <= 3 && !sh.always && shopsShut() && phase === 'free'; }
   const honestStock = sh => sh.stock.filter(q => ITEMS[q].c === 'food');
   // a shop that has shut for the night still has its honesty box, if it sells anything to eat
   function shopRing(id) { if (!shopShut(id)) return openBag(id); const sh = SHOPS[id]; if (honestStock(sh).length) openBag(id, true); else flash(`${sh.n} is shut. It opens at seven in the morning.`, 5000); }
@@ -5620,7 +5640,7 @@
     if (k === 'sci') return where === 'village' && phase === 'sci' && !!sciActive && sciActive.left.has(o.userData.id) && !talking();
     if (k === 'readteach') return FOLK.fen.mode === 'post' && where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
     if (k === 'sciteach') return FOLK.mari.mode === 'post' && where === 'village' && (phase === 'free' || phase === 'sci') && !talking();
-    if (k === 'teacher') return (o.userData.i > 2 || FOLK[['bw', 'hol', 'ori'][o.userData.i]].mode === 'post') && TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
+    if (k === 'teacher') return (o.userData.i > 3 || FOLK[['bw', 'hol', 'ori', 'wren'][o.userData.i]].mode === 'post') && TEACH[o.userData.i].w === where && !talking() && (phase === 'free' || (/^to/.test(phase) && phase !== 'towood'));
     if (k === 'quest') return where === 'village' && phase === 'free' && !save.beetle && !beetle && !parked;
     if (k === 'ferry') return o.userData.world === where && !ferryRide;
     if (k === 'follower') return (o === beetle && !!beetleName && beetle.userData.follow) || (!!parked && o === parked.obj && !parked.leave && parked.world === curWorld());
@@ -8364,7 +8384,8 @@
     if (where === 'cairnhold') {
       cairnSolids.forEach(s => { const dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz), min = s.r + 0.6; if (d < min && d > 0.001) { p.x = s.x + dx / d * min; p.z = s.z + dz / d * min; } });
       cairnBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } });
-      if ((Math.abs(p.x) > 60 || p.z < -0.5 || p.z > CAIRN_LEN + 20.5) && !fading) { switchFrame('wild', prev); return; }
+      for (const bx of cairnHB) { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (bx.id && Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.6) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } }
+      if ((Math.abs(p.x) > CRN.x || p.z < -0.5 || p.z > CAIRN_LEN + 20.5) && !fading) { switchFrame('wild', prev); return; }
       // the gorge: only the bridge crosses it
       const onBridge = bridgeBuilt && Math.abs(p.x) < 3.2;
       // the rope across the lane holds until the bridge is built; everywhere else the gorge is a real drop, and the walls are too steep to climb
@@ -8713,10 +8734,10 @@
     }
     if (where === 'cairnhold') {
       const dW = Math.hypot(player.position.x - WRENPOS.x, player.position.z - WRENPOS.z);
-      if (dW < 30) wren.lookAt(player.position.x, 0, player.position.z); if (!reduce) { wren.userData.head.rotation.z = Math.sin(t * 1.1) * 0.05; wren.userData.arms[0].rotation.x = -0.4 + Math.sin(t * 2.2) * 0.25; }
+      if (dW < 30 && FOLK.wren.mode === 'post') wren.lookAt(player.position.x, 0, player.position.z); if (!reduce) { wren.userData.head.rotation.z = Math.sin(t * 1.1) * 0.05; wren.userData.arms[0].rotation.x = -0.4 + Math.sin(t * 2.2) * 0.25; }
       if (dW < 7.5 && !nearWren && !talking() && ['towren', 'tocairn'].includes(phase)) { nearWren = true; offer(reachWren); }
       if (dW > 10.5) nearWren = false;
-      const dP = Math.hypot(player.position.x - PIP2POS.x, player.position.z - PIP2POS.z); if (dP < 20) pip2.lookAt(player.position.x, 0, player.position.z); if (!reduce) pip2.position.y = Math.abs(Math.sin(t * 3)) * 0.08;
+      const dP = Math.hypot(player.position.x - PIP2POS.x, player.position.z - PIP2POS.z); if (FOLK.pip2.mode === 'post') { if (dP < 20) pip2.lookAt(player.position.x, 0, player.position.z); if (!reduce) pip2.position.y = Math.abs(Math.sin(t * 3)) * 0.08; }
       if (phase === 'c10cross' && player.position.z > GORGE.z1 + 4 && !talking()) { wren.position.set(-6, 0, GORGE.z1 + 8); wren.lookAt(player.position.x, 0, player.position.z); finishCairn(); }
     }
     spinners.forEach(g => { if (g.userData.spin) g.rotation.y += dt * g.userData.spin; });
@@ -8879,14 +8900,16 @@
     fen: { g: fen, hd: fenHead, n: 'Fen Dewberry', post: FENPOS, home: 'fenhome', via: [[-28.6, 99], [-8, 99], [0, 92]] },
     hol: { g: hol, hd: holHead, n: 'Hollis Quern', post: HOLPOS, home: 'holhome', w: 'orchards', via: [[2, 86], [14, 100], [ORC.gx, 100]] },
     pip: { g: pip, hd: pipHead, n: 'Pip Willowby', post: PIPPOS, home: 'piphome', w: 'orchards', kid: true, noKnock: true, fire: [11, -8], via: [[8, 80], [10, 100], [ORC.gx, 100]] },
+    wren: { g: wren, hd: wren.userData.head, n: 'Wren Ashcombe', post: WRENPOS, home: 'wrenhome', w: 'cairnhold', gx: CRN.w, yaw0: 2.4, via: [[-13, 50], [CRN.w, 50]] },
+    pip2: { g: pip2, hd: pip2.userData.head, n: 'Pip Willowby', post: PIP2POS, home: 'wrenhome', w: 'cairnhold', gx: CRN.w, yaw0: -2.2, kid: true, noKnock: true, fire: [11, -8], via: [[13, 50], [CRN.w, 50]] },
     ori: { g: ori, hd: oriHead, n: 'Captain Oriel Tideknot', post: ORIPOS, py: 1.65, home: 'orihome', w: 'fernwater', via: [[17, 57], [17, 50], [0, 50]] },
     maud: { g: maud, hd: maudHead, n: 'Maudie Crumb', post: maud.position.clone(), home: 'maudhome', w: 'fernwater', indoor: 'bakery', via: [], solid: interiors.bakery.solids.find(q => q.x === maud.position.x && q.z === maud.position.z) } };
-  const FTOWN = { village: { homes: HOMES, lane: LANE.z, gx: 3, sc: scene, sol: solids }, orchards: { homes: OHOMES, lane: ORC.lane, gx: ORC.gx, sc: orchScene, sol: orchSolids }, fernwater: { homes: FHOMES, lane: FRN.lane, gx: 0, sc: fernScene, sol: fernSolids, gy: fernY } };
+  const FTOWN = { village: { homes: HOMES, lane: LANE.z, gx: 3, sc: scene, sol: solids }, orchards: { homes: OHOMES, lane: ORC.lane, gx: ORC.gx, sc: orchScene, sol: orchSolids }, fernwater: { homes: FHOMES, lane: FRN.lane, gx: 0, sc: fernScene, sol: fernSolids, gy: fernY }, cairnhold: { homes: CHOMES, lane: CRN.lane, gx: CRN.e, sc: cairnScene, sol: cairnSolids } };
   const lyingQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0)));
   const BED = { x: -38 + 7.2, z: -9.5, y: 10 };   // the grown elves' bed, upstairs in every house
   const KIDBED = { x: -38 + 4.4, z: 2, y: 10 };   // the child's bed, in the little room at the head of the stair
   function folkInit(id, i) { const f = FOLK[id], T = FTOWN[f.w || 'village'], h = T.homes.find(q => q.id === f.home), lz = T.lane; f.T = T; f.id = id; f.h = h; f.i = i; f.mode = null; f.pose = null;
-    f.route = [[f.post.x, f.post.z], ...f.via, [T.gx, lz], [h.x, lz], [h.x, h.z + h.sg * 30], [h.x, h.z + h.sg * 17]];
+    f.route = [[f.post.x, f.post.z], ...f.via, [f.gx !== undefined ? f.gx : T.gx, lz], [h.x, lz], [h.x, h.z + h.sg * 30], [h.x, h.z + h.sg * 17]];
     f.solid = f.solid || T.sol.find(s => s.x === f.post.x && s.z === f.post.z);
     const ud = f.g.userData; f.g.userData = {}; const c = f.g.clone(true); f.g.userData = ud; c.visible = false; c.position.y = 0; interiors[f.home].scene.add(c); f.in = c;   // the same figure again, for indoors
     { const bg = new THREE.Group(); bg.visible = false; interiors[f.home].scene.add(bg); f.abed = bg; const hu = f.hd.userData; f.hd.userData = {}; const hc = f.hd.clone(true); f.hd.userData = hu; const md = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), mat('#f2ead8', { roughness: 1 }));
@@ -8900,7 +8923,7 @@
   // people who are not teachers: the two who keep the inn, the travellers staying in it, the lamplighter and the watchman. Each is only there at the hours they would be, and each will tell you why.
   const folk = [];
   function addFolk(sc, world, o, x, z, yaw, n, lines, on) { const g = makeElfNPC(o); g.position.set(x, o.sit ? -2.5 : 0, z); g.rotation.y = yaw; g.traverse(m => { if (m.isMesh) m.castShadow = true; }); sc.add(g); Object.assign(g.userData, { pickable: true, kind: 'folk', world, fi: folk.length }); pickables.push(g);
-    const F = { g, n, lines, on, k: 0, solid: o.sit || o.walks ? null : { x, z, r: 1.7 } }; if (F.solid) (world === 'village' ? solids : world === 'orchards' ? orchSolids : world === 'fernwater' ? fernSolids : interiors[world.slice(3)].solids).push(F.solid); F.sx = x; folk.push(F); return F; }
+    const F = { g, n, lines, on, k: 0, solid: o.sit || o.walks ? null : { x, z, r: 1.7 } }; if (F.solid) (world === 'village' ? solids : world === 'orchards' ? orchSolids : world === 'fernwater' ? fernSolids : world === 'cairnhold' ? cairnSolids : interiors[world.slice(3)].solids).push(F.solid); F.sx = x; folk.push(F); return F; }
   const day = (a, b) => h => a < b ? h >= a && h < b : h >= a || h < b;
   { const [kx, kz, ky] = INN_SEATS.keeper, isc = interiors.inn.scene;
     addFolk(isc, 'in:inn', { coat: '#a8563a', skin: '#e8b890', hair: '#8a4a2a' }, kx, kz, ky, 'Posy Underbough', ['Posy Underbough. Welcome to the Sleepy Beetle. If you are hungry, ring the bell on the barrel.', 'I keep the day and my brother Moss keeps the night, so there is always somebody awake here.', 'The beetle over the mantel? My grandfather carved him. He has been asleep for sixty years and I have never once seen him wake.'], day(7, 19));
@@ -8926,6 +8949,11 @@
     mk('nell', { coat: '#3a4a9a', skin: '#f0c9a0', hair: '#2a2a2a' }, 102, 130, Math.PI, 'Nell Willowby', ['Nell Willowby, cooper. Every crate and every cider barrel in the Orchards came off this bench.', 'A barrel is staves, hoops and nothing else. No nails and no glue. The cider swells the wood and the wood holds the cider.', 'Pip is mine. The stacking in rows comes from me, and I will not hear a word against it.', 'I work till the light goes. Then it is home to Windfall Lane, number two.'], 'piphome', [[76, 118], [ORC.gx, 118]]);
     mk('bram', { coat: '#b08a3a', skin: '#d9a070', hair: '#dcdcdc' }, 124, 37, -Math.PI / 2, 'Bram Honeywell', ['Bram Honeywell. These are my bees, though the bees would put it the other way about.', 'No bees, no apples. A blossom that no bee visits sets no fruit. Hollis knows it, which is why he lets me have this corner.', 'Walk slowly near the skeps and they will not mind you. It is flapping that upsets them.', 'I wrote it all down once. The Library at Hearthmoor has the book.'], 'bramhome', [[124, 66], [60, 100], [ORC.gx, 104]]);
     mk('tan', { coat: '#4f6b3a', skin: '#c9956a', hair: '#8a4a2a' }, 73, 40.5, -Math.PI / 2, 'Tansy Applegarth', ['Tansy Applegarth. I pick the pears. Apples you can shake down. A pear you must take off by hand, or it bruises.', 'Four rows of six. You will have that worked out before I finish saying it, if Hollis has had you.', 'A pear is picked hard and ripens indoors. One left to go soft on the tree is brown in the middle.', 'Number four, Windfall Lane, with the berry bushes at the back. That is me.'], 'tanhome', [[58, 70], [50, 96], [ORC.gx, 104]]); }
+  // Cairnhold's own people
+  { const mk = (id, o, x, z, yaw, n, lines, home, via, gx) => { const F = addFolk(cairnScene, 'cairnhold', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'cairnhold', via, gx, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
+    mk('una', { coat: '#8a6a9a', skin: '#f0c9a0', hair: '#c9a06a' }, -36, 62, 0, 'Una Fellwick', ['Una Fellwick. The pasture is mine to keep. The flock is up on the high fell till the frost, so it is only grass and me.', 'Twelve by eight, that pasture. Wren has had every child on the road pace it out, and I have had to mend the fence after most of them.', 'A fence is as long as the way round. Forty yards of rail, however you count it.', 'I am at number two, Rim Row, the far house on the west side. You can hear the water in the gorge from my door.'], 'unahome', [[CRN.w, 62]], CRN.w);
+    mk('gar', { coat: '#6e6a62', skin: '#c9956a', hair: '#2a2a2a' }, 20, 23, -Math.PI / 2, 'Garth Scree', ['Garth Scree, mason. Every wall in Cairnhold is drystone: no mortar in it. Only weight, and each stone sitting on two.', 'One on two, two on one. A joint never runs straight up through two courses, or the wall splits there.', 'A square corner is a rope with knots at three, four and five. Stretch it tight, and the corner between the three and the four is square every time.', 'Number three, Rim Row, east side. I built the garden wall myself, so mind you admire it.'], 'garhome', [[20, 30], [CRN.e, 30]]);
+    mk('tob', { coat: '#4f7a5a', skin: '#d9a070', hair: '#8a4a2a' }, 49.5, 72, -Math.PI / 2, 'Tobias Marl', ['Tobias Marl. I carry the other end of the chain. A surveyor is no use alone: it takes two to measure anything longer than your arm.', 'A map is the land made small, by the same amount everywhere. Shrink one field more than its neighbour and the map is a lie.', 'That is the odd field. It will not fit one sum, so you cut it into two oblongs in your head and add them.', 'Number four, Rim Row, the last house east. I pace it home every night: it is the same number of steps every time, which is the point.'], 'tobhome', [[CRN.e, 72]]); }
   // Fernwater's own people
   { const mk = (id, o, x, z, yaw, n, lines, home, via) => { const F = addFolk(fernScene, 'fernwater', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'fernwater', via, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
     mk('hes', { coat: '#3e8a52', skin: '#c9956a', hair: '#5a3d22' }, -12, 20, -Math.PI / 2, 'Hester Tideknot', ['Hester Tideknot. Oriel sails with rope and I make it. He is my brother, and he would be tied up with string without me.', 'A rope is yarns twisted one way into strands, and strands twisted the other way into rope. Each twist is trying to undo the other, and that is what holds it shut.', 'Three strands is the usual. Count them on any rope you pick up.', 'We are both at number one, Heron Row, over the bridge. I walk home when the light goes.'], 'orihome', [[0, 20]]);
@@ -8946,13 +8974,18 @@
       hes: asleep ? ['Mm. It is the middle of the night, and I have a hundred fathoms to lay tomorrow. Find me at the rope-walk.'] : ['The rope-walk is shut up for the night. Oriel is the one for lessons. I am the one for rope.'],
       maud: asleep ? ['Bless you, I am up at four for the ovens as it is. The bakery opens at seven. Go to bed, lamb.'] : ['The ovens are banked for the night, love. Fresh at seven. Off you go.'],
       cor: asleep ? ['The fish are asleep. I should like to be. Come by the nets in the morning.'] : ['Nets are up and I am in. Come by the rack tomorrow.'],
+      wren: asleep ? ['Hm? It is the middle of the night. Still, the stars are how you find north, so it is not wasted. What is it you want to measure?'] : ['The Lodge is shut, but I am not. A surveyor’s day ends when the light does, and her sums do not. Come in.'],
+      una: asleep ? ['Is it the fence? It is always the fence. No? Then it will keep till morning.'] : ['Done for the day. The grass will grow without me till tomorrow.'],
+      gar: asleep ? ['Mm. Stone will wait. It has waited this long. Find me at the yard in the morning.'] : ['Tools are down for the night. Come by the yard tomorrow and I will show you a square corner.'],
+      tob: asleep ? ['Hrm. The chain is on its peg and I am in my bed. Tomorrow.'] : ['Chain is coiled and counted. All hundred links, as ever. Good night.'],
+      pip2: asleep ? ['…a hundred links. I counted them twice. Good night.'] : ['Wren says I may lodge here while I am learning the chain. I have my own bed and everything.'],
       pell: asleep ? ['Is the river up? No? Then it can wait till I read the gauge at dawn. Good night.'] : ['Bridge is sound and the gauge is read. That is my day done. Good night.'] }[who];
     L[0] = pre + L[0];
-    say(L, () => { if (who === 'bw') teacherMenu(0); else if (who === 'mari') sciMenu(); else if (who === 'fen') readMenu(); else if (who === 'hol') teacherMenu(1); else if (who === 'ori') teacherMenu(2); }, f.n);
+    say(L, () => { if (who === 'bw') teacherMenu(0); else if (who === 'mari') sciMenu(); else if (who === 'fen') readMenu(); else if (who === 'hol') teacherMenu(1); else if (who === 'ori') teacherMenu(2); else if (who === 'wren') teacherMenu(3); }, f.n);
   }
   let shutNow = null;
   function nightLifeTick(dt, t) {
-    const abed = abedNow(), hr = clockHour(), live = gameStarted && !titleUp, seen = where === 'village' && live, seenO = (where === 'orchards' || where === 'fernwater') && live, want = abed ? 'home' : 'post';
+    const abed = abedNow(), hr = clockHour(), live = gameStarted && !titleUp, seen = where === 'village' && live, seenO = (where === 'orchards' || where === 'fernwater' || where === 'cairnhold') && live, want = abed ? 'home' : 'post';
     Object.values(FOLK).forEach(f => { const R = f.route;
       if (f.indoor) { if (f.mode === null || (f.mode !== want && !(live && where === 'in' && interior && interior.id === f.indoor))) folkSettle(f, want); }   // somebody who works indoors stays till you have left the shop
       else if (f.mode === null || (f.mode !== want && !(live && where === (f.w || 'village')))) folkSettle(f, want);
@@ -8968,7 +9001,7 @@
         if (pose === 'bed') { if (f.kid) f.inSpot.position.set(KIDBED.x + 1, KIDBED.y, KIDBED.z + 2.6); else f.inSpot.position.set(BED.x - 0.5, BED.y, BED.z + 2.4); }
         else if (pose === 'fire') { const [fx, fz] = f.fire || [5, -12.5]; f.in.position.set(fx, 0, fz); f.in.rotation.set(0, 0.5, 0); f.inSpot.position.set(fx, 0, fz); } } });
     // shutting-up time, said once as it happens
-    { const shut = abed; if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { const fw = where === 'fernwater'; if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : fw ? 'The shops are shut, and everyone is walking home over the bridge to Heron Row.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : fw ? 'The Crossing is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
+    { const shut = abed; if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { const fw = where === 'fernwater', ch = where === 'cairnhold'; if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : ch ? 'The Lodge is shut for the night, and everyone is walking home to Rim Row.' : fw ? 'The shops are shut, and everyone is walking home over the bridge to Heron Row.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : ch ? 'Cairnhold is waking up. The Lodge opens at seven.' : fw ? 'The Crossing is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
     folk.forEach(F => { const on = F.on(hr); if (on !== F.g.visible) { F.g.visible = on; if (F.solid) F.solid.x = on ? F.sx : 1e6; } });
     if (WICK.g.visible && seen) { const g = WICK.g, L = LANE.x1 - 28, u = (netNow() * 3.2) % (2 * L); WICK.dir = u < L ? 1 : -1; g.position.x = 10 + (u < L ? u : 2 * L - u); g.rotation.y = WICK.dir * Math.PI / 2; g.position.y = Math.abs(Math.sin(t * 5)) * 0.1; }
     if (where === 'in' && interior) roomNight(interior);
