@@ -369,7 +369,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 97 · 19 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 101 · 19 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -407,6 +407,8 @@
       <div class="stick" id="stick" role="application" aria-label="Move: slide your thumb in the direction you want to walk"><div class="knob" id="knob"></div></div>
       <div class="acts">
         <button class="act" id="mapbtn">Map</button>
+        <button class="act" id="saybtn">Say</button>
+        <button class="act" id="voicebtn" hidden>Voice</button>
         <button class="act" id="bagbtn">Bag</button>
         <button class="act" id="ridebtn" hidden>Ride</button>
         <button class="act" id="runbtn">Run</button>
@@ -1875,7 +1877,7 @@
       for (let q = 0; q < 60; q++) { const x = 112 + R() * 32, z = (q % 2 ? 8 : 56) + R() * 8; bloom(bg, x, 0, z, 1 + R() * 1.4, cols[q % 5]); }
       bg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(bg);
       // the bees themselves: a loose cloud over the flowers, on the move all day and gone at night
-      const n = 40, bees = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 6, 5), new THREE.MeshBasicMaterial({ color: '#f2c13a' }), n); bees.frustumCulled = false; bees.userData.whole = true; orchScene.add(bees); orchScene.userData.bees = { mesh: bees, n, seed: Array.from({ length: n }, () => [112 + Math.random() * 32, 26 + Math.random() * 20, Math.random() * 6.3, 0.6 + Math.random()]) }; }
+      const n = 40, bees = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 6, 5), new THREE.MeshBasicMaterial({ color: '#f2c13a' }), n); bees.frustumCulled = false; bees.userData.whole = true; orchScene.add(bees); orchScene.userData.bees = { mesh: bees, n, seed: (R2 => Array.from({ length: n }, () => [112 + R2() * 32, 26 + R2() * 20, R2() * 6.3, 0.6 + R2()]))(seeded(3, 1, 4)) }; }
     // ---- the cooperage: an open shed where the crates and the cider barrels are made ----
     { const cg = new THREE.Group(); orchScene.add(cg); const CX = 98, CZ = 132, wd = mat('#6b4a2b'), pale = mat('#b8935a', { roughness: 1 }), hoop = mat('#4b4b4b', { metalness: 0.5 }), tile = mat('#7a4a2e', { roughness: 1 });
       const put = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(CX + x, y, CZ + z); cg.add(q); return q; };
@@ -3495,10 +3497,11 @@
   kid.body = new THREE.Group(); player.children.slice().forEach(o => kid.body.add(o)); player.add(kid.body);
   bike = makeBike(); player.add(bike);
   function setRiding(on) {
-    if (on && (!bikeOwned || where === 'in' || inRiver(player.position.x, player.position.z) || sitting)) return;
-    riding = on; bike.visible = on; py = 0; kid.legs.forEach(l => l.rotation.x = 0);
-    if (on) { kid.body.position.set(0, 0.98, -0.7); kid.body.rotation.x = 0.3; } else { kid.body.position.set(0, 0, 0); kid.body.rotation.x = 0; player.rotation.z = 0; }
-    flash(on ? 'Riding. Press the ride key again to get off.' : 'On foot.');
+    const dg = mount === 'dog';
+    if (on && ((!dg && !bikeOwned) || where === 'in' || inRiver(player.position.x, player.position.z) || sitting)) return;
+    riding = on; bike.visible = on && !dg; py = 0; kid.legs.forEach(l => { l.rotation.x = 0; l.rotation.z = 0; });
+    if (on) { if (dg) { kid.body.position.set(0, DOG_SEAT, -0.5); kid.body.rotation.x = 0.06; } else { kid.body.position.set(0, 0.98, -0.7); kid.body.rotation.x = 0.3; } } else { kid.body.position.set(0, 0, 0); kid.body.rotation.x = 0; player.rotation.z = 0; if (dg) { dogDrop = true; mount = 'bike'; } }
+    flash(on ? (dg ? `Riding ${DOGNAME}. Press the ride key again to get down.` : 'Riding. Press the ride key again to get off.') : 'On foot.');
   }
   function goToCogsworth() {
     fadeTo('Cogsworth', () => {
@@ -4004,10 +4007,13 @@
     g.userData.wings = wings; return g;
   }
   function addFlock(sceneRef, cx, cz, radius, height, n, groundFn) {
-    const f = { birds: [], cx, cz, radius, height, phase: rnd(0, 6.3), speed: rnd(0.12, 0.2), groundFn };
+    const f = { birds: [], cx, cz, radius, height, phase: rnd(0, 6.3), speed: rnd(0.12, 0.2), groundFn }; f.ph0 = f.phase;
     for (let i = 0; i < n; i++) { const b = makeBird(i % 3 === 0); b.userData.off = i * 0.7; b.userData.flap = rnd(0, 6); sceneRef.add(b); f.birds.push(b); }
     flocks.push(f);
   }
+  // Every game must make the very same animals, in the same places and colours, in the same order: other players see them, and each one is known by its place in the list.
+  const BUILDN = 98, netNow = () => (Date.now() - 1.79e12) / 1000;   // the same number of seconds on every device, for anything that only has to keep time
+  const _realRandom = Math.random; Math.random = seeded(11, 23, 5);
   addFlock(scene, 0, 50, 45, 42, 5, () => 0);
   addFlock(orchScene, 0, 60, 50, 46, 5, () => 0);
   addFlock(fernScene, 0, 70, 55, 40, 6, () => 0);
@@ -4040,7 +4046,7 @@
     const g = new THREE.Group(); const m = mat(pick(['#f4c53a', '#e68fb0', '#9fb7f0', '#f0e6f5', '#e0702a']), { side: THREE.DoubleSide });
     const wings = [-1, 1].map(d => { const w = new THREE.Mesh(new THREE.CircleGeometry(0.45, 8), m); w.position.x = d * 0.42; w.rotation.x = -Math.PI / 2; const piv = new THREE.Group(); piv.add(w); g.add(piv); return piv; });
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 5), mat('#2a2420')); body.rotation.x = Math.PI / 2; g.add(body);
-    g.userData.wings = wings; g.userData.t = rnd(0, 100); g.userData.base = new THREE.Vector3(); return g;
+    g.userData.wings = wings; g.userData.t = g.userData.t0 = rnd(0, 100); g.userData.base = new THREE.Vector3(); return g;
   }
   [[scene, 2, [-30, 30], [-5, 95]], [orchScene, 1, [-40, 40], [5, 100]], [fernScene, 1, [-14, 14], [4, 50]]].forEach(([sc, n, xr, zr]) => {
     for (let i = 0; i < n; i++) { const b = makeButterfly(); let x, z; if (xr) { x = rnd(xr[0], xr[1]); z = rnd(zr[0], zr[1]); } else { x = 0; z = 0; }
@@ -4130,7 +4136,7 @@
   [[scene, 30, 0, FENCE.z1, 'village'], [fernScene, -44, 0, 12, 'fernwater'], [orchScene, -19.5, 0, 70, 'orchards']].forEach(([sc, x, y, z, key]) => { const cr = makeCrow(), yaw = rnd(0, 6.3); cr.position.set(x, y + 2.42, z); cr.rotation.y = yaw; sc.add(cr); critters.push({ obj: cr, kind: 'crow', sceneKey: key, perch: new THREE.Vector3(x, y + 2.42, z), yaw, state: 'perch', t: 0, a: 0 }); });
   addFlock(orchScene, 0, 50, 70, 80, 1, () => 0); flocks[flocks.length - 1].birds[0].scale.setScalar(3.2); flocks[flocks.length - 1].speed = 0.08;
   function animalTick(c, dt, t) {
-    const o = c.obj, dp = Math.hypot(player.position.x - o.position.x, player.position.z - o.position.z);
+    const o = c.obj, E = NET.nearElf(o.position), dp = Math.hypot(E.x - o.position.x, E.z - o.position.z);
     if (c.kind === 'squirrel') {
       c.timer -= dt; c.state = c.state || 'freeze'; c.gx = c.gx || 0; c.gz = c.gz || 0;
       if (c.timer <= 0) {
@@ -4151,12 +4157,12 @@
     if (c.kind === 'crow') {
       // it sits with its wings folded; walk up and it lifts off in a widening circle, and it only comes down again once you have gone
       const fly = c.state !== 'perch'; o.userData.wings.forEach(w => (w.visible = fly)); o.userData.folded.forEach(f => (f.visible = !fly));
-      if (!fly) { o.position.set(c.perch.x, c.perch.y + Math.abs(Math.sin(t * 2.2 + c.a)) * 0.04, c.perch.z); o.rotation.set(0, c.yaw + Math.sin(t * 0.6 + c.a) * 0.5, 0); if (dp < 9) { c.state = 'fly'; c.t = 0; c.a = Math.atan2(o.position.z - player.position.z, o.position.x - player.position.x); } return; }
+      if (!fly) { o.position.set(c.perch.x, c.perch.y + Math.abs(Math.sin(t * 2.2 + c.a)) * 0.04, c.perch.z); o.rotation.set(0, c.yaw + Math.sin(t * 0.6 + c.a) * 0.5, 0); if (dp < 9) { c.state = 'fly'; c.t = 0; c.a = Math.atan2(o.position.z - E.z, o.position.x - E.x); } return; }
       c.t += dt; const fl = Math.sin(c.t * 13) * 0.75; o.userData.wings[0].rotation.z = fl; o.userData.wings[1].rotation.z = -fl;
       if (c.state === 'fly') {
         const r = 13 * (1 - Math.exp(-c.t * 0.7)), ang = c.a + c.t * 0.8, y = c.perch.y + 11 * (1 - Math.exp(-c.t * 0.6)), nx = c.perch.x + Math.cos(ang) * r, nz = c.perch.z + Math.sin(ang) * r;
         o.lookAt(nx + (nx - o.position.x), y, nz + (nz - o.position.z)); o.position.set(nx, y, nz);
-        if (c.t > 7 && Math.hypot(player.position.x - c.perch.x, player.position.z - c.perch.z) > 15) c.state = 'land';
+        if (c.t > 7 && Math.hypot(E.x - c.perch.x, E.z - c.perch.z) > 15) c.state = 'land';
       } else {
         const to = c.perch.clone().sub(o.position), L = to.length(), stp = Math.min(L, dt * Math.max(2.5, Math.min(9, L * 1.6)));
         if (L > 0.6) o.lookAt(c.perch.x, o.position.y, c.perch.z); if (L > 0.001) o.position.add(to.multiplyScalar(stp / L));
@@ -4166,22 +4172,22 @@
     }
     // pheasants burst into the air when startled, glide, and land further off
     if (c.kind === 'pheasant' && c.state === 'burst') { c.timer -= dt; const k = 1 - c.timer / 2.2; o.position.set(c.from.x + (c.target.x - c.from.x) * k, c.ground(o.position.x, o.position.z) + Math.sin(k * Math.PI) * 9, c.from.z + (c.target.z - c.from.z) * k); const fl = Math.sin(t * 30) * 0.9; o.userData.wings[0].rotation.z = fl; o.userData.wings[1].rotation.z = -fl; if (c.timer <= 0) { c.state = 'idle'; c.timer = 3; o.userData.wings.forEach(w => w.rotation.z = 0); } return; }
-    if (c.kind === 'pheasant' && dp < c.flee && c.state !== 'burst') { c.state = 'burst'; c.timer = 2.2; c.from = o.position.clone(); const ang = Math.atan2(o.position.x - player.position.x, o.position.z - player.position.z) + rnd(-0.6, 0.6); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 28, 0, o.position.z + Math.cos(ang) * 28); if (!c.ok(c.target.x, c.target.z) || !clearOf(c.sceneKey, c.target.x, c.target.z, 3)) c.target.set(o.position.x - Math.sin(ang) * 10, 0, o.position.z - Math.cos(ang) * 10); o.rotation.y = ang; return; }
+    if (c.kind === 'pheasant' && dp < c.flee && c.state !== 'burst') { c.state = 'burst'; c.timer = 2.2; c.from = o.position.clone(); const ang = Math.atan2(o.position.x - E.x, o.position.z - E.z) + rnd(-0.6, 0.6); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 28, 0, o.position.z + Math.cos(ang) * 28); if (!c.ok(c.target.x, c.target.z) || !clearOf(c.sceneKey, c.target.x, c.target.z, 3)) c.target.set(o.position.x - Math.sin(ang) * 10, 0, o.position.z - Math.cos(ang) * 10); o.rotation.y = ang; return; }
     // the general wanderer: idle, wander, flee; dogs come to you instead
     c.timer -= dt;
     if (c.kind === 'dog') { c.cool = Math.max(0, (c.cool || 0) - dt);
-      if (dp < 22 && dp > 7 && c.state !== 'greet' && c.state !== 'wag' && c.cool <= 0 && Math.random() < dt * 0.5) { c.state = 'greet'; c.timer = 6; const side = Math.random() < 0.5 ? 1 : -1; c.sideA = bodyYaw + side * Math.PI / 2; }
-      if (c.state === 'greet') { c.target = new THREE.Vector3(player.position.x + Math.sin(c.sideA) * 5.5, 0, player.position.z + Math.cos(c.sideA) * 5.5); const dtg = Math.hypot(c.target.x - o.position.x, c.target.z - o.position.z); if (dtg < 1.5 || c.timer <= 0) { c.state = dtg < 1.5 ? 'wag' : 'idle'; c.timer = dtg < 1.5 ? 2.5 : 2; } }
-      if (c.state === 'wag') { o.lookAt(player.position.x, o.position.y, player.position.z); o.userData.tail.rotation.z = Math.sin(t * 14) * 0.6; o.userData.legs.forEach(l => l.rotation.x = 0); if (c.timer <= 0 || dp > 9) { c.state = 'wander'; c.cool = 25; const ang = bodyYaw + Math.PI + rnd(-1, 1); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 18, 0, o.position.z + Math.cos(ang) * 18); c.timer = 6; } return; }
+      if (dp < 22 && dp > 7 && c.state !== 'greet' && c.state !== 'wag' && c.cool <= 0 && Math.random() < dt * 0.5) { c.state = 'greet'; c.timer = 6; const side = Math.random() < 0.5 ? 1 : -1; c.sideA = E.yaw + side * Math.PI / 2; }
+      if (c.state === 'greet') { c.target = new THREE.Vector3(E.x + Math.sin(c.sideA) * 5.5, 0, E.z + Math.cos(c.sideA) * 5.5); const dtg = Math.hypot(c.target.x - o.position.x, c.target.z - o.position.z); if (dtg < 1.5 || c.timer <= 0) { c.state = dtg < 1.5 ? 'wag' : 'idle'; c.timer = dtg < 1.5 ? 2.5 : 2; } }
+      if (c.state === 'wag') { o.lookAt(E.x, o.position.y, E.z); o.userData.tail.rotation.z = Math.sin(t * 14) * 0.6; o.userData.legs.forEach(l => l.rotation.x = 0); if (c.timer <= 0 || dp > 9) { c.state = 'wander'; c.cool = 25; const ang = E.yaw + Math.PI + rnd(-1, 1); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 18, 0, o.position.z + Math.cos(ang) * 18); c.timer = 6; } return; }
       // a dog never plants itself in your path: if it ends up right in front of you it steps aside
-      if (dp < 4.5 && c.state !== 'greet') { const ang = Math.atan2(o.position.x - player.position.x, o.position.z - player.position.z); if (Math.abs(wrap(ang - bodyYaw)) < 0.7) { c.state = 'wander'; c.target = new THREE.Vector3(o.position.x + Math.sin(bodyYaw + Math.PI / 2) * 8, 0, o.position.z + Math.cos(bodyYaw + Math.PI / 2) * 8); c.timer = 3; } } }
-    if (c.flee && dp < c.flee && c.state !== 'flee') { c.state = 'flee'; c.target = new THREE.Vector3(o.position.x + (o.position.x - player.position.x) * 4, 0, o.position.z + (o.position.z - player.position.z) * 4); c.timer = 3; }
+      if (dp < 4.5 && c.state !== 'greet') { const ang = Math.atan2(o.position.x - E.x, o.position.z - E.z); if (Math.abs(wrap(ang - E.yaw)) < 0.7) { c.state = 'wander'; c.target = new THREE.Vector3(o.position.x + Math.sin(E.yaw + Math.PI / 2) * 8, 0, o.position.z + Math.cos(E.yaw + Math.PI / 2) * 8); c.timer = 3; } } }
+    if (c.flee && dp < c.flee && c.state !== 'flee') { c.state = 'flee'; c.target = new THREE.Vector3(o.position.x + (o.position.x - E.x) * 4, 0, o.position.z + (o.position.z - E.z) * 4); c.timer = 3; }
     if (c.state === 'idle' && c.timer <= 0) { c.state = 'wander'; const ang = rnd(0, 6.3), r = rnd(4, c.radius); c.target = new THREE.Vector3(c.home.x + Math.cos(ang) * r, 0, c.home.z + Math.sin(ang) * r); c.timer = rnd(4, 9); }
     if (c.state === 'wander' || c.state === 'flee' || c.state === 'greet') {
       const dx = c.target.x - o.position.x, dz = c.target.z - o.position.z, d = Math.hypot(dx, dz), sp = c.state === 'flee' ? c.fleeSpeed : c.speed;
       if (d < 0.8 || c.timer <= 0) { c.state = 'idle'; c.timer = c.restless ? rnd(0.3, 1.5) : rnd(1.5, 6); o.userData.legs && o.userData.legs.forEach(l => l.rotation.x = 0); }
       else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt;
-        if (c.ok(nx, nz)) { const ox = o.position.x, oz = o.position.z; o.position.x = nx; o.position.z = nz; const pushed = pushClear(c.sceneKey, o, c.pad || 1.5); if (pushed > 0.01 && Math.hypot(o.position.x - ox, o.position.z - oz) < sp * dt * 0.3) { c.stuck += dt; if (c.stuck > 1.5) { const [hx, hz] = clearSpotNear(c.sceneKey, c.home.x, c.home.z, c.radius, (c.pad || 1.5) + 2, c.ok); if (c.stuck > 6) { if (Math.hypot(o.position.x - player.position.x, o.position.z - player.position.z) > 140) { o.position.x = hx; o.position.z = hz; } c.stuck = 0; } c.target.set(hx, 0, hz); c.timer = 6; } } else c.stuck = 0; }
+        if (c.ok(nx, nz)) { const ox = o.position.x, oz = o.position.z; o.position.x = nx; o.position.z = nz; const pushed = pushClear(c.sceneKey, o, c.pad || 1.5); if (pushed > 0.01 && Math.hypot(o.position.x - ox, o.position.z - oz) < sp * dt * 0.3) { c.stuck += dt; if (c.stuck > 1.5) { const [hx, hz] = clearSpotNear(c.sceneKey, c.home.x, c.home.z, c.radius, (c.pad || 1.5) + 2, c.ok); if (c.stuck > 6) { if (Math.hypot(o.position.x - E.x, o.position.z - E.z) > 140) { o.position.x = hx; o.position.z = hz; } c.stuck = 0; } c.target.set(hx, 0, hz); c.timer = 6; } } else c.stuck = 0; }
         else { c.state = 'idle'; c.timer = 1; }
         const want = Math.atan2(dx, dz); o.rotation.y += wrap(want - o.rotation.y) * Math.min(1, dt * 5); c.gaitT = (c.gaitT || 0) + dt * c.gait * (sp / c.speed); o.userData.legs && o.userData.legs.forEach((l, i) => l.rotation.x = Math.sin(c.gaitT + (i % 2) * Math.PI + Math.floor(i / 2) * 0.5) * 0.6); o.position.y = c.ground(o.position.x, o.position.z) + Math.abs(Math.sin(c.gaitT)) * c.bob; if (o.userData.tail && c.kind !== 'dog') o.userData.tail.rotation.y = Math.sin(c.gaitT) * 0.2; return; }
     }
@@ -4203,39 +4209,58 @@
   // squirrels on the wild oaks: three of them, each on a tree near you, moving on to a new tree as you travel
   const wildSquirrels = []; for (let i = 0; i < 3; i++) { squirrelOn(worldScene, 0, 0, -500, 'wild', 8, 40); wildSquirrels.push(critters[critters.length - 1]); }
   const wildFlock = flocks[flocks.length - 1];
+  Math.random = _realRandom;
+
   function wildLifeTick(dt) {
-    if (where !== 'wild') return; const px = player.position.x, pz = player.position.z;
+    if (where !== 'wild') return; const px = player.position.x, pz = player.position.z, pup = NET.puppet();
     wildFlock.cx += (px + Math.sin(bodyYaw) * 60 - wildFlock.cx) * Math.min(1, dt * 0.25); wildFlock.cz += (pz + Math.cos(bodyYaw) * 60 - wildFlock.cz) * Math.min(1, dt * 0.25);
     wildSolT -= dt; if (wildSolT > 0) return; wildSolT = 1.3;
     wildSol = []; chunks.forEach(c => { for (const sd of c.solids) if (Math.abs(sd.x - px) < 420 && Math.abs(sd.z - pz) < 420) wildSol.push(sd); });
+    if (pup) return;   // another game near you is running the animals: it decides where they go
     { const oaks = wildSol.filter(sd => sd.oak && Math.hypot(sd.x - px, sd.z - pz) > 30 && Math.hypot(sd.x - px, sd.z - pz) < 240);
       wildSquirrels.forEach(c => { if (c.tree && wildSol.includes(c.tree) && Math.hypot(c.tx - px, c.tz - pz) < 300) return;
-        const free = oaks.filter(sd => !wildSquirrels.some(q => q.tree === sd)); if (!free.length) return; const sd = free[Math.floor(Math.random() * free.length)];
+        const free = oaks.filter(sd => !wildSquirrels.some(q => q.tree === sd)); if (!free.length) return; const sd = free.slice().sort((p, q) => Math.hypot(p.x - px, p.z - pz) - Math.hypot(q.x - px, q.z - pz))[0];
         c.tree = sd; c.tx = sd.x; c.tz = sd.z; c.baseY = sd.y + 0.2; c.r = sd.K * 1.2; c.rf = h => sd.K * 1.2 - 0.5 * h / 7.6; c.climb = sd.K * 5.4; c.h = 0; c.dir = 1; c.state = 'freeze'; c.gx = 0; c.gz = 0; c.timer = rnd(0.5, 2); c.obj.position.set(sd.x + c.r, c.baseY, sd.z); }); }
     // anything left far behind turns up again somewhere ahead
     wildFauna.forEach(c => { const o = c.obj; if (Math.hypot(o.position.x - px, o.position.z - pz) < 340) return;
       for (let k = 0; k < 14; k++) { const ang = bodyYaw + rnd(-1.5, 1.5), r = rnd(150, 270), x = px + Math.sin(ang) * r, z = pz + Math.cos(ang) * r; if (!wildOK(x, z) || !clearOf('wild', x, z, 4)) continue; o.position.set(x, worldH(x, z), z); if (c.home) c.home.set(x, 0, z); c.state = 'idle'; c.timer = rnd(1, 4); c.target = null; c.stuck = 0; break; } });
   }
+  // An animal that another game is running: glide it between the places that game last said it was, a quarter of a second behind, and move its legs and wings to suit.
+  function puppetTick(c, dt, t) {
+    const o = c.obj, B = c.pb; if (!B || !B.length) return; const rt = performance.now() - 260; let i = B.length - 1; while (i > 0 && B[i].t > rt) i--; const a = B[i], b = B[i + 1]; let x = a.x, y = a.y, z = a.z, r = a.r, f = a.f, v = 0, vy = 0;
+    if (b && a.t <= rt) { const k = Math.min(1, (rt - a.t) / Math.max(1, b.t - a.t)), far = Math.hypot(b.x - a.x, b.z - a.z) > 40; if (far) { x = b.x; y = b.y; z = b.z; r = b.r; } else { x += (b.x - a.x) * k; y += (b.y - a.y) * k; z += (b.z - a.z) * k; r += wrap(b.r - a.r) * k; v = Math.hypot(b.x - a.x, b.z - a.z) / Math.max(0.05, (b.t - a.t) / 1000); vy = (b.y - a.y) / Math.max(0.05, (b.t - a.t) / 1000); } f = b.f; }
+    const up = !!(f & 2), u = o.userData; c.pv = (c.pv || 0) + (Math.min(v, 30) - (c.pv || 0)) * Math.min(1, dt * 6); const go = c.pv > 0.4; c.gaitT = (c.gaitT || 0) + (go ? dt * (c.gait || 9) * Math.min(3, Math.max(0.6, c.pv / (c.speed || 5))) : 0);
+    if (c.ground && !up && c.kind !== 'squirrel' && c.kind !== 'crow' && c.kind !== 'frog' && c.kind !== 'pheasant') y = c.ground(x, z) + (go ? Math.abs(Math.sin(c.gaitT)) * (c.kind === 'rabbit' ? 0.9 : c.bob || 0) : 0);
+    o.visible = !(f & 1); o.position.set(x, y, z);
+    if (c.kind === 'squirrel' && up) { o.up.set(Math.cos(r), 0, Math.sin(r)); o.lookAt(x, y + (vy < -0.5 ? -5 : 5), z); o.up.set(0, 1, 0); } else o.rotation.set(0, r, 0);
+    if (u.legs) u.legs.forEach((l, q) => l.rotation.x = go && !up ? Math.sin(c.gaitT + (q % 2) * Math.PI + Math.floor(q / 2) * 0.5) * 0.6 : 0);
+    if (c.kind === 'crow') { u.wings.forEach(w => (w.visible = up)); u.folded.forEach(w => (w.visible = !up)); }
+    if (u.wings && (c.kind === 'crow' || c.kind === 'pheasant')) { const fl = up ? Math.sin(t * (c.kind === 'crow' ? 13 : 30)) * 0.8 : 0; u.wings[0].rotation.z = fl; u.wings[1].rotation.z = -fl; }
+    if (u.tail) { if (c.kind === 'dog') u.tail.rotation.z = Math.sin(t * (f & 4 ? 14 : 5)) * (f & 4 ? 0.6 : 0.2); else if (c.kind === 'squirrel') u.tail.rotation.x = 0.5 + (go || up ? Math.sin(t * 22) * 0.35 : 0); }
+    if (c.kind === 'deer') { const nk = u.neck, want = !go && Math.sin(netNow() * 0.8 + c.home.x) > 0.6 ? 1.55 : 0; nk.rotation.x += (want - nk.rotation.x) * Math.min(1, dt * 2.5); }
+  }
   function ambientTick(dt, t) {
     const here = where === 'in' ? null : where;
     flocks.forEach(f => {
       if (!f.birds[0].parent || f.birds[0].parent !== curScene()) return;
-      f.phase += dt * f.speed;
+      f.phase = f.ph0 + netNow() * f.speed;
       f.birds.forEach(b => { const a = f.phase + b.userData.off * 0.35, r = f.radius + Math.sin(a * 2.3 + b.userData.off) * 8; const x = f.cx + Math.cos(a) * r, z = f.cz + Math.sin(a) * r; const y = f.height + Math.sin(a * 1.7 + b.userData.off) * 5 + (f.groundFn ? Math.max(0, f.groundFn(x, z) - 10) : 0); b.position.set(x, y, z); b.lookAt(f.cx + Math.cos(a + 0.05) * r, y, f.cz + Math.sin(a + 0.05) * r); b.userData.flap += dt * (6 + Math.sin(a * 3) * 2); const fl = Math.sin(b.userData.flap) * 0.7; b.userData.wings[0].rotation.z = fl; b.userData.wings[1].rotation.z = -fl; });
     });
+    const pup = NET.puppet();
     critters.forEach(c => {
       if (c.sceneKey !== here) return; const o = c.obj;
+      if (c.kind !== 'butterfly' && pup) { puppetTick(c, dt, t); return; }
       if (c.kind !== 'butterfly' && c.kind !== 'rabbit' && c.kind !== 'heron') { animalTick(c, dt, t); return; }
-      if (c.kind === 'butterfly') { const u = o.userData; u.t += dt; o.position.set(u.base.x + Math.sin(u.t * 0.7) * 3 + Math.sin(u.t * 1.9) * 0.8, u.base.y + Math.sin(u.t * 2.3) * 0.6 + Math.sin(u.t * 5.1) * 0.15, u.base.z + Math.cos(u.t * 0.5) * 3); o.rotation.y = Math.atan2(Math.cos(u.t * 0.7) * 2.1, -Math.sin(u.t * 0.5) * 1.5); const fl = Math.sin(u.t * 18) * 1.1; u.wings[0].rotation.z = fl; u.wings[1].rotation.z = -fl; }
+      if (c.kind === 'butterfly') { const u = o.userData; u.t = u.t0 + netNow() % 100000; o.position.set(u.base.x + Math.sin(u.t * 0.7) * 3 + Math.sin(u.t * 1.9) * 0.8, u.base.y + Math.sin(u.t * 2.3) * 0.6 + Math.sin(u.t * 5.1) * 0.15, u.base.z + Math.cos(u.t * 0.5) * 3); o.rotation.y = Math.atan2(Math.cos(u.t * 0.7) * 2.1, -Math.sin(u.t * 0.5) * 1.5); const fl = Math.sin(u.t * 18) * 1.1; u.wings[0].rotation.z = fl; u.wings[1].rotation.z = -fl; }
       else if (c.kind === 'rabbit') {
         c.timer -= dt;
-        const dp = Math.hypot(player.position.x - o.position.x, player.position.z - o.position.z);
-        if (dp < 9 && c.state !== 'flee') { c.state = 'flee'; c.target = new THREE.Vector3(o.position.x + (o.position.x - player.position.x) * 3, 0, o.position.z + (o.position.z - player.position.z) * 3); c.timer = 3; }
+        const E = NET.nearElf(o.position), dp = Math.hypot(E.x - o.position.x, E.z - o.position.z);
+        if (dp < 9 && c.state !== 'flee') { c.state = 'flee'; c.target = new THREE.Vector3(o.position.x + (o.position.x - E.x) * 3, 0, o.position.z + (o.position.z - E.z) * 3); c.timer = 3; }
         if (c.state === 'idle' && c.timer <= 0) { c.state = 'hop'; c.target = new THREE.Vector3(o.position.x + rnd(-12, 12), 0, o.position.z + rnd(-12, 12)); c.timer = 4; }
         if (c.state === 'hop' || c.state === 'flee') {
           const dx = c.target.x - o.position.x, dz = c.target.z - o.position.z, d = Math.hypot(dx, dz), sp = c.state === 'flee' ? 14 : 5;
           if (d < 0.5 || c.timer <= 0) { c.state = 'idle'; c.timer = rnd(1.5, 5); c.hop = 0; }
-          else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt; if (!c.ok || c.ok(nx, nz)) { o.position.x = nx; o.position.z = nz; if (pushClear(c.sceneKey, o, 1.5) > 0.01) { c.stuck = (c.stuck || 0) + dt; if (c.stuck > 4) { const [hx, hz] = clearSpotNear(c.sceneKey, o.position.x, o.position.z, 30, 4); if (Math.hypot(o.position.x - player.position.x, o.position.z - player.position.z) > 140) { o.position.x = hx; o.position.z = hz; } else { c.state = 'idle'; c.timer = 1; } c.stuck = 0; } } else c.stuck = 0; } else { c.state = 'idle'; c.timer = 1; } o.rotation.y = Math.atan2(dx, dz); c.hop += dt * (c.state === 'flee' ? 14 : 9); }
+          else { const nx = o.position.x + dx / d * sp * dt, nz = o.position.z + dz / d * sp * dt; if (!c.ok || c.ok(nx, nz)) { o.position.x = nx; o.position.z = nz; if (pushClear(c.sceneKey, o, 1.5) > 0.01) { c.stuck = (c.stuck || 0) + dt; if (c.stuck > 4) { const [hx, hz] = clearSpotNear(c.sceneKey, o.position.x, o.position.z, 30, 4); if (Math.hypot(o.position.x - E.x, o.position.z - E.z) > 140) { o.position.x = hx; o.position.z = hz; } else { c.state = 'idle'; c.timer = 1; } c.stuck = 0; } } else c.stuck = 0; } else { c.state = 'idle'; c.timer = 1; } o.rotation.y = Math.atan2(dx, dz); c.hop += dt * (c.state === 'flee' ? 14 : 9); }
         }
         o.position.y = c.ground(o.position.x, o.position.z) + Math.abs(Math.sin(c.hop)) * (c.state === 'idle' ? 0 : 0.9);
         if (c.state === 'idle') { o.children[1].position.y = 1.9 - Math.abs(Math.sin(t * 2.2)) * 0.25; }
@@ -4579,6 +4604,82 @@
   [['townA', '#e9dcc3', '#8a4a2a', '#2f5f8a', '#d9a33f'], ['townB', '#e2e6d6', '#4f6b52', '#8a3a4a', '#9fd07a']].forEach(([id, wallC, trimC, quilt, kidQuilt]) => makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: wallC, trim: trimC, label: 'A house in Hearthmoor', region: 'wild', out: 'Hearthmoor', city: true, hint: 'Somebody’s home. Nobody is in just now.', decorate: familyHome({ wall: wallC, quilt, kidQuilt, rug: '#b8a070' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: id === 'townA' ? '#8a4a2a' : '#4f6b52', quilt }); }) }));
   const pickables = []; roomSeats.forEach(o => pickables.push(o)); storeSpots.forEach(o => pickables.push(o));
   pickables.push(orchScene.userData.bench); pickables.push(fernScene.userData.bench);
+  // ---------- a dog to ride, and the stable he lives in ----------
+  // There is one riding dog in the whole world, and one owner: whoever claims him first (kept on the server). He is not hired out. The stable is only where he sleeps.
+  const STABLE = { x: -36, z: -36 }, DOGNAME = 'Bracken', DOG_HOME = [STABLE.x, 0, STABLE.z + 0.5];
+  const dogSt = { owner: '', mine: false, home: true, at: -1e9, text: '' };
+  let mount = 'bike', dogDrop = false, lastRide = null, dogPh = 0, dogBoard = null;
+  const rdog = makeDog(), DOG_TOP = new THREE.Box3().setFromObject(rdog.children[0]).max.y, DOG_SEAT = DOG_TOP * 0.66 - 0.7;   // the top of his back, measured in his own units (he is drawn at two-thirds size), so the blanket and the rider sit on it
+  { const coat = mat('#8a5a2e', { roughness: 0.9 }), dark = mat('#1b1b1b'); rdog.traverse(o => { if (o.isMesh) o.material = o.material.color.getHexString() === '1b1b1b' ? dark : coat; });
+    { const ty = DOG_TOP, red = mat('#b03a3a', { roughness: 1 }), gold = mat('#e8b64c'); blob(rdog, new THREE.BoxGeometry(2.6, 0.4, 4.2), red, 0, ty - 0.08, -0.4); [-1, 1].forEach(d => { const fl = blob(rdog, new THREE.BoxGeometry(1.5, 0.3, 4.2), red, d * 1.85, ty - 0.55, -0.4); fl.rotation.z = -d * 0.75; }); [1.5, -2.3].forEach(z => blob(rdog, new THREE.BoxGeometry(2.7, 0.14, 0.4), gold, 0, ty + 0.1, z)); }
+    blob(rdog, new THREE.TorusGeometry(1.2, 0.16, 6, 16), mat('#b03a3a'), 0, 6.3, 3.3).rotation.x = Math.PI / 2 - 0.75; blob(rdog, sph(0.28), mat('#e8b64c', { metalness: 0.6, roughness: 0.4 }), 0, 5.4, 4.1);
+    rdog.userData.world = 'village'; }
+  const dogSpot = new THREE.Object3D(); dogSpot.userData = { pickable: true, kind: 'mount', world: 'village' }; pickables.push(dogSpot);   // where you reach him: by his shoulder, not his middle
+  // the stable: an open-fronted shed with three stalls, on the quiet side of the old oak
+  { const sg = new THREE.Group(); scene.add(sg); const wd = mat('#6b4a2b'), plank = mat('#9a7448', { roughness: 1 }), tile = mat('#7a4a2e', { roughness: 1 }), straw = mat('#a8894a', { roughness: 1 }), W = 36, D = 16, H = 12, X = STABLE.x, Z = STABLE.z;
+    const put = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(X + x, y, Z + z); sg.add(q); return q; };
+    put(new THREE.BoxGeometry(W, H, 0.8), plank, 0, H / 2, -D / 2); [-1, 1].forEach(s => put(new THREE.BoxGeometry(0.8, H, D), plank, s * W / 2, H / 2, 0)); [-6, 6].forEach(x => { put(new THREE.BoxGeometry(0.6, 7, D - 3), plank, x, 3.5, -1.5); put(new THREE.BoxGeometry(0.9, H, 0.9), wd, x, H / 2, D / 2 - 0.4); });
+    [-W / 2, W / 2].forEach(x => put(new THREE.BoxGeometry(1, H, 1), wd, x, H / 2, D / 2 - 0.4)); put(new THREE.BoxGeometry(W + 1, 0.9, 1), wd, 0, H, D / 2 - 0.4);
+    { const a = Math.atan(6 / 10), sl = Math.hypot(10.4, 6.25); [-1, 1].forEach(s => { const r = put(new THREE.BoxGeometry(W + 3, 0.6, sl), tile, 0, H + 3.1, s * 4.9); r.rotation.x = s * a; }); put(new THREE.BoxGeometry(W + 3.4, 0.7, 1.1), wd, 0, H + 6.3, 0); const tri = new THREE.Shape(); tri.moveTo(-D / 2 - 0.4, 0); tri.lineTo(D / 2 + 0.4, 0); tri.lineTo(0, 5.6); tri.closePath(); [-1, 1].forEach(s => { const gb = put(new THREE.ExtrudeGeometry(tri, { depth: 0.8, bevelEnabled: false }), plank, s * W / 2 - 0.4, H, 0); gb.rotation.y = Math.PI / 2; }); }
+    const ft = dirtTex.clone(); ft.needsUpdate = true; ft.repeat.set(8, 6); const fl = new THREE.Mesh(new THREE.PlaneGeometry(W + 6, D + 14), mat('#ffffff', { map: ft })); fl.rotation.x = -Math.PI / 2; fl.position.set(X, 0.03, Z + 6); fl.receiveShadow = true; scene.add(fl);
+    [-12, 0, 12].forEach(x => put(new THREE.BoxGeometry(10.6, 0.24, D - 2.5), straw, x, 0.14, -1)); 
+    [[-15, -5.5], [-12.4, -5.6], [-13.7, -5.5, 2.3], [14, -5.4]].forEach(([x, z, y]) => { const bl = put(new THREE.BoxGeometry(2.6, 2.2, 3.6), straw, x, (y || 0) + 1.1, z); bl.rotation.y = (x * 7 % 5) * 0.05; });
+    put(new THREE.BoxGeometry(5, 1.8, 2), wd, 3.4, 0.9, -6.4); put(new THREE.BoxGeometry(4.4, 0.16, 1.5), mat('#4a7fb8', { roughness: 0.2 }), 3.4, 1.75, -6.4);
+    put(new THREE.CylinderGeometry(1.5, 1.2, 0.9, 12), mat('#8f8a7a', { roughness: 1 }), -3.6, 0.45, -6.2); put(new THREE.CylinderGeometry(1.3, 1.3, 0.1, 12), mat('#6b4a2b'), -3.6, 0.92, -6.2);
+    const sn = signBoard('The Hollow Stables', 12, 2, '#5a3d22', '#f6e7c2'); sn.position.set(X, H + 1.6, Z + D / 2 + 0.2); scene.add(sn);
+    sg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(sg);
+    hollowBoxes.push({ x: X, z: Z - D / 2, hw: W / 2 + 0.4, hd: 0.6 }, { x: X - W / 2, z: Z, hw: 0.6, hd: D / 2 }, { x: X + W / 2, z: Z, hw: 0.6, hd: D / 2 }, { x: X - 6, z: Z - 1.5, hw: 0.4, hd: D / 2 - 1.5 }, { x: X + 6, z: Z - 1.5, hw: 0.4, hd: D / 2 - 1.5 });
+    solids.push({ x: X - 6, z: Z + D / 2 - 0.4, r: 0.8 }, { x: X + 6, z: Z + D / 2 - 0.4, r: 0.8 }, { x: X - 14, z: Z - 5.5, r: 2.6 }, { x: X + 14, z: Z - 5.4, r: 2 }, { x: X + 3.4, z: Z - 6.4, r: 2.2 }, { x: X - 3.6, z: Z - 6.2, r: 1.5 });
+    const bp = new THREE.Object3D(); bp.position.set(X + 6, 4, Z + D / 2 + 0.4); scene.add(bp); bp.userData = { pickable: true, kind: 'stable', world: 'village' }; pickables.push(bp);
+    lampPost(scene, X - W / 2 - 2.5, Z + D / 2 + 3, 10, 26, solids); }
+  function dogBoardSet() { const text = DOGNAME + (dogSt.owner ? ' · ' + dogSt.owner + '’s dog' : ' · nobody’s yet'); if (text === dogSt.text) return; dogSt.text = text; if (dogBoard) scene.remove(dogBoard); dogBoard = signBoard(text, 9.6, 1.5, dogSt.owner ? (dogSt.mine ? '#3e8a52' : '#8a6438') : '#f6e7c2', dogSt.owner ? '#f6e7c2' : '#3a2a18'); dogBoard.position.set(STABLE.x, 9.6, STABLE.z + 7.75); scene.add(dogBoard); }
+  dogBoardSet();
+  const dogLocal = () => !session && devMode;   // a tester with no account keeps the dog on this device only
+  async function dogFetch() { dogSt.at = performance.now(); if (dogLocal()) { dogSt.mine = !!save.dogMine; dogSt.owner = dogSt.mine ? (save.name || 'Elfling') : ''; dogSt.home = !save.dog; dogBoardSet(); return; }
+    try { const rows = await rpcOpen('game_mounts_list'), q = Array.isArray(rows) ? rows.find(r => r && r.id === 'bracken') : null; dogSt.owner = q ? String(q.name || 'Elfling').slice(0, 16) : ''; dogSt.mine = !!(q && q.mine); dogSt.home = q ? q.home !== false : true; dogBoardSet(); if (dogSt.mine && !dogSt.home && !save.dog && !(riding && mount === 'dog')) dogHomeFlag(true); } catch (e) {} }
+  function dogHomeFlag(home) { dogSt.home = home; if (!dogLocal() && dogSt.mine) rpc('game_mount_home', { p_id: 'bracken', p_home: home }).catch(() => {}); }
+  function dogPut(sc, x, y, z, r, world) { if (rdog.parent !== sc) sc.add(rdog); rdog.position.set(x, y, z); rdog.rotation.set(0, r, 0); rdog.visible = true; rdog.userData.world = world; }
+  function dogMount() { if (!dogSt.mine || riding || where === 'in' || sitting || talking()) return; mount = 'dog'; const wasHome = !save.dog; player.add(rdog); rdog.position.set(0, 0, 0); rdog.rotation.set(0, 0, 0); rdog.visible = true; setRiding(true); if (!riding) { mount = 'bike'; return; } save.dog = { w: where, p: [0, 0, 0], r: 0, on: 1 }; if (wasHome) dogHomeFlag(false); persist(); }
+  function dogSendHome(quiet) { if (riding && mount === 'dog') { riding = false; bike.visible = false; kid.body.position.set(0, 0, 0); kid.body.rotation.x = 0; player.rotation.z = 0; py = 0; mount = 'bike'; dogDrop = false; } save.dog = null; persist(); dogHomeFlag(true); dogPut(scene, DOG_HOME[0], 0, DOG_HOME[2], 0, 'village'); if (!quiet) flash(DOGNAME + ' is back in his stall.', 4500); }
+  function rideKey() { if (talking()) return; if (riding) { setRiding(false); return; }
+    if (dogSt.mine && rdog.visible && rdog.parent === player.parent && Math.hypot(rdog.position.x - player.position.x, rdog.position.z - player.position.z) < 10) { dogMount(); return; }
+    if (bikeOwned) { mount = 'bike'; setRiding(true); } else if (dogSt.mine) flash(DOGNAME + ' is not beside you. Walk up to him and press the ride key.', 4500); }
+  function dogPick() {
+    if (dogSt.mine) { dogMount(); return; }
+    if (dogSt.owner) { say([`${DOGNAME} sniffs your hand and lets you scratch behind his ears.`, `He is ${dogSt.owner}’s dog. There is only the one riding dog, and he is not for hire.`], null, DOGNAME); return; }
+    if (!session && !devMode) { flash('Sign in to have a dog of your own.', 4500); return; }
+    choose(DOGNAME, `This is ${DOGNAME}. He is big enough to carry an elf and quicker than any bicycle. Nobody owns him yet. There is only one riding dog, and whoever takes him keeps him. Will you?`, [['Yes, he is mine', async () => {
+      if (dogLocal()) { save.dogMine = true; persist(); await dogFetch(); chink(1760); flash(`${DOGNAME} is yours. Press the ride key beside him to climb up.`, 6000); return; }
+      try { const r = await rpc('game_claim_mount', { p_id: 'bracken', p_name: save.name || 'Elfling' }); if (r && r.status === 'ok') { dogSt.owner = r.name; dogSt.mine = true; dogSt.home = true; dogBoardSet(); chink(1760); flash(`${DOGNAME} is yours. Press the ride key beside him to climb up.`, 6000); } else { flash(r && r.status === 'taken' ? 'Somebody took him a moment ago.' : 'He could not be claimed just now.', 5000); dogFetch(); } } catch (e) { flash('The stable’s book could not be reached. Try again in a while.', 5000); } }], ['Not now']]);
+  }
+  function stablePick() { const out = dogSt.mine && (!!save.dog || (riding && mount === 'dog'));
+    const text = dogSt.mine ? (out ? `${DOGNAME} is yours, and he is out with you. This is his stall whenever you want to leave him.` : `${DOGNAME} is yours. He is in his stall. Walk up to him and press the ride key.`) : dogSt.owner ? `One dog lives here: ${DOGNAME}. He belongs to ${dogSt.owner}.${dogSt.home ? '' : ' He is out with them now.'}` : `One dog lives here: ${DOGNAME}. Nobody owns him yet. Go and meet him.`;
+    choose('The Hollow Stables', text, out ? [['Put ' + DOGNAME + ' in his stall', () => dogSendHome()], ['Leave him out']] : [['Good']]); }
+  // each frame: where the dog is, and how he moves
+  function dogTick(dt, t) {
+    if (performance.now() - dogSt.at > (where === 'village' ? 45000 : 180000) && gameStarted && !titleUp) dogFetch();
+    const mineOn = riding && mount === 'dog';
+    if (mineOn) { lastRide = { w: where, p: [player.position.x, player.position.y, player.position.z], r: bodyYaw }; }
+    if (dogDrop) { dogDrop = false; let w = null, p, r;
+      if (where !== 'in') { w = where; p = [player.position.x + Math.cos(bodyYaw) * 3.4, player.position.y, player.position.z - Math.sin(bodyYaw) * 3.4]; r = bodyYaw; } else if (lastRide) { w = lastRide.w; p = lastRide.p; r = lastRide.r; }
+      if (w) save.dog = { w, p: p.map(q => +q.toFixed(1)), r: +r.toFixed(2) }; else { save.dog = null; dogHomeFlag(true); } persist(); }
+    if (dogSt.mine) { if (mineOn) { if (rdog.parent !== player) { player.add(rdog); rdog.position.set(0, 0, 0); rdog.rotation.set(0, 0, 0); rdog.visible = true; } }
+      else if (save.dog && !save.dog.on && save.dog.w) { const sc = sceneOf(save.dog.w); if (sc && (rdog.parent !== sc || rdog.userData.world !== save.dog.w || Math.abs(rdog.position.x - save.dog.p[0]) > 0.2)) dogPut(sc, save.dog.p[0], save.dog.p[1], save.dog.p[2], save.dog.r, save.dog.w); }
+      else if (save.dog && save.dog.on) { save.dog.on = 0; dogDrop = true; }
+      else if (rdog.parent !== scene || rdog.userData.world !== 'village' || rdog.position.x !== DOG_HOME[0]) dogPut(scene, DOG_HOME[0], 0, DOG_HOME[2], 0, 'village'); }
+    else { let rider = null, left = null; NET.peers.forEach(p => { if (p.mt === 2) rider = p; else if (p.dw) left = p; });
+      if (rider) { const g = rider.k.g; dogPut(curScene(), g.position.x, g.position.y - DOG_SEAT, g.position.z, g.rotation.y, 'ridden'); }
+      else if (left && where !== 'in') dogPut(curScene(), left.dw[0], left.dw[1], left.dw[2], left.dw[3], 'ridden');
+      else if (dogSt.home || !dogSt.owner) { if (rdog.parent !== scene || rdog.position.x !== DOG_HOME[0] || !rdog.visible) dogPut(scene, DOG_HOME[0], 0, DOG_HOME[2], 0, 'village'); }
+      else rdog.visible = false;
+      rdog.userData.gait = rider ? rider.sp : 0; }
+    // legs and tail
+    const sp = mineOn ? vel.length() : (rdog.userData.gait || 0), L = rdog.userData.legs; dogPh += dt * Math.min(22, 3 + sp * 0.62);
+    const amp = Math.min(0.85, sp / 22); L.forEach((l, q) => { l.rotation.x = sp > 0.5 ? Math.sin(dogPh + (q < 2 ? 0 : Math.PI * 0.85) + (q % 2) * 0.5) * amp : 0; });
+    rdog.userData.tail.rotation.z = Math.sin(t * (sp > 0.5 ? 9 : 4)) * (sp > 0.5 ? 0.25 : 0.4);
+    if (mineOn) { rdog.position.y = Math.abs(Math.sin(dogPh)) * 0.16 * amp; kid.body.position.y = DOG_SEAT + rdog.position.y; }
+    const free = rdog.visible && rdog.parent && rdog.parent !== player && rdog.userData.world !== 'ridden'; dogSpot.visible = !!free; if (free) { if (dogSpot.parent !== rdog.parent) rdog.parent.add(dogSpot); dogSpot.position.set(rdog.position.x + Math.sin(rdog.rotation.y) * 3.2, rdog.position.y + 3, rdog.position.z + Math.cos(rdog.rotation.y) * 3.2); dogSpot.userData.world = rdog.userData.world; }
+  }
   orchBenches.forEach(([x, z, yaw]) => { const b = makeBench(true); b.position.set(x, 0, z); b.rotation.y = yaw; b.traverse(m => { if (m.isMesh) m.castShadow = true; }); orchScene.add(b); b.userData = { pickable: true, kind: 'seat', yaw, seatTop: 1.51, label: 'garden bench', world: 'orchards' }; pickables.push(b); });
   addSeat(makeBench(true), 5.5, R + 3.2, 0, 1.51, 'bench by the shop');
   addSeat(makeBench(false), FEN.x + 6.5, FEN.z - 5.5, -Math.PI / 2, 1.51, 'bench at the stall');
@@ -5179,13 +5280,13 @@
     findsNear();
     if (questGrub) questGrub.visible = !save.beetle && !beetle && !parked && phase === 'free';
     { const cb = beetle || (parked && parked.obj); if (cb && beetleName && !cb.userData.pickable) { cb.userData.pickable = true; cb.userData.kind = 'follower'; pickables.push(cb); } }
-    $('ridebtn').hidden = !bikeOwned;
+    $('ridebtn').hidden = !bikeOwned && !dogSt.mine;
     if (!!save.lamp !== !!(lampLight && lampLight.parent)) setLamp(save.lamp);
     // say what the pick-up button will do, when it is something that isn't part of a lesson
     let text = '', word = 'Pick up';
     if (!talking() && !bagOpen && !mapOpen && !fading && !sitting) { const [b0, d0] = nearestPick(0); if (b0 && d0 <= REACH && b0.userData.kind === 'sci') { text = 'Look at ' + b0.userData.label; word = 'Look'; }
       if (!(b0 && d0 <= REACH)) for (let tier = 1; tier < 5 && !text; tier++) { const [b, d] = nearestPick(tier); if (!b || d > REACH) continue; const u = b.userData;
-        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'readteach') { text = 'Speak to Fen Dewberry'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { const sh = SHOPS[u.shop]; if (!shopShut(u.shop)) { text = 'Trade at ' + sh.n; word = 'Trade'; } else if (honestStock(sh).length) { text = 'Honesty box at ' + sh.n; word = 'Open'; } else { text = sh.n + ' is shut till seven'; word = 'Look'; } } else if (u.kind === 'folk') { text = 'Speak to ' + folk[u.fi].n; word = 'Speak'; } else if (u.kind === 'decor') { text = 'Choose your room’s colours'; word = 'Choose'; } else if (u.kind === 'book') { text = 'Read “' + BOOKS[u.book].t + '”'; word = 'Read'; } else if (u.kind === 'shelf') { text = 'Look along the shelf: ' + u.label; word = 'Look'; } else if (u.kind === 'wash') { text = 'Wash at the washstand'; word = 'Wash'; } else if (u.kind === 'lot') { const st = lotState[u.no]; text = st ? (st.mine ? `Lot ${u.no} is yours` : `Lot ${u.no} is ${st.name}’s`) : `Claim Lot ${u.no}`; word = st ? 'Look' : 'Claim'; } else if (u.kind === 'store') { text = (u.owner ? 'Look at the ' : 'Open the ') + u.label; word = u.owner ? 'Look' : 'Open'; } else if (u.kind === 'knock') { text = 'Knock at ' + FOLK[u.who].n + '’s door'; word = 'Knock'; } else if (u.kind === 'resident') { text = (FOLK[u.who].pose === 'bed' ? 'Wake ' : 'Speak to ') + FOLK[u.who].n; word = 'Speak'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
+        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'readteach') { text = 'Speak to Fen Dewberry'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { const sh = SHOPS[u.shop]; if (!shopShut(u.shop)) { text = 'Trade at ' + sh.n; word = 'Trade'; } else if (honestStock(sh).length) { text = 'Honesty box at ' + sh.n; word = 'Open'; } else { text = sh.n + ' is shut till seven'; word = 'Look'; } } else if (u.kind === 'folk') { text = 'Speak to ' + folk[u.fi].n; word = 'Speak'; } else if (u.kind === 'decor') { text = 'Choose your room’s colours'; word = 'Choose'; } else if (u.kind === 'book') { text = 'Read “' + BOOKS[u.book].t + '”'; word = 'Read'; } else if (u.kind === 'shelf') { text = 'Look along the shelf: ' + u.label; word = 'Look'; } else if (u.kind === 'wash') { text = 'Wash at the washstand'; word = 'Wash'; } else if (u.kind === 'mount') { text = dogSt.mine ? 'Ride ' + DOGNAME : dogSt.owner ? `${DOGNAME}, ${dogSt.owner}’s dog` : 'Meet ' + DOGNAME; word = dogSt.mine ? 'Ride' : 'Greet'; } else if (u.kind === 'stable') { text = 'Read the stable’s board'; word = 'Read'; } else if (u.kind === 'lot') { const st = lotState[u.no]; text = st ? (st.mine ? `Lot ${u.no} is yours` : `Lot ${u.no} is ${st.name}’s`) : `Claim Lot ${u.no}`; word = st ? 'Look' : 'Claim'; } else if (u.kind === 'store') { text = (u.owner ? 'Look at the ' : 'Open the ') + u.label; word = u.owner ? 'Look' : 'Open'; } else if (u.kind === 'knock') { text = 'Knock at ' + FOLK[u.who].n + '’s door'; word = 'Knock'; } else if (u.kind === 'resident') { text = (FOLK[u.who].pose === 'bed' ? 'Wake ' : 'Speak to ') + FOLK[u.who].n; word = 'Speak'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
     if (text !== promptText) { promptText = text; const p = $('prompt'); p.hidden = !text; if (text) p.innerHTML = settings.input === 'touch' ? text : `<kbd>${settings.input === 'gamepad' ? 'X' : keyLabel(settings.binds.pick)}</kbd> ${text}`; $('grab').textContent = word; }
   }
 
@@ -5202,7 +5303,7 @@
   const famSave = () => { try { localStorage.setItem(FAM_KEY, JSON.stringify(fam)); } catch (e) {} };
   const famAge = () => fam.year ? new Date().getFullYear() - fam.year - 1 : 0;   // the youngest they could be: their birthday may not have come round yet this year
   const famTier = () => { const a = famAge(); return !fam.year || a < 13 ? 'child' : a < 18 ? 'teen' : 'adult'; };
-  const voiceRule = () => fam.voice || { child: 'off', teen: 'friends', adult: 'all' }[famTier()];   // nothing reads this yet: it is decided here so it is ready when voice is built
+  const voiceRule = () => fam.voice || { child: 'off', teen: 'friends', adult: 'all' }[famTier()];   // voice chat works only when this says 'all'; 'friends' counts as off until there is a friends list
   const pinHash = p => { let h = 5381; ('long-road:' + p).split('').forEach(c => { h = ((h << 5) + h + c.charCodeAt(0)) | 0; }); return String(h); };
   const yearOptions = () => { const y = new Date().getFullYear(); let s = '<option value="">Choose…</option>'; for (let q = y - 3; q >= y - 100; q--) s += `<option value="${q}">${q}</option>`; return s; };
   function renderFam() {
@@ -5215,33 +5316,106 @@
     const pinBox = ph => { const i = document.createElement('input'); i.type = 'password'; i.inputMode = 'numeric'; i.maxLength = 8; i.placeholder = ph; i.autocomplete = 'off'; i.style.width = '9em'; row.appendChild(i); return i; };
     if (locked) { const i = pinBox('Passcode'); btn('Unlock', () => { if (pinHash(i.value) === fam.pin) { famOpen = true; famMsg = ''; } else famMsg = 'That is not the passcode.'; renderFam(); }); return; }
     if (can) {
-      const sel = document.createElement('select'); Object.keys(VW).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = 'Voice: ' + VW[k]; sel.appendChild(o); }); sel.value = voiceRule(); sel.onchange = () => { fam.voice = sel.value; famSave(); renderFam(); }; row.appendChild(sel);
-      btn('Ready-made phrases: ' + (fam.phrases !== false ? 'on' : 'off'), () => { fam.phrases = fam.phrases === false; famSave(); renderFam(); });
+      const sel = document.createElement('select'); Object.keys(VW).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = 'Voice: ' + VW[k]; sel.appendChild(o); }); sel.value = voiceRule(); sel.onchange = () => { fam.voice = sel.value; famSave(); renderFam(); NET.voiceSync(); }; row.appendChild(sel);
+      btn('Ready-made phrases and gestures: ' + (fam.phrases !== false ? 'on' : 'off'), () => { fam.phrases = fam.phrases === false; famSave(); renderFam(); $('saybtn').hidden = fam.phrases === false; });
     }
     if (famOpen || !fam.pin) { const i = pinBox(fam.pin ? 'New passcode' : 'Parent: choose a passcode'); btn(fam.pin ? 'Change passcode' : 'Set passcode', () => { if (!/^\d{4,8}$/.test(i.value)) { famMsg = 'Use 4 to 8 digits.'; renderFam(); return; } fam.pin = pinHash(i.value); famOpen = true; famMsg = 'Passcode set. Do not lose it: it is the only way to change these.'; famSave(); renderFam(); }); }
-    if (famOpen) { const ys = document.createElement('select'); ys.innerHTML = yearOptions(); ys.value = String(fam.year || ''); ys.onchange = () => { if (ys.value) { fam.year = +ys.value; fam.voice = ''; famSave(); renderFam(); } }; row.appendChild(ys); btn('Lock', () => { famOpen = false; famMsg = ''; renderFam(); }); }
+    if (famOpen) { const ys = document.createElement('select'); ys.innerHTML = yearOptions(); ys.value = String(fam.year || ''); ys.onchange = () => { if (ys.value) { fam.year = +ys.value; fam.voice = ''; famSave(); renderFam(); NET.voiceSync(); } }; row.appendChild(ys); btn('Lock', () => { famOpen = false; famMsg = ''; renderFam(); }); }
   }
   $('seeopt').addEventListener('click', () => { if (fam.pin && !famOpen) return; fam.see = fam.see === false; famSave(); renderFam(); NET.sync(); });
 
   // ---------- other players: everyone in the same place sees each other's elf walk about ----------
   // Each game tells the others where its elf is a few times a second, over Supabase Realtime. Nothing is kept on the server and nothing but the elf is shared: lessons, coins and chests stay your own.
+  // Things an elf can say to the others: a fixed list, sent as a number, so nobody can ever be sent words somebody typed. And a few gestures.
+  const PHRASES = ['Hello!', 'Goodbye!', 'Yes.', 'No.', 'Thank you!', 'You are welcome.', 'Sorry!', 'Follow me.', 'Wait for me!', 'Over here!', 'Shall we walk together?', 'I am going to a lesson.', 'Good luck!', 'Well done!', 'I need help.', 'Look at that!'];
+  const EMOTES = [['Wave', 2.6], ['Cheer', 2.6], ['Bow', 2.2], ['Dance', 4.2], ['Point', 2.4]];
+  function openSay(tab, again) {
+    if ((talking() && !again) || bagOpen || mapOpen || !gameStarted || titleUp) return;
+    if (fam.phrases === false) { flash('Ready-made phrases are turned off in the parental controls.', 4500); return; }
+    showDialog(true); hint(''); clearDialog(); $('speaker').textContent = save.name || 'You'; const ges = tab === 'g';
+    line.textContent = ges ? 'Which gesture?' : NET.peers.size ? 'What will you say?' : 'What will you say? (Nobody else is in this place just now, so only you will see it.)';
+    const mk = (label, fn, prim) => { const b = document.createElement('button'); b.className = 'btn' + (prim ? ' primary' : ''); b.textContent = label; b.onclick = fn; actions.appendChild(b); return b; };
+    if (ges) EMOTES.forEach(([n], i) => mk(n, () => { showDialog(false); NET.say('e', i); }, !i)); else PHRASES.forEach((q, i) => mk(q, () => { showDialog(false); NET.say('q', i); }, !i));
+    mk(ges ? 'Phrases…' : 'Gestures…', () => openSay(ges ? '' : 'g', true)); mk('Never mind', () => showDialog(false));
+    const f = actions.querySelector('button'); if (f) f.focus({ preventScroll: true });
+  }
   const NET = (() => {
     const peers = new Map(), myId = (() => { try { let v = localStorage.getItem('long-road-pid'); if (!v) { v = 'p' + Math.random().toString(36).slice(2, 12); localStorage.setItem('long-road-pid', v); } return v; } catch (e) { return 'p' + Math.random().toString(36).slice(2, 12); } })();
-    let ws = null, topic = '', state = 'off', why = '', ref = 0, beat = 0, sendT = 0, lookT = 0, last = [0, 0, 0, 0], retry = 0, retryAt = 0, wasMoving = false;
+    let ws = null, topic = '', state = 'off', why = '', ref = 0, beat = 0, sendT = 0, lookT = 0, last = [0, 0, 0, 0], retry = 0, retryAt = 0, wasMoving = false, critT = 0, force = false;
     const SEND = 0.095, BEHIND = 180;   // ten positions a second go out; everyone else is drawn this many milliseconds in the past, gliding between the two positions either side of that moment
     const want = () => fam.see !== false && gameStarted && !titleUp && !dead ? 'lr:' + (where === 'in' ? 'in:' + interior.id + (interior.city && interior.door ? ':' + Math.round(interior.door.x) + ':' + Math.round(interior.door.z) : '') : where) : '';
     const push = (t, event, payload) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ topic: t, event, payload, ref: String(++ref) })); };
     function nameTag(name) { const tex = canvasTex(256, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(27,43,30,.78)'; const tw = Math.min(w - 8, 30 + name.length * 17); g.beginPath(); g.rect((w - tw) / 2, 10, tw, 44); g.fill(); g.fillStyle = '#f6e7c2'; g.font = '600 30px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(name, w / 2, 33); }); const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false })); sp.scale.set(3.2, 0.8, 1); return sp; }
-    function dropAll() { peers.forEach(p => p.k.g.parent && p.k.g.parent.remove(p.k.g)); peers.clear(); }
+    // a speech bubble over an elf, and a gesture made with its arms
+    function bubble(o, g, tall, text) { if (o.bub) { g.remove(o.bub); o.bub.material.map.dispose(); o.bub.material.dispose(); } const W = 512, tex = canvasTex(W, 112, (c, w, h) => { c.clearRect(0, 0, w, h); c.font = '600 40px Georgia, serif'; const tw = Math.min(w - 16, c.measureText(text).width + 56), x0 = (w - tw) / 2; c.fillStyle = 'rgba(246,236,208,.96)'; c.strokeStyle = '#6b4a2b'; c.lineWidth = 5; c.beginPath(); const r = 26, y0 = 6, y1 = 84; c.moveTo(x0 + r, y0); c.arcTo(x0 + tw, y0, x0 + tw, y1, r); c.arcTo(x0 + tw, y1, x0, y1, r); c.lineTo(w / 2 + 14, y1); c.lineTo(w / 2, h - 4); c.lineTo(w / 2 - 14, y1); c.arcTo(x0, y1, x0, y0, r); c.arcTo(x0, y0, x0 + tw, y0, r); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#2c2014'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, w / 2, 46, w - 40); });
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false })); sp.renderOrder = 20; const k = 1 / g.scale.x; sp.scale.set(9.2 * k, 2.0 * k, 1); sp.position.y = (3.9 * tall + 2.3) * k; g.add(sp); o.bub = sp; o.bubT = performance.now(); }
+    function bubbleTick(o, g, now) { if (!o.bub) return; const age = (now - o.bubT) / 1000; if (age > 5.5) { g.remove(o.bub); o.bub.material.map.dispose(); o.bub.material.dispose(); o.bub = null; } else o.bub.material.opacity = age > 4.7 ? (5.5 - age) / 0.8 : 1; }
+    function pose(o, k, now) { if (o.em === undefined || o.em === null) return; const age = (now - o.emT) / 1000, A = k.arms, g = k.g, w = Math.sin(age * 10), E = EMOTES[o.em];
+      if (!E || age > E[1]) { o.em = null; A[0].rotation.z = -0.18; A[1].rotation.z = 0.18; g.rotation.x = 0; g.rotation.z = 0; return; }
+      const ease = Math.min(1, age * 5, (E[1] - age) * 5);
+      if (o.em === 0) { A[1].rotation.x = -2.7 * ease; A[1].rotation.z = 0.18 + (0.45 + w * 0.4) * ease; }
+      else if (o.em === 1) { A[0].rotation.x = A[1].rotation.x = (-2.9 + w * 0.25) * ease; A[0].rotation.z = -0.18 - 0.3 * ease; A[1].rotation.z = 0.18 + 0.3 * ease; }
+      else if (o.em === 2) { g.rotation.x = Math.sin(Math.min(1, age / E[1]) * Math.PI) * 0.62; A[0].rotation.x = A[1].rotation.x = 0.2 * ease; }
+      else if (o.em === 3) { const s = Math.sin(age * 6); A[0].rotation.x = (-1.6 + s * 1.1) * ease; A[1].rotation.x = (-1.6 - s * 1.1) * ease; g.rotation.z = Math.sin(age * 6) * 0.16 * ease; k.legs[0].rotation.x = s * 0.5 * ease; k.legs[1].rotation.x = -s * 0.5 * ease; }
+      else if (o.em === 4) { A[1].rotation.x = -1.55 * ease; A[1].rotation.z = 0.18; } }
+    // ---- voice: elves near each other can talk. The sound goes straight from one game to the other (WebRTC); this channel only introduces them. ----
+    // It is on only for an elf whose voice rule is 'all' (grown-ups by default; a child only if a parent has changed it behind the passcode), and only once that player has switched it on and let the browser use the microphone.
+    const RTC = { on: false, stream: null, pcs: new Map(), again: new Map() };
+    const voiceOK = () => voiceRule() === 'all';
+    const sig = (to, body) => { if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: Object.assign({ id: myId, to, rt: 1 }, body) }); };
+    function chip() { let c = $('voicechip'); if (!c) { c = document.createElement('button'); c.id = 'voicechip'; c.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:30;font:600 13px Inter,system-ui,sans-serif;padding:6px 12px;border-radius:999px;border:2px solid #e8b64c;background:rgba(27,43,30,.9);color:#f6e7c2;pointer-events:auto;cursor:pointer'; c.onclick = () => voice(); document.body.appendChild(c); }
+      c.hidden = !RTC.on; if (RTC.on) { let n = 0; RTC.pcs.forEach(q => { if (q.pc.connectionState === 'connected') n++; }); const t = '🎙 Voice on · ' + (n ? n + ' connected' : 'nobody connected') + ' · tap to turn off'; if (c.textContent !== t) c.textContent = t; } const vb = $('voicebtn'); if (vb) { vb.hidden = !voiceOK(); vb.textContent = RTC.on ? 'Voice ✓' : 'Voice'; } }
+    function hang(id) { const q = RTC.pcs.get(id); if (!q) return; RTC.pcs.delete(id); try { q.pc.close(); } catch (e) {} if (q.gain) { try { q.src.disconnect(); q.gain.disconnect(); } catch (e) {} } if (q.el) { try { q.el.pause(); q.el.srcObject = null; } catch (e) {} } RTC.again.set(id, performance.now() + 4000); }
+    function link(id, first) { if (RTC.pcs.has(id)) return RTC.pcs.get(id); const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }), q = { pc, el: null, ice: [], ready: false }; RTC.pcs.set(id, q);
+      RTC.stream.getTracks().forEach(t => pc.addTrack(t, RTC.stream));
+      pc.onicecandidate = e => { if (e.candidate) sig(id, { ice: e.candidate.toJSON ? e.candidate.toJSON() : e.candidate }); };
+      pc.ontrack = e => { if (!q.el) { q.el = new Audio(); q.el.autoplay = true; q.el.volume = 0; } const st = e.streams[0] || new MediaStream([e.track]); q.el.srcObject = st; const pl = q.el.play(); if (pl && pl.catch) pl.catch(() => {});
+        // loudness is set through the game's own sound engine where there is one, because a phone will not let a page turn an audio element down
+        try { if (audioCtx && !q.gain) { if (audioCtx.state === 'suspended') audioCtx.resume(); q.src = audioCtx.createMediaStreamSource(st); q.gain = audioCtx.createGain(); q.gain.gain.value = 0; q.src.connect(q.gain); q.gain.connect(audioCtx.destination); q.el.muted = true; } } catch (err) { q.gain = null; q.el.muted = false; } };
+      pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed' || pc.connectionState === 'closed') { if (RTC.pcs.get(id) === q) hang(id); } };
+      if (first) pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => sig(id, { sdp: pc.localDescription.toJSON ? pc.localDescription.toJSON() : pc.localDescription })).catch(() => hang(id));
+      return q; }
+    async function heardSig(m) { if (!RTC.on || !voiceOK() || !RTC.stream || typeof m.id !== 'string') return;
+      try { if (m.sdp && m.sdp.type === 'offer') { if (m.id > myId) return; hang(m.id); RTC.again.delete(m.id); const q = link(m.id, false); await q.pc.setRemoteDescription(m.sdp); q.ready = true; for (const c of q.ice.splice(0)) await q.pc.addIceCandidate(c).catch(() => {}); const a = await q.pc.createAnswer(); await q.pc.setLocalDescription(a); sig(m.id, { sdp: q.pc.localDescription.toJSON ? q.pc.localDescription.toJSON() : q.pc.localDescription }); }
+        else if (m.sdp && m.sdp.type === 'answer') { const q = RTC.pcs.get(m.id); if (q && !q.ready) { await q.pc.setRemoteDescription(m.sdp); q.ready = true; for (const c of q.ice.splice(0)) await q.pc.addIceCandidate(c).catch(() => {}); } }
+        else if (m.ice) { const q = RTC.pcs.get(m.id); if (q) { if (q.ready) await q.pc.addIceCandidate(m.ice).catch(() => {}); else q.ice.push(m.ice); } } } catch (e) { hang(m.id); } }
+    function voiceOff(quiet) { if (!RTC.on) return; RTC.on = false; Array.from(RTC.pcs.keys()).forEach(hang); RTC.again.clear(); if (RTC.stream) RTC.stream.getTracks().forEach(t => t.stop()); RTC.stream = null; lookT = 0; chip(); if (!quiet) flash('Voice is off. Nobody can hear you, and you cannot hear them.', 4500); }
+    async function voice() { if (!gameStarted || titleUp) return;
+      if (RTC.on) return voiceOff();
+      if (!voiceOK()) { flash(famTier() === 'adult' ? 'Voice chat is turned off for this elf. It can be changed in Settings, under the parental controls.' : 'Voice chat is off for this elf. Only a parent can turn it on, in Settings, under the parental controls.', 6000); return; }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.RTCPeerConnection) { flash('Voice chat does not work in this browser, or on this page.', 5000); return; }
+      if (RTC.asking) return; RTC.asking = true;
+      try { RTC.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); } catch (e) { RTC.asking = false; flash('The microphone was not allowed, so voice stays off.', 5000); return; }
+      RTC.asking = false; RTC.on = true; lookT = 0; chip(); flash('Voice is on. Elves near you who have voice on can hear you, and you them. It fades with distance.', 6500); }
+    function voiceTick(now) { if (!RTC.on) return; if (!voiceOK()) return voiceOff(true);
+      peers.forEach((p, id) => { const q = RTC.pcs.get(id); if (p.vc && !q && myId < id && state === 'on' && now > (RTC.again.get(id) || 0)) link(id, true); else if (q && !p.vc) hang(id);
+        if (q && q.el) { const d = Math.hypot(p.k.g.position.x - player.position.x, p.k.g.position.z - player.position.z, p.k.g.position.y - player.position.y), v = d < 25 ? 1 : d > 150 ? 0 : Math.pow((150 - d) / 125, 2); if (q.gain) { if (Math.abs(q.gain.gain.value - v) > 0.01) q.gain.gain.value = v; } else if (Math.abs(q.el.volume - v) > 0.01) q.el.volume = v; q.vol = v; } });
+      RTC.pcs.forEach((q, id) => { if (!peers.has(id)) hang(id); }); if ((RTC.chipT = (RTC.chipT || 0) + 1) % 30 === 0) chip(); }
+    const me = {}; let sayAt = 0;
+    function say(kind, n) { const now = performance.now(); if (fam.phrases === false || now - sayAt < 1200) return; sayAt = now; if (kind === 'q') { if (!PHRASES[n]) return; bubble(me, player, kid.tall || 1, PHRASES[n]); } else { if (!EMOTES[n]) return; me.em = n; me.emT = now; } chink(kind === 'q' ? 990 : 780);
+      if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: { id: myId, [kind]: n } }); }
+    function dropAll() { peers.forEach(p => { p.k.g.parent && p.k.g.parent.remove(p.k.g); if (p.bt && p.bt.parent) p.bt.parent.remove(p.bt); }); peers.clear(); }
+    // One game in each place runs the animals: the one whose id sorts first, among the elves near enough to share them. In a town that is everyone there; in open country it is everyone within a few hundred units.
+    const shares = p => { if (where !== 'wild') return true; const d = Math.hypot(p.x - player.position.x, p.z - player.position.z); p.near = d < (p.near ? 460 : 400); return p.near; };
+    function puppet() { if (state !== 'on' || where === 'in') return false; for (const [id, p] of peers) if (id < myId && shares(p)) return true; return false; }
+    function nearElf(pos) { let x = player.position.x, z = player.position.z, yaw = bodyYaw, best = Math.hypot(x - pos.x, z - pos.z); peers.forEach(p => { const g = p.k.g.position, d = Math.hypot(g.x - pos.x, g.z - pos.z); if (d < best) { best = d; x = g.x; z = g.z; yaw = p.r; } }); return { x, z, yaw }; }
+    function critterList() { const out = [], now = performance.now(); critters.forEach((c, i) => { if (c.sceneKey !== where || c.kind === 'butterfly') return; const o = c.obj, f = (o.visible ? 0 : 1) | ((c.kind === 'crow' && c.state !== 'perch') || (c.kind === 'pheasant' && c.state === 'burst') || (c.kind === 'squirrel' && c.h >= 0.5) ? 2 : 0) | (c.state === 'wag' ? 4 : 0);
+        const q = [i, +o.position.x.toFixed(1), +o.position.y.toFixed(1), +o.position.z.toFixed(1), +(c.kind === 'squirrel' && c.h >= 0.5 ? c.a : o.rotation.y).toFixed(2), f], key = q.join(); if (key === c.ns && !force && now - (c.nk || 0) < 2000) return; c.ns = key; c.nk = now; out.push(q); }); force = false; return out; }
     function hear(m) {
       if (!m || typeof m.id !== 'string' || m.id === myId || m.id.length > 40) return;
       let p = peers.get(m.id);
+      if (m.rt) { if (m.to === myId) heardSig(m); return; }
       if (m.hi) { lookT = 0; return; }   // somebody has just arrived: tell them at once what you look like
-      if (m.bye) { if (p) { p.k.g.parent && p.k.g.parent.remove(p.k.g); peers.delete(m.id); } return; }
+      if (m.bye) { if (p) { p.k.g.parent && p.k.g.parent.remove(p.k.g); if (p.bt && p.bt.parent) p.bt.parent.remove(p.bt); peers.delete(m.id); hang(m.id); } return; }
+      if (p && (Number.isInteger(m.q) || Number.isInteger(m.e))) { if (fam.phrases === false) return; if (Number.isInteger(m.q) && PHRASES[m.q]) { bubble(p, p.k.g, p.k.tall || 1, PHRASES[m.q]); if (!talking() && Math.hypot(p.x - player.position.x, p.z - player.position.z) < 90) flash(`${p.name || 'An elf'}: ${PHRASES[m.q]}`, 4500); } else if (EMOTES[m.e]) { p.em = m.e; p.emT = performance.now(); } return; }
       if (![m.x, m.y, m.z, m.r].every(Number.isFinite)) return;
-      if (!p) { if (peers.size >= 24) return; const k = makeKid(); k.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); k.satchel.visible = true; p = { k, x: m.x, y: m.y, z: m.z, r: m.r, name: '', tag: null, seen: 0, mv: 0, buf: [], sp: 0 }; k.g.position.set(m.x, m.y, m.z); peers.set(m.id, p); curScene().add(k.g); }
-      p.x = m.x; p.y = m.y; p.z = m.z; p.r = m.r; p.mv = m.m ? 1 : 0; p.sit = !!m.s; p.seen = performance.now(); { const B = p.buf, L = B[B.length - 1]; if (L && Math.hypot(m.x - L.x, m.z - L.z) > 30) B.length = 0; let ts = p.seen; if (Number.isFinite(m.t)) { const d = p.seen - m.t; p.off = p.off === undefined || Math.abs(d - p.off) > 3000 ? d : Math.min(p.off + 0.4, d); ts = m.t + p.off; if (L && ts <= L.t) ts = L.t + 1; } p.run = !!m.u; B.push({ t: ts, x: m.x, y: m.y, z: m.z, r: m.r }); if (B.length > 16) B.shift(); }
-      if (m.l && typeof m.l === 'object') { applyLookTo(p.k, m.l, typeof m.h === 'string' ? m.h : ''); const nm = String(m.n || 'Elfling').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16) || 'Elfling'; if (nm !== p.name) { if (p.tag) p.k.g.remove(p.tag); p.name = nm; p.tag = nameTag(nm); p.k.g.add(p.tag); if (!p.hello) { p.hello = true; if (!talking()) flash(`${nm} is here.`, 3500); } } if (p.tag) p.tag.position.y = (3.9 * p.k.tall + 0.6) / p.k.g.scale.x; }
+      if (!p) { if (peers.size >= 24) return; const k = makeKid(); k.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); k.satchel.visible = true; p = { k, id: m.id, x: m.x, y: m.y, z: m.z, r: m.r, name: '', tag: null, seen: 0, mv: 0, buf: [], sp: 0 }; force = true; k.g.position.set(m.x, m.y, m.z); peers.set(m.id, p); curScene().add(k.g); }
+      p.x = m.x; p.y = m.y; p.z = m.z; p.r = m.r; p.mv = m.m ? 1 : 0; p.sit = !!m.s; p.mt = m.mt | 0; p.seen = performance.now(); { const B = p.buf, L = B[B.length - 1]; if (L && Math.hypot(m.x - L.x, m.z - L.z) > 30) B.length = 0; let ts = p.seen; if (Number.isFinite(m.t)) { const d = p.seen - m.t; p.off = p.off === undefined || Math.abs(d - p.off) > 3000 ? d : Math.min(p.off + 0.4, d); ts = m.t + p.off; if (L && ts <= L.t) ts = L.t + 1; } p.run = !!m.u; B.push({ t: ts, x: m.x, y: m.y, z: m.z, r: m.r }); if (B.length > 16) B.shift();
+        // the animals, if this is the game that runs them here
+        if (Array.isArray(m.c) && m.v === BUILDN && m.id < myId && where !== 'in' && shares(p)) m.c.forEach(q => { const c = Array.isArray(q) ? critters[q[0]] : null; if (!c || c.sceneKey !== where || !q.slice(1, 5).every(Number.isFinite)) return; const pb = c.pb || (c.pb = []), l = pb[pb.length - 1]; pb.push({ t: l && ts <= l.t ? l.t + 1 : ts, x: q[1], y: q[2], z: q[3], r: q[4], f: q[5] | 0 }); if (pb.length > 10) pb.shift(); c.pfrom = m.id; });
+        // and their beetle, if one is walking with them
+        if (Array.isArray(m.b) && m.b.slice(0, 5).every(Number.isFinite)) { if (!p.bt) { p.bt = makeBeetle(); p.bt.traverse(o => { if (o.isMesh) o.castShadow = true; }); p.bt.position.set(m.b[0], m.b[1], m.b[2]); } p.bb = m.b; p.btSeen = p.seen; } }
+      if (m.l && typeof m.l === 'object') { p.vc = m.vc === 1; p.dw = Array.isArray(m.dw) && m.dw.length === 4 && m.dw.every(Number.isFinite) ? m.dw : null; applyLookTo(p.k, m.l, typeof m.h === 'string' ? m.h : ''); const nm = String(m.n || 'Elfling').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16) || 'Elfling'; if (nm !== p.name) { if (p.tag) p.k.g.remove(p.tag); p.name = nm; p.tag = nameTag(nm); p.k.g.add(p.tag); if (!p.hello) { p.hello = true; if (!talking()) flash(`${nm} is here.`, 3500); } } if (p.tag) p.tag.position.y = (3.9 * p.k.tall + 0.6) / p.k.g.scale.x; }
     }
     function open(t) {
       shut(t === topic); topic = t; state = 'connecting'; why = '';
@@ -5262,23 +5436,27 @@
       if (ws && state === 'on') {
         beat -= dt; if (beat <= 0) { beat = 25; push('phoenix', 'heartbeat', {}); }
         sendT -= dt; lookT -= dt; const P = player.position, moved = Math.hypot(P.x - last[0], P.z - last[2]) > 0.03 || Math.abs(P.y - last[1]) > 0.03 || Math.abs(bodyYaw - last[3]) > 0.02;
-        if (sendT <= 0 && (moved || wasMoving || lookT <= 0 || sendT < -1)) { sendT = SEND; wasMoving = moved; const m = { id: myId, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), r: +bodyYaw.toFixed(2), m: moved ? 1 : 0, s: sitting ? 1 : 0, t: Math.round(performance.now()), u: running ? 1 : 0 };
-          if (lookT <= 0) { lookT = 4; m.n = save.name || 'Elfling'; m.l = Object.assign({}, DEFAULT_LOOK, save.look || {}); m.h = save.hatStyle || ''; }
+        let cl = null; critT -= dt; if (sendT <= 0 && critT <= 0 && where !== 'in' && peers.size && !puppet()) { critT = 0.2; cl = critterList(); if (!cl.length) cl = null; }
+        if (sendT <= 0 && (moved || wasMoving || cl || lookT <= 0 || sendT < -1)) { sendT = SEND; wasMoving = moved; const m = { id: myId, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), r: +bodyYaw.toFixed(2), m: moved ? 1 : 0, s: sitting ? 1 : 0, t: Math.round(performance.now()), u: running ? 1 : 0 }; if (riding) m.mt = mount === 'dog' ? 2 : 1; if (cl) { m.c = cl; m.v = BUILDN; } if (beetle && beetle.visible && beetle.parent === player.parent) m.b = [+beetle.position.x.toFixed(2), +beetle.position.y.toFixed(2), +beetle.position.z.toFixed(2), +beetle.rotation.y.toFixed(2), +beetle.scale.x.toFixed(2)];
+          if (lookT <= 0) { lookT = 4; m.n = save.name || 'Elfling'; m.l = Object.assign({}, DEFAULT_LOOK, save.look || {}); m.h = save.hatStyle || ''; m.vc = RTC.on && voiceOK() ? 1 : 0; if (dogSt.mine && save.dog && !save.dog.on && save.dog.w === where) m.dw = [save.dog.p[0], save.dog.p[1], save.dog.p[2], save.dog.r]; }
           last = [P.x, P.y, P.z, bodyYaw]; push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: m }); } }
+      bubbleTick(me, player, performance.now()); pose(me, kid, performance.now()); voiceTick(performance.now());
       // draw the others: ease each toward where it was last heard to be, swing its legs while it walks, and let go of anyone not heard from for a while
       const now = performance.now(), sc = curScene();
-      peers.forEach((p, id) => { if (now - p.seen > 7000) { p.k.g.parent && p.k.g.parent.remove(p.k.g); peers.delete(id); return; } const g = p.k.g; if (g.parent !== sc) sc.add(g);
+      peers.forEach((p, id) => { if (now - p.seen > 7000) { p.k.g.parent && p.k.g.parent.remove(p.k.g); if (p.bt && p.bt.parent) p.bt.parent.remove(p.bt); peers.delete(id); return; } const g = p.k.g; if (g.parent !== sc) sc.add(g);
+        if (p.bt) { const bt = p.bt, on = now - p.btSeen < 1500; if (on && bt.parent !== sc) sc.add(bt); else if (!on && bt.parent) bt.parent.remove(bt); if (on) { const [bx, by, bz, br, bs] = p.bb, k = Math.min(1, dt * 10), d = Math.hypot(bx - bt.position.x, bz - bt.position.z); if (d > 30) bt.position.set(bx, by, bz); else { bt.position.x += (bx - bt.position.x) * k; bt.position.y += (by - bt.position.y) * k; bt.position.z += (bz - bt.position.z) * k; } bt.rotation.y += wrap(br - bt.rotation.y) * k; bt.scale.setScalar(bs); p.bw = (p.bw || 0) + d * 2.2; if (bt.userData.legs) bt.userData.legs.forEach((leg, i) => { leg.rotation.x = Math.sin(p.bw + i * 1.05) * (d > 0.05 ? 0.5 : 0); }); } }
         const B = p.buf, rt = now - BEHIND, ox = g.position.x, oz = g.position.z; let tx = p.x, ty = p.y, tz = p.z, tr = p.r, vv = 0;
         if (B.length) { let i = B.length - 1; while (i > 0 && B[i].t > rt) i--; const a = B[i], b = B[i + 1];
           if (b && a.t <= rt) { const f = Math.min(1, (rt - a.t) / Math.max(1, b.t - a.t)); let dr = b.r - a.r; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); tx = a.x + (b.x - a.x) * f; ty = a.y + (b.y - a.y) * f; tz = a.z + (b.z - a.z) * f; tr = a.r + dr * f; vv = Math.hypot(b.x - a.x, b.z - a.z) / Math.max(0.03, (b.t - a.t) / 1000); }
           else { tx = a.x; ty = a.y; tz = a.z; tr = a.r; } }
+        if (p.mt === 2) ty += DOG_SEAT;
         if (Math.hypot(tx - ox, tz - oz) > 30) g.position.set(tx, ty, tz); else { const kx = Math.min(1, dt * 22); g.position.x += (tx - ox) * kx; g.position.y += (ty - g.position.y) * kx; g.position.z += (tz - oz) * kx; }
         { let dr = tr - g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); g.rotation.y += dr * Math.min(1, dt * 16); }
         // the legs: the same stride the elf's own player sees, paced by how fast it is going between the two positions, never by one frame's movement
         p.sp += (Math.min(vv, 20) - p.sp) * Math.min(1, dt * 5); const going = p.sp > 0.5 && !p.sit;
-        p.ph = (p.ph || 0) + (going ? dt * (p.run ? 16 : 11) * Math.min(1.2, Math.max(0.45, p.sp / 7.5)) : 0); p.amp = (p.amp || 0) + ((going ? (p.run ? 1.0 : 0.7) : 0) - (p.amp || 0)) * Math.min(1, dt * 7); const sw = Math.sin(p.ph) * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; });
+        p.ph = (p.ph || 0) + (going ? dt * (p.run ? 16 : 11) * Math.min(1.2, Math.max(0.45, p.sp / 7.5)) : 0); p.amp = (p.amp || 0) + ((going ? (p.run ? 1.0 : 0.7) : 0) - (p.amp || 0)) * Math.min(1, dt * 7); const sw = Math.sin(p.ph) * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; { const rd = p.mt === 2; if (rd) { p.k.legs[0].rotation.x = p.k.legs[1].rotation.x = -1.25; p.k.arms[0].rotation.x = p.k.arms[1].rotation.x = -0.95; } if (rd !== !!p.rd) { p.rd = rd; p.k.legs[0].rotation.z = rd ? -0.5 : 0; p.k.legs[1].rotation.z = rd ? 0.5 : 0; } } bubbleTick(p, g, now); pose(p, p.k, now); });
     }
-    return { tick, hear, peers, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
+    return { tick, hear, peers, puppet, nearElf, say, me, voice, voiceSync: () => { if (RTC.on && !voiceOK()) voiceOff(true); chip(); }, rtc: RTC, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
       note: () => state === 'on' ? `Connected. ${peers.size ? peers.size + (peers.size === 1 ? ' other elf is' : ' other elves are') + ' in this place with you.' : 'Nobody else is in this place just now.'}` : state === 'connecting' ? 'Connecting…' : state === 'failed' ? `Could not connect (${why}). It will keep trying.` : 'Not connected: it joins when you are in the game.' };
   })();
   async function sbAuth(path, body) {
@@ -5307,7 +5485,7 @@
   function cloudSoon() { if (!session) return; cloudDirty = true; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudPush, 3000); }
   async function cloudPush() {
     if (!session || cloudBusy || !cloudDirty) return; cloudBusy = true; cloudDirty = false;
-    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null, inv: save.inv || {}, hat: save.hatStyle || '', lamp: !!save.lamp, stam: save.stamMax || 100, ts: save.ts || 0, bm: save.beetleMode || '', ba: save.beetleAt || null, lv: save.level || 0, td: save.tested || [], st: save.stores || {}, ul: save.unlocked || {}, rd: save.read || {} } }); rpc('game_stores_put', { p_stores: save.stores || {}, p_unlocked: save.unlocked || {} }).catch(() => {}); acctRefresh('Saved to the cloud.', 'ok'); }
+    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null, inv: save.inv || {}, hat: save.hatStyle || '', lamp: !!save.lamp, stam: save.stamMax || 100, ts: save.ts || 0, bm: save.beetleMode || '', ba: save.beetleAt || null, lv: save.level || 0, td: save.tested || [], st: save.stores || {}, ul: save.unlocked || {}, rd: save.read || {}, dg: save.dog || null } }); rpc('game_stores_put', { p_stores: save.stores || {}, p_unlocked: save.unlocked || {} }).catch(() => {}); acctRefresh('Saved to the cloud.', 'ok'); }
     catch (e) { cloudDirty = true; acctRefresh('Cloud save failed, kept locally. ' + e.message, 'err'); }
     cloudBusy = false;
   }
@@ -5318,7 +5496,7 @@
     lodgeFetch();
     const c = await rpc('game_load_progress'); if (!c) { save.owner = uid; persist(); return 'empty'; }
     master = !!c.master; try { acctRefresh(); if (!startEl.hidden) drawPanel(); } catch (e) {}
-    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), lay: (c.blob && c.blob.lay) || 0, name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null, inv: (c.blob && c.blob.inv) || {}, hatStyle: (c.blob && c.blob.hat) || '', lamp: !!(c.blob && c.blob.lamp), stamMax: Math.max((c.blob && c.blob.stam) || 100, save.stamMax || 100), ts: (c.blob && c.blob.ts) || 0, found: save.found || {}, beetleMode: (c.blob && c.blob.bm) || '', beetleAt: (c.blob && c.blob.ba) || null, level: (c.blob && c.blob.lv) || 0, tested: (c.blob && c.blob.td) || [], stores: (c.blob && c.blob.st) || save.stores || {}, unlocked: (c.blob && c.blob.ul) || save.unlocked || {}, read: (c.blob && c.blob.rd) || save.read || {} };
+    const cloud = { coins: c.coins || 0, done: Array.isArray(c.done) ? c.done : [], where: c.where || 'village', pos: Array.isArray(c.pos) && c.pos.length === 3 ? c.pos : [0, 0, 6.5], yaw: typeof c.yaw === 'number' ? c.yaw : Math.PI, beetle: c.beetle || '', started: !!(c.blob && c.blob.started) || (c.done && c.done.length > 0), bike: !!(c.blob && c.blob.bike), lay: (c.blob && c.blob.lay) || 0, name: (c.blob && c.blob.name) || save.name || '', look: (c.blob && c.blob.look) || save.look || null, inv: (c.blob && c.blob.inv) || {}, hatStyle: (c.blob && c.blob.hat) || '', lamp: !!(c.blob && c.blob.lamp), stamMax: Math.max((c.blob && c.blob.stam) || 100, save.stamMax || 100), ts: (c.blob && c.blob.ts) || 0, found: save.found || {}, beetleMode: (c.blob && c.blob.bm) || '', beetleAt: (c.blob && c.blob.ba) || null, level: (c.blob && c.blob.lv) || 0, tested: (c.blob && c.blob.td) || [], stores: (c.blob && c.blob.st) || save.stores || {}, unlocked: (c.blob && c.blob.ul) || save.unlocked || {}, read: (c.blob && c.blob.rd) || save.read || {}, dog: (c.blob && c.blob.dg) || save.dog || null };
     // a bike granted on the account is kept whichever save wins
     if (cloud.bike || save.bike) { cloud.bike = true; save.bike = true; bikeOwned = true; }
     // the same lessons done on both: the newer save wins (so coins you spent stay spent); otherwise the one further along
@@ -5429,6 +5607,8 @@
     if (k === 'knock') return FOLK[o.userData.who].mode === 'home' && phase === 'free' && !talking();
     if (k === 'folk') return o.visible && !talking();
     if (k === 'lot') return where === 'wild' && !talking();
+    if (k === 'mount') return o.visible && o.userData.world === where && !riding && !talking();
+    if (k === 'stable') return where === 'village' && !talking();
     if (k === 'decor' || k === 'wash' || k === 'book' || k === 'shelf') return !talking() && !sitting;
     if (k === 'store') return Math.abs(player.position.y - o.position.y) < 5 && !talking();
     if (k === 'spill') return phase === 'spill' && !(o.userData.fall && o.userData.fall.t < 1);
@@ -5476,6 +5656,8 @@
     else if (d.kind === 'shelf') shelfBrowse(d.ids, d.label);
     else if (d.kind === 'wash') { chink(880); flash('Clean hands and a clean face.', 3000); }
     else if (d.kind === 'lot') lotPick(d.no);
+    else if (d.kind === 'mount') dogPick();
+    else if (d.kind === 'stable') stablePick();
     else if (d.kind === 'folk') { const F = folk[d.fi]; const ln = F.lines[F.k++ % F.lines.length]; say([typeof ln === 'function' ? ln() : ln], null, F.n); }
     else if (d.kind === 'follower') companionMenu();
     else if (d.kind === 'teacher') teacherMenu(d.i);
@@ -5510,7 +5692,7 @@
     player.position.add(new THREE.Vector3(Math.sin(yaw) * 1.4, 0, Math.cos(yaw) * 1.4)); hint('');
   }
   // tier 0: whatever the lesson in hand wants picked; 1: things lying about; 2: a counter to trade at; 3: a seat
-  const PICK_TIER = { find: 1, book: 2, shelf: 2, lot: 2, wash: 2, decor: 3, store: 2, resident: 2, knock: 2, folk: 2, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
+  const PICK_TIER = { find: 1, book: 2, shelf: 2, mount: 2, stable: 3, lot: 2, wash: 2, decor: 3, store: 2, resident: 2, knock: 2, folk: 2, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
   function nearestPick(tier) { let best = null, bd = Infinity; pickables.forEach(o => { if ((PICK_TIER[o.userData.kind] || 0) !== tier || !canPick(o)) return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } }); return [best, bd]; }
   function pickNearest() {
     let [best, bd] = nearestPick(0);
@@ -7884,8 +8066,8 @@
   const keys = {};
   // ---------- input settings: device, key binds, mouse ----------
   const SET_KEY = 'long-road-settings-v1';
-  const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', ride: 'KeyR', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', bag: 'KeyI', keys: 'KeyH', settings: 'KeyP' };
-  const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', ride: 'Ride / get off the bicycle', view: 'Flip view', zoom: 'Zoom', map: 'World map', bag: 'Satchel', keys: 'Show / hide controls', settings: 'Settings' };
+  const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', ride: 'KeyR', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', bag: 'KeyI', keys: 'KeyH', settings: 'KeyP', say: 'KeyT', voice: 'KeyB' };
+  const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', ride: 'Ride / get off the bicycle', view: 'Flip view', zoom: 'Zoom', map: 'World map', bag: 'Satchel', keys: 'Show / hide controls', settings: 'Settings', say: 'Say something / gesture', voice: 'Voice chat on / off' };
   const settings = { input: null, binds: Object.assign({}, DEFAULT_BINDS), invert: true, sens: 100, birds: true, music: true, musicVol: 60, sounds: true, soundVol: 70, showKeys: true };
   try { const sv = JSON.parse(localStorage.getItem(SET_KEY) || '{}'); Object.assign(settings, sv); settings.binds = Object.assign({}, DEFAULT_BINDS, sv.binds || {}); } catch (e) {}
   function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) {} }
@@ -7940,11 +8122,13 @@
     if (talking() || mapOpen) return;
     const a = actionOf(e.code); if (!a) return;
     if (a === 'bag' && !e.repeat) { openBag(); return; }
+    if (a === 'say' && !e.repeat) { e.preventDefault(); openSay(); return; }
+    if (a === 'voice' && !e.repeat) { e.preventDefault(); NET.voice(); return; }
     if (isMove(a)) { keys[a] = true; e.preventDefault(); }
     if (a === 'jump') { e.preventDefault(); if (!e.repeat) wantJump = true; }
     if (e.repeat) return;
     if (a === 'pick') pickNearest();
-    if (a === 'ride') setRiding(!riding);
+    if (a === 'ride') rideKey();
     if (a === 'view') toggleView();
     if (a === 'zoom') setZoom((zoom + 1) % ZOOMS.length);
     if (a === 'keys') toggleKeys();
@@ -7974,7 +8158,7 @@
   { const rb = $('runbtn'); const on = e => { e.preventDefault(); keys.run = true; }, off = () => { keys.run = false; }; rb.addEventListener('pointerdown', on); rb.addEventListener('pointerup', off); rb.addEventListener('pointerleave', off); rb.addEventListener('pointercancel', off); }
   tapButton($('jumpbtn'), () => { wantJump = true; });
   tapButton($('viewbtn'), toggleView);
-  tapButton($('bagbtn'), () => openBag()); tapButton($('ridebtn'), () => { if (!talking()) setRiding(!riding); });
+  tapButton($('bagbtn'), () => openBag()); tapButton($('ridebtn'), () => rideKey());
   $('coins').addEventListener('click', () => openBag()); $('bagchip').addEventListener('click', () => openBag());
 
   // gamepad: left stick walks, right stick looks, A jumps (or presses the highlighted button), X picks up, Y switches view
@@ -8023,8 +8207,10 @@
     } else {
       if (hit(0)) wantJump = true;
       if (hit(2)) pickNearest();
-      if (hit(12)) setRiding(!riding);
+      if (hit(12)) rideKey();
       if (hit(13)) openBag();
+      if (hit(15)) openSay();
+      if (hit(14)) NET.voice();
       if (hit(3)) toggleView();
       if (hit(4)) setZoom(zoom - 1); if (hit(5)) setZoom(zoom + 1);
     }
@@ -8366,7 +8552,7 @@
       if (grade > 0.25 && running) stamina = Math.max(0, stamina - dt * 20 * grade);
       const swimming = inRiver(player.position.x, player.position.z);
       if (riding && (swimming || where === 'in')) setRiding(false);
-      const speed = riding ? (mz > 0.1 ? (running ? 25 : 17.5) * Math.pow(slopeK, running ? 1.3 : 1.6) : 0) : (swimming ? 3.6 : running ? 14 : 7.5) * (1 + (kid.tall - 1) * 0.3) * mag * (mz < 0 && Math.abs(mx) < 0.2 ? 0.65 : 1) * slopeK;
+      const speed = riding ? (mz > 0.1 ? (mount === 'dog' ? (running ? 32 : 21) : (running ? 25 : 17.5)) * Math.pow(slopeK, running ? 1.3 : 1.6) : 0) : (swimming ? 3.6 : running ? 14 : 7.5) * (1 + (kid.tall - 1) * 0.3) * mag * (mz < 0 && Math.abs(mx) < 0.2 ? 0.65 : 1) * slopeK;
       targetV.copy(fwd).multiplyScalar(speed);
       const face = view === 'front' ? bodyYaw : dir;
       if (riding) { bodyYaw = dir; if (view !== 'front') camYaw += wrap(bodyYaw - camYaw) * Math.min(1, dt * 2.2); } else bodyYaw += wrap(face - bodyYaw) * Math.min(1, dt * 10);
@@ -8480,7 +8666,7 @@
       if (dPip > 9) nearPip = false;
       const mg = orchScene.children.find(o => o.userData && o.userData.wheel); if (mg) { mg.userData.wheel.rotation.x += dt * wheelSpeed; mg.userData.mice.forEach((m, i) => { m.position.y = (m.userData.y0 || 1.2) + Math.abs(Math.sin(t * 6 * wheelSpeed / 0.9 + i)) * 0.25; m.rotation.z = Math.sin(t * 6 + i) * 0.08; }); }
       const prG = orchScene.children.find(o => o.userData && o.userData.press); if (prG) { const target = 2.8 - prG.userData.squeeze * 0.45; prG.userData.plate.position.y += (target - prG.userData.plate.position.y) * Math.min(1, dt * 3); prG.userData.screw.position.y = prG.userData.plate.position.y + 2; prG.userData.screw.rotation.y += dt * prG.userData.squeeze; }
-      { const B = orchScene.userData.bees, out = clockNight() < 0.5; if (B && (out || B.mesh.visible)) { B.mesh.visible = out; const m4 = B.m4 || (B.m4 = new THREE.Matrix4()); B.seed.forEach(([bx, bz, ph, sp], i) => { const a = t * sp + ph; m4.makeTranslation(bx + Math.sin(a * 1.3) * 3 + Math.sin(a * 0.31) * 5, 2.4 + Math.sin(a * 2.1 + ph) * 1.3 + Math.sin(a * 0.4) * 1.2, bz + Math.cos(a * 1.1) * 3 + Math.cos(a * 0.27) * 5); B.mesh.setMatrixAt(i, m4); }); B.mesh.instanceMatrix.needsUpdate = true; } }
+      { const B = orchScene.userData.bees, out = clockNight() < 0.5; if (B && (out || B.mesh.visible)) { B.mesh.visible = out; const m4 = B.m4 || (B.m4 = new THREE.Matrix4()); B.seed.forEach(([bx, bz, ph, sp], i) => { const a = (netNow() % 100000) * sp + ph; m4.makeTranslation(bx + Math.sin(a * 1.3) * 3 + Math.sin(a * 0.31) * 5, 2.4 + Math.sin(a * 2.1 + ph) * 1.3 + Math.sin(a * 0.4) * 1.2, bz + Math.cos(a * 1.1) * 3 + Math.cos(a * 0.27) * 5); B.mesh.setMatrixAt(i, m4); }); B.mesh.instanceMatrix.needsUpdate = true; } }
       orchTrees.forEach(tr => { if (tr.userData.bounce > 0) { tr.userData.bounce = Math.max(0, tr.userData.bounce - dt * 1.6); tr.scale.setScalar(1 + Math.sin(tr.userData.bounce * Math.PI) * 0.12); } });
     }
     // Fernwater: Oriel at the dock, Maudie at the bakery, the ferry rocking, the water moving
@@ -8510,7 +8696,9 @@
     }
     spinners.forEach(g => { if (g.userData.spin) g.rotation.y += dt * g.userData.spin; });
     if (!reduce) swingSigns.forEach(g => { g.rotation.x = Math.sin(t * 0.8 + g.userData.ph) * 0.035; });
-    if (riding) {
+    dogTick(dt, t);
+    if (riding && mount === 'dog') { const sp = vel.length(); kid.legs[0].rotation.x = kid.legs[1].rotation.x = -1.25; kid.legs[0].rotation.z = -0.5; kid.legs[1].rotation.z = 0.5; kid.arms[0].rotation.x = kid.arms[1].rotation.x = -0.95; kid.body.rotation.x += ((running ? 0.3 : 0.08) - kid.body.rotation.x) * Math.min(1, dt * 5); player.rotation.z += (-clamp(mx, -1, 1) * Math.min(0.2, sp / 60) - player.rotation.z) * Math.min(1, dt * 5); }
+    else if (riding) {
       const sp = vel.length(), pedalling = mz > 0.1;
       bike.userData.wheels.forEach(w => (w.rotation.x += sp * dt / 1.1));
       if (pedalling && sp > 0.3) bike.userData.crank.rotation.x += dt * Math.min(running ? 14 : 9, 2 + sp * (running ? 0.55 : 0.45));
@@ -8743,7 +8931,7 @@
     // shutting-up time, said once as it happens
     { const shut = abed; if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
     folk.forEach(F => { const on = F.on(hr); if (on !== F.g.visible) { F.g.visible = on; if (F.solid) F.solid.x = on ? F.sx : 1e6; } });
-    if (WICK.g.visible && seen) { const g = WICK.g; g.position.x += WICK.dir * 3.2 * dt; if (g.position.x > LANE.x1 - 18) WICK.dir = -1; else if (g.position.x < 10) WICK.dir = 1; g.rotation.y = WICK.dir * Math.PI / 2; g.position.y = Math.abs(Math.sin(t * 5)) * 0.1; }
+    if (WICK.g.visible && seen) { const g = WICK.g, L = LANE.x1 - 28, u = (netNow() * 3.2) % (2 * L); WICK.dir = u < L ? 1 : -1; g.position.x = 10 + (u < L ? u : 2 * L - u); g.rotation.y = WICK.dir * Math.PI / 2; g.position.y = Math.abs(Math.sin(t * 5)) * 0.1; }
     if (where === 'in' && interior) roomNight(interior);
   }
   var TEACH = [{ n: 'Old Bramblewick', sc: scene, w: 'village', p: BWPOS }, { n: 'Hollis Quern', sc: orchScene, w: 'orchards', p: HOLPOS }, { n: ORI, sc: fernScene, w: 'fernwater', p: ORIPOS }, { n: WREN, sc: cairnScene, w: 'cairnhold', p: WRENPOS },
@@ -9359,7 +9547,7 @@
     else { place(); hint(`Welcome back${save.name ? ', ' + save.name : ''}. ${coins} acorn coins, ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Press M for the map.`); }
   }
   let restoreAfter = null;
-  tapButton($('mapbtn'), toggleMap);
+  tapButton($('mapbtn'), toggleMap); tapButton($('saybtn'), () => openSay()); $('saybtn').hidden = fam.phrases === false; tapButton($('voicebtn'), () => NET.voice()); NET.voiceSync();
   window.addEventListener('keydown', e => { if (!$('settings').hidden || bagOpen) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {
