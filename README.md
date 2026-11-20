@@ -163,6 +163,28 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## Small animals get joints too (build 112)
+
+- **Rabbits** have haunches, long hind feet and front paws. Each hop now runs the way a real one does: the hind feet push off together and straighten out behind, the front paws reach forward in the air, the front paws land first, and the hind feet swing past them to land in front, ready to push again. A rabbit sits with its hind feet folded flat under it, and a frightened rabbit hops higher.
+- **Squirrels** have hind legs that fold under them and small arms held to the chest. They hop the same way across the ground and scrabble with all four feet as they dash up and down a trunk.
+- **Crows** stand on legs that bend backward at the ankle, as a bird's do. The ankles dip a little as a crow shifts on its perch, and it tucks its feet back when it flies.
+- **The heron** at Fernwater has long legs with the same backward-bending ankle. When it steps, it lifts one foot with the toes swinging up under it.
+- **Frogs** sit on folded hind legs and kick them straight out behind when they jump.
+- **Pheasants** tuck their feet up while they fly.
+- **The beetle** has a knee in each of its six legs. It walks on two tripods (front and back legs on one side with the middle leg on the other), each leg sweeping back along the ground, then lifting and swinging forward.
+- Other players see the same hops, perches and tucks.
+- Not yet: the mouse, the hedgehog, the ducks and the birds that only fly overhead.
+
+## Riding, hands, gaits and faces (build 111)
+
+- **Sitting on Bracken.** The rider now sits down into the saddle blanket instead of hovering above it. Because Bracken is broad and an elf child is small, the thighs go out sideways across the blanket and the shins lie along its flaps, the way a small child sits a pony. This works the same at any height the player has grown to, and for other players seen riding him.
+- **A bridle and reins.** Bracken wears a noseband, a strap behind his ears, cheek straps and a brass ring at each corner of his mouth. Leather reins run from the rings, under his jaw, along the sides of his neck and back to the rider's hands, with a little sag. They follow every step, and they are hidden when nobody is riding.
+- **Hands with fingers.** Every person (the player, other players, every elf in every town and the Hollow's own folk) now has a palm, four fingers and a thumb. Each finger bends in two places, so a hand can relax, half-close or make a fist. Riders close their hands round the reins. Further than about 20 to 30 paces away, a hand turns back into the simple round mitten, so the extra detail costs nothing at a distance. This is the groundwork for grabbing things with your hands in VR.
+- **Animal legs join the body.** Each leg of the deer, dogs (Bracken too), fox, badger and rams now starts with a rounded shoulder or haunch that sits inside the body, so the top of the leg no longer shows as a cut-off post.
+- **Walk, trot and gallop.** Four-legged animals choose a gait by speed. A walk sets the feet down one at a time (hind, fore, other hind, other fore). A trot moves diagonal pairs together. A gallop lands both hind feet close together and then both front feet, and the body rises and falls once a stride. Gaits blend into each other as speed changes. Legs fold as they swing forward and straighten as they land, and the stride slows down and lengthens at speed rather than going faster and faster.
+- **A startled deer bounds.** When a deer takes fright it first springs away in a few stiff-legged bounds, all four feet leaving the ground together and tucked up, before it breaks into a gallop.
+- **Faces match their names.** The eyebrows were tilted the wrong way round, so Determined and Grumpy looked worried. Brows now tilt down toward the nose for Determined, Grumpy and Mischief. They sit a touch lower and are drawn darker so they show under the hair.
+
 ## Knees and elbows (build 110)
 
 - **Your elf and other players** have a thigh, knee and shin in each leg, and an upper arm, elbow and forearm in each arm. Knees bend as each leg swings back and fold square when you sit or ride Bracken. Elbows bend more as the arm swings forward.
