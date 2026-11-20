@@ -143,8 +143,36 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **Honesty boxes.** A shop that is shut and sells food (the Stores, Dewberry's stall) still lets you buy the food from an honesty box; nothing else, and nobody is there to buy from you. A shop with no food (the potting shed, the woodshop) says it is shut till seven.
 - **The Sleepy Beetle** is the inn on the green, and it never shuts. Posy Underbough keeps it from 7 in the morning to 7 in the evening and her brother Moss through the night. It sells hot cocoa and barley stew (both made here), and bread, pie, cider and nut mix. Inside there is a great hearth with the carved beetle asleep over it, two settles by the fire, four tables with stools, and the bar; ring the bell on the barrel. Three travellers sit in from 5 in the evening until 11: a carter, a road surveyor and a pedlar.
 - **Anyone out at night has a reason,** and will tell you it. Wick Tallow the lamplighter walks the lane from dusk to dawn. Bryn Ashlock minds the gate from 9 until the Hollow wakes. Both sleep by day at the inn.
-- **Not yet:** only the Hollow, Mallow Orchards, Fernwater and Cairnhold keep hours. The other towns' shops stay open and their people stay put until they have homes to go to. The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
+- **Not yet:** every town but Skyhaven keeps hours. Skyhaven's people stay put until they have homes to go to. The inn has no upstairs you can visit, so the travellers, the lamplighter and the watchman simply are not there when they are asleep. Nobody sits down: people at home stand by the fire, then lie in bed.
 - How it works: `daySecs()` reads the clock in `ZONE`; `hollowAbed()` and `shopsShut()` are the hours. `FOLK` holds the four with their post, their home and the way between; `nightLifeTick` walks them, puts their indoor figures by the fire or in bed, and shows or hides everyone in `folk` (each has an `on(hour)` test). `shopShut(id)` and `shopRing(id)` decide between the shop, the honesty box and a shut door. `roomNight(room)` darkens a room's windows.
+
+## Lanternreach at full size
+
+- **Windward Row.** A new street runs west from the lane, between the chandlery and the Tide Office, with two full-size family houses on each side: Vell, Reef, Ebb and Wick. Each has its fenced garden, gate, letterbox and a walk-in home inside, the same as the houses in the Hollow. The town's ground now reaches 180 units further west, and the plain is levelled under the row so the houses sit square. It meets the open land with no edge.
+- **Three new people.** Rowan Reef keeps the chandlery, Marnie Ebb the Tide Office, and Jory Wick the light. They talk about fathoms and compass bearings, the tide as a wave, and the beam's thirty degrees a second.
+- **Hours.** It is always night in Lanternreach, so people go by the clock: home along the row at nine, by the fire, then bed, and back at seven. The chandlery bell is shut at night. Knock on Astra's door and she will still teach.
+- **Taller lamps** down the lane, to suit grown elves.
+- **Not yet:** the lighthouse, observatory, keeper's cottage, chandlery and Tide Office are the size they were, which is small beside the new houses. The two painted hills that stood west of the town are gone, because the row stands where they were.
+
+## Emberdeep at full size
+
+Emberdeep was always a hall big enough for grown elves, but nobody lived there. Now they do.
+
+- **Hearth Gallery.** The west wall of the hall is gone and the cavern runs on another 160 units. Four two-storey house fronts are cut into its north wall, each with a grown-elf door you walk through, lit windows, a number and a family name. A great iron brazier of coals stands in the middle with six stones round it to sit on, with four more pillars, lamps, a coal store and a stack of iron pigs. All of it is solid.
+- **Four homes.** Ironvein, Cinder, Slagg and Flint Hold are full family homes inside, the same size as the homes in the other towns.
+- **Three new people.** Brokk Cinder keeps the furnaces, Hilda Slagg weighs the ore at the carts, and Odwin Flint trims the lamps and sweeps the forge-grid. Each has things to say about their work (smelting, shares of a hundred, along-then-up on the grid).
+- **Hours.** At nine in the evening Master Durna and the other three walk home along the gallery, sit by the fire, and go to bed. They are back at seven. Durna's shop bell is shut at night. Knock on her door and she will still teach.
+- **Not yet:** there is no day or night to see under the mountain, so evening only shows in people going home. The forge, furnaces and lava side are unchanged.
+
+## Cogsworth at full size
+
+- **The town now runs 170 units further west** along the foot of the cliff (380 wide, was 210). The gate, the lane, the square and water clock, the lift, both works, the thermometer, the hill and every lesson spot are where they were.
+- **Cliff Row:** four houses built into the cliff, as the two works are. Each is a full two-storey timber front 34 wide and 24 tall with a grown-elf door in the rock, a turning brass gear over it and a brass flue up the cliff, and the same full house inside as everywhere else: no. 1 Gearwright (Tamsin), no. 2 Spindle (Odette, who builds the bicycles), no. 3 Ratchet (Barnaby, who keeps the lift), no. 4 Verge (Clementine, who keeps the town clock).
+- **The town clock** stands in the new square: a stone tower 45 high with four faces. Its hands show the real time, the same clock the whole game runs on.
+- **Also new:** plane trees in stone tubs, benches you can sit on, full-height lamps, and the grown-elf gate with the big gear turning above it.
+- **Hours.** Both works shut at 9 and open at 7. Tamsin, Odette, Barnaby and Clementine walk home to Cliff Row at 9, sit by the fire till 10, then bed. Knock and whoever is in answers; Tamsin will teach at any hour. A lesson under way keeps Tamsin at her place.
+- **Not yet:** the two works are the size they were. The houses have no gardens, being in a cliff.
+- How it works: `CGW` holds the west edge and the lane; `GHOMES` the houses (each "house" is a point inside the cliff, so the same walking-home code works); `cogHB` their doors. The crag in open country behind the town (`cogLand`) now stands tall as far west as the row does.
 
 ## Cairnhold at full size
 
