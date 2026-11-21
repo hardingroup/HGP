@@ -163,6 +163,95 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## The Ice Cave on Frostpeak: frost goblins, and Old Rimeclaw who throws snow (build 132)
+
+**Where**
+- A little over half way up the Frostpeak trail, on the uphill side: a mouth in the rock with icicles hanging over it, a sign that says "The Ice Cave", and snowballs lying on the path in front. Walk into the mouth to go in.
+- Sister Linden Hush at the monastery will tell you where it is.
+
+**Inside**
+- A long cave of blue ice: pillars of ice from the floor, icicles from the roof, snow drifted against the walls, a frozen pool, and clumps of crystal that give the light.
+- **Five frost goblins.** They are pale blue, in white rags, and a little tougher than the goblins in the Hollow: each takes four points of harm. A white belt needs four hits for one; a black belt needs one.
+- **Old Rimeclaw** at the far end, nearly twice their size, with a crown of ice. He takes fourteen points of harm.
+  - He sees you from most of the way down the cave, and there is no talking to him.
+  - While you are out of his reach he throws snowballs, one every two or three seconds. Each is aimed at where you were standing when he threw it, so keep moving and it misses. One that lands costs five health.
+  - Up close he clouts like the goblin chief does.
+- **The heap** behind him: once every frost goblin has been seen off, look through it for 45 acorn coins. This pays once.
+- They are all back the next time you come in, the same as in the Goblin Hole.
+
+**Under the bonnet**
+- The game now keeps each cave's creatures apart, so more caves can be added without their goblins getting mixed up.
+- The cast sheet has the frost goblin and Old Rimeclaw on it.
+
+**Not yet**
+- This is the only cave on the mountain so far.
+- Frost goblins are yours alone, like the Hollow's: another player in the cave sees their own.
+
+## Frostpeak: a mountain of snow, a monastery on top of it, and a dojo with three belts to earn (build 131)
+
+**The mountain**
+- Frostpeak is a new mountain north-west of Fernwater Crossing, off the road that runs north from Fernwater to Cairnhold. It is 320 high and 1,400 across, which makes it the biggest thing in the land by a long way.
+- It is under snow from a little above its foot to its top, with grey rock showing on the steep faces, pines on the lower and middle slopes, and snow falling whenever you are on it.
+- **From far off** you can see it white against the sky, before the haze would normally let anything that far away show.
+- **Finding it:** on the road north of Fernwater there is a signpost, "Frostpeak Monastery, up the mountain". A line of stone cairns with yellow flags runs from the signpost to the foot.
+- **The climb:** a trail winds most of the way round the mountain from the foot to the top, cut level so it can be walked, with a red pole and flags every little way. It is a long walk on purpose. The top is flat.
+- Once you have reached the top, Frostpeak is on your map and you can travel straight back to it.
+
+**The monastery**
+- **The gate** where the trail comes over the lip, with a stone way running from it to the hall, stone lanterns that light at night, and prayer flags strung across the yard.
+- **The hall:** open at the front, under a two-tier roof with snow on it. Inside are mats, a rack of staves and a scroll with one brushed circle.
+- **The yard:** three striking posts. Any of them can be punched and will rock on its base.
+- **Three cells** for the monks, each open to the yard, with a sleeping mat, a blanket and a lamp. You can walk into them.
+- **The bell,** which you can ring.
+- **A fire bowl** with three stones to sit on round it, and **a frozen pond** you can walk across.
+- **Five people live here:** Brother Sorrel Deepsnow at the gate, Brother Tobin Quietfoot sweeping the yard, Sister Linden Hush at the bell, Pim Snowberry (the newest, and a child) by the fire, and Master Oren Frostmantle in the hall.
+
+**The dojo: belts**
+- Speak to Master Oren. He teaches one belt at a time, and each belt is earned in a drill, not by counting hits.
+- **The drill:** stand at the middle post. Master Oren lights the lantern over it at moments of his choosing. Strike while it is lit. A strike before the light counts against you, and so does a light you miss.
+  - **Yellow belt:** 6 lights, land 4.
+  - **Green belt:** 8 lights, land 6, and the light is quicker.
+  - **Black belt:** 10 lights, land 8, and the light is quicker again.
+- Walk out of the yard in the middle of a drill and he puts the lantern out. You can try as often as you like.
+- Your belt is worn: the belt on your elf turns yellow, green or black.
+
+**The four punches**
+- **White belt (no belt):** the flap. Leans away, looks away, both arms going. One point of harm, one goblin.
+- **Yellow belt:** the straight punch. Weight back, then one straight arm with the body behind it. Two points, and it can catch two.
+- **Green belt:** the one-two. Both fists up, a quick jab with the left, then the right comes through. Two blows from one press, two points each.
+- **Black belt:** the open palm. Both hands drawn back to the hips, then both palms out together, with a ring of air off the blow. Five points, a long reach, up to four at once, and whatever it lands on goes a long way back.
+- Twelve landed punches in the Goblin Hole still teach you the straight punch by yourself, but not the belt.
+- The Punch button shows on a touch screen at the monastery as well as in the cave.
+
+**Not yet**
+- The caves on the mountain. Sister Linden mentions them; none can be entered.
+- Other players see your elf at the monastery but not the colour of your belt, and each player has their own drill.
+- The monks stay at their posts day and night. They do not sleep, eat or train yet.
+
+## Hands clear of the coat, necks for everyone, and a fan that turns the right way (build 130)
+
+**Your elf's arms and hands**
+- The arms now lie along the outside of the coat with the hands resting at the hip. They used to hang straight down inside the flare of the coat, so the sleeves vanished into it and the hands came out under the hem.
+- A rounded shoulder joins each arm to the body.
+- This is the same for every other player's elf, at every height from child to grown.
+
+**Necks**
+- Every elf has a neck you can see: yours, other players', all the townsfolk and travellers, and the eight hand-made folk of the Hollow. Heads sit a little higher to make room.
+- The plain townsfolk also get a closed top to the coat under the neck.
+- The goblins keep their heads on their shoulders, as goblins do.
+
+**Hair**
+- Your elf's hair now comes down the back of the head. It used to stop in a band, with bare skin below it.
+
+**The wind tunnel at Skyhaven**
+- The fan turned end over end. It now spins on the drum's own axle like a wheel, with a hub in the middle and a pitch to the blades.
+
+## Shoulders for the eight hand-made folk of the Hollow (build 129)
+
+- Old Bramblewick, Marigold Fernsby, Aldric Bough, Fen Dewberry, Hollis Quern, Pip Willowby, Captain Oriel Tideknot and Maudie Crumb were each modelled by hand, so build 128's shoulder fix missed them. They have it now.
+- For each one the game finds where the body really is at shoulder height, brings the arm in to meet it, and rounds the join with a shoulder in the colour of the sleeve.
+- Your own elf and the goblins are built differently again and were not changed.
+
 ## Nine fixes from the first walk round Tinderfold: the book, a swing, a rocking chair, shoulders, and signs you can read (build 128)
 
 **The book in your hands**
