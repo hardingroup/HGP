@@ -371,7 +371,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 116 · 20 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 118 · 20 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -413,6 +413,7 @@
         <button class="act" id="voicebtn" hidden>Voice</button>
         <button class="act" id="bagbtn">Bag</button>
         <button class="act" id="ridebtn" hidden>Ride</button>
+        <button class="act" id="whistlebtn" hidden>Whistle</button>
         <button class="act" id="runbtn">Run</button>
         <button class="act" id="viewbtn">View</button>
         <button class="act" id="jumpbtn">Jump</button>
@@ -557,7 +558,7 @@
   function fixGrownSigns() { GROWN.forEach(q => q.g.traverse(o => { if (o.userData && o.userData.sign) { const side = Math.abs(Math.sin(o.rotation.y)) > 0.5; o.scale.set(1.3 / (side ? q.gz : q.gx), 1.3 / q.gy, 1); } })); }
 
   // ---------- world layout: one village street, north to south, inside a fence ----------
-  const SHOP = new THREE.Vector3(0, 0, 0), R = 11, GAP = Math.asin(2.5 / R);
+  const SHOP = new THREE.Vector3(0, 0, 0), R = 15, HT = 21, GAP = Math.asin(3.3 / R);   // Bramblewick's stump: 30 across and 21 high inside, with a doorway a grown elf walks through
   const BWPOS = new THREE.Vector3(5, 0, -5.5);
   const NURS = new THREE.Vector3(-36, 0, 46), MARIPOS = new THREE.Vector3(-36, 0, 52.5);
   const WOOD = new THREE.Vector3(38, 0, 50), ALDPOS = new THREE.Vector3(35, 0, 54);
@@ -576,7 +577,7 @@
   HOMES.forEach(h => { houseSize(h); h.sg = h.face ? -1 : 1; h.z = LANE.z - h.sg * 38; });
   const nearHome = (x, z, pad = 0) => [...HOMES, INN].some(h => Math.abs(x - h.x) < h.hw + 4 + pad && Math.abs(z - h.z) < h.hd + 7 + pad);
   const inLot = (x, z, pad = 0) => HOMES.some(h => Math.abs(x - h.x) < 41 + pad && Math.abs(z - (h.z - h.sg * 6)) < 37 + pad);   // the whole plot: house, front garden and back
-  const YARD = new THREE.Vector3(0, 0, 17);
+  const YARD = new THREE.Vector3(0, 0, R + 6);
   const DOOR = new THREE.Vector3(0, 0, R + 1.5);
   const GATE = new THREE.Vector3(0, 0, 152);
   const FENCE = { x0: -64, x1: 290, z0: -56, z1: 152 };
@@ -589,7 +590,7 @@
     const t = clamp((wx * vx + wz * vz) / L, 0, 1); return Math.hypot(px - (ax + vx * t), pz - (az + vz * t));
   };
   // [from, to, trim at the far end, width]
-  const STREET0 = new THREE.Vector3(0, 0, 14), STREET1 = new THREE.Vector3(0, 0, GATE.z - 1);
+  const STREET0 = new THREE.Vector3(0, 0, R + 2), STREET1 = new THREE.Vector3(0, 0, GATE.z - 1);
   const pathEnds = [
     [STREET0, STREET1, 0, 8],
     [new THREE.Vector3(0, 0, NURS.z), NURS, 15.5, 4], [new THREE.Vector3(0, 0, WOOD.z), WOOD, 9, 4],
@@ -920,54 +921,55 @@
   const shop = new THREE.Group();
   {
     const wallM = mat('#ffffff', { map: barkTex, side: THREE.DoubleSide });
-    const wall = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.6, R, 13, 72, 1, true, GAP, Math.PI * 2 - 2 * GAP), wallM); wall.position.y = 6.5; shop.add(wall);
-    const lintel = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.6, R - 0.6 * 6 / 13, 7, 16, 1, true, -GAP, 2 * GAP), wallM); lintel.position.y = 9.5; shop.add(lintel);
+    const DH = 9.5;   // the doorway's height
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.6, R, HT, 96, 1, true, GAP, Math.PI * 2 - 2 * GAP), wallM); wall.position.y = HT / 2; shop.add(wall);
+    const lintel = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.6, R - 0.6 * DH / HT, HT - DH, 16, 1, true, -GAP, 2 * GAP), wallM); lintel.position.y = (HT + DH) / 2; shop.add(lintel);
     // inner wall lining (plank panelling), slightly inside the bark
-    const lining = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.75, R - 0.2, 12.6, 72, 1, true, GAP + 0.02, Math.PI * 2 - 2 * GAP - 0.04), mat('#ffffff', { map: wallInTex, side: THREE.BackSide })); lining.position.y = 6.3; shop.add(lining);
+    const lining = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.75, R - 0.2, HT - 0.4, 96, 1, true, GAP + 0.02, Math.PI * 2 - 2 * GAP - 0.04), mat('#ffffff', { map: wallInTex, side: THREE.BackSide })); lining.position.y = (HT - 0.4) / 2; shop.add(lining);
     const floor = new THREE.Mesh(new THREE.CircleGeometry(R - 0.2, 48), mat('#ffffff', { map: plankTex })); floor.rotation.x = -Math.PI / 2; floor.position.y = 0.04; floor.receiveShadow = true; shop.add(floor);
     const roof = new THREE.Mesh(new THREE.SphereGeometry(R + 0.9, 36, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat('#4f7a33', { roughness: 0.95, side: THREE.DoubleSide }));
-    roof.position.y = 12.9; roof.scale.y = 0.62; shop.add(roof);
-    const lip = new THREE.Mesh(new THREE.TorusGeometry(R + 0.7, 0.6, 10, 48), mat('#456e2c')); lip.rotation.x = Math.PI / 2; lip.position.y = 13; shop.add(lip);
-    const curl = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.42, 10, 24, Math.PI * 1.6), mat('#456e2c')); curl.position.set(0, 20.2, 0); curl.rotation.z = Math.PI / 2; shop.add(curl);
-    const chim = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1, 3.5, 12), mat('#8d7a66')); chim.position.set(6, 17.2, -2); shop.add(chim);
-    for (let k = 0; k < 3; k++) { const beam = new THREE.Mesh(new THREE.BoxGeometry(2 * R - 1.5, 0.5, 0.6), mat('#5a4027')); beam.position.y = 12.5; beam.rotation.y = k * Math.PI / 3 + 0.3; shop.add(beam); }
+    roof.position.y = HT - 0.1; roof.scale.y = 0.62; shop.add(roof);
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(R + 0.7, 0.6, 10, 48), mat('#456e2c')); lip.rotation.x = Math.PI / 2; lip.position.y = HT; shop.add(lip);
+    const curl = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.55, 10, 24, Math.PI * 1.6), mat('#456e2c')); curl.position.set(0, HT + 10.3, 0); curl.rotation.z = Math.PI / 2; shop.add(curl);
+    const chim = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.2, 5, 12), mat('#8d7a66')); chim.position.set(8, HT + 6, -3); shop.add(chim);
+    for (let k = 0; k < 3; k++) { const beam = new THREE.Mesh(new THREE.BoxGeometry(2 * R - 1.5, 0.6, 0.7), mat('#5a4027')); beam.position.y = HT - 0.5; beam.rotation.y = k * Math.PI / 3 + 0.3; shop.add(beam); }
     // door arch and open door
     const dz = R * Math.cos(GAP);
-    [-1, 1].forEach(d => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 6, 10), mat('#7a5a3a')); post.position.set(d * 2.55, 3, dz); shop.add(post); });
-    const arch = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.32, 10, 30, Math.PI), mat('#7a5a3a')); arch.position.set(0, 6, dz); shop.add(arch);
-    const hinge = new THREE.Group(); hinge.position.set(-2.5, 0, dz); shop.userData.hinge = hinge; shop.add(hinge);
+    [-1, 1].forEach(d => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.44, DH, 10), mat('#7a5a3a')); post.position.set(d * 3.3, DH / 2, dz); shop.add(post); });
+    const arch = new THREE.Mesh(new THREE.BoxGeometry(7.4, 0.7, 0.8), mat('#7a5a3a')); arch.position.set(0, DH, dz); shop.add(arch); { const ab = new THREE.Mesh(new THREE.TorusGeometry(3.3, 0.36, 10, 30, Math.PI), mat('#7a5a3a')); ab.position.set(0, DH, dz + 0.2); shop.add(ab); }
+    const hinge = new THREE.Group(); hinge.position.set(-3.25, 0, dz); hinge.scale.set(1.3, DH / 6, 1); shop.userData.hinge = hinge; shop.add(hinge);
     const doorM = mat('#5b3a1e');
     const dPanel = new THREE.Mesh(new THREE.BoxGeometry(5, 3.5, 0.25), doorM); dPanel.position.set(2.5, 1.75, 0); hinge.add(dPanel);
     const dTop = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.5, 0.25, 24, 1, false, 0, Math.PI), doorM); dTop.rotation.x = Math.PI / 2; dTop.rotation.z = 0; dTop.position.set(2.5, 3.5, 0); hinge.add(dTop);
     for (let k = 0; k < 5; k++) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 5.6, 0.28), mat('#3e2812')); pl.position.set(0.5 + k * 1, 2.8, 0); hinge.add(pl); }
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), mat('#e8b64c', { metalness: 0.6, roughness: 0.3 })); knob.position.set(4.4, 2.8, 0.2); hinge.add(knob);
-    [[0, 0.22, 4.4], [0, 0.5, 3.4]].forEach(([x, y, r]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.45, 24, 1, false, -Math.PI / 2, Math.PI), mat('#8a7458')); st.position.set(x, y, dz + 0.1); shop.add(st); });
+    [[0, 0.22, 5.4], [0, 0.5, 4.3]].forEach(([x, y, r]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.45, 24, 1, false, -Math.PI / 2, Math.PI), mat('#8a7458')); st.position.set(x, y, dz + 0.1); shop.add(st); });
     // round windows, lit from inside and glowing outside
-    [0.8, -0.8, 2.0, -2.0].forEach(th => {
-      const ro = R - 0.6 * 7.5 / 13;
+    [[0.65, 7.5], [-0.65, 7.5], [1.5, 7.5], [-1.5, 7.5], [2.3, 7.5], [-2.3, 7.5], [0.4, 15.5], [-0.4, 15.5], [1.1, 15.5], [-1.1, 15.5], [1.9, 15.5], [-1.9, 15.5], [2.7, 15.5], [-2.7, 15.5]].forEach(([th, wy]) => {
+      const ro = R - 0.6 * wy / HT;
       [[ro + 0.08, '#f6cf72'], [ro - 0.7, '#fff1c9']].forEach(([rr, col], i) => {
         const w = new THREE.Mesh(new THREE.CircleGeometry(1.2, 24), mat(col, { emissive: i ? '#ffe2a0' : '#d48f22', emissiveIntensity: i ? 0.9 : 0.7, side: THREE.DoubleSide }));
-        w.position.set(rr * Math.sin(th), 7.5, rr * Math.cos(th)); w.rotation.y = th; shop.add(w);
+        w.position.set(rr * Math.sin(th), wy, rr * Math.cos(th)); w.rotation.y = th; shop.add(w);
         const fr = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.2, 8, 24), mat('#7a5a3a')); fr.position.copy(w.position); fr.rotation.y = th; shop.add(fr);
         const bar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.4, 0.1), mat('#7a5a3a')); bar.position.copy(w.position); bar.rotation.y = th; shop.add(bar);
         const bar2 = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 0.1), mat('#7a5a3a')); bar2.position.copy(w.position); bar2.rotation.y = th; shop.add(bar2);
       });
     });
-    const sign = signBoard('Village Stores', 5.6, 1.7); sign.position.set(0, 7.8, dz + 0.7); shop.add(sign);
-    [-1.6, 1.6].forEach(x => { const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.2, 5), mat('#4b4b4b')); ch.position.set(x, 9.2, dz + 0.7); shop.add(ch); });
+    const sign = signBoard('Village Stores', 7.4, 2.1); sign.position.set(0, DH + 4.4, dz + 0.5); shop.add(sign);
+    [-2.4, 2.4].forEach(x => { const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.2, 5), mat('#4b4b4b')); ch.position.set(x, DH + 6, dz + 0.5); shop.add(ch); });
     // lantern post, barrels and crates outside
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 6, 8), mat('#5a4027')); post.position.set(-6.8, 3, 9.8); shop.add(post);
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.18, 0.18), mat('#5a4027')); arm.position.set(-6.2, 5.9, 9.8); shop.add(arm);
-    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1, 0.8), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1.2 })); lamp.position.set(-5.6, 5.2, 9.8); shop.add(lamp);
-    const glow = new THREE.PointLight('#ffb950', 0.9, 16); glow.position.set(-5.6, 5, 10.5); shop.add(glow);
-    solids.push({ x: -6.8, z: 9.8, r: 0.6 });
-    [[7.75, 9.9], [9.5, 8.3]].forEach(([x, z]) => {   // clear of the stump's wall
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 6, 8), mat('#5a4027')); post.position.set(-7.6, 3, 14.6); shop.add(post);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.18, 0.18), mat('#5a4027')); arm.position.set(-7, 5.9, 14.6); shop.add(arm);
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1, 0.8), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1.2 })); lamp.position.set(-6.4, 5.2, 14.6); shop.add(lamp);
+    const glow = new THREE.PointLight('#ffb950', 0.9, 16); glow.position.set(-6.4, 5, 15.3); shop.add(glow);
+    solids.push({ x: -7.6, z: 14.6, r: 0.6 });
+    [[8.6, 13.6], [11.2, 11.7]].forEach(([x, z]) => {   // clear of the stump's wall
       const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.9, 2.2, 16), mat('#8a6438')); barrel.position.set(x, 1.1, z); shop.add(barrel);
       [0.5, 1.7].forEach(y => { const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.97, 0.06, 6, 20), mat('#4b4b4b', { metalness: 0.5 })); hoop.rotation.x = Math.PI / 2; hoop.position.set(x, y, z); shop.add(hoop); });
       solids.push({ x, z, r: 1.1 });
     });
-    const crate = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.4, 1.8), mat('#9a7448')); crate.position.set(-8.4, 0.7, 6.4); crate.rotation.y = 0.3; shop.add(crate); solids.push({ x: -8.4, z: 6.4, r: 1.6 });
-    for (let k = 0; k < 4; k++) { const a = makeAcornMesh(); a.scale.setScalar(0.8); a.position.set(-8.4 + rnd(-0.6, 0.6), 1.5, 6.4 + rnd(-0.5, 0.5)); a.rotation.z = rnd(-0.4, 0.4); shop.add(a); }
+    const crate = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.4, 1.8), mat('#9a7448')); crate.position.set(-12.4, 0.7, 10.2); crate.rotation.y = 0.7; shop.add(crate); solids.push({ x: -12.4, z: 10.2, r: 1.6 });
+    for (let k = 0; k < 4; k++) { const a = makeAcornMesh(); a.scale.setScalar(0.8); a.position.set(-12.4 + rnd(-0.6, 0.6), 1.5, 10.2 + rnd(-0.5, 0.5)); a.rotation.z = rnd(-0.4, 0.4); shop.add(a); }
 
     // ----- inside -----
     const inside = new THREE.Group(); shop.add(inside);
@@ -1008,7 +1010,7 @@
     const toySign = signBoard('Acorn Toys', 3.4, 1, '#6b4a2b', '#f4c53a'); toySign.position.set(0, 9, -(R - 1.1)); inside.add(toySign);
     const paintSign = signBoard('Berry Paints', 3.4, 1, '#6b4a2b', '#f4c53a'); paintSign.position.set(-5.6, 7.4, -7.9); paintSign.rotation.y = Math.PI + 0.62; inside.add(paintSign);
     // workbench on the left wall
-    const bench = new THREE.Group(); bench.position.set(-7.6, 0, 0.8); bench.rotation.y = Math.PI / 2; inside.add(bench);
+    const bench = new THREE.Group(); bench.position.set(-(R - 3.4), 0, 0.8); bench.rotation.y = Math.PI / 2; inside.add(bench);
     const top = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.3, 2.2), mat('#ffffff', { map: plankTex })); top.position.y = 2.2; bench.add(top);
     [[-1.9, -0.8], [1.9, -0.8], [-1.9, 0.8], [1.9, 0.8]].forEach(([x, z]) => { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2.1, 0.25), mat('#5a4027')); leg.position.set(x, 1.05, z); bench.add(leg); });
     const h1 = hammer(); h1.position.set(-1.2, 2.47, 0.3); h1.rotation.set(Math.PI / 2, 0, 0.8); bench.add(h1);
@@ -1019,10 +1021,10 @@
     for (let k = 0; k < 14; k++) { const sh = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.03, 0.08), mat('#d8b985')); sh.position.set(rnd(-2, 2), 2.37, rnd(-1, 1)); sh.rotation.y = rnd(0, 6); bench.add(sh); }
     const bCandle = candle(true); bCandle.position.set(1.9, 2.35, -0.8); bench.add(bCandle);
     const vise = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.7), mat('#4e4e4e', { metalness: 0.7, roughness: 0.4 })); vise.position.set(-2.0, 2.55, 0.9); bench.add(vise);
-    const stool = new THREE.Group(); stool.position.set(-5.4, 0, 0.8); inside.add(stool);
+    const stool = new THREE.Group(); stool.position.set(-(R - 5.6), 0, 0.8); inside.add(stool);
     const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.18, 14), mat('#8a6438')); seat.position.y = 1.5; stool.add(seat);
     for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2; const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.5, 6), mat('#5a4027')); leg.position.set(Math.cos(a) * 0.4, 0.75, Math.sin(a) * 0.4); leg.rotation.set(Math.sin(a) * 0.15, 0, -Math.cos(a) * 0.15); stool.add(leg); }
-    solids.push({ x: -7.6, z: -0.6, r: 1.5 }, { x: -7.6, z: 2.2, r: 1.5 }, { x: -5.4, z: 0.8, r: 0.65 });
+    solids.push({ x: -(R - 3.4), z: -0.6, r: 1.5 }, { x: -(R - 3.4), z: 2.2, r: 1.5 }, { x: -(R - 5.6), z: 0.8, r: 0.65 });
     // tools hanging above the bench
     const rack = new THREE.Group(); rack.position.set(-(R - 1.0), 5.6, 0.8); rack.rotation.y = Math.PI / 2; inside.add(rack);
     const rail = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.2, 0.2), mat('#5a4027')); rack.add(rail);
@@ -1046,10 +1048,28 @@
     const sackTie = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.06, 6, 12), mat('#8a6438')); sackTie.position.set(-4.6, 2.2, 7.6); sackTie.rotation.x = Math.PI / 2; inside.add(sackTie);
     solids.push({ x: 4.6, z: 7.4, r: 1.1 }, { x: -4.6, z: 7.6, r: 1.1 });
     // hanging lantern
-    const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.2, 5), mat('#4b4b4b')); chain.position.set(0, 10.9, -1); inside.add(chain);
+    const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, HT - 10, 5), mat('#4b4b4b')); chain.position.set(0, (HT + 9.4) / 2, -1); inside.add(chain);
     const lant = new THREE.Mesh(new THREE.BoxGeometry(1, 1.3, 1), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1.2 })); lant.position.set(0, 8.7, -1); inside.add(lant);
     const lantCap = new THREE.Mesh(new THREE.ConeGeometry(0.9, 0.5, 8), mat('#4b4b4b')); lantCap.position.set(0, 9.6, -1); inside.add(lantCap);
-    const lantLight = new THREE.PointLight('#ffc46a', 1.3, 34); lantLight.position.set(0, 8.4, -1); inside.add(lantLight);
+    const lantLight = new THREE.PointLight('#ffc46a', 1.3, 44); lantLight.position.set(0, 8.4, -1); inside.add(lantLight);
+    // ---- the rest of the bigger shop ----
+    { const wood = mat('#8a6438'), dark = mat('#5a4027'), top = mat('#ffffff', { map: plankTex }), cream = mat('#f2ead8'), I = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); q.castShadow = true; q.receiveShadow = true; inside.add(q); return q; }, B = (w, h, d, x, y, z, m) => I(new THREE.BoxGeometry(w, h, d), m, x, y, z);
+      // the high shelves: books and boxes stacked up the back wall above the old ones, in reach of a grown elf
+      [Math.PI * 0.68, Math.PI, Math.PI * 1.32, Math.PI * 0.84, Math.PI * 1.16].forEach((a, n) => [9.4, 11.8].forEach(y => { const g = new THREE.Group(); g.position.set(Math.sin(a) * (R - 1.4), y + (n > 2 ? 1.2 : 0), Math.cos(a) * (R - 1.4)); g.rotation.y = a; inside.add(g); const bd = new THREE.Mesh(new THREE.BoxGeometry(5, 0.18, 1.3), top); g.add(bd); [-2.2, 2.2].forEach(x => { const br = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.7, 0.9), dark); br.position.set(x, -0.4, 0.2); g.add(br); }); for (let i = 0; i < 9; i++) { const bk = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.1 + ((i + n) % 3) * 0.2, 0.9), mat(['#7a2a3a', '#2f4f7a', '#3e6a4a', '#8a6a3a', '#5a3a6a'][(i + n) % 5])); bk.position.set(-2 + i * 0.5, 0.65, 0); g.add(bk); } }));
+      // a reading corner under the high shelves: two armchairs turned toward the room, a little table and a rug
+      [[-7.6, -8.6], [-11.4, -4.6]].forEach(([x, z], i) => { const yaw = Math.atan2(-x, -z), c = mat(i ? '#7a3a3a' : '#3e5a7a', { roughness: 1 }), g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = yaw; inside.add(g); const add = (w, h, d, px, py, pz) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), c); q.position.set(px, py, pz); q.castShadow = true; g.add(q); };
+        add(2.4, 1.2, 2.6, 0, 0.9, 0); add(2.4, 2.6, 0.6, 0, 2.2, -1.3); [-1, 1].forEach(sd => add(0.5, 1.3, 2.4, sd * 1.2, 1.9, 0)); solids.push({ x, z, r: 1.5 }); seatSpot(scene, 'village', x + Math.sin(yaw) * 0.2, z + Math.cos(yaw) * 0.2, yaw, 1.5, 'armchair'); });
+      { const tx = -10.2, tz = -7.8; I(new THREE.CylinderGeometry(1, 1, 0.2, 16), top, tx, 2.2, tz); I(new THREE.CylinderGeometry(0.15, 0.3, 2.1, 8), dark, tx, 1.05, tz); solids.push({ x: tx, z: tz, r: 1 }); const bk = B(0.9, 0.25, 1.2, tx + 0.2, 2.42, tz, mat('#7a2a3a')); bk.rotation.y = 0.4; I(new THREE.CylinderGeometry(0.2, 0.16, 0.35, 10), cream, tx - 0.4, 2.48, tz + 0.4);
+        const rg = I(new THREE.CircleGeometry(3.4, 32), mat('#ffffff', { map: rugTex, roughness: 1 }), -9, 0.08, -6.2); rg.rotation.x = -Math.PI / 2; }
+      // a long display table down the left side of the shop floor, with the newest toys and a basket of acorns on it
+      { const x = -7.4, z = 8.2; B(6, 0.3, 2.6, x, 2.4, z, top); [[-2.7, -1.1], [2.7, -1.1], [-2.7, 1.1], [2.7, 1.1]].forEach(([a, b]) => B(0.3, 2.3, 0.3, x + a, 1.15, z + b, dark)); [-2.2, 2.2, 0].forEach(o => solids.push({ x: x + o, z, r: 1.6 }));
+        [acornPerson('#3e8a52'), acornCart(), acornTop(), acornPerson('#d9a33f'), acornTop()].forEach((t, i) => { t.position.set(x - 2.2 + i * 1.1, 2.55, z + (i % 2 ? 0.5 : -0.4)); t.rotation.y = i; inside.add(t); });
+        const lbl = signBoard('New this week', 3, 0.8, '#6b4a2b', '#f4c53a'); lbl.position.set(x, 3.4, z + 1.35); inside.add(lbl); }
+      // barrels of nuts and a rack of brooms by the right-hand window
+      [[9.4, 7.6, '#8a5a2a'], [11.2, 5.2, '#d9a33f']].forEach(([x, z, col]) => { I(new THREE.CylinderGeometry(1.1, 1, 2.2, 14), wood, x, 1.1, z); [0.4, 1.8].forEach(y => I(new THREE.TorusGeometry(1.08, 0.06, 6, 18), mat('#4b4b4b'), x, y, z).rotation.x = Math.PI / 2); for (let i = 0; i < 9; i++) I(new THREE.SphereGeometry(0.24, 8, 6), mat(col), x + rnd(-0.6, 0.6), 2.25, z + rnd(-0.6, 0.6)); solids.push({ x, z, r: 1.2 }); });
+      // more light for the bigger room: lamps on the gallery posts, and the daylight through the upper windows
+      [Math.PI * 0.75, Math.PI * 1.25].forEach(a => { const L = new THREE.PointLight('#ffd08a', 0.7, 30); L.position.set(Math.sin(a) * (R - 4), 13.5, Math.cos(a) * (R - 4)); inside.add(L); I(new THREE.BoxGeometry(0.7, 0.9, 0.7), mat('#ffe39a', { emissive: '#ffb93a', emissiveIntensity: 1.2 }), Math.sin(a) * (R - 3.4), 13.6, Math.cos(a) * (R - 3.4)); });
+      { const L = new THREE.PointLight('#fff0d0', 0.5, 36); L.position.set(0, 16, 6); inside.add(L); } }
     // a stuffed owl toy on a high shelf, for fun
     const owl = new THREE.Group(); owl.position.set(0.9, 7.1, -(R - 1.6)); inside.add(owl);
     const ob = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 10), mat('#8a6a46')); ob.scale.y = 1.2; ob.position.y = 0.45; owl.add(ob);
@@ -4753,7 +4773,7 @@
   function makePheasant() { const g = new THREE.Group(), m = mat('#a0522d'); blob(g, sph(1.6), m, 0, 2.6, 0, 1, 0.9, 1.6); blob(g, sph(0.7), mat('#2e5a3a'), 0, 4.6, 2.4); blob(g, sph(0.5), mat('#c8384a'), 0, 4.6, 2.9, 1, 0.8, 0.8); blob(g, new THREE.ConeGeometry(0.2, 0.9, 5), mat('#e0b23c'), 0, 4.5, 3.6).rotation.x = Math.PI / 2; blob(g, new THREE.CylinderGeometry(0.1, 0.35, 7, 5), mat('#7a4a2a'), 0, 3.2, -4.6).rotation.x = Math.PI / 2 + 0.25; g.userData.legs = legSet(g, mat('#8a7a66'), [[-0.5, 0], [0.5, 0]], 1.6, 0.12); g.userData.wings = [-1, 1].map(d => { const piv = new THREE.Group(); piv.position.set(d * 1.2, 3.2, 0); const w = blob(piv, new THREE.PlaneGeometry(3, 1.6), mat('#8a5a2a', { side: THREE.DoubleSide }), d * 1.5, 0, 0); w.rotation.x = -Math.PI / 2; g.add(piv); return piv; }); return g; }
   function makeDuck() { const g = new THREE.Group(), m = mat(pick(['#8a6a3a', '#5a4a3a'])); blob(g, sph(1.5), m, 0, 0.6, 0, 1, 0.8, 1.6); blob(g, sph(0.8), pick([mat('#2e6b3a'), m]), 0, 2.6, 1.8); blob(g, new THREE.BoxGeometry(0.7, 0.3, 1.1), mat('#e0b23c'), 0, 2.4, 2.8); blob(g, sph(0.5), m, 0, 1.2, -2, 0.6, 0.6, 1).rotation.x = -0.5; return g; }
   function makeFrog() { const g = new THREE.Group(), m = mat('#5f9a3a'); blob(g, sph(0.7), m, 0, 0.5, 0, 1, 0.7, 1.2); const H = [-1, 1].map(d => { blob(g, sph(0.22), mat('#f4c53a'), d * 0.35, 0.95, 0.4); blob(g, sph(0.1), mat('#1b1b1b'), d * 0.35, 1.0, 0.55); const l = limb(g, m, d * 0.45, 0, -0.5, [[0.42, 0.13], [0.42, 0.1], [0.36, 0.1]]); l.rotation.z = d * 0.75; limbFit(g, l, [-1.1, 2.5, -2.9]); const f = limb(g, m, d * 0.4, 0, 0.45, [[0.3, 0.08], [0.25, 0.07]]); f.rotation.z = d * 0.35; limbFit(g, f, [0.3, -0.5]); return l; }); g.userData.limbs = { H }; return g; }
-  function makeDog() { const g = new THREE.Group(); g.scale.setScalar(0.66); const m = mat(pick(['#c9a06a', '#3a2a1e', '#e6dcc2'])); blob(g, sph(2.2), m, 0, 5.4, 0, 1, 0.9, 2.2); blob(g, new THREE.CylinderGeometry(1.1, 1.5, 3.2, 8), m, 0, 6.5, 3.6).rotation.x = 0.75; const head = blob(g, sph(1.5), m, 0, 7.2, 5, 1, 0.9, 1.3); blob(g, sph(0.9), m, 0, 6.6, 6.8, 0.8, 0.7, 1.3); blob(g, sph(0.3), mat('#1b1b1b'), 0, 6.8, 7.9); [-1, 1].forEach(d => { blob(g, sph(0.2), mat('#1b1b1b'), d * 0.6, 7.6, 6.1); blob(g, sph(0.6), m, d * 1.4, 7.6, 4.6, 0.6, 1.4, 0.8).rotation.z = -d * 0.5; }); const tail = blob(g, new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5), m, 0, 6.6, -5.2); tail.rotation.x = -1.1; g.userData.tail = tail; g.userData.legs = legSet(g, m, [[-1.2, 3], [1.2, 3], [-1.2, -3], [1.2, -3]], 4.2, 0.4); return g; }
+  function makeDog() { const g = new THREE.Group(); g.scale.setScalar(0.66); const m = mat(pick(['#c9a06a', '#3a2a1e', '#e6dcc2'])); blob(g, sph(2.2), m, 0, 5.4, 0, 1, 0.9, 2.2); blob(g, new THREE.CylinderGeometry(1.1, 1.5, 3.2, 8), m, 0, 6.5, 3.6).rotation.x = 0.75; const head = blob(g, sph(1.5), m, 0, 7.2, 5, 1, 0.9, 1.3); blob(g, sph(0.9), m, 0, 6.6, 6.8, 0.8, 0.7, 1.3); blob(g, sph(0.3), mat('#1b1b1b'), 0, 6.8, 7.9); [-1, 1].forEach(d => { blob(g, sph(0.2), mat('#1b1b1b'), d * 0.6, 7.6, 6.1); blob(g, sph(0.6), m, d * 1.4, 7.6, 4.6, 0.6, 1.4, 0.8).rotation.z = -d * 0.5; }); const tail = new THREE.Group(); tail.position.set(0, 5.95, -4.3); g.add(tail); { const tm = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.32, 3.5, 6), m); tm.rotation.x = -1.1; tm.position.set(0, 0.79, -1.56); tail.add(tm); const root = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6), m); tail.add(root); } g.userData.tail = tail; /* hinged where it leaves the rump, so it wags from the base */ g.userData.legs = legSet(g, m, [[-1.2, 3], [1.2, 3], [-1.2, -3], [1.2, -3]], 4.2, 0.4); return g; }
   function makeCrow() {
     const g = new THREE.Group(), m = mat('#17161c', { roughness: 0.42, metalness: 0.3 }), m2 = mat('#22212b', { roughness: 0.5, metalness: 0.25, side: THREE.DoubleSide }), grey = mat('#2e2c2a', { roughness: 0.6 });
     blob(g, sph(0.9, 12, 10), m, 0, 1.55, -0.1, 0.8, 0.82, 1.55).rotation.x = -0.3;
@@ -4836,7 +4856,7 @@
     if (c.kind === 'dog') { c.cool = Math.max(0, (c.cool || 0) - dt);
       if (dp < 22 && dp > 7 && c.state !== 'greet' && c.state !== 'wag' && c.cool <= 0 && Math.random() < dt * 0.5) { c.state = 'greet'; c.timer = 6; const side = Math.random() < 0.5 ? 1 : -1; c.sideA = E.yaw + side * Math.PI / 2; }
       if (c.state === 'greet') { c.target = new THREE.Vector3(E.x + Math.sin(c.sideA) * 5.5, 0, E.z + Math.cos(c.sideA) * 5.5); const dtg = Math.hypot(c.target.x - o.position.x, c.target.z - o.position.z); if (dtg < 1.5 || c.timer <= 0) { c.state = dtg < 1.5 ? 'wag' : 'idle'; c.timer = dtg < 1.5 ? 2.5 : 2; } }
-      if (c.state === 'wag') { o.lookAt(E.x, o.position.y, E.z); o.userData.tail.rotation.z = Math.sin(t * 14) * 0.6; o.userData.legs.forEach(l => l.rotation.x = 0); if (c.timer <= 0 || dp > 9) { c.state = 'wander'; c.cool = 25; const ang = E.yaw + Math.PI + rnd(-1, 1); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 18, 0, o.position.z + Math.cos(ang) * 18); c.timer = 6; } return; }
+      if (c.state === 'wag') { o.lookAt(E.x, o.position.y, E.z); o.userData.tail.rotation.y = Math.sin(t * 14) * 0.6; o.userData.legs.forEach(l => l.rotation.x = 0); if (c.timer <= 0 || dp > 9) { c.state = 'wander'; c.cool = 25; const ang = E.yaw + Math.PI + rnd(-1, 1); c.target = new THREE.Vector3(o.position.x + Math.sin(ang) * 18, 0, o.position.z + Math.cos(ang) * 18); c.timer = 6; } return; }
       // a dog never plants itself in your path: if it ends up right in front of you it steps aside
       if (dp < 4.5 && c.state !== 'greet') { const ang = Math.atan2(o.position.x - E.x, o.position.z - E.z); if (Math.abs(wrap(ang - E.yaw)) < 0.7) { c.state = 'wander'; c.target = new THREE.Vector3(o.position.x + Math.sin(E.yaw + Math.PI / 2) * 8, 0, o.position.z + Math.cos(E.yaw + Math.PI / 2) * 8); c.timer = 3; } } }
     if (c.flee && dp < c.flee && c.state !== 'flee') { c.state = 'flee'; if (c.kind === 'deer') c.bound = 1.7; c.target = new THREE.Vector3(o.position.x + (o.position.x - E.x) * 4, 0, o.position.z + (o.position.z - E.z) * 4); c.timer = 3; }
@@ -4849,7 +4869,7 @@
         else { c.state = 'idle'; c.timer = 1; }
         const want = Math.atan2(dx, dz); o.rotation.y += wrap(want - o.rotation.y) * Math.min(1, dt * 5); const rel = sp / c.speed; c.gaitT = (c.gaitT || 0) + dt * c.gait * (rel <= 1 ? rel : 1 + (rel - 1) * 0.35); if (c.bound > 0) c.bound -= dt; o.position.y = c.ground(o.position.x, o.position.z) + (o.userData.legs ? quadPose(o.userData.legs, c.gaitT, sp / c.fleeSpeed, c.bound || 0, c.bob) : Math.abs(Math.sin(c.gaitT)) * c.bob); if (o.userData.tail && c.kind !== 'dog') o.userData.tail.rotation.y = Math.sin(c.gaitT) * 0.2; return; }
     }
-    o.position.y = c.ground(o.position.x, o.position.z); if (c.kind === 'dog') o.userData.tail.rotation.z = Math.sin(t * 5) * 0.2;
+    o.position.y = c.ground(o.position.x, o.position.z); if (c.kind === 'dog') o.userData.tail.rotation.y = Math.sin(t * 5) * 0.2;
     if (c.kind === 'deer') { const nk = o.userData.neck, want = Math.sin(t * 0.8 + c.home.x) > 0.6 ? 1.55 : 0; nk.rotation.x += (want - nk.rotation.x) * Math.min(1, dt * 2.5); }
   }
   // ---------- the open land's animals: a small company of deer, a fox, a badger, pheasants, rabbits and a flock that keeps pace with you ----------
@@ -5317,6 +5337,23 @@
   function dogPut(sc, x, y, z, r, world) { rdog.scale.setScalar(0.66); if (rdog.parent !== sc) sc.add(rdog); rdog.position.set(x, y, z); rdog.rotation.set(0, r, 0); rdog.visible = true; rdog.userData.world = world; }
   function dogMount() { if (!dogSt.mine || riding || where === 'in' || sitting || talking()) return; mount = 'dog'; const wasHome = !save.dog; player.add(rdog); rdog.position.set(0, 0, 0); rdog.rotation.set(0, 0, 0); rdog.visible = true; setRiding(true); if (!riding) { mount = 'bike'; return; } save.dog = { w: where, p: [0, 0, 0], r: 0, on: 1 }; if (wasHome) dogHomeFlag(false); persist(); }
   function dogSendHome(quiet) { if (riding && mount === 'dog') { riding = false; bike.visible = false; kid.legs.forEach(l => { l.rotation.z = 0; l.userData.knee.rotation.z = 0; }); gripAll(kid.hands, 0.35); kid.body.position.set(0, 0, 0); kid.body.rotation.x = 0; player.rotation.z = 0; py = 0; mount = 'bike'; dogDrop = false; } save.dog = null; persist(); dogHomeFlag(true); dogPut(scene, DOG_HOME[0], 0, DOG_HOME[2], 0, 'village'); if (!quiet) flash(DOGNAME + ' is back in his stall.', 4500); }
+  // the whistle: your dog comes running to you from wherever he is, the stall in the Hollow included. If he is far off or somewhere else entirely, he comes up the way you came
+  let dogCome = null;
+  function dogWhistle() { if (talking() || fading || !gameStarted) return;
+    try { if (audioCtx && snd.fx) { const t0 = audioCtx.currentTime; sndNote(snd.fx, 'sine', 1900, 2500, t0, 0.22, 0.09, 0.02); sndNote(snd.fx, 'sine', 2500, 1700, t0 + 0.26, 0.34, 0.09, 0.02); } } catch (e) {}
+    if (!dogSt.mine) { flash(dogSt.owner ? `${DOGNAME} is ${dogSt.owner}’s dog, so he stays where he is.` : `You whistle, but ${DOGNAME} isn’t anyone’s yet. He lives in the stable in the Hollow.`, 4500); return; }
+    if (riding && mount === 'dog') { hint(`${DOGNAME} is right underneath you.`); return; }
+    if (where === 'in' || where === 'lift' || where === 'flight') { flash('He can’t hear you from in here. Whistle outside.', 4000); return; }
+    const P = player.position, sc = curScene(); let x, z; const here = save.dog && !save.dog.on && save.dog.w === where && rdog.parent === sc;
+    if (here && Math.hypot(rdog.position.x - P.x, rdog.position.z - P.z) < 160) { x = rdog.position.x; z = rdog.position.z; }
+    else { const a = bodyYaw + Math.PI + rnd(-0.6, 0.6); x = P.x + Math.sin(a) * 40; z = P.z + Math.cos(a) * 40; }
+    if (!save.dog) dogHomeFlag(false);
+    save.dog = { w: where, p: [x, groundAt(x, z), z], r: Math.atan2(P.x - x, P.z - z), on: 0 }; dogCome = { t: 0 }; persist();
+    flash(`You whistle. ${DOGNAME} pricks up his ears and comes running.`, 4000); }
+  function dogComeTick(dt) { if (!dogCome) return; if (!save.dog || save.dog.on || save.dog.w !== where || where === 'in') { dogCome = null; rdog.userData.gait = 0; return; }
+    const P = player.position, p = save.dog.p, dx = P.x - p[0], dz = P.z - p[2], d = Math.hypot(dx, dz); dogCome.t += dt;
+    if (d < 4.4 || dogCome.t > 40) { dogCome = null; rdog.userData.gait = 0; persist(); hint(`${DOGNAME} is here, wagging. ${pickName()} at him to ride.`); return; }
+    const sp = Math.min(26, 7 + d * 0.6); p[0] += dx / d * sp * dt; p[2] += dz / d * sp * dt; p[1] = groundAt(p[0], p[2]); save.dog.r = Math.atan2(dx, dz); rdog.userData.gait = sp; }
   function rideKey() { if (talking()) return; if (riding) { setRiding(false); return; }
     if (dogSt.mine && rdog.visible && rdog.parent === player.parent && Math.hypot(rdog.position.x - player.position.x, rdog.position.z - player.position.z) < 10) { dogMount(); return; }
     if (bikeOwned) { mount = 'bike'; setRiding(true); } else if (dogSt.mine) flash(DOGNAME + ' is not beside you. Walk up to him and press the ride key.', 4500); }
@@ -5353,7 +5390,7 @@
     const sp = mineOn ? vel.length() : (rdog.userData.gait || 0), L = rdog.userData.legs; dogPh += dt * Math.min(15, 3 + sp * 0.5);
     let hop = 0; if (sp > 0.5) hop = quadPose(L, dogPh, sp / 30, 0, 0.12); else L.forEach(l => { l.rotation.x = 0; });
     reinTick(mineOn ? kid : rider0);
-    rdog.userData.tail.rotation.z = Math.sin(t * (sp > 0.5 ? 9 : 4)) * (sp > 0.5 ? 0.25 : 0.4);
+    rdog.userData.tail.rotation.y = Math.sin(t * (sp > 0.5 ? 9 : 4)) * (sp > 0.5 ? 0.25 : 0.4);
     if (mineOn) { const ps = player.scale.x; rdog.scale.setScalar(0.66 / ps); rdog.position.y = hop; kid.body.position.y = dogSit(ps) + rdog.position.y; }   // he is one size whoever rides him, however tall they have grown
     const free = rdog.visible && rdog.parent && rdog.parent !== player && rdog.userData.world !== 'ridden'; dogSpot.visible = !!free; if (free) { if (dogSpot.parent !== rdog.parent) rdog.parent.add(dogSpot); dogSpot.position.set(rdog.position.x + Math.sin(rdog.rotation.y) * 3.2, rdog.position.y + 3, rdog.position.z + Math.cos(rdog.rotation.y) * 3.2); dogSpot.userData.world = rdog.userData.world; }
   }
@@ -6273,7 +6310,7 @@
     findsNear();
     if (questGrub) questGrub.visible = !save.beetle && !beetle && !parked && phase === 'free';
     { const cb = beetle || (parked && parked.obj); if (cb && beetleName && !cb.userData.pickable) { cb.userData.pickable = true; cb.userData.kind = 'follower'; pickables.push(cb); } }
-    $('ridebtn').hidden = !bikeOwned && !dogSt.mine;
+    $('ridebtn').hidden = !bikeOwned && !dogSt.mine; $('whistlebtn').hidden = !dogSt.mine;
     if (!!save.lamp !== !!(lampLight && lampLight.parent)) setLamp(save.lamp);
     // say what the pick-up button will do, when it is something that isn't part of a lesson
     let text = '', word = 'Pick up';
@@ -6313,7 +6350,7 @@
       btn('Ready-made phrases and gestures: ' + (fam.phrases !== false ? 'on' : 'off'), () => { fam.phrases = fam.phrases === false; famSave(); renderFam(); $('saybtn').hidden = fam.phrases === false; });
     }
     if (famOpen || !fam.pin) { const i = pinBox(fam.pin ? 'New passcode' : 'Parent: choose a passcode'); btn(fam.pin ? 'Change passcode' : 'Set passcode', () => { if (!/^\d{4,8}$/.test(i.value)) { famMsg = 'Use 4 to 8 digits.'; renderFam(); return; } fam.pin = pinHash(i.value); famOpen = true; famMsg = 'Passcode set. Do not lose it: it is the only way to change these.'; famSave(); renderFam(); }); }
-    if (famOpen) { const ys = document.createElement('select'); ys.innerHTML = yearOptions(); ys.value = String(fam.year || ''); ys.onchange = () => { if (ys.value) { fam.year = +ys.value; fam.voice = ''; famSave(); renderFam(); NET.voiceSync(); } }; row.appendChild(ys); btn('Lock', () => { famOpen = false; famMsg = ''; renderFam(); }); }
+    if (famOpen || (!fam.year && !fam.pin)) { const ys = document.createElement('select'); ys.innerHTML = yearOptions(); ys.value = String(fam.year || ''); ys.onchange = () => { if (ys.value) { fam.year = +ys.value; fam.voice = ''; famSave(); renderFam(); NET.voiceSync(); } }; row.appendChild(ys); if (famOpen) btn('Lock', () => { famOpen = false; famMsg = ''; renderFam(); }); }
   }
   $('seeopt').addEventListener('click', () => { if (fam.pin && !famOpen) return; fam.see = fam.see === false; famSave(); renderFam(); NET.sync(); });
 
@@ -6355,15 +6392,17 @@
     // ---- voice: elves near each other can talk. The sound goes straight from one game to the other (WebRTC); this channel only introduces them. ----
     // It is on only for an elf whose voice rule is 'all' (grown-ups by default; a child only if a parent has changed it behind the passcode), and only once that player has switched it on and let the browser use the microphone.
     const RTC = { on: false, stream: null, pcs: new Map(), again: new Map() };
+    const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const voiceOK = () => voiceRule() === 'all';
     const sig = (to, body) => { if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: Object.assign({ id: myId, to, rt: 1 }, body) }); };
     function chip() { let c = $('voicechip'); if (!c) { c = document.createElement('button'); c.id = 'voicechip'; c.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:30;font:600 13px Inter,system-ui,sans-serif;padding:6px 12px;border-radius:999px;border:2px solid #e8b64c;background:rgba(27,43,30,.9);color:#f6e7c2;pointer-events:auto;cursor:pointer'; c.onclick = () => voice(); document.body.appendChild(c); }
-      c.hidden = !RTC.on; if (RTC.on) { let n = 0; RTC.pcs.forEach(q => { if (q.pc.connectionState === 'connected') n++; }); const t = '🎙 Voice on · ' + (n ? n + ' connected' : 'nobody connected') + ' · tap to turn off'; if (c.textContent !== t) c.textContent = t; } const vb = $('voicebtn'); if (vb) { vb.hidden = !voiceOK(); vb.textContent = RTC.on ? 'Voice ✓' : 'Voice'; } }
-    function hang(id) { const q = RTC.pcs.get(id); if (!q) return; RTC.pcs.delete(id); try { q.pc.close(); } catch (e) {} if (q.gain) { try { q.src.disconnect(); q.gain.disconnect(); } catch (e) {} } if (q.el) { try { q.el.pause(); q.el.srcObject = null; } catch (e) {} } RTC.again.set(id, performance.now() + 4000); }
+      c.hidden = !RTC.on; if (RTC.on) { let n = 0; RTC.pcs.forEach(q => { if (q.pc.connectionState === 'connected') n++; }); const t = '🎙 Voice on · ' + (n ? n + ' connected' : 'nobody connected') + ' · tap to turn off'; if (c.textContent !== t) c.textContent = t; } const vb = $('voicebtn'); if (vb) { vb.hidden = !gameStarted || fam.see === false; vb.textContent = RTC.on ? 'Voice ✓' : voiceOK() ? 'Voice' : 'Voice (off)'; } }
+    function hang(id) { const q = RTC.pcs.get(id); if (!q) return; RTC.pcs.delete(id); try { q.pc.close(); } catch (e) {} if (q.gain) { try { q.src.disconnect(); q.gain.disconnect(); } catch (e) {} } if (q.el) { try { q.el.pause(); q.el.srcObject = null; q.el.remove(); } catch (e) {} } RTC.again.set(id, performance.now() + 4000); }
     function link(id, first) { if (RTC.pcs.has(id)) return RTC.pcs.get(id); const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }), q = { pc, el: null, ice: [], ready: false }; RTC.pcs.set(id, q);
       RTC.stream.getTracks().forEach(t => pc.addTrack(t, RTC.stream));
       pc.onicecandidate = e => { if (e.candidate) sig(id, { ice: e.candidate.toJSON ? e.candidate.toJSON() : e.candidate }); };
-      pc.ontrack = e => { if (!q.el) { q.el = new Audio(); q.el.autoplay = true; q.el.volume = 0; } const st = e.streams[0] || new MediaStream([e.track]); q.el.srcObject = st; const pl = q.el.play(); if (pl && pl.catch) pl.catch(() => {});
+      pc.ontrack = e => { if (!q.el) { q.el = document.createElement('audio'); q.el.autoplay = true; q.el.setAttribute('playsinline', ''); q.el.style.display = 'none'; document.body.appendChild(q.el); q.el.volume = IOS ? 1 : 0; } const st = e.streams[0] || new MediaStream([e.track]); q.el.srcObject = st; q.el.muted = false; const pl = q.el.play(); if (pl && pl.catch) pl.catch(() => { RTC.blocked = true; });
+        if (IOS) return;   // on an iPhone or iPad the element plays it, at full volume within earshot
         // loudness is set through the game's own sound engine where there is one, because a phone will not let a page turn an audio element down
         try { if (audioCtx && !q.gain) { if (audioCtx.state === 'suspended') audioCtx.resume(); q.src = audioCtx.createMediaStreamSource(st); q.gain = audioCtx.createGain(); q.gain.gain.value = 0; q.src.connect(q.gain); q.gain.connect(audioCtx.destination); q.el.muted = true; } } catch (err) { q.gain = null; q.el.muted = false; } };
       pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed' || pc.connectionState === 'closed') { if (RTC.pcs.get(id) === q) hang(id); } };
@@ -6375,7 +6414,9 @@
         else if (m.ice) { const q = RTC.pcs.get(m.id); if (q) { if (q.ready) await q.pc.addIceCandidate(m.ice).catch(() => {}); else q.ice.push(m.ice); } } } catch (e) { hang(m.id); } }
     function voiceOff(quiet) { if (!RTC.on) return; RTC.on = false; Array.from(RTC.pcs.keys()).forEach(hang); RTC.again.clear(); if (RTC.stream) RTC.stream.getTracks().forEach(t => t.stop()); RTC.stream = null; if (RTC.mySrc) { try { RTC.mySrc.disconnect(); } catch (e) {} } RTC.mySrc = RTC.myAn = null; lookT = 0; chip(); if (!quiet) flash('Voice is off. Nobody can hear you, and you cannot hear them.', 4500); }
     async function voice() { if (!gameStarted || titleUp) return;
+      try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {} RTC.pcs.forEach(q => { if (q.el && q.el.paused && q.el.srcObject) { const pl = q.el.play(); if (pl && pl.catch) pl.catch(() => {}); } });
       if (RTC.on) return voiceOff();
+      if (!voiceOK() && !fam.year) { flash('Voice chat is off because this device does not know the year you were born. Open Settings (the gear), choose your birth year under the parental controls, and the Voice button will work.', 8000); return; }
       if (!voiceOK()) { flash(famTier() === 'adult' ? 'Voice chat is turned off for this elf. It can be changed in Settings, under the parental controls.' : 'Voice chat is off for this elf. Only a parent can turn it on, in Settings, under the parental controls.', 6000); return; }
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.RTCPeerConnection) { flash('Voice chat does not work in this browser, or on this page.', 5000); return; }
       if (RTC.asking) return; RTC.asking = true;
@@ -6389,10 +6430,10 @@
       if (!RTC.myAn && RTC.stream && audioCtx) { try { RTC.mySrc = audioCtx.createMediaStreamSource(RTC.stream); RTC.myAn = analyser(RTC.mySrc); } catch (e) { RTC.myAn = null; } }
       kid.setTalk(levelOf(RTC.myAn));
       peers.forEach((p, id) => { const q = RTC.pcs.get(id); if (q && q.src && !q.an) q.an = analyser(q.src); if (p.k.setTalk) p.k.setTalk(q && q.an ? levelOf(q.an) : 0); }); }
-    function voiceTick(now) { mouthTick(); if (!RTC.on) return; if (!voiceOK()) return voiceOff(true);
+    function voiceTick(now) { mouthTick(); if ((RTC.chipT = (RTC.chipT || 0) + 1) % 30 === 0) chip(); if (!RTC.on) return; if (!voiceOK()) return voiceOff(true);
       peers.forEach((p, id) => { const q = RTC.pcs.get(id); if (p.vc && !q && myId < id && state === 'on' && now > (RTC.again.get(id) || 0)) link(id, true); else if (q && !p.vc) hang(id);
         if (q && q.el) { const d = Math.hypot(p.k.g.position.x - player.position.x, p.k.g.position.z - player.position.z, p.k.g.position.y - player.position.y), v = d < 25 ? 1 : d > 150 ? 0 : Math.pow((150 - d) / 125, 2); if (q.gain) { if (Math.abs(q.gain.gain.value - v) > 0.01) q.gain.gain.value = v; } else if (Math.abs(q.el.volume - v) > 0.01) q.el.volume = v; q.vol = v; } });
-      RTC.pcs.forEach((q, id) => { if (!peers.has(id)) hang(id); }); if ((RTC.chipT = (RTC.chipT || 0) + 1) % 30 === 0) chip(); }
+      RTC.pcs.forEach((q, id) => { if (!peers.has(id)) hang(id); }); }
     const me = {}; let sayAt = 0;
     function say(kind, n) { const now = performance.now(); if (fam.phrases === false || now - sayAt < 1200) return; sayAt = now; if (kind === 'q') { if (!PHRASES[n]) return; bubble(me, player, kid.tall || 1, PHRASES[n]); } else { if (!EMOTES[n]) return; me.em = n; me.emT = now; } chink(kind === 'q' ? 990 : 780);
       if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: { id: myId, [kind]: n } }); }
@@ -6421,20 +6462,25 @@
         if (Array.isArray(m.b) && m.b.slice(0, 5).every(Number.isFinite)) { if (!p.bt) { p.bt = makeBeetle(); p.bt.traverse(o => { if (o.isMesh) o.castShadow = true; }); p.bt.position.set(m.b[0], m.b[1], m.b[2]); } p.bb = m.b; p.btSeen = p.seen; } }
       if (m.l && typeof m.l === 'object') { p.vc = m.vc === 1; p.dw = Array.isArray(m.dw) && m.dw.length === 4 && m.dw.every(Number.isFinite) ? m.dw : null; applyLookTo(p.k, m.l, typeof m.h === 'string' ? m.h : ''); const nm = String(m.n || 'Elfling').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16) || 'Elfling'; if (nm !== p.name) { if (p.tag) p.k.g.remove(p.tag); p.name = nm; p.tag = nameTag(nm); p.k.g.add(p.tag); if (!p.hello) { p.hello = true; if (!talking()) flash(`${nm} is here.`, 3500); } } if (p.tag) p.tag.position.y = (3.9 * p.k.tall + 0.6) / p.k.g.scale.x; }
     }
+    const FAR = new Map(), FAR_T = 'realtime:lr:world'; let farT = 0;
     function open(t) {
       shut(t === topic); topic = t; state = 'connecting'; why = '';
       try { ws = new WebSocket(SB_URL.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + SB_KEY + '&vsn=1.0.0'); } catch (e) { state = 'failed'; why = String(e.message || e); return; }
       const sock = ws, T = 'realtime:' + t;
       sock.onopen = () => { if (sock !== ws) return; push(T, 'phx_join', { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, postgres_changes: [], private: false }, access_token: session ? session.access_token : undefined }); };
       sock.onmessage = ev => { if (sock !== ws) return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
-        if (m.event === 'phx_reply' && m.topic === T) { if (m.payload && m.payload.status === 'ok') { state = 'on'; retry = 0; lookT = 0; push(T, 'broadcast', { type: 'broadcast', event: 'p', payload: { id: myId, hi: 1 } }); } else if (m.payload && m.payload.status === 'error') { state = 'failed'; why = JSON.stringify(m.payload.response || '').slice(0, 120); } }
-        else if (m.event === 'broadcast' && m.topic === T && m.payload && m.payload.event === 'p') hear(m.payload.payload); };
+        if (m.event === 'phx_reply' && m.topic === T) { if (m.payload && m.payload.status === 'ok') { state = 'on'; retry = 0; lookT = 0; farT = 0; push(T, 'broadcast', { type: 'broadcast', event: 'p', payload: { id: myId, hi: 1 } }); push(FAR_T, 'phx_join', { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, postgres_changes: [], private: false }, access_token: session ? session.access_token : undefined }); } else if (m.payload && m.payload.status === 'error') { state = 'failed'; why = JSON.stringify(m.payload.response || '').slice(0, 120); } }
+        else if (m.event === 'broadcast' && m.topic === T && m.payload && m.payload.event === 'p') hear(m.payload.payload);
+        else if (m.event === 'broadcast' && m.topic === FAR_T && m.payload && m.payload.event === 'g') heardFar(m.payload.payload); };
       sock.onerror = () => { if (sock === ws) why = 'the connection was refused'; };
       sock.onclose = () => { if (sock !== ws) return; ws = null; if (state !== 'off') { state = 'failed'; if (!why) why = 'the connection closed'; retry = Math.min(retry + 1, 6); retryAt = performance.now() + 2000 * retry * retry; } };
     }
     function shut(keep) { if (ws) { const s = ws, T = 'realtime:' + topic; try { push(T, 'broadcast', { type: 'broadcast', event: 'p', payload: { id: myId, bye: 1 } }); } catch (e) {} ws = null; try { s.close(); } catch (e) {} } if (!keep) dropAll(); topic = ''; state = 'off'; }
+    function heardFar(m) { if (!m || typeof m.id !== 'string' || m.id === myId || m.id.length > 40 || !Number.isFinite(m.mx) || !Number.isFinite(m.my)) return; if (m.bye) { FAR.delete(m.id); return; }
+      const nm = String(m.n || 'Elfling').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16) || 'Elfling'; FAR.set(m.id, { n: nm, mx: clamp(m.mx, 0, 1000), my: clamp(m.my, 0, 640), at: String(m.at || '').slice(0, 40), seen: performance.now() }); }
+    function farTick(dt) { if (!ws || state !== 'on') return; farT -= dt; if (farT > 0) return; farT = 3; const [mx, my] = youAreHere(); push(FAR_T, 'broadcast', { type: 'broadcast', event: 'g', payload: { id: myId, n: save.name || 'Elfling', mx: +mx.toFixed(1), my: +my.toFixed(1), at: hereWords() } }); }
     function tick(dt, t) {
-      const w = want();
+      const w = want(); farTick(dt); FAR.forEach((f, id) => { if (performance.now() - f.seen > 15000) FAR.delete(id); });
       if (w !== topic && !(state === 'failed' && w && w === topic)) { if (w) open(w); else shut(); }
       else if (w && !ws && state === 'failed' && performance.now() > retryAt) open(w);
       if (ws && state === 'on') {
@@ -6460,8 +6506,9 @@
         p.sp += (Math.min(vv, 20) - p.sp) * Math.min(1, dt * 5); const going = p.sp > 0.5 && !p.sit;
         p.ph = (p.ph || 0) + (going ? dt * (p.run ? 16 : 11) * Math.min(1.2, Math.max(0.45, p.sp / 7.5)) : 0); p.amp = (p.amp || 0) + ((going ? (p.run ? 1.0 : 0.7) : 0) - (p.amp || 0)) * Math.min(1, dt * 7); const sw = Math.sin(p.ph) * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; { const rd = p.mt === 2; if (rd) ridePose(p.k); if (rd !== !!p.rd) { p.rd = rd; if (!rd) { p.k.legs.forEach(l => { l.rotation.z = 0; l.userData.knee.rotation.z = 0; }); gripAll(p.k.hands, 0.35); } } } bubbleTick(p, g, now); pose(p, p.k, now); });
     }
+    function farList() { return Array.from(FAR.values()); }
     function send(extra) { if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: Object.assign({ id: myId }, extra) }); }
-    return { tick, hear, peers, puppet, nearElf, say, me, voice, send, voiceSync: () => { if (RTC.on && !voiceOK()) voiceOff(true); chip(); }, rtc: RTC, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
+    return { tick, hear, peers, puppet, nearElf, say, me, voice, send, farList, hearFar: heardFar, voiceSync: () => { if (RTC.on && !voiceOK()) voiceOff(true); chip(); }, rtc: RTC, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
       note: () => state === 'on' ? `Connected. ${peers.size ? peers.size + (peers.size === 1 ? ' other elf is' : ' other elves are') + ' in this place with you.' : 'Nobody else is in this place just now.'}` : state === 'connecting' ? 'Connecting…' : state === 'failed' ? `Could not connect (${why}). It will keep trying.` : 'Not connected: it joins when you are in the game.' };
   })();
   async function sbAuth(path, body) {
@@ -9078,8 +9125,8 @@
   const keys = {};
   // ---------- input settings: device, key binds, mouse ----------
   const SET_KEY = 'long-road-settings-v1';
-  const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', ride: 'KeyR', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', bag: 'KeyI', keys: 'KeyH', settings: 'KeyP', say: 'KeyT', voice: 'KeyB' };
-  const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', ride: 'Ride / get off the bicycle', view: 'Flip view', zoom: 'Zoom', map: 'World map', bag: 'Satchel', keys: 'Show / hide controls', settings: 'Settings', say: 'Say something / gesture', voice: 'Voice chat on / off' };
+  const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', ride: 'KeyR', whistle: 'KeyG', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', bag: 'KeyI', keys: 'KeyH', settings: 'KeyP', say: 'KeyT', voice: 'KeyB' };
+  const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', ride: 'Ride / get off the bicycle', whistle: 'Whistle for your dog', view: 'Flip view', zoom: 'Zoom', map: 'World map', bag: 'Satchel', keys: 'Show / hide controls', settings: 'Settings', say: 'Say something / gesture', voice: 'Voice chat on / off' };
   const settings = { input: null, binds: Object.assign({}, DEFAULT_BINDS), invert: true, sens: 100, birds: true, music: true, musicVol: 60, sounds: true, soundVol: 70, showKeys: true };
   try { const sv = JSON.parse(localStorage.getItem(SET_KEY) || '{}'); Object.assign(settings, sv); settings.binds = Object.assign({}, DEFAULT_BINDS, sv.binds || {}); } catch (e) {}
   function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) {} }
@@ -9136,6 +9183,7 @@
     if (a === 'bag' && !e.repeat) { openBag(); return; }
     if (a === 'say' && !e.repeat) { e.preventDefault(); openSay(); return; }
     if (a === 'voice' && !e.repeat) { e.preventDefault(); NET.voice(); return; }
+    if (a === 'whistle' && !e.repeat) { e.preventDefault(); dogWhistle(); return; }
     if (isMove(a)) { keys[a] = true; e.preventDefault(); }
     if (a === 'jump') { e.preventDefault(); if (!e.repeat) wantJump = true; }
     if (e.repeat) return;
@@ -9170,7 +9218,7 @@
   { const rb = $('runbtn'); const on = e => { e.preventDefault(); keys.run = true; }, off = () => { keys.run = false; }; rb.addEventListener('pointerdown', on); rb.addEventListener('pointerup', off); rb.addEventListener('pointerleave', off); rb.addEventListener('pointercancel', off); }
   tapButton($('jumpbtn'), () => { wantJump = true; });
   tapButton($('viewbtn'), toggleView);
-  tapButton($('bagbtn'), () => openBag()); tapButton($('ridebtn'), () => rideKey());
+  tapButton($('bagbtn'), () => openBag()); tapButton($('ridebtn'), () => rideKey()); tapButton($('whistlebtn'), () => dogWhistle());
   $('coins').addEventListener('click', () => openBag()); $('bagchip').addEventListener('click', () => openBag());
 
   // gamepad: left stick walks, right stick looks, A jumps (or presses the highlighted button), X picks up, Y switches view
@@ -9223,6 +9271,7 @@
       if (hit(13)) openBag();
       if (hit(15)) openSay();
       if (hit(14)) NET.voice();
+      if (hit(6)) dogWhistle();
       if (hit(3)) toggleView();
       if (hit(4)) setZoom(zoom - 1); if (hit(5)) setZoom(zoom + 1);
     }
@@ -9520,9 +9569,9 @@
   function applySettings() {
     const kb = settings.binds, L = keyLabel, kbd = t => `<kbd>${t}</kbd>`;
     const line = settings.input === 'gamepad'
-      ? `${kbd('Left stick')} walk &middot; ${kbd('Right stick')} look &middot; ${kbd('B')} run &middot; ${kbd('A')} jump &middot; ${kbd('X')} pick up / talk / sit &middot; ${kbd('D-pad up')} ride &middot; ${kbd('D-pad down')} satchel &middot; ${kbd('Y')} flip view &middot; ${kbd('LB')}${kbd('RB')} zoom &middot; ${kbd('Start')} map &middot; ${kbd('Select')} settings`
+      ? `${kbd('Left stick')} walk &middot; ${kbd('Right stick')} look &middot; ${kbd('B')} run &middot; ${kbd('A')} jump &middot; ${kbd('X')} pick up / talk / sit &middot; ${kbd('D-pad up')} ride &middot; ${kbd('LT')} whistle &middot; ${kbd('D-pad down')} satchel &middot; ${kbd('Y')} flip view &middot; ${kbd('LB')}${kbd('RB')} zoom &middot; ${kbd('Start')} map &middot; ${kbd('Select')} settings`
       : settings.input === 'touch' ? `Drag the picture to look. Slide the round pad to walk; the buttons run, jump, pick up and open the map.`
-      : `${kbd(L(kb.f))}${kbd(L(kb.l))}${kbd(L(kb.b))}${kbd(L(kb.r))} walk &middot; ${kbd('mouse')} look${settings.invert ? ' (inverted)' : ''} &middot; ${kbd(L(kb.run))} run &middot; ${kbd(L(kb.jump))} jump &middot; ${kbd(L(kb.pick))} pick up / talk / sit &middot; ${kbd(L(kb.ride))} ride &middot; ${kbd(L(kb.view))} flip view &middot; ${kbd(L(kb.zoom))} / ${kbd('wheel')} zoom &middot; ${kbd(L(kb.bag))} satchel &middot; ${kbd(L(kb.map))} map &middot; ${kbd(L(kb.settings))} settings &middot; ${kbd(L(kb.keys))} hide this<br><span id="lockhint">Click the game to grab the mouse, ${kbd('Esc')} to let go.</span>`;
+      : `${kbd(L(kb.f))}${kbd(L(kb.l))}${kbd(L(kb.b))}${kbd(L(kb.r))} walk &middot; ${kbd('mouse')} look${settings.invert ? ' (inverted)' : ''} &middot; ${kbd(L(kb.run))} run &middot; ${kbd(L(kb.jump))} jump &middot; ${kbd(L(kb.pick))} pick up / talk / sit &middot; ${kbd(L(kb.ride))} ride &middot; ${kbd(L(kb.whistle))} whistle &middot; ${kbd(L(kb.view))} flip view &middot; ${kbd(L(kb.zoom))} / ${kbd('wheel')} zoom &middot; ${kbd(L(kb.bag))} satchel &middot; ${kbd(L(kb.map))} map &middot; ${kbd(L(kb.settings))} settings &middot; ${kbd(L(kb.keys))} hide this<br><span id="lockhint">Click the game to grab the mouse, ${kbd('Esc')} to let go.</span>`;
     keysEl.innerHTML = line; keysEl.classList.toggle('gone', !settings.showKeys); keysShown = settings.showKeys ? 0 : 99;
     document.body.classList.toggle('touchmode', settings.input === 'touch');
     if (hint.current) hint(hint.current);
@@ -9674,7 +9723,7 @@
     if (!reduce) aldHead.rotation.x = Math.sin(t * 0.7) * 0.04;
     if (inV && dAld < 7.5 && !nearAld && !talking() && ['towood', 'sortshapes', 'sacks'].includes(phase)) { nearAld = true; offer(reachAldric); }
     if (dAld > 10.5) nearAld = false;
-    nightLifeTick(dt, t); tinderTick(dt, t); liftRunTick(); liftCarTick(dt); discoverTick(); NET.tick(dt, t);
+    nightLifeTick(dt, t); tinderTick(dt, t); liftRunTick(); liftCarTick(dt); discoverTick(); dogComeTick(dt); NET.tick(dt, t);
     grown.forEach(s => { const tg = s.userData.target; if (s.scale.x < tg) { s.scale.setScalar(Math.min(tg, s.scale.x + dt * 0.8)); } });
 
     // the orchards: Hollis and Pip, the mill wheel and its mice, bouncing trees
@@ -9883,7 +9932,7 @@
   jointify(maud, { hem: 1.9, hipY: 2.3, x: 0.55, r: 0.3, legC: '#5a4a3a', bootR: 0.45, bootC: '#4a2f1a' });
   [fen, mari, ald, bw, hol, pip, ori, maud].forEach(gripFix);   // the Hollow's own folk got their elbows just now, so what they hold moves onto the forearm here
   const FOLK = {
-    bw: { g: bw, hd: head, n: 'Old Bramblewick', post: BWPOS, home: 'bwhome', via: [[0, 3], [0, 14]] },
+    bw: { g: bw, hd: head, n: 'Old Bramblewick', post: BWPOS, home: 'bwhome', via: [[0, 3], [0, R + 3]] },
     mari: { g: mari, hd: mariHead, n: 'Marigold Fernsby', post: MARIPOS, home: 'marihome', via: [[-24, 48], [-19, 46], [0, 46]] },
     ald: { g: ald, hd: aldHead, n: 'Aldric Bough', post: ALDPOS, home: 'aldhome', via: [[24, 52], [4, 50]] },
     fen: { g: fen, hd: fenHead, n: 'Fen Dewberry', post: FENPOS, home: 'fenhome', via: [[-28.6, 99], [-8, 99], [0, 92]] },
@@ -10110,7 +10159,7 @@
       [x, z] = place(-12, 28, [[0, 0]], 2.4); const br = G(); M(br, cyl(1, 0.7, 0.9, 10), '#3a3a3a', 0, 1.5, 0, { metalness: 0.5, roughness: 0.6 }); [0, 2.1, 4.2].forEach(a => { const l = M(br, cyl(0.07, 0.07, 1.4, 5), '#3a3a3a', Math.cos(a) * 0.6, 0.65, Math.sin(a) * 0.6); l.rotation.set(Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3); });
       spot('fire', 'the fire in the brazier', br, x, z, 1.2); const fl = new THREE.PointLight('#ff8a3a', 0.5, 14); fl.position.set(x, 2.6, z); scene.add(fl); makeFire(scene, scene, x, 1.9, z, 0.7, fl);
       [x, z] = place(-11, 70, [[0, 0]], 2); const tr = G(); M(tr, bx(2.2, 0.2, 1.5), '#8a6438', 0, 1.6, 0); [[-0.9, -0.6], [0.9, -0.6], [-0.9, 0.6], [0.9, 0.6]].forEach(([a, b]) => M(tr, bx(0.14, 1.5, 0.14), '#5a3d22', a, 0.75, b)); for (let i = 0; i < 12; i++) M(tr, sph(0.07, 6, 5), '#3a2a1a', -0.8 + (i % 4) * 0.52, 1.75, -0.4 + Math.floor(i / 4) * 0.4); M(tr, bx(1.9, 0.06, 1.2), '#e9e2d0', 0, 1.71, 0); spot('seeds', 'the dry seeds on the tray', tr, x, z, 1.3);
-      const fix = (id, label, px, pz) => spot(id, label, new THREE.Object3D(), px, pz, 0); fix('oak', 'the Old Oak', OAK.x + 9.5, OAK.z + 2); fix('bush', 'the berry bush', BUSH.x + 5, BUSH.z + 1); fix('lamp', 'the lantern post', 7, 13.8); fix('barrel', 'the barrel by the shop', 9.4, 11); fix('nest', 'the nest in the oak', OAK.x - 9.5, OAK.z + 3); }
+      const fix = (id, label, px, pz) => spot(id, label, new THREE.Object3D(), px, pz, 0); fix('oak', 'the Old Oak', OAK.x + 9.5, OAK.z + 2); fix('bush', 'the berry bush', BUSH.x + 5, BUSH.z + 1); fix('lamp', 'the lantern post', -7.6, 15.4); fix('barrel', 'the barrel by the shop', 12, 12.6); fix('nest', 'the nest in the oak', OAK.x - 9.5, OAK.z + 3); }
     // ---------- 2: four pots ----------
     const pots = []; { const offs = row(4, 3.4), [x, z] = place(-11, 80, offs, 1.6); offs.forEach(([ox, oz], i) => { const g = G(); M(g, cyl(0.75, 0.55, 1.1, 12), '#b5673a', 0, 0.55, 0); M(g, cyl(0.68, 0.68, 0.06, 12), '#3a2a1a', 0, 1.09, 0); const pl = G(); pl.position.y = 1.1; g.add(pl);
         const crate = M(g, bx(2, 2.4, 2), '#a8814a', 0, 1.2, 0); crate.visible = false; const wet = M(g, cyl(0.69, 0.69, 0.07, 12), '#1f1610', 0, 1.1, 0); wet.visible = false;
@@ -10590,8 +10639,9 @@
         <text y="40" text-anchor="middle" font-family="Uncial Antiqua, Georgia, serif" font-size="14" fill="#3a2a18">${r.name}</text>
         <text y="55" text-anchor="middle" font-size="10" fill="#5a3d22">${built ? r.lessons.length + ' lessons' : 'not yet built'}</text></g>`;
     });
-    const [yx, yy] = youAreHere();
-    svg += `<g id="youmark" transform="translate(${yx} ${yy})" ${gameStarted ? '' : 'visibility="hidden"'}><circle class="you" r="9"/><circle r="5" fill="#d23b4e" stroke="#fff" stroke-width="2"/><text y="-14" text-anchor="middle" font-size="11" font-weight="700" fill="#d23b4e">You are here</text></g></svg>`;
+    svg += `<g id="farmarks">${farSvg()}</g>`;
+    const [yx, yy] = youAreHere(), hd = mapHeading();
+    svg += `<g id="youmark" transform="translate(${yx} ${yy})" ${gameStarted ? '' : 'visibility="hidden"'}><circle class="you" r="9"/><g id="youarrow" transform="rotate(${hd === null ? 0 : hd.toFixed(1)})" ${hd === null ? 'visibility="hidden"' : ''}><path d="M0 -17 L6 -6 L-6 -6 Z" fill="#d23b4e" stroke="#fff" stroke-width="1.5"/></g><circle r="5" fill="#d23b4e" stroke="#fff" stroke-width="2"/><text y="-22" text-anchor="middle" font-size="11" font-weight="700" fill="#d23b4e">You are here</text></g></svg>`;
     mapSvgEl.innerHTML = svg; refreshSaveButtons();
     if (!gameStarted && save.started) $('maphint').textContent = `Welcome back: ${save.coins} acorn coins and ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Continue, or pick any lesson.`;
     mapSvgEl.querySelectorAll('.mapmark').forEach(g => { g.addEventListener('click', () => selectRegion(parseInt(g.dataset.i, 10))); g.setAttribute('tabindex', '0'); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRegion(parseInt(g.dataset.i, 10)); } }); });
@@ -10657,8 +10707,16 @@
     }
   }
   function selectRegion(i) { selRegion = i; mapSvgEl.querySelectorAll('.mapmark').forEach(g => g.classList.toggle('sel', parseInt(g.dataset.i, 10) === i)); drawPanel(); }
+  // other elves on the map: a blue dot for each, with their name, wherever they are
+  function farSvg() { if (!gameStarted) return ''; return NET.farList().map(f => `<g transform="translate(${f.mx.toFixed(1)} ${f.my.toFixed(1)})"><circle r="8" fill="#2f6fd0" stroke="#fff" stroke-width="2.5"/><text y="-13" text-anchor="middle" font-size="13" font-weight="700" fill="#1f4f9a" stroke="#f6ecd0" stroke-width="3" paint-order="stroke">${f.n.replace(/[<>&]/g, '')}</text></g>`).join(''); }
+  // which way you face on the map, as degrees to turn an arrow that points up; none indoors
+  function mapHeading() { if (where === 'in') return null; if (where === 'skyhaven') return bodyYaw * 180 / Math.PI; const f = frameOf(where), w = bodyYaw + (f ? f.yaw : 0); return (Math.PI - w) * 180 / Math.PI; }
+  function hereWords() { const w = regionOf(); return w === 'wild' ? (CITY.here ? 'Hearthmoor' : 'the Long Road') : REGION_LABEL[w] || ''; }
+  let farDrawT = 0;
   function updateMapLive() {
     if (!mapOpen || !gameStarted) return;
+    { const ar = document.getElementById('youarrow'), hd = mapHeading(); if (ar) { if (hd === null) ar.setAttribute('visibility', 'hidden'); else { ar.removeAttribute('visibility'); ar.setAttribute('transform', `rotate(${hd.toFixed(1)})`); } } }
+    if (performance.now() - farDrawT > 1500) { farDrawT = performance.now(); const fm = document.getElementById('farmarks'); if (fm) fm.innerHTML = farSvg(); }
     const ym = document.getElementById('youmark'); if (ym) { const [x, y] = youAreHere(); ym.setAttribute('transform', `translate(${x} ${y})`); }
     const me = document.getElementById('inset-me'); if (me && mapPanel._ins) { me.setAttribute('cx', mapPanel._ins.X(player.position.x)); me.setAttribute('cy', mapPanel._ins.Z(player.position.z)); }
   }

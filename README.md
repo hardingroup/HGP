@@ -163,6 +163,48 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## Other elves on the map, which way you face, voice on iPhone and iPad, and Bracken's tail (build 118)
+
+**Other elves on the map**
+- Every other elf who is playing shows on the big map as a blue dot with their name, wherever they are in the land, so you can find a friend or your family and walk to them.
+- Each game tells the others where it is on the map every 3 seconds. A dot goes away about 15 seconds after that elf stops playing.
+- If "See other elves" is off in Settings, you are not on anyone's map and you see no dots.
+
+**Which way you face**
+- Your red "You are here" mark now has a small arrow that points the way your elf is facing. It turns as you turn, in every town and out on the road. Indoors the arrow hides.
+
+**Voice on iPhone and iPad**
+- The Voice button now always shows next to Say once you are playing. Before, it could stay hidden on a phone or tablet.
+- If voice cannot work yet, the button says "Voice (off)". Tap it and it tells you why. Most often the device does not know your birth year: open Settings, pick your birth year under parental controls, and voice works.
+- Sound from other elves now plays through the iPhone and iPad speaker properly. Apple devices do not play this kind of sound through the game's normal sound path, so they now use a plain audio player for each elf. If the phone blocks the sound, tapping Voice again starts it.
+- The birth-year box in Settings now shows on a device that has no birth year and no parent passcode yet.
+
+**Bracken's tail**
+- The dog's tail now joins the rump, with a rounded root, and wags side to side from that point instead of swinging around its middle.
+
+## A bigger Village Stores, and a whistle for Bracken (build 117)
+
+**The Village Stores**
+- Old Bramblewick's stump is much bigger: 30 across and 21 high instead of 22 and 13. The doorway is tall enough for a grown elf to walk through, under a wooden arch.
+- There are two rings of round windows, a broader mossy roof with its curl, and a taller chimney.
+- The lantern post, barrels, crate and bench now stand out in front, clear of the bigger walls. The yard and the start of the street move forward with them.
+- Inside, the old counter, shelves, workbench and stove are all still there, with more around them:
+  - two rows of high shelves full of books and boxes up the back wall
+  - a reading corner with two armchairs you can sit in, a little table and a rug
+  - a long display table of the week's new toys
+  - barrels of nuts by the right-hand window
+  - more lamps to light the bigger room
+- Bramblewick walks out through the new doorway when he goes home at night.
+
+**A whistle for Bracken**
+- If Bracken is your dog, whistle and he comes running to you from wherever he is, his stall in the Hollow included. If he is far off, or in another place, he comes running up the way you came.
+- He stops beside you, wagging, ready to ride.
+- To whistle:
+  - **Keyboard:** G (it can be changed in Settings)
+  - **Touch:** the Whistle button, which appears once he is yours
+  - **Controller:** the left trigger
+- You can't whistle from indoors, on the sky-lift, or on the glider. If Bracken belongs to someone else, or to nobody yet, the whistle tells you so.
+
 ## One gondola for everyone, riding the ram carriage, Tinderfold on the map (build 116)
 
 **The gondola is shared**
