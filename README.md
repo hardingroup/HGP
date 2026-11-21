@@ -163,6 +163,166 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## A book in your hands: reach for it, hold it open, turn the pages (build 126)
+
+**Reaching for a book**
+- When you choose to read, borrow, buy or take a book from a shelf, the shelf picture steps aside, your elf turns to that exact place on the shelf, the arm goes up to it, and the book comes away into the hand. The place on the shelf is empty from that moment.
+- A book you are only reading at the shelf leaves its gap while it is in your hands and goes back when you close it.
+- The same happens with a book lying on a table.
+
+**Reading**
+- You now hold the book open in both hands and look down at it as your own eyes would. The words are printed on the pages themselves: the title page first, then two pages to a spread.
+- "Turn the page" lifts the right-hand page and swings it over to the left, with the next pages under it. "Back a page" turns it back the other way.
+- On a tall narrow screen, such as a phone held upright, you look at one page at a time so the print stays large, and the view slides across before a page turns.
+- While you read you see the book and your two hands on it, and nothing else of yourself.
+- The buttons under the book work as before on every way of playing. The words of the open pages are also there, unseen, for a screen reader.
+- **Plain text** switches to the old parchment panel, for anyone who finds that easier to read. "Hold the book" on that panel switches back. The choice is remembered.
+- This is how every book is read now: from a shelf, from a table, from your satchel, the keeper's log, and the recipes at the forge.
+
+**For VR later**
+- The book is a real object with real pages and a hinge, held between the two hands, so in a headset it can be gripped and its pages turned by hand. That step is not built: the game has no VR mode yet.
+
+**Not yet**
+- Putting a book back on a shelf does not have a reach; the book drops into its place as before.
+- Checkers: looking down at the table while you play is still to do.
+
+## The keeper's log is kept, and the forge's recipe book can be read (build 125)
+
+**The Log of the Lanternreach Light**
+- The log book open on the table in the Keeper's Cottage can be read, and it is being kept. Jory Wick, who keeps the light, has written an entry for each of the last seven real days, and the last page is always today's. Come back tomorrow and there is a new one.
+- Each entry has the day and date, the wind and the sea, the Moon, the tides, the ships that passed, the oil burned, and a line about the keeper's day.
+- **The Moon and the tides are real.** The Moon's phase is worked out from the date, and the tides follow it: spring tides at new and full moon, neap tides at the quarters.
+- The oil count goes up by 2 pints a day through the week, as the sign on the wall says. The wind, the ships and the keeper's remarks are made up, but a given day always reads the same for everybody.
+
+**Recipes of Ore and Flux**
+- The book on the lectern in Emberdeep stands beside the balance scale in the forge and is Master Durna Ironvein's recipe book, so that is what it now is: six pages on recipes written in parts, scaling a recipe up, and finding a missing amount, in the forge's own words about every recipe being a balance.
+- It stays on its lectern. It can be read there but not carried off.
+
+**Also**
+- The book on the desk in the Observatory can be read: A First Book of the Night Sky, by Astra Vell.
+
+## A frame-rate counter, graphics settings that change what is drawn, and the last of the books (build 124)
+
+**The frame-rate counter**
+- Settings, under Graphics, has a new tick box: "Show the frame rate". It puts a small line in the bottom-left corner with three numbers: frames a second, draws, and triangles.
+- **Frames a second** is how smooth the game is. About 60 is smooth; under 30 feels choppy.
+- **Draws** is how many separate things the device was asked to draw for that picture. This is the number that makes a phone or tablet work hard and get warm.
+- It works on a phone and a tablet as well as a computer.
+
+**What each quality setting does now**
+- **Low**
+  - at most 30 pictures a second, which is the largest single saving of heat and battery
+  - no shadows, and one screen pixel per game pixel
+  - a third of the grass
+  - hands are round mittens, with no fingers
+  - animals lose the small shaping on their legs, birds overhead lose their legs, books lose the band on the spine
+  - things too small to matter at their distance are not drawn at all
+- **Medium**
+  - shadows, most of the grass
+  - fingers only when close
+  - only the tiniest far-off things are left out
+- **High**: everything, with the sharpest shadows.
+- Measured standing on the green in the Hollow: High asked for about 5,000 draws, Medium about 3,700, Low about 1,000. Before this build Low was about 1,400 and Medium about 5,000.
+- The frame rate itself could not be measured here, because the test machine has no graphics chip. The counter is there so it can be read on the real devices.
+
+**The last of the books**
+- The four books on the Library's reading tables and the three on the librarian's desk are real books now. Walk up and choose "Pick up": read it there, borrow it for a coin, or buy it. When the place is empty you can put one of your own books down there.
+- The high shelves in the Village Stores hold real books, two shelves at each of five places. Reading is free and a book costs 8 coins. There is no borrowing from a shop.
+- Old Bramblewick's cottage was already done in build 123: its books are the bookcase in his study.
+- **Still only to look at:** the book on the lectern in Emberdeep and the keeper's log at Lanternreach. Each needs something written in it first.
+
+## Real books on real shelves: read, borrow, buy and put back (build 123)
+
+**Every book is its own book**
+- A bookcase is now rows of places, and every book stands in one place as its own object with its own cover colour and band. Take a book down and it leaves a gap. Put a book into an empty place and it drops in and stays there, in that place, on every later visit.
+- Walk up to a bookcase and choose "Look along…". The shelf you are looking at is shown as a row of spines in the same order as on the wall. Pick a book or an empty place. It works by tap, mouse, keyboard (arrows along the shelf, up and down for the shelf above or below, Enter, Esc) and gamepad (stick or D-pad, A, B).
+- The tall library walls are split into three parts each, and you can look along any of the seven shelves from the floor, which is what the ladder is for.
+
+**Reading, borrowing and buying**
+- **Reading at the shelf is always free.**
+- **The Library Tower in Hearthmoor:** borrow a book for 1 acorn coin for three real days, or buy it for 8 and keep it. Sage Inkwell explains this when you speak to her.
+- **In somebody's house:** you may read any book there. To take one away, ask to borrow it (free, three days) or ask to buy it (6 coins). Whoever lives there has to be at home to say yes; if they are out the game says so.
+- **Your own bookshelf**, in your room at a lodging house, starts empty. Books you own can stand on it, in whatever order you put them.
+- A satchel holds six books. They are listed in the satchel with how long each is due back in, and a Read button, so you can read a carried book anywhere.
+- **Bringing one back:** put a borrowed book into any empty place in the building it came from. If it is not back on its day it is taken home to its shelf for you, with no fine.
+- A book you own can go on any shelf anywhere. On somebody else's shelf, that is giving it to them.
+
+**The books**
+- Twenty-nine titles. The twelve that were already written, six new ones (Shapes a Builder Uses, A First Book of the Night Sky, Acorn Coins, Telling the Time, Halves and Quarters, Games for a Round Table), and a times-table book for each number from 2 to 12 with a help for learning it.
+- About 1,460 books stand on 1,860 places in 24 bookcases: the Library (three walls and four low shelves), the bookcase in the hall of the houses that have one, the bookcase in the study of the houses that have one, and your own.
+- With 29 titles and that many places, the Library holds many copies of each. More titles are the thing to add next.
+
+**How it is stored**
+- A case's books are drawn as one batch for speed, but each is separate and can be taken or placed on its own.
+- Only what you have changed is saved: which places you emptied or filled, and the books you carry. It is saved with your game and goes with an account.
+- Shelves are per player for now. If you take a book, another player still sees it on their shelf.
+
+**Not yet**
+- The four books lying on the Library tables can be read but not carried.
+- The stacks of books in the Village Stores and in Old Bramblewick's cottage are still only to look at, and so are the three on the librarian's desk.
+- Checkers: looking down at the table while you play, and pieces that glide on the screen board, are still to do.
+
+**Also fixed**
+- On the lowest graphics setting, the code that thins out grass was thinning the books too. Books are left whole.
+- Opening a game board or a bookshelf now gives you the mouse pointer back if the game had hold of it.
+
+## Five more table games: chess, pairs, pig, stones and the sliding puzzle (build 122)
+
+The round table in each family hall now has a game you can play, the same way as checkers: walk up and choose it, or sit on one of the two side stools. A board opens on the screen, and the real pieces on the table move as the game goes. Tap, mouse, keyboard (arrows or walking keys, then Enter or Space; N for a new game; Esc to stand up) and gamepad (stick or D-pad, A, Y, B) all work.
+
+A second elf who sits on the other stool takes the other side, and everyone in the room sees the pieces move. While the other stool is empty, the board plays the other side. Anyone else can open the board to watch.
+
+- **Chess** (Old Bramblewick's and Astra Vell's). The full rules: check, checkmate and stalemate, castling, taking in passing, and a pawn that reaches the far row becomes a queen. Pieces you may move have a gold edge, and the squares a picked piece can go to have a gold spot. The board's own play looks one move and one reply ahead, so it takes what is free and is easy to beat.
+- **Pairs**, the card game (the Fernsbys', Rowan Reef's, Clementine Verge's, Pell Reedmace's). Sixteen cards face down, eight pairs of pictures. Turn over two; a match is yours and you go again. Most pairs wins.
+- **Pig**, the dice game (the Dewberrys', Jory Wick's, Corwin Sedge's). Roll to add to the pot, hold to bank it; a one loses the pot and your turn. First to 50. It is all adding up, and deciding when to stop.
+- **Stones** (Odette Spindle's, Wren Ashcombe's). The old sowing game, also called mancala: six pits each with four stones, and a store. Pick a pit and its stones are dropped one at a time round the board. End in your store and you go again; end in an empty pit of your own and you take the stones across from it. Most stones in the store wins.
+- **The sliding puzzle** (the Boughs', Tamsin Gearwright's). Eight numbered tiles and a gap; slide them into order. There are no sides: anyone sitting at the table can move a tile, so two can do it together. The tiles on the table show their numbers as dots.
+
+**Not yet**
+- Knucklebones, the map table and the tea table are still only to look at, and so is the long-running chess game at Fen and Pip's.
+- Chess has no draw by repeated moves and no choice of piece when a pawn is crowned.
+- The pieces on the table jump to their new squares; they do not slide as the checkers do.
+
+## Every clock tells the time, and a telescope you can look through (build 121)
+
+**Clocks**
+- Every clock face in the land now shows the real time, with an hour hand and a minute hand that move. That is the tall clocks in the house halls, the wall of clocks at Gearwright House, the six clocks in the Clockworks, the great clocks over the doors on Cliff Row, and the Cogsworth town clock, which already did.
+- They all show the game's own time, which is Central time for every player, the same clock the sun and the shops go by.
+- A clock in a house built as the mirror image of another has its hands turn the other way inside, so it still reads right.
+- Since build 120, some halls have a bookcase or a dresser where the clock used to stand, so not every hall has one.
+
+**The observatory telescope**
+- In the Observatory at Lanternreach, walk up to the eyepiece and choose "Look through the telescope". It works by tap, mouse, keyboard and gamepad, like any conversation.
+- There are ten things to look at, each with a picture and a few sentences about it: the Moon, Jupiter and its four big moons, Saturn and its rings, Mars, Venus, the Seven Sisters, the Great Nebula in Orion, the Andromeda Galaxy, the double star Albireo, and the Pole Star with the sky turning round it.
+- **The Moon is real.** It shows tonight's true phase, worked out from the date, and the words name it (waxing crescent, full moon and so on).
+- Jupiter's moons go round at their true speeds, so they are in different places each night, but where they start is made up. The planets are always on show, whatever is really up tonight.
+- The first time you have looked at all ten, you get 10 acorn coins.
+
+## Every hall furnished its own way, birds with legs, and a map that fills in as you walk (build 120)
+
+**The hall in each house**
+- The big living room used to be the same in every family home. Now six things change from house to house:
+  - the lights: a wheel of candles, or three hanging lanterns
+  - the seats by the fire: a settle, two armchairs with a little table, or two benches facing across a low table
+  - the tall piece by the door: a clock, a bookcase, or a dresser with the best plates
+  - beside the chimney: two pictures, three small portraits, or a shelf of jugs
+  - on the long wall: cloth hangings, a shelf of pot plants, or a patchwork quilt
+  - the far corner: a fern, a basket of logs, or a tall vase of flowers
+- Each house's choices come from its name, so a house looks the same every visit and to every player. All thirty homes come out different from each other.
+- Every new seat can be sat on, and all the new furniture is solid.
+
+**Birds overhead**
+- The birds that circle over the towns now have a head, a beak, a tail and two legs tucked back under them as they fly.
+
+**The map fills in as you walk**
+- The road, the River Fern and Cairn Gorge are now drawn only where you have been. The map marks the land around you as seen while you walk, ride or fly, and the lines grow as you go.
+- A game saved before this build starts with the land round each town it has found, and the road between any two found towns that are next to each other.
+- What you have seen is saved with your game, and on an account it goes with you to other devices.
+- The shape of the land (hills, valleys, the sea) still shows across the whole map, so a river valley can be made out faintly before you have walked it.
+
+**A fix found on the way**
+- The list of towns you have found and the list of things you have picked up were saved under the same name, and each could wipe the other. They are kept apart now. Before, a thing you picked up could be back in its place too soon.
+
 ## Checkers for two, Bracken goes round things, and legs for the small animals (build 119)
 
 **Checkers you can play**
