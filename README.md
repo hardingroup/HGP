@@ -163,6 +163,46 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## The sky-lift is a real car, fast travel, spinning your elf, talking mouths (build 115)
+
+**The sky-lift**
+- **It rides the cable.** The cable now hangs between a steel tower beside the pier end and a gantry on Skyhaven's dock, sagging a little in the middle. A haul rope runs above it. The gondola hangs from a wheel that rolls along the cable, so it is always on the line, and the wheel turns as it goes.
+- **One car, and you walk on.** There's no fade any more:
+  - **Car at your end:** walk off the end of the pier, or the dock, through the gap in its rail. A moment after you're standing inside, it sets off.
+  - **On the way:** you can walk about in it while it travels.
+  - **At the other end:** it waits, and you walk out.
+  - **Car at the other end:** walking to the edge rings the bell, and you watch the car come to you.
+  - **Workers' runs:** the people who work in Skyhaven use the same car on their morning and evening runs.
+- **Bigger and taller.** Wide enough for several to stand in, and tall enough for a grown elf, with a lamp under its roof.
+
+**Fast travel to places you have found**
+- The map now shows only the towns you have been to. A new player sees only Thistledown Hollow.
+- The first time you reach a town, it appears on your map. From then on, the map has a **Travel to …** button for it. Hearthmoor works the same way.
+- Everywhere new, you still walk to first.
+- Existing players start with the Hollow, plus every town where they've finished a lesson, plus wherever they are now.
+
+**Turning your elf in the creator**
+- Your elf now stands still, facing you. Turn it yourself:
+  - drag it with the mouse, or swipe it with a finger
+  - hold the arrow keys or Q and E
+  - push the right stick
+- A flick keeps it turning for a moment after you let go.
+- A VR hand will be able to turn it the same way (pinch and twist) once VR is in.
+
+**Talking mouths**
+- With voice chat on, your elf's mouth opens and closes with how loud you are speaking, and so does everyone else's whose voice you can hear. It follows loudness, not the actual words, as in most online games. When nobody is talking, each face goes back to its own expression.
+
+## The satchel, held things, and Cliff Row (build 114)
+
+- **The satchel is a real shoulder bag.** It used to sit inside your elf's body, with only two straps sticking out of the shoulders. Now it rides on the right hip, a little behind, where a swinging arm clears it. Its strap runs up across the chest, over the left shoulder and down the back. The bag has a flap, a brass buckle and rings for the strap.
+- **The satchel button and picture show a satchel**, a flat shoulder bag with a flap and a long strap, instead of a backpack. The traveller's pack is still a backpack, because it is one.
+- **Things people hold stay in their hands.** Since elbows went in, anything held (Durna's hammer, Marigold's trowel, Captain Tideknot's rope and the rest) was fixed to the upper arm while the forearm bent away from it. Each held thing now rides on the forearm with the hand, and the hand closes round it.
+- **Cliff Row in Cogsworth: four different fronts.**
+  - Gearwright's keeps its timber grid and turning gear.
+  - Spindle's has a long timber balcony along the upper floor, with tall doors opening onto it and pots of flowers on the rail.
+  - Ratchet's is dressed stone with a round-arched door and keystone, arched windows, brass pipes and ivy.
+  - Verge's has a bay window, a brass-ringed porthole, and a great clock face over the door.
+
 ## Every house its own (build 113)
 
 The twenty family houses in Thistledown Hollow, the Orchards, Fernwater, Cairnhold and Lanternreach used to be one house in different paint. Now no two in a town are alike, outside or in.
@@ -208,7 +248,6 @@ The twenty family houses in Thistledown Hollow, the Orchards, Fernwater, Cairnho
   - bread rising at Maudie's
 
 **Not yet:**
-- The four houses built into the cliff at Cogsworth still share one rock front.
 - Each household has its own second room, game and things about the hall, but the hall's built-in pieces are the same in every house: the candle wheel, settle, clock and wall hangings.
 
 ## Small animals get joints too (build 112)
