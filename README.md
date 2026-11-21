@@ -163,6 +163,54 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## Every house its own (build 113)
+
+The twenty family houses in Thistledown Hollow, the Orchards, Fernwater, Cairnhold and Lanternreach used to be one house in different paint. Now no two in a town are alike, outside or in.
+
+**Outside, six kinds of house, each its own size:**
+- **Timber-framed:** the old two-storey house with dark beams (the Boughs').
+- **Stone cottage:** stone walls, a steep roof with two dormer windows, and a chimney at each end.
+- **Thatched cottage:** long and low, under a deep straw roof with a rounded ridge, and the chimney up through the middle.
+- **Barn-roofed:** clapboard walls under a gambrel roof (two slopes each side), with a dormer.
+- **Hip-roofed:** a square two-storey house with stone corners and a roof sloping on all four sides.
+- **Saltbox:** two storeys at the front and one at the back, under one long back slope.
+- **Towered:** the timber house with a round tower at the back corner and a pointed roof on it (Captain Tideknot's and Astra Vell's).
+
+**Inside:**
+- **Half the houses are laid out the other way round**, so the kitchen, stair and bedrooms sit on the other side of the hall. The people who live there sit by their own fire and sleep in their own beds either way.
+- **A child's room only where a child lives** (Pip Willowby's house and the Ashcombes', where the other Pip stays). Everywhere else the second room upstairs is what that household would use it for:
+  - a study with a bookcase, desk, globe and armchair
+  - a sewing room with bolts of cloth, a spinning wheel and baskets of yarn
+  - a guest room
+  - a music room with a harp, a drum, a lute and a music stand
+  - a storeroom of jars, sacks, barrels and crates
+  - a painter's room with an easel, canvases and a workbench
+- **A different game on every hall table:** draughts, chess, cards, dice, a jigsaw, a stones-and-pits board, knucklebones, a sea map with markers, a tea set, or just a vase of flowers.
+- **What each house's description promises is really there now:**
+  - Astra's star chart and sextant
+  - rope on the pegs at Reef Cottage
+  - the tide table with today circled at Ebb Cottage
+  - Jory Wick's lamp glasses
+  - Tamsin's walls of clocks, none agreeing
+  - the wheel over Odette's hearth
+  - Barnaby's labelled levers
+  - the town clock's spare hands at Clementine's
+  - Wren's plumb line
+  - Una's fleeces and crook
+  - Garth's mallet and stone dust
+  - Tobias's map rack and chain
+  - the half-mended net at Corwin's
+  - Pell's river marks by the door
+  - flour sacks at the mill house
+  - Pip's crates
+  - honey jars at the Honeywells'
+  - pear baskets at the Applegarths'
+  - bread rising at Maudie's
+
+**Not yet:**
+- The four houses built into the cliff at Cogsworth still share one rock front.
+- Each household has its own second room, game and things about the hall, but the hall's built-in pieces are the same in every house: the candle wheel, settle, clock and wall hangings.
+
 ## Small animals get joints too (build 112)
 
 - **Rabbits** have haunches, long hind feet and front paws. Each hop now runs the way a real one does: the hind feet push off together and straighten out behind, the front paws reach forward in the air, the front paws land first, and the hind feet swing past them to land in front, ready to push again. A rabbit sits with its hind feet folded flat under it, and a frightened rabbit hops higher.

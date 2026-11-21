@@ -369,7 +369,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 112 · 20 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 113 · 20 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -566,12 +566,12 @@
   const LANE = { z: 34, x1: 262, w: 10, r: 14 };
   const INN = { id: 'inn', inn: true, x: 44, z: -35, hw: 26, hd: 16, face: 0, sign: 'The Sleepy Beetle', wall: '#ead9b8', trim: '#4a3320', roof: '#7a4a2e', door: '#2f5a4a', flower: '#f4a340' };
   const HOMES = [
-    { id: 'bwhome', no: 1, x: 116, face: 0, yard: 'hive', sign: 'Bramblewick', wall: '#e9dcc3', trim: '#5a3d22', roof: '#4f7a33', door: '#5b3a1e', flower: '#f4d35e' },
-    { id: 'marihome', no: 2, x: 116, face: Math.PI, yard: 'frame', sign: 'Fernsby', wall: '#e6dfc6', trim: '#3e6b52', roof: '#6f9a3a', door: '#3e6b52', flower: '#e68fb0' },
-    { id: 'aldhome', no: 3, x: 210, face: 0, yard: 'wood', sign: 'Bough', wall: '#d8c9a4', trim: '#4a3420', roof: '#8a6a3c', door: '#6b4a2b', flower: '#9fb7f0' },
-    { id: 'fenhome', no: 4, x: 210, face: Math.PI, yard: 'berries', sign: 'Dewberry', wall: '#f0e2d8', trim: '#8a3a4a', roof: '#a8563a', door: '#8a3a4a', flower: '#d23b4e' }
+    { id: 'bwhome', style: 'thatch', no: 1, x: 116, face: 0, yard: 'hive', sign: 'Bramblewick', wall: '#e9dcc3', trim: '#5a3d22', roof: '#4f7a33', door: '#5b3a1e', flower: '#f4d35e' },
+    { id: 'marihome', style: 'stone', no: 2, x: 116, face: Math.PI, yard: 'frame', sign: 'Fernsby', wall: '#e6dfc6', trim: '#3e6b52', roof: '#6f9a3a', door: '#3e6b52', flower: '#e68fb0' },
+    { id: 'aldhome', style: 'timber', no: 3, x: 210, face: 0, yard: 'wood', sign: 'Bough', wall: '#d8c9a4', trim: '#4a3420', roof: '#8a6a3c', door: '#6b4a2b', flower: '#9fb7f0' },
+    { id: 'fenhome', style: 'hip', no: 4, x: 210, face: Math.PI, yard: 'berries', sign: 'Dewberry', wall: '#f0e2d8', trim: '#8a3a4a', roof: '#a8563a', door: '#8a3a4a', flower: '#d23b4e' }
   ];
-  HOMES.forEach(h => { h.hw = 26; h.hd = 16; h.sg = h.face ? -1 : 1; h.z = LANE.z - h.sg * 38; });
+  HOMES.forEach(h => { houseSize(h); h.sg = h.face ? -1 : 1; h.z = LANE.z - h.sg * 38; });
   const nearHome = (x, z, pad = 0) => [...HOMES, INN].some(h => Math.abs(x - h.x) < h.hw + 4 + pad && Math.abs(z - h.z) < h.hd + 7 + pad);
   const inLot = (x, z, pad = 0) => HOMES.some(h => Math.abs(x - h.x) < 41 + pad && Math.abs(z - (h.z - h.sg * 6)) < 37 + pad);   // the whole plot: house, front garden and back
   const YARD = new THREE.Vector3(0, 0, 17);
@@ -1375,6 +1375,77 @@
     put(new THREE.CylinderGeometry(0.06, 0.08, hgt, 5), gStem, x, y + hgt / 2, z); put(new THREE.SphereGeometry(0.4, 8, 6), petalM, x, y + hgt, z, 1, 0.5, 1);
     put(new THREE.SphereGeometry(0.16, 6, 5), gCtr, x, y + hgt + 0.14, z); put(new THREE.SphereGeometry(0.3, 6, 5), gLeaf, x + 0.28, y + hgt * 0.4, z, 1, 0.22, 0.5);
   }
+  // ---- the shapes a house can take. Hf and Hb are the heights of the front and back walls; the roof is a line of points across the house from the front eave to the back one ----
+  const HSTYLE = {
+    timber: null,   // the old two-storey timber-framed house, drawn by its own code below
+    stone: { hw: 23, hd: 15, Hf: 12.5, Hb: 12.5, RH: 15, roof: 'gable', finish: 'stone', dormers: 2, chim: 'both' },
+    thatch: { hw: 27, hd: 14, Hf: 12, Hb: 12, RH: 13, roof: 'round', finish: 'plaster', thatch: true, chim: 'mid' },
+    gambrel: { hw: 24, hd: 16, Hf: 12.5, Hb: 12.5, RH: 16, roof: 'gambrel', finish: 'board', chim: 'end', dormers: 1 },
+    hip: { hw: 22, hd: 16, Hf: 18.5, Hb: 18.5, RH: 9, roof: 'hip', finish: 'quoin', chim: 'mid' },
+    salt: { hw: 25, hd: 16, Hf: 19, Hb: 10.5, RH: 9, roof: 'salt', finish: 'board', chim: 'mid' },
+    tower: { hw: 24, hd: 15, Hf: 18, Hb: 18, RH: 9, roof: 'gable', finish: 'timber', tower: true, chim: 'end' } };
+  function houseSize(h) { const z = { stone: [23, 15], thatch: [27, 14], gambrel: [24, 16], hip: [22, 16], salt: [25, 16], tower: [24, 15] }[h.style] || [26, 16]; h.hw = z[0]; h.hd = z[1]; }   // called before the styles below exist, so it keeps its own copy of the sizes
+  function roofLine(st, D) { const { Hf, Hb, RH } = st, F = D / 2;
+    if (st.roof === 'salt') return [[F, Hf], [F - D * 0.3, Hf + RH], [-F, Hb]];
+    if (st.roof === 'gambrel') return [[F, Hf], [F * 0.58, Hf + RH * 0.72], [0, Hf + RH], [-F * 0.58, Hf + RH * 0.72], [-F, Hb]];
+    if (st.roof === 'round') { const out = []; for (let i = 0; i <= 12; i++) { const t = 1 - i / 6; out.push([F * t, Hf + RH * (1 - Math.pow(Math.abs(t), 1.8))]); } return out; }   // thatch: steep sides and a rounded ridge
+    return [[F, Hf], [0, Hf + RH], [-F, Hb]]; }
+  // the body, roof, windows and chimneys of a house in one of the styles above. The porch, door and garden are drawn by buildHouse as for any house
+  function houseBody(h, st, c) { const { g, box, put, W, D, wallM, trimM, shutM, flM, paneM } = c, capM = c.roofM, roofM = st.thatch ? mat('#b08a48', { roughness: 1 }) : c.roofM, F = D / 2, OV = st.thatch ? 2.6 : 1.8;
+    const stoneM = gStone, Hlow = Math.min(st.Hf, st.Hb);
+    box(W + 0.9, 1.3, D + 0.9, 0, 0.65, 0, gStone);
+    // the walls and gables are one solid, cut to the shape of the roof
+    let line = null, ridgeY = 0, ridgeZ = 0;
+    if (st.roof === 'hip') box(W, st.Hf, D, 0, st.Hf / 2, 0, st.finish === 'stone' ? stoneM : wallM);
+    else { line = roofLine(st, D); line.forEach(([z, y]) => { if (y > ridgeY) { ridgeY = y; ridgeZ = z; } });
+      const sh = new THREE.Shape(); sh.moveTo(-F, 0); line.forEach(([z, y]) => sh.lineTo(-z, y)); sh.lineTo(F, 0); sh.lineTo(-F, 0);
+      const geo = new THREE.ExtrudeGeometry(sh, { depth: W, bevelEnabled: false }); geo.translate(0, 0, -W / 2); const body = put(geo, st.finish === 'stone' ? stoneM : wallM, 0, 0, 0); body.rotation.y = Math.PI / 2; }
+    // the roof: a plank along each stretch of the line, running out past the walls at the eaves and the gable ends
+    const tk = st.thatch ? 1.7 : 0.8;
+    if (line) { for (let i = 0; i < line.length - 1; i++) { let [z0, y0] = line[i], [z1, y1] = line[i + 1]; const dz = z1 - z0, dy = y1 - y0, L = Math.hypot(dz, dy), uz = dz / L, uy = dy / L;
+        if (i === 0) { z0 -= uz * OV; y0 -= uy * OV; } if (i === line.length - 2) { z1 += uz * OV; y1 += uy * OV; }
+        const len = Math.hypot(z1 - z0, y1 - y0) + (st.thatch ? 0.9 : 0.25), nz = dy / L, ny = -dz / L, r = box(W + OV * 2, tk, len, 0, (y0 + y1) / 2 + ny * tk / 2, (z0 + z1) / 2 + nz * tk / 2, roofM); r.rotation.x = Math.atan2(-dy, dz) + Math.PI; }
+      if (!st.thatch) box(W + OV * 2 + 0.4, 0.7, 1.3, 0, ridgeY + 0.5, ridgeZ, trimM); else { const cap = put(new THREE.CylinderGeometry(1.2, 1.2, W + OV * 2 + 0.6, 10), capM, 0, ridgeY + 1.3, ridgeZ); cap.rotation.z = Math.PI / 2; }
+      // bargeboards up each gable end
+      if (!st.thatch) [-1, 1].forEach(sx => { for (let i = 0; i < line.length - 1; i++) { const [z0, y0] = line[i], [z1, y1] = line[i + 1], dz = z1 - z0, dy = y1 - y0; const bb = box(0.35, 0.7, Math.hypot(dz, dy) + 0.4, sx * (W / 2 + OV + 0.1), (y0 + y1) / 2 + 0.35, (z0 + z1) / 2, trimM); bb.rotation.x = Math.atan2(-dy, dz) + Math.PI; } });
+      // a round window high in each gable, if there is room for one
+      if (ridgeY - Hlow > 7) [-1, 1].forEach(sx => { const y = Hlow + (ridgeY - Hlow) * 0.42, rw = put(new THREE.CircleGeometry(1.4, 16), paneM, sx * (W / 2 + 0.03), y, ridgeZ); rw.rotation.y = sx * Math.PI / 2; const rr = put(new THREE.TorusGeometry(1.4, 0.2, 6, 18), trimM, sx * (W / 2 + 0.05), y, ridgeZ); rr.rotation.y = Math.PI / 2; }); }
+    else { ridgeY = st.Hf + st.RH; const rg = new THREE.Group(); rg.position.set(0, st.Hf + st.RH / 2, 0); rg.scale.z = (D + OV * 2) / (W + OV * 2); g.add(rg); const cone = new THREE.Mesh(new THREE.ConeGeometry((W / 2 + OV) * Math.SQRT2, st.RH, 4), roofM); cone.rotation.y = Math.PI / 4; rg.add(cone); box(W + 0.4, 0.6, D + 0.4, 0, st.Hf, 0, trimM); }
+    // the finish on the walls
+    const fH = [st.Hf, st.Hb];
+    if (st.finish === 'board') [1, -1].forEach((s, q) => { for (let y = 2.2; y < fH[q] - 0.4; y += 1.25) box(W, 0.16, 0.14, 0, y, s * (F + 0.06), trimM); });
+    if (st.finish === 'board') [-1, 1].forEach(sx => { for (let y = 2.2; y < Hlow - 0.4; y += 1.25) box(0.14, 0.16, D, sx * (W / 2 + 0.06), y, 0, trimM); });
+    if (st.finish === 'quoin' || st.finish === 'stone') { const qm = st.finish === 'stone' ? mat('#b8b0a0', { roughness: 1 }) : stoneM; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => { const top = sz > 0 ? st.Hf : st.Hb; for (let y = 1.3, q = 0; y < top - 0.8; y += 1.5, q++) box(q % 2 ? 1.6 : 2.6, 1.3, q % 2 ? 2.6 : 1.6, sx * (W / 2 - (q % 2 ? 0.55 : 1.05)), y + 0.65, sz * (F - (q % 2 ? 1.05 : 0.55)), qm); }); }
+    if (st.finish === 'timber' || st.finish === 'plaster') [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => box(1, sz > 0 ? st.Hf : st.Hb, 1, sx * W / 2, (sz > 0 ? st.Hf : st.Hb) / 2, sz * F, trimM));
+    if (st.finish === 'timber') { box(W + 0.5, 0.8, D + 0.5, 0, 10, 0, trimM); [1, -1].forEach((s, q) => { for (let x = -W / 2 + 3; x < W / 2; x += 6.5) box(0.5, fH[q] - 10, 0.3, x, (fH[q] + 10) / 2, s * (F + 0.05), trimM); }); }
+    // windows: shutters on every one, flower boxes on those beside the door
+    const win = (u, y, w, hh, face, flowers) => {
+      const wg = new THREE.Group(); if (face < 2) { wg.position.set(u, y, (face ? -1 : 1) * (F + 0.06)); wg.rotation.y = face ? Math.PI : 0; } else { wg.position.set((face === 2 ? 1 : -1) * (W / 2 + 0.06), y, u); wg.rotation.y = face === 2 ? Math.PI / 2 : -Math.PI / 2; }
+      const add = (w2, h2, d2, px, py, pz, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w2, h2, d2), m); b.position.set(px, py, pz); wg.add(b); };
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(w, hh), paneM); p.position.z = 0.02; wg.add(p);
+      add(w + 0.5, 0.3, 0.3, 0, hh / 2, 0.1, trimM); add(w + 0.9, 0.35, 0.6, 0, -hh / 2, 0.2, trimM); add(0.3, hh, 0.3, -w / 2, 0, 0.1, trimM); add(0.3, hh, 0.3, w / 2, 0, 0.1, trimM); add(0.14, hh, 0.14, 0, 0, 0.1, trimM); add(w, 0.14, 0.14, 0, 0.25, 0.1, trimM);
+      if (st.finish !== 'stone') [-1, 1].forEach(s => add(w * 0.42, hh, 0.14, s * (w / 2 + w * 0.21 + 0.2), 0, 0.08, shutM));
+      if (flowers) { add(w + 0.6, 0.7, 0.9, 0, -hh / 2 - 0.5, 0.55, trimM); for (let q = 0; q < 7; q++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(0.34, 8, 6), q % 3 === 1 ? gLeaf : flM); fl.position.set(-w / 2 + 0.2 + q * (w - 0.4) / 6, -hh / 2 - 0.05 + (q % 2) * 0.15, 0.6); wg.add(fl); } }
+      g.add(wg); };
+    const xsG = W / 2 > 21 ? [-(W / 2 - 6), -(W / 2 - 14.5), W / 2 - 14.5, W / 2 - 6] : [-(W / 2 - 7), W / 2 - 7];
+    xsG.forEach(x => win(x, 5.7, 4.2, 4.8, 0, true)); xsG.filter((x, i) => i % 2 === 0).forEach(x => win(-x, 5.7, 3.6, 4.6, 1));
+    if (st.Hf > 16) [-(W / 2 - 6), -W / 6, W / 6, W / 2 - 6].forEach(x => win(x, 14.4, 3, 4, 0)); if (st.Hb > 16) [-(W / 2 - 6), W / 6].forEach(x => win(x, 14.4, 3, 4, 1));
+    [2, 3].forEach(f => { [-D / 4, D / 4].forEach(z => win(z, 5.7, 3.4, 4.6, f)); if (Hlow > 16) win(0, 14.4, 3.2, 4, f); });
+    // dormers: a window in the roof with a little gable over it
+    if (st.dormers && line) { const xs = st.dormers === 2 ? [-W / 4, W / 4] : [0]; const zf = F - 1.2, by = st.Hf + 0.2;
+      xs.forEach(x => { box(5.8, 5.6, 6, x, by + 2.8, zf - 3, st.finish === 'stone' ? stoneM : wallM); const p = put(new THREE.PlaneGeometry(2.6, 3), paneM, x, by + 2.7, zf + 0.03);
+        [[3.2, 0.3, 0, 1.6], [3.2, 0.3, 0, -1.6], [0.3, 3.2, -1.45, 0], [0.3, 3.2, 1.45, 0], [0.14, 3, 0, 0]].forEach(([w2, h2, ox, oy]) => box(w2, h2, 0.3, x + ox, by + 2.7 + oy, zf + 0.12, trimM));
+        [-1, 1].forEach(s => { const r = box(3.9, 0.5, 7, x + s * 1.65, by + 6.4, zf - 2.9, roofM); r.rotation.z = -s * 0.62; }); }); }
+    // a little round tower at the back corner, with a pointed roof
+    if (st.tower) { const tx = W / 2 - 4.6, tz = -F + 4.6, th = ridgeY + 4; put(new THREE.CylinderGeometry(4.6, 4.9, th, 16), wallM, tx, th / 2, tz); put(new THREE.CylinderGeometry(4.9, 4.9, 0.7, 16), trimM, tx, th, tz);
+      put(new THREE.ConeGeometry(5.7, 8, 16), roofM, tx, th + 4.3, tz); put(new THREE.SphereGeometry(0.45, 8, 6), mat('#e8b64c', { metalness: 0.5, roughness: 0.4 }), tx, th + 8.5, tz);
+      [[0.6, th - 4], [-0.9, th - 11], [2.2, 7]].forEach(([a, y]) => { const wp = put(new THREE.PlaneGeometry(1.8, 2.6), paneM, tx + Math.sin(a) * 4.75, y, tz + Math.cos(a) * 4.75); wp.rotation.y = a; const fr = put(new THREE.TorusGeometry(1.25, 0.18, 5, 14, Math.PI), trimM, tx + Math.sin(a) * 4.8, y + 1.3, tz + Math.cos(a) * 4.8); fr.rotation.y = a; }); }
+    // chimneys
+    const stack = (x, z, y0, top) => { box(3.6, top - y0, 3.6, x, (top + y0) / 2, z, gStone); box(4.5, 0.6, 4.5, x, top + 0.3, z, gStone); put(new THREE.CylinderGeometry(0.7, 0.85, 1.6, 10), mat('#a8563a', { roughness: 1 }), x, top + 1.4, z); };
+    if (st.chim === 'end' || st.chim === 'both') stack(-W / 2 - 1.3, ridgeZ, 0, ridgeY + 2.6);
+    if (st.chim === 'both') stack(W / 2 + 1.3, ridgeZ, 0, ridgeY + 2.6);
+    if (st.chim === 'mid') stack(-W * 0.18, line ? ridgeZ - 2.2 : 0, Hlow, ridgeY + 2.4);
+    return st.chim === 'mid' ? [] : st.chim === 'both' ? [-1, 1] : [-1]; }
   function buildHouse(h) {
     const W = h.hw * 2, D = h.hd * 2, H1 = 10, H = 19, RH = 11, OV = 2.2, sg = h.sg, g = new THREE.Group(); g.position.set(h.x, 0, h.z); g.rotation.y = h.face; (h.sc || scene).add(g); const SOL = h.sol || solids, BX = h.bx || hollowBoxes;
     const wx = lx => h.x + sg * lx, wz = lz => h.z + sg * lz;   // a spot on the house's own plan, as a spot in the Hollow
@@ -1382,6 +1453,8 @@
     NIGHT_GLOW.push(n => { paneM.emissiveIntensity = 0.3 + 1.2 * n; });
     const box = (w, hh, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m); b.position.set(x, y, z); g.add(b); return b; };
     const put = (geo, m, x, y, z) => { const b = new THREE.Mesh(geo, m); b.position.set(x, y, z); g.add(b); return b; };
+    const st = HSTYLE[h.style]; let chims = [-1];
+    if (st) chims = houseBody(h, st, { g, box, put, W, D, wallM, trimM, roofM, shutM, flM, paneM }); else {
     // walls on a stone footing, with a timber frame: corner posts, a beam between the two floors, and studs up the top one
     box(W + 0.9, 1.3, D + 0.9, 0, 0.65, 0, gStone); box(W, H, D, 0, H / 2, 0, wallM);
     [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => box(1, H, 1, sx * W / 2, H / 2, sz * D / 2, trimM));
@@ -1409,6 +1482,7 @@
         [-1, 1].forEach(q => { const bb = box(0.35, 0.7, sl, s * (W / 2 + OV + 0.1), H + RH - k * run / 2 - 0.1, q * run / 2, trimM); bb.rotation.x = q * a; }); }); }
     // the chimney climbs the west end from the ground
     box(3.8, H + RH + 2.6, 3.8, -W / 2 - 1.3, (H + RH + 2.6) / 2, 0, gStone); box(4.7, 0.6, 4.7, -W / 2 - 1.3, H + RH + 2.9, 0, gStone); put(new THREE.CylinderGeometry(0.7, 0.85, 1.6, 10), mat('#a8563a', { roughness: 1 }), -W / 2 - 1.3, H + RH + 4, 0);
+    }
     // the porch: a stone step, two posts, and a little roof of its own with the family's name on it
     { const pz = D / 2 + 5.2; box(11.4, 0.22, 6.4, 0, 0.11, D / 2 + 3, gStone);
       [-4.8, 4.8].forEach(x => { box(0.6, 9.9, 0.6, x, 4.95, pz, trimM); SOL.push({ x: wx(x), z: wz(pz), r: 0.45 }); }); box(10.6, 0.6, 0.6, 0, 9.9, pz, trimM); [-4.8, 4.8].forEach(x => box(0.5, 0.5, 5.2, x, 9.9, D / 2 + 2.6, trimM));
@@ -1418,7 +1492,7 @@
       box(4.9, 0.5, 0.5, 0, 9.35, D / 2 + 0.15, trimM); [-2.45, 2.45].forEach(x => box(0.45, 9.3, 0.5, x, 4.65, D / 2 + 0.15, trimM));
       const door = new THREE.Mesh(new THREE.BoxGeometry(4.4, 8.9, 0.3), shutM); door.position.set(0, 4.67, D / 2 + 0.12); g.add(door); hingeDoor(door, g); extDoors[extDoors.length - 1].hinge.userData.keep = true;
       box(0.7, 1, 0.7, 3.6, 7.3, D / 2 + 0.5, lampGlass); box(0.9, 0.14, 0.9, 3.6, 7.9, D / 2 + 0.5, ironM); box(0.9, 0.14, 0.9, 3.6, 6.75, D / 2 + 0.5, ironM); }
-    BX.push({ id: h.id, x: h.x, z: h.z, hw: h.hw + 0.2, hd: h.hd + 0.2, door: { x: h.x, z: wz(h.hd + 0.2) } }, { x: wx(-W / 2 - 1.3), z: h.z, hw: 2.2, hd: 2.2 });
+    BX.push({ id: h.id, x: h.x, z: h.z, hw: h.hw + 0.2, hd: h.hd + 0.2, door: { x: h.x, z: wz(h.hd + 0.2) } }); chims.forEach(sx => BX.push({ x: wx(sx * (W / 2 + 1.3)), z: h.z, hw: 2.2, hd: 2.2 }));
     if (h.inn) { g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(g); return; }
     // ---- the plot: a white fence all round, a gate with a rose arch on the lane, and a gate each side of the house through to the back garden ----
     const LW = 40, FZ = D / 2 + 14, BZ = -D / 2 - 26;
@@ -1786,11 +1860,11 @@
   // the town beyond the orchard rows: Windfall Lane, where the people who work here live. Each house is laid out like the Hollow's (see HOMES): one that faces 0 has its door on the lane from the south side, one that faces π from the north.
   const orchBoxes = [], orchBenches = [];
   const OHOMES = [
-    { id: 'holhome', no: 1, x: -18, face: 0, yard: 'frame', sign: 'Quern', wall: '#e4d8bc', trim: '#5a4027', roof: '#8a3a3a', door: '#5a4027', flower: '#f4d35e' },
-    { id: 'piphome', no: 2, x: -18, face: Math.PI, yard: 'wood', sign: 'Willowby', wall: '#e9e2d0', trim: '#3a4a9a', roof: '#4a5fb8', door: '#3a4a9a', flower: '#e68fb0' },
-    { id: 'bramhome', no: 3, x: 106, face: 0, yard: 'hive', sign: 'Honeywell', wall: '#f0e2c0', trim: '#7a5a1e', roof: '#b08a3a', door: '#7a5a1e', flower: '#f4a340' },
-    { id: 'tanhome', no: 4, x: 106, face: Math.PI, yard: 'berries', sign: 'Applegarth', wall: '#e6dfc6', trim: '#4f6b3a', roof: '#6f9a3a', door: '#4f6b3a', flower: '#d23b4e' }];
-  OHOMES.forEach(h => { h.hw = 26; h.hd = 16; h.sg = h.face ? -1 : 1; h.z = ORC.lane - h.sg * 38; h.sc = orchScene; h.sol = orchSolids; h.bx = orchBoxes; h.benches = orchBenches; });
+    { id: 'holhome', style: 'gambrel', no: 1, x: -18, face: 0, yard: 'frame', sign: 'Quern', wall: '#e4d8bc', trim: '#5a4027', roof: '#8a3a3a', door: '#5a4027', flower: '#f4d35e' },
+    { id: 'piphome', style: 'salt', no: 2, x: -18, face: Math.PI, yard: 'wood', sign: 'Willowby', wall: '#e9e2d0', trim: '#3a4a9a', roof: '#4a5fb8', door: '#3a4a9a', flower: '#e68fb0' },
+    { id: 'bramhome', style: 'thatch', no: 3, x: 106, face: 0, yard: 'hive', sign: 'Honeywell', wall: '#f0e2c0', trim: '#7a5a1e', roof: '#b08a3a', door: '#7a5a1e', flower: '#f4a340' },
+    { id: 'tanhome', style: 'hip', no: 4, x: 106, face: Math.PI, yard: 'berries', sign: 'Applegarth', wall: '#e6dfc6', trim: '#4f6b3a', roof: '#6f9a3a', door: '#4f6b3a', flower: '#d23b4e' }];
+  OHOMES.forEach(h => { houseSize(h); h.sg = h.face ? -1 : 1; h.z = ORC.lane - h.sg * 38; h.sc = orchScene; h.sol = orchSolids; h.bx = orchBoxes; h.benches = orchBenches; });
   const inOLot = (x, z, pad = 0) => OHOMES.some(h => Math.abs(x - h.x) < 41 + pad && Math.abs(z - (h.z - h.sg * 6)) < 37 + pad);
   let _os = null; function orchAll() { if (_os && _os.n === orchBoxes.length + orchSolids.length) return _os.list; const list = orchSolids.slice(); orchBoxes.forEach(b => { const r = Math.max(0.6, Math.min(b.hw, b.hd)), long = b.hw > b.hd, L = long ? b.hw : b.hd, n = Math.max(1, Math.ceil(L / r)); for (let k = 0; k < n; k++) { const t = n === 1 ? 0 : -L + r + (2 * (L - r)) * k / (n - 1); list.push({ x: b.x + (long ? t : 0), z: b.z + (long ? 0 : t), r }); } }); _os = { n: orchBoxes.length + orchSolids.length, list }; return list; }
   const ROWS = { rows: 4, per: 6, x0: -14, dx: -8, z0: 14, dz: 9 };
@@ -2022,11 +2096,11 @@
   const FERN_LEN = 320, FRN = { x: 110, lane: 205 };   // Fernwater: the old town and the river as they were, and Heron Row on the far bank
   const fernHB = [], fernBenches = [];   // the straight-sided things on the far bank: houses, their fences and sheds
   const FHOMES = [
-    { id: 'orihome', no: 1, x: -62, face: 0, yard: 'frame', sign: 'Tideknot', wall: '#dfe6e8', trim: '#2f4a6a', roof: '#2f4a6a', door: '#2f4a6a', flower: '#9fb7f0' },
-    { id: 'maudhome', no: 2, x: -62, face: Math.PI, yard: 'berries', sign: 'Crumb', wall: '#f0dfc0', trim: '#8a3a3a', roof: '#c8384a', door: '#8a3a3a', flower: '#e68fb0' },
-    { id: 'corhome', no: 3, x: 62, face: 0, yard: 'wood', sign: 'Sedge', wall: '#e8dcc0', trim: '#6b4a2b', roof: '#d9a33f', door: '#6b4a2b', flower: '#f4d35e' },
-    { id: 'pellhome', no: 4, x: 62, face: Math.PI, yard: 'hive', sign: 'Reedmace', wall: '#e2e6d6', trim: '#3e6a4a', roof: '#3e8a52', door: '#3e6a4a', flower: '#ffffff' }];
-  FHOMES.forEach(h => { h.hw = 26; h.hd = 16; h.sg = h.face ? -1 : 1; h.z = FRN.lane - h.sg * 38; });
+    { id: 'orihome', style: 'tower', no: 1, x: -62, face: 0, yard: 'frame', sign: 'Tideknot', wall: '#dfe6e8', trim: '#2f4a6a', roof: '#2f4a6a', door: '#2f4a6a', flower: '#9fb7f0' },
+    { id: 'maudhome', style: 'stone', no: 2, x: -62, face: Math.PI, yard: 'berries', sign: 'Crumb', wall: '#f0dfc0', trim: '#8a3a3a', roof: '#c8384a', door: '#8a3a3a', flower: '#e68fb0' },
+    { id: 'corhome', style: 'gambrel', no: 3, x: 62, face: 0, yard: 'wood', sign: 'Sedge', wall: '#e8dcc0', trim: '#6b4a2b', roof: '#d9a33f', door: '#6b4a2b', flower: '#f4d35e' },
+    { id: 'pellhome', style: 'thatch', no: 4, x: 62, face: Math.PI, yard: 'hive', sign: 'Reedmace', wall: '#e2e6d6', trim: '#3e6a4a', roof: '#3e8a52', door: '#3e6a4a', flower: '#ffffff' }];
+  FHOMES.forEach(h => { houseSize(h); h.sg = h.face ? -1 : 1; h.z = FRN.lane - h.sg * 38; });
   const tileF = makeTile('fernwater', null, 0, 0, yawF, [-FRN.x, FRN.x, 0, FERN_LEN]); tileF.open = true;
   { const [cx, cz] = toWorld(tileF, 0, 60); tileF.ox += FERN_AT[0] - cx; tileF.oz += FERN_AT[1] - cz; tileF.m.setPosition(tileF.ox, 0, tileF.oz); tileF.inv = tileF.m.clone().invert(); }
   // the Fern runs straight through the town and on across the country in both directions
@@ -2038,11 +2112,11 @@
   const CRN = { x: 224, lane: 96, e: 46, w: -52 };   // Cairnhold: Rim Row runs along the near side of the gorge, reached by a path either side of the old town
   const cairnHB = [], cairnBenches = [];
   const CHOMES = [
-    { id: 'wrenhome', no: 1, x: -92, face: 0, yard: 'frame', sign: 'Ashcombe', wall: '#d9d4c8', trim: '#4a5560', roof: '#5a6b7a', door: '#4a5560', flower: '#9fb7f0' },
-    { id: 'unahome', no: 2, x: -176, face: 0, yard: 'berries', sign: 'Fellwick', wall: '#e0dccf', trim: '#5a4a3a', roof: '#8a6a9a', door: '#5a4a3a', flower: '#e68fb0' },
-    { id: 'garhome', no: 3, x: 92, face: 0, yard: 'wood', sign: 'Scree', wall: '#cfcabb', trim: '#4a3420', roof: '#6e6a62', door: '#4a3420', flower: '#f4d35e' },
-    { id: 'tobhome', no: 4, x: 176, face: 0, yard: 'hive', sign: 'Marl', wall: '#dcd6c4', trim: '#3e5a4a', roof: '#4f7a5a', door: '#3e5a4a', flower: '#ffffff' }];
-  CHOMES.forEach(h => { h.hw = 26; h.hd = 16; h.sg = 1; h.z = CRN.lane - 38; });
+    { id: 'wrenhome', style: 'stone', no: 1, x: -92, face: 0, yard: 'frame', sign: 'Ashcombe', wall: '#d9d4c8', trim: '#4a5560', roof: '#5a6b7a', door: '#4a5560', flower: '#9fb7f0' },
+    { id: 'unahome', style: 'salt', no: 2, x: -176, face: 0, yard: 'berries', sign: 'Fellwick', wall: '#e0dccf', trim: '#5a4a3a', roof: '#8a6a9a', door: '#5a4a3a', flower: '#e68fb0' },
+    { id: 'garhome', style: 'hip', no: 3, x: 92, face: 0, yard: 'wood', sign: 'Scree', wall: '#cfcabb', trim: '#4a3420', roof: '#6e6a62', door: '#4a3420', flower: '#f4d35e' },
+    { id: 'tobhome', style: 'gambrel', no: 4, x: 176, face: 0, yard: 'hive', sign: 'Marl', wall: '#dcd6c4', trim: '#3e5a4a', roof: '#4f7a5a', door: '#3e5a4a', flower: '#ffffff' }];
+  CHOMES.forEach(h => { houseSize(h); h.sg = 1; h.z = CRN.lane - 38; });
   const tileC = makeTile('cairnhold', null, 0, 0, yawC, [-CRN.x, CRN.x, 0, 150]); tileC.open = true; tileC.oy = 26; tileC.blend = 1000; tileC.noCrop = true;
   { const [cx, cz] = toWorld(tileC, 0, 75); tileC.ox += CAIRN_AT[0] - cx; tileC.oz += CAIRN_AT[1] - cz; tileC.m.setPosition(tileC.ox, tileC.oy, tileC.oz); tileC.inv = tileC.m.clone().invert(); }
   const GW = { zc: 115, hw: 8, depth: 34, half: 1800, rim: 20, out: 46 };
@@ -2058,11 +2132,11 @@
     { id: 'mabhome', kind: 'thatch', x: -352, sg: -1, w: 40, d: 20, sign: 'Spoke' }];
   LXHOMES.forEach(h => { h.face = h.sg > 0 ? 0 : Math.PI; h.z = LNT.lane - h.sg * 38; h.dz = h.z + h.sg * h.d / 2; h.out = { x: h.x, z: h.dz + h.sg * 4.5, yaw: h.face }; h.knock = { x: h.x, z: h.dz + h.sg * 1.6, y: 0, w: 'lantern' }; });
   const LHOMES = [
-    { id: 'asthome', no: 1, x: -100, sg: 1, yard: 'frame', sign: 'Vell', wall: '#e9e6dc', trim: '#1f3a5a', roof: '#3f4a58', door: '#1f3a5a', flower: '#9fb7f0' },
-    { id: 'reefhome', no: 2, x: -100, sg: -1, yard: 'wood', sign: 'Reef', wall: '#e6ddc8', trim: '#4a3420', roof: '#4a5560', door: '#8a3a2a', flower: '#f4d35e' },
-    { id: 'ebbhome', no: 3, x: -184, sg: 1, yard: 'berries', sign: 'Ebb', wall: '#dfe6e8', trim: '#2a3a5a', roof: '#3a4a5a', door: '#3e6a6a', flower: '#ffffff' },
-    { id: 'wickhome', no: 4, x: -184, sg: -1, yard: 'hive', sign: 'Wick', wall: '#ece4d0', trim: '#5a3d22', roof: '#46505c', door: '#b8323a', flower: '#e68fb0' }];
-  LHOMES.forEach(h => { h.hw = 26; h.hd = 16; h.face = h.sg > 0 ? 0 : Math.PI; h.z = LNT.lane - h.sg * 38; });
+    { id: 'asthome', style: 'tower', no: 1, x: -100, sg: 1, yard: 'frame', sign: 'Vell', wall: '#e9e6dc', trim: '#1f3a5a', roof: '#3f4a58', door: '#1f3a5a', flower: '#9fb7f0' },
+    { id: 'reefhome', style: 'gambrel', no: 2, x: -100, sg: -1, yard: 'wood', sign: 'Reef', wall: '#e6ddc8', trim: '#4a3420', roof: '#4a5560', door: '#8a3a2a', flower: '#f4d35e' },
+    { id: 'ebbhome', style: 'hip', no: 3, x: -184, sg: 1, yard: 'berries', sign: 'Ebb', wall: '#dfe6e8', trim: '#2a3a5a', roof: '#3a4a5a', door: '#3e6a6a', flower: '#ffffff' },
+    { id: 'wickhome', style: 'salt', no: 4, x: -184, sg: -1, yard: 'hive', sign: 'Wick', wall: '#ece4d0', trim: '#5a3d22', roof: '#46505c', door: '#b8323a', flower: '#e68fb0' }];
+  LHOMES.forEach(h => { houseSize(h); h.face = h.sg > 0 ? 0 : Math.PI; h.z = LNT.lane - h.sg * 38; });
   const CGW = { x0: -230, lane: 80, gx: -44 };   // Cogsworth: Cliff Row runs west along the foot of the cliff, and the houses are built into it
   const GHOMES = [
     { id: 'tamhome', no: 1, x: -76, sign: 'Gearwright', wall: '#cfc6b4', trim: '#3a2a20', door: '#8a4a2a', flower: '#f4a340' },
@@ -2800,7 +2874,45 @@
   // A family's house inside. The living room is the cottage's old single room, built at a grown elf's size (everything in it is 1.6 times what it was).
   // Off its west side is a wing of three rooms, each with its own doorway: the kitchen at the front, the child's room in the middle, the parents' room at the back.
   // Only the child's room is furnished at a child's size.
-  function familyHome(o, inner) { return (sc, solids, k) => {
+  // ---- who lives in each house, and so how it is furnished. second: the other room upstairs (a child's room only where a child lives). game: what is set out on the table in the hall. mir: the plan is the other way round ----
+  const HOUSEHOLD = {
+    bwhome: { second: 'study', game: 'chess' }, marihome: { second: 'store', game: 'cards' }, aldhome: { second: 'hobby', game: 'puzzle' }, fenhome: { second: 'guest', game: 'dice' },
+    holhome: { mir: 1, second: 'store', game: 'tea', touch: ['flour'] }, piphome: { second: 'kid', game: 'checkers', touch: ['crates', 'crates2'] }, bramhome: { mir: 1, second: 'guest', game: 'none', touch: ['honey', 'honey2'] }, tanhome: { second: 'sewing', game: 'knuckle', touch: ['pears', 'pears2'] },
+    asthome: { mir: 1, second: 'study', game: 'chess', touch: ['starchart', 'sextant'] }, reefhome: { second: 'store', game: 'cards', touch: ['rope', 'rope2'] }, ebbhome: { mir: 1, second: 'music', game: 'tea', touch: ['tides'] }, wickhome: { second: 'guest', game: 'dice', touch: ['glasses'] },
+    tamhome: { mir: 1, second: 'hobby', game: 'puzzle', touch: ['clocks', 'clocks2'] }, odehome: { second: 'sewing', game: 'stones', touch: ['wheel'] }, barhome: { mir: 1, second: 'music', game: 'checkers', touch: ['levers'] }, clemhome: { second: 'study', game: 'cards', touch: ['hands'] },
+    wrenhome: { mir: 1, second: 'kid', game: 'stones', touch: ['plumb'] }, unahome: { second: 'sewing', game: 'none', touch: ['fleece'] }, garhome: { mir: 1, second: 'hobby', game: 'knuckle', touch: ['mallet'] }, tobhome: { second: 'study', game: 'map', touch: ['maps', 'chain'] },
+    orihome: { mir: 1, second: 'guest', game: 'map', touch: ['seachart', 'rope'] }, maudhome: { second: 'store', game: 'tea', touch: ['bread'] }, corhome: { mir: 1, second: 'music', game: 'dice', touch: ['net'] }, pellhome: { second: 'hobby', game: 'cards', touch: ['marks'] } };
+  // the things each household keeps about the hall, the ones its door-sign hint tells you of. Each is drawn facing +z, standing on y = 0
+  function homeTouch(name) { const g = new THREE.Group(), B = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); g.add(b); return b; }, P = (geo, m, x, y, z) => { const b = new THREE.Mesh(geo, m); b.position.set(x, y, z); g.add(b); return b; };
+    const wood = mat('#8a6438'), dark = mat('#5a3d22'), brass = mat('#c9a440', { metalness: 0.6, roughness: 0.3 }), cream = mat('#f2ead8'), rope = mat('#c9a86a', { roughness: 1 }), iron = mat('#4a4642', { metalness: 0.5, roughness: 0.5 });
+    const frame = (w, h, y, face) => { B(w + 0.5, h + 0.5, 0.2, 0, y, 0.1, dark); B(w, h, 0.06, 0, y, 0.24, face); };
+    let floor = false, r = 1.5;
+    if (name === 'starchart') { frame(6, 4.2, 9, mat('#1f2f5a')); for (let i = 0; i < 26; i++) P(new THREE.SphereGeometry(0.06 + (i % 4) * 0.03, 5, 4), mat('#fff6d0', { emissive: '#fff0b0', emissiveIntensity: 0.6 }), rnd(-2.8, 2.8), 9 + rnd(-1.9, 1.9), 0.3); [[-2, 8.2, 1.2, 0.4], [0.5, 9.6, 1.6, -0.5]].forEach(([x, y, l, a]) => B(l, 0.04, 0.03, x, y, 0.3, cream).rotation.z = a); }
+    else if (name === 'seachart') { frame(6.4, 4.4, 9, mat('#d9cfa8')); B(2.6, 1.8, 0.03, -1.2, 9.3, 0.3, mat('#8fb06a')); B(1.2, 2.4, 0.03, 1.9, 8.4, 0.3, mat('#8fb06a')); for (let i = 0; i < 6; i++) B(0.06, 0.6, 0.03, -2.6 + i * 1.1, 10.4 - (i % 2) * 2.4, 0.31, mat('#3a5a8a')); P(new THREE.TorusGeometry(0.6, 0.05, 5, 16), mat('#8a3a2a'), 2.2, 10.4, 0.3); }
+    else if (name === 'sextant') { floor = true; r = 1.1; B(1.4, 3.2, 1.4, 0, 1.6, 0, wood); B(1.8, 0.7, 1.4, 0, 3.55, 0, dark); const a = P(new THREE.TorusGeometry(0.7, 0.06, 5, 14, Math.PI / 3), brass, 0, 4.0, 0.1); a.rotation.z = Math.PI * 1.15; B(0.06, 0.9, 0.06, 0, 4.3, 0.1, brass).rotation.z = 0.3; }
+    else if (name === 'rope' || name === 'rope2') { B(6, 0.5, 0.3, 0, 8.6, 0.15, dark); [-2, 0, 2].forEach((x, i) => { B(0.18, 0.18, 0.7, x, 8.6, 0.5, brass); for (let q = 0; q < 4; q++) { const c = P(new THREE.TorusGeometry(0.75 - q * 0.04, 0.12, 5, 16), rope, x, 7.7 - q * 0.08, 0.55 + q * 0.06); c.scale.y = 1.4; } }); }
+    else if (name === 'tides') { frame(4.4, 5.6, 8.6, cream); for (let i = 0; i < 9; i++) B(3.6, 0.05, 0.03, 0, 10.8 - i * 0.55, 0.3, mat('#5a6a8a')); const c = P(new THREE.TorusGeometry(0.42, 0.06, 5, 16), mat('#c8384a'), 0.9, 9.15, 0.32); c.scale.x = 2; }
+    else if (name === 'glasses') { B(7, 0.3, 1.3, 0, 7, 0.65, wood); [-1, 1].forEach(s => B(0.3, 0.9, 1, s * 3, 6.4, 0.55, wood)); for (let i = 0; i < 6; i++) P(new THREE.CylinderGeometry(0.38, 0.45, 1.3, 12, 1, true), new THREE.MeshStandardMaterial({ color: '#f4f0e0', transparent: true, opacity: 0.45, roughness: 0.05, side: THREE.DoubleSide }), -2.7 + i * 1.08, 7.8, 0.65); }
+    else if (name === 'clocks' || name === 'clocks2') { [[-2, 9.6, 1.1], [1.2, 10.4, 0.8], [0.4, 7.8, 0.9], [2.6, 8.4, 0.6]].forEach(([x, y, rr], i) => { const f = P(new THREE.CylinderGeometry(rr + 0.15, rr + 0.15, 0.25, 18), i % 2 ? brass : dark, x, y, 0.13); f.rotation.x = Math.PI / 2; const fc = P(new THREE.CircleGeometry(rr, 18), cream, x, y, 0.27); const h1 = B(0.06, rr * 0.75, 0.03, x, y + rr * 0.33, 0.3, mat('#1a1410')); const h2 = B(0.06, rr * 0.55, 0.03, x, y, 0.3, mat('#1a1410')); h2.rotation.z = 1 + i; h2.position.set(x - Math.sin(1 + i) * rr * 0.27, y + Math.cos(1 + i) * rr * 0.27, 0.3); }); }
+    else if (name === 'wheel') { const w = P(new THREE.TorusGeometry(2.4, 0.18, 6, 28), iron, 0, 9.4, 0.5); const t = P(new THREE.TorusGeometry(2.55, 0.12, 6, 28), mat('#2a2420'), 0, 9.4, 0.5); for (let i = 0; i < 12; i++) { const sp = B(0.05, 4.8, 0.05, 0, 9.4, 0.5, iron); sp.rotation.z = i / 12 * Math.PI; } P(new THREE.SphereGeometry(0.3, 8, 6), brass, 0, 9.4, 0.5); B(0.2, 0.2, 0.6, 0, 11.9, 0.3, brass); }
+    else if (name === 'levers') { B(5.2, 3.4, 0.3, 0, 7.6, 0.15, mat('#3a3a2a')); [-1.8, -0.6, 0.6, 1.8].forEach((x, i) => { const l = B(0.2, 2, 0.2, x, 8.1, 0.6, brass); l.rotation.x = (i % 2 ? 0.4 : -0.4); P(new THREE.SphereGeometry(0.28, 8, 6), mat(['#c8384a', '#2f4f7a', '#3e8a52', '#d9a33f'][i]), x, 9.05, 0.6 + (i % 2 ? 0.38 : -0.38)); B(0.9, 0.35, 0.05, x, 6.4, 0.33, cream); }); }
+    else if (name === 'hands') { floor = true; r = 1.4; [[-0.6, 7.5, 0.18], [0.7, 5.6, -0.12]].forEach(([x, L, a]) => { const hg = new THREE.Group(); hg.position.set(x, 0, -0.3); hg.rotation.z = a; hg.rotation.x = -0.18; g.add(hg); const s1 = new THREE.Mesh(new THREE.BoxGeometry(0.45, L, 0.15), iron); s1.position.y = L / 2; hg.add(s1); const tip = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.4, 4), iron); tip.position.y = L + 0.6; hg.add(tip); }); }
+    else if (name === 'plumb') { B(0.2, 0.2, 0.9, 0, 11.5, 0.45, brass); B(0.03, 5.5, 0.03, 0, 8.75, 0.85, cream); const bob = P(new THREE.ConeGeometry(0.32, 0.8, 10), brass, 0, 5.7, 0.85); bob.rotation.x = Math.PI; frame(3, 2.2, 8.6, mat('#a9cfd6')); }
+    else if (name === 'fleece') { floor = true; r = 2.2; [-1.6, 1.6].forEach(x => B(0.3, 4.6, 0.3, x, 2.3, 0, wood)); B(3.8, 0.25, 0.25, 0, 4.4, 0, wood); B(3.8, 0.25, 0.25, 0, 2.6, 0, wood); [-0.9, 0.9].forEach(x => { const f = P(new THREE.SphereGeometry(0.9, 10, 8), mat('#efe8d8', { roughness: 1 }), x, 3.7, 0.15); f.scale.set(0.9, 1.4, 0.35); });
+      const ck = new THREE.Group(); ck.position.set(3.2, 0, 0.2); ck.rotation.z = -0.12; g.add(ck); const st2 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 7.5, 6), wood); st2.position.y = 3.75; ck.add(st2); const hk = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.12, 5, 12, Math.PI * 1.3), wood); hk.position.set(0.5, 7.5, 0); ck.add(hk); }
+    else if (name === 'mallet') { floor = true; r = 1.8; B(3, 2.2, 2.4, 0, 1.1, 0, mat('#a8a294', { roughness: 1 })); B(1.6, 0.8, 1.2, 0.4, 2.6, 0.2, mat('#bdb7a8', { roughness: 1 })); const m = new THREE.Group(); m.position.set(-0.8, 2.3, 0.5); m.rotation.z = 0.4; g.add(m); const hd = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.3, 10), wood); hd.rotation.z = Math.PI / 2; m.add(hd); const hn = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.2, 6), dark); hn.position.y = -1.1; m.add(hn);
+      const dust = P(new THREE.CircleGeometry(2.4, 18), mat('#d8d2c2', { roughness: 1, transparent: true, opacity: 0.7 }), 0, 0.03, 0); dust.rotation.x = -Math.PI / 2; }
+    else if (name === 'maps') { floor = true; r = 1.6; B(3.2, 3.6, 1.8, 0, 1.8, 0, wood); for (let i = 0; i < 9; i++) { const m = P(new THREE.CylinderGeometry(0.3, 0.3, 2.6, 8), mat(['#e9dcb8', '#d9c9a0', '#f2e6c8'][i % 3]), -1.1 + (i % 4) * 0.72, 3.4 + Math.floor(i / 4) * 0.45, 0.1); m.rotation.x = 0.3; } }
+    else if (name === 'chain') { B(0.2, 0.2, 0.6, 0, 9.5, 0.3, iron); for (let i = 0; i < 14; i++) { const l = P(new THREE.TorusGeometry(0.22, 0.06, 4, 8), iron, Math.sin(i * 0.9) * 0.6, 9.2 - i * 0.28, 0.5); l.rotation.y = i % 2 ? Math.PI / 2 : 0; } }
+    else if (name === 'net') { floor = true; r = 1.8; [-1.8, 1.8].forEach(x => B(0.25, 7, 0.25, x, 3.5, 0, wood)); B(3.9, 0.25, 0.25, 0, 7, 0, wood); const nm = mat('#8a7a5a', { roughness: 1 }); for (let i = 0; i < 9; i++) B(0.04, 6.4 - (i % 3) * 1.2, 0.04, -1.6 + i * 0.4, 3.8 + (i % 3) * 0.6, 0.1, nm); for (let j = 0; j < 12; j++) B(3.4 - (j > 8 ? 1.6 : 0), 0.04, 0.04, j > 8 ? 0.8 : 0, 6.8 - j * 0.45, 0.1, nm); B(1.2, 0.5, 0.9, 0.5, 0.25, 0.6, nm); }
+    else if (name === 'marks') { B(0.25, 8, 0.1, 0, 4, 0.05, mat('#6b4a2b')); [[1.4, 0.8], [2.6, 1], [3.1, 0.7], [4.5, 1.1], [5.2, 0.6]].forEach(([y, w]) => { B(w, 0.06, 0.04, 0.5, y, 0.12, mat('#3a3a4a')); B(0.5, 0.18, 0.03, 0.5 + w / 2 + 0.4, y, 0.12, mat('#6a6a7a')); }); }
+    else if (name === 'flour') { floor = true; r = 2.4; [[-1.3, 0, 1], [1.2, 0.3, 0.95], [0, -1.2, 0.9], [0.1, 0.1, 0.8, 2.1]].forEach(([x, z, k, y]) => { const s2 = P(new THREE.SphereGeometry(1.2 * k, 10, 8), mat('#e9e2d0', { roughness: 1 }), x, (y || 1.05) * k, z); s2.scale.set(1, 1.3, 0.85); P(new THREE.CylinderGeometry(0.25, 0.35, 0.5, 8), mat('#c9a86a'), x, (y || 1.05) * k + 1.55 * k, z); }); }
+    else if (name === 'crates' || name === 'crates2') { floor = true; r = 2.4; const cm = mat('#b08a5a', { roughness: 1 }); [[-1.2, 0, 0], [1.2, 0, 0], [0, 2.3, 0], [-1.2, 0, 2.3], [1.2, 0, 2.3], [0, 2.3, 2.3]].forEach(([x, y, z], i) => { if (name === 'crates2' && i > 3) return; B(2.2, 2.2, 2.2, x, y + 1.1, z - 1.1, cm); B(2.25, 0.2, 2.25, x, y + 1.6, z - 1.1, dark); }); }
+    else if (name === 'honey' || name === 'honey2') { B(7, 0.3, 1.3, 0, 7.4, 0.65, wood); B(7, 0.3, 1.3, 0, 9.6, 0.65, wood); for (let i = 0; i < 12; i++) { const j = jar(['#e8a33f', '#d9902a', '#f0b84a'][i % 3], 0.9); j.position.set(-2.8 + (i % 6) * 1.1, i < 6 ? 7.55 : 9.75, 0.65); g.add(j); } }
+    else if (name === 'pears' || name === 'pears2') { floor = true; r = 1.5; const bk = P(new THREE.CylinderGeometry(1.3, 1, 1.3, 14, 1, true), mat('#a07a44', { side: THREE.DoubleSide }), 0, 0.65, 0); for (let i = 0; i < 9; i++) { const p = P(new THREE.SphereGeometry(0.35, 8, 6), mat(i % 3 ? '#c9c94a' : '#9ab84a', { roughness: 0.6 }), rnd(-0.7, 0.7), 1.2 + rnd(0, 0.3), rnd(-0.7, 0.7)); p.scale.y = 1.35; } if (name === 'pears2') { const b2 = P(new THREE.CylinderGeometry(1.1, 0.9, 1.1, 14, 1, true), mat('#a07a44', { side: THREE.DoubleSide }), 2.6, 0.55, 0.4); } }
+    else if (name === 'bread') { floor = true; r = 1.8; B(3.4, 0.3, 2.4, 0, 3.4, 0, wood); [[-1.6, -1], [1.6, -1], [-1.6, 1], [1.6, 1]].forEach(([x, z]) => B(0.3, 3.3, 0.3, x, 1.65, z, dark)); [[-0.8, -0.4], [0.7, 0.3], [-0.2, 0.6]].forEach(([x, z]) => { const l = P(new THREE.SphereGeometry(0.6, 10, 8), mat('#d9a86a', { roughness: 1 }), x, 3.85, z); l.scale.set(1.3, 0.7, 0.9); }); const cl = B(1.6, 0.05, 1.2, 0.9, 3.58, -0.5, cream); const rp = P(new THREE.CylinderGeometry(0.18, 0.18, 2.4, 8), wood, -0.3, 3.75, 0.9); rp.rotation.z = Math.PI / 2; }
+    return { g, floor, r }; }
+  function familyHome(o, inner) { const body = (sc, solids, k) => {
     const owner = { bwhome: 'Old Bramblewick', marihome: 'the Fernsbys', aldhome: 'the Boughs', fenhome: 'the Dewberrys', holhome: 'Hollis Quern', piphome: 'the Willowbys', bramhome: 'Bram Honeywell', tanhome: 'Tansy Applegarth', asthome: 'Astra Vell', reefhome: 'Rowan Reef', ebbhome: 'Marnie Ebb', wickhome: 'Jory Wick', durhome: 'Master Durna', brokhome: 'Brokk Cinder', hilhome: 'Hilda Slagg', odwhome: 'Odwin Flint', tamhome: 'Tamsin Gearwright', odehome: 'Odette Spindle', barhome: 'Barnaby Ratchet', clemhome: 'Clementine Verge', wrenhome: 'Wren Ashcombe', unahome: 'Una Fellwick', garhome: 'Garth Scree', tobhome: 'Tobias Marl', orihome: 'the Tideknots', maudhome: 'Maudie Crumb', corhome: 'Corwin Sedge', pellhome: 'Pell Reedmace' }[k.id] || 'the family who live here';
     const { wall, W, D, H, trimM } = k, S = 1.6, PX = -W / 2 + 22, lx = (PX + W / 2) / 2, wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 }), wm = mat(o.wall, { roughness: 1 }), cream = mat('#f2ead8');
     const lg = new THREE.Group(); lg.position.set(lx, 0, 0); lg.scale.setScalar(S); sc.add(lg);
@@ -2831,8 +2943,7 @@
       [[5.8, 10.8, '#d9c08a', 0.025], [5, 10, o.runner || '#7a3e2a', 0.035]].forEach(([w, d, c, y]) => { const rn = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(c, { roughness: 1 })); rn.rotation.x = -Math.PI / 2; rn.position.set(0, y, S - 6.6); sc.add(rn); });
       // a round table with a game set out on it, and three stools
       { const x = PX + 7.5, z = 12.5, tp = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 2.9, 0.35, 20), top); tp.position.set(x, 3.5, z); sc.add(tp); const pd = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 3.3, 10), dark); pd.position.set(x, 1.65, z); sc.add(pd); so(x, z, 2.6);
-        wall(2, 0.12, 2, x, 3.74, z, cream); for (let q = 0; q < 16; q++) if ((q + (q >> 2)) % 2) wall(0.5, 0.13, 0.5, x - 0.75 + (q % 4) * 0.5, 3.75, z - 0.75 + (q >> 2) * 0.5, dark);
-        [[-0.5, 0.25, '#b0203a'], [0.25, -0.5, '#2f4f7a'], [0.75, 0.5, '#b0203a'], [-0.25, -0.25, '#2f4f7a']].forEach(([a, b, c]) => { const pc = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.16, 10), mat(c)); pc.position.set(x + a, 3.9, z + b); sc.add(pc); });
+        tableGame((HOUSEHOLD[k.id] || {}).game || 'checkers', x, 3.68, z, (geo, m, px, py, pz) => { const q = new THREE.Mesh(geo, m); q.position.set(x + px, 3.68 + py, z + pz); sc.add(q); return q; });
         [[0, -4.3, 0], [-4.3, 0, Math.PI / 2], [4.3, 0, -Math.PI / 2]].forEach(([a, b, yaw]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.9, 2.5, 12), wood); st.position.set(x + a, 1.25, z + b); sc.add(st); so(x + a, z + b, 1.1); k.seat(x + a, z + b, yaw, 2.5, 'stool'); }); }
       // a tall clock by the door, and cloaks on their pegs the other side of it
       { const x = 8.5, z = S - 1; wall(2.4, 9.6, 1.5, x, 4.8, z, dark); wall(2.9, 0.5, 1.9, x, 9.85, z, dark); wall(2.9, 0.6, 1.9, x, 0.3, z, dark); const fc = new THREE.Mesh(new THREE.CircleGeometry(0.85, 20), cream); fc.position.set(x, 7.9, z - 0.77); fc.rotation.y = Math.PI; sc.add(fc);
@@ -2879,15 +2990,69 @@
         const ch = [PX - 9, -D / 2 + 2]; up(2.2, 0.3, 2.2, ch[0], 2.6, ch[1], wood); [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([a, b]) => up(0.26, 2.5, 0.26, ch[0] + a, 1.25, ch[1] + b, dark)); up(2.2, 3, 0.26, ch[0], 4.2, ch[1] - 1, wood); so(ch[0], ch[1], 1.2, 1); k.seat(ch[0], ch[1], 0, 2.75, 'chair', FH);
         flat(3.6, o.rug, X0 + 15, -7, FH);
         storeSpot(sc, 'in:' + k.id, PX - 4.2, FH, -D / 2 + 3.6, { label: 'wardrobe', owner }); storeSpot(sc, 'in:' + k.id, PX - 4.4, FH, UZ - 2, { label: 'chest', owner }); }
+      // the other room upstairs: a child's room where a child lives, and otherwise whatever this household uses it for
+      const second = (HOUSEHOLD[k.id] || { second: 'kid' }).second;
+      if (second !== 'kid') secondRoom(second, { up, so, seat: (x, z, yaw, t, label) => k.seat(x, z, yaw, t, label, FH), X0, PX, FH, flat, sc, wood, dark, top, cream, quilt: o.quilt, rug: o.rug, id: k.id, owner });
       // the child's room: everything here is small
-      { const bx = X0 + 4.4, bz = 2; up(7.2, 1.1, 4.2, bx, 0.75, bz, wood); up(6.8, 0.5, 4, bx + 0.1, 1.5, bz, mat(o.kidQuilt || '#f4d35e', { roughness: 1 })); up(1.4, 0.5, 3.1, bx - 2.5, 1.9, bz, cream); up(0.3, 3.2, 4.4, X0 + 0.6, 1.6, bz, dark); so(bx - 1.8, bz, 2.2, 1); so(bx + 1.8, bz, 2.2, 1);
+      else { const bx = X0 + 4.4, bz = 2; up(7.2, 1.1, 4.2, bx, 0.75, bz, wood); up(6.8, 0.5, 4, bx + 0.1, 1.5, bz, mat(o.kidQuilt || '#f4d35e', { roughness: 1 })); up(1.4, 0.5, 3.1, bx - 2.5, 1.9, bz, cream); up(0.3, 3.2, 4.4, X0 + 0.6, 1.6, bz, dark); so(bx - 1.8, bz, 2.2, 1); so(bx + 1.8, bz, 2.2, 1);
         const tx = PX - 4.5, tz = 3; up(3, 0.25, 2.2, tx, 2.2, tz, top); [[-1.3, -0.9], [1.3, -0.9], [-1.3, 0.9], [1.3, 0.9]].forEach(([x, z]) => up(0.22, 2.1, 0.22, tx + x, 1.05, tz + z, dark)); so(tx, tz, 1.6, 1);
         const st = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.55, 1.4, 12), wood); st.position.set(tx, FH + 0.7, tz + 2.4); sc.add(st); so(tx, tz + 2.4, 0.7, 1); k.seat(tx, tz + 2.4, Math.PI, 1.4, 'little stool', FH);
         up(2.8, 1.5, 1.8, PX - 2, 0.75, 9.6, mat('#b5562b')); up(2.9, 0.2, 1.9, PX - 2, 1.6, 9.6, mat('#8a3a2a')); so(PX - 2, 9.6, 1.6, 1);   // the toy chest, out of the way of the stair head
         [acornPerson('#d23b4e'), acornTop(), acornCart()].forEach((t, i) => { t.position.set(X0 + 8 + i * 1.7, FH + 0.05, 8 + (i % 2) * 0.9); t.rotation.y = i * 1.1; t.scale.setScalar(1.3); sc.add(t); });
         const pap = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.04, 0.8), cream); pap.position.set(tx - 0.4, FH + 2.36, tz); pap.rotation.y = 0.3; sc.add(pap);
         flat(3.2, '#7fb0d8', X0 + 11, 5, FH); } }
-  }; }
+  }; return (sc, solids, k) => { const hh = HOUSEHOLD[k.id] || {}, n0 = sc.children.length, s0 = solids.length, b0 = k.boxes.length; body(sc, solids, k);
+    // this household's own things about the hall: on the east wall, on the floor in the east corners, or on the north wall beside the chimney
+    const E = k.W / 2, N = -k.D / 2, SLOT = [[E - 0.35, 0, -8, -Math.PI / 2], [E - 0.35, 0, 8, -Math.PI / 2], [E - 3.6, 0, 12.5, -Math.PI / 2], [29, 0, N + 3.4, 0], [29, 0, N + 0.35, 0], [3.6, 0, k.D / 2 - 0.35, Math.PI]];
+    const want = { starchart: 4, seachart: 4, sextant: 2, rope: 0, rope2: 1, tides: 0, glasses: 0, clocks: 0, clocks2: 1, wheel: 4, levers: 0, hands: 2, plumb: 0, fleece: 2, mallet: 2, maps: 2, chain: 0, net: 2, marks: 5, flour: 2, crates: 2, crates2: 3, honey: 0, honey2: 1, pears: 2, pears2: 3, bread: 3 };
+    (hh.touch || []).forEach(n => { const t = homeTouch(n), [x, y, z, ry] = SLOT[want[n]]; t.g.position.set(x, y, z); t.g.rotation.y = ry; t.g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); sc.add(t.g); if (t.floor) solids.push({ x, z, r: t.r }); });
+    // a house built the other way round: everything in it is reflected east to west. The shell and its door are the same either way
+    if (hh.mir) { sc.children.slice(n0).forEach(m => { m.position.x *= -1; m.rotation.y *= -1; m.rotation.z *= -1; m.scale.x *= -1; if (m.userData && m.userData.kind === 'seat') m.userData.yaw = -m.userData.yaw; });
+      for (let i = s0; i < solids.length; i++) solids[i].x *= -1; for (let i = b0; i < k.boxes.length; i++) k.boxes[i].x *= -1; const fa = k.room.floorAt; if (fa) k.room.floorAt = (x, z, y) => fa(-x, z, y); } }; }
+  // what is set out on the table in the hall: a different game in each house, or none
+  function tableGame(game, x, y, z, P) { const B = (w, h, d, px, py, pz, m) => P(new THREE.BoxGeometry(w, h, d), m, px, py, pz), cream = mat('#f2ead8'), dark = mat('#3a2a1e'), red = mat('#b0203a'), blue = mat('#2f4f7a'), wood = mat('#8a6438');
+    if (game === 'checkers') { B(2, 0.12, 2, 0, 0.06, 0, cream); for (let q = 0; q < 16; q++) if ((q + (q >> 2)) % 2) B(0.5, 0.13, 0.5, -0.75 + (q % 4) * 0.5, 0.07, -0.75 + (q >> 2) * 0.5, dark); [[-0.5, 0.25, red], [0.25, -0.5, blue], [0.75, 0.5, red], [-0.25, -0.25, blue]].forEach(([a, b, c]) => P(new THREE.CylinderGeometry(0.17, 0.17, 0.16, 10), c, a, 0.22, b)); }
+    else if (game === 'chess') { B(2.3, 0.12, 2.3, 0, 0.06, 0, dark); for (let q = 0; q < 64; q++) if ((q + (q >> 3)) % 2) B(0.26, 0.13, 0.26, -0.91 + (q % 8) * 0.26, 0.07, -0.91 + (q >> 3) * 0.26, cream);
+      for (let i = 0; i < 14; i++) { const side = i % 2, col = side ? mat('#f2ead8') : mat('#2a1a10'), h = 0.25 + (i % 5) * 0.08, px = -0.91 + ((i * 3) % 8) * 0.26, pz = (side ? 0.65 : -0.65) + ((i >> 2) % 2) * (side ? 0.26 : -0.26); P(new THREE.CylinderGeometry(0.07, 0.1, h, 8), col, px, 0.14 + h / 2, pz); P(new THREE.SphereGeometry(0.08, 6, 5), col, px, 0.14 + h + 0.05, pz); } }
+    else if (game === 'cards') { const back = mat('#7a2a3a'); [[0, -1.4], [-1.4, 0.3], [1.3, 0.6]].forEach(([a, b], h) => { for (let q = 0; q < 4; q++) { const c = B(0.5, 0.02, 0.72, a + (q - 1.5) * 0.18, 0.02 + q * 0.004, b, back); c.rotation.y = (q - 1.5) * 0.2 + h; } });
+      [[-0.3, 0.1, red], [0.25, -0.2, mat('#1a1a1a')], [0.05, 0.35, red]].forEach(([a, b, m], i) => { const c = B(0.5, 0.02, 0.72, a, 0.03 + i * 0.004, b, cream); c.rotation.y = i * 0.6; B(0.12, 0.022, 0.12, a, 0.04 + i * 0.004, b, m).rotation.y = i * 0.6; }); B(0.5, 0.3, 0.72, 0.9, 0.15, -0.6, back); }
+    else if (game === 'dice') { const cup = P(new THREE.CylinderGeometry(0.42, 0.34, 0.95, 14, 1, true), mat('#5a3d22', { side: THREE.DoubleSide }), -0.9, 0.48, -0.4); [[0.2, 0.1, 0.3], [0.6, -0.3, 1.1], [0.35, 0.5, 0.7]].forEach(([a, b, r]) => { const d = B(0.32, 0.32, 0.32, a, 0.16, b, cream); d.rotation.y = r; for (let p = 0; p < 3; p++) B(0.07, 0.02, 0.07, a + (p - 1) * 0.08, 0.33, b + (p - 1) * 0.08, mat('#1a1a1a')).rotation.y = r; });
+      B(1.4, 0.06, 1, 0.3, 0.03, -1.3, mat('#3a3a3a')); for (let i = 0; i < 7; i++) B(0.03, 0.02, 0.5, -0.2 + i * 0.13, 0.07, -1.3, cream); }
+    else if (game === 'puzzle') { B(2.6, 0.08, 1.9, 0, 0.04, 0, wood); const cols = ['#6f9a3a', '#a9cfd6', '#4f7a33', '#d9a33f', '#8fb0d8', '#c8384a']; for (let q = 0; q < 30; q++) { if (q % 7 === 3 || q > 23) continue; B(0.4, 0.06, 0.36, -1.0 + (q % 6) * 0.4, 0.11, -0.72 + Math.floor(q / 6) * 0.36, mat(cols[(q * 5) % 6])); } for (let i = 0; i < 7; i++) { const pc = B(0.38, 0.06, 0.34, rnd(-2, 2), 0.03, rnd(1.1, 1.8) * (i % 2 ? 1 : -1), mat(cols[i % 6])); pc.rotation.y = rnd(0, 3); } }
+    else if (game === 'stones') { const bd = B(3, 0.35, 1.2, 0, 0.18, 0, wood); for (let r = 0; r < 2; r++) for (let q = 0; q < 6; q++) { const pit = P(new THREE.CircleGeometry(0.19, 12), dark, -1.1 + q * 0.44, 0.36, (r - 0.5) * 0.5); pit.rotation.x = -Math.PI / 2; for (let n = 0; n < 1 + ((q + r * 3) % 4); n++) P(new THREE.SphereGeometry(0.06, 5, 4), mat(['#9fb7f0', '#e9e2d0', '#6a9a5a'][n % 3]), -1.1 + q * 0.44 + rnd(-0.08, 0.08), 0.41, (r - 0.5) * 0.5 + rnd(-0.08, 0.08)); } }
+    else if (game === 'knuckle') { for (let i = 0; i < 5; i++) { const b = P(new THREE.CylinderGeometry(0.07, 0.07, 0.3, 6), cream, rnd(-0.8, 0.8), 0.07, rnd(-0.8, 0.8)); b.rotation.set(Math.PI / 2, 0, rnd(0, 3)); [-1, 1].forEach(s => P(new THREE.SphereGeometry(0.09, 6, 5), cream, b.position.x - x + Math.sin(b.rotation.z) * 0.15 * s, 0.08, b.position.z - z + Math.cos(b.rotation.z) * 0.15 * s)); } P(new THREE.SphereGeometry(0.16, 10, 8), red, 0.5, 0.16, 0.6); }
+    else if (game === 'map') { B(2.8, 0.02, 2, 0, 0.01, 0, mat('#e2d6b0')); B(1.2, 0.025, 0.8, -0.5, 0.02, -0.3, mat('#8fb06a')); B(0.7, 0.025, 1.0, 0.8, 0.02, 0.4, mat('#8fb06a')); for (let i = 0; i < 4; i++) P(new THREE.SphereGeometry(0.1, 6, 5), mat('#6a6a6a'), -1.2 + i * 0.8, 0.08, 0.9 - (i % 2) * 1.8); const cp = P(new THREE.CylinderGeometry(0.3, 0.3, 0.12, 14), mat('#c9a440', { metalness: 0.6, roughness: 0.3 }), 1.1, 0.08, -0.7); }
+    else if (game === 'tea') { const pot = P(new THREE.SphereGeometry(0.5, 12, 10), mat('#3e6a8a'), 0, 0.45, 0); pot.scale.y = 0.85; const sp = P(new THREE.CylinderGeometry(0.06, 0.1, 0.6, 6), mat('#3e6a8a'), 0.55, 0.55, 0); sp.rotation.z = -0.9; P(new THREE.SphereGeometry(0.1, 6, 5), cream, 0, 0.9, 0); [0, 2.1, 4.2].forEach(a => { P(new THREE.CylinderGeometry(0.22, 0.17, 0.3, 10), cream, Math.cos(a) * 1.3, 0.15, Math.sin(a) * 1.3); const sa = P(new THREE.CylinderGeometry(0.34, 0.34, 0.03, 12), cream, Math.cos(a) * 1.3, 0.02, Math.sin(a) * 1.3); }); }
+    else { const v = P(new THREE.CylinderGeometry(0.3, 0.42, 1.0, 12), mat('#a9cfd6', { roughness: 0.3 }), 0, 0.5, 0); for (let i = 0; i < 7; i++) { const a = i * 0.9; P(new THREE.CylinderGeometry(0.03, 0.03, 0.9, 4), mat('#4f7a2f'), Math.cos(a) * 0.12, 1.3, Math.sin(a) * 0.12); P(new THREE.SphereGeometry(0.2, 8, 6), mat(['#f4d35e', '#e68fb0', '#ffffff', '#9fb7f0'][i % 4]), Math.cos(a) * 0.35, 1.8 + (i % 2) * 0.15, Math.sin(a) * 0.35); } } }
+  // the other room upstairs, for a house with no child in it. It fills the same space: the west wall, a spot by the east wall, a corner, and the middle of the floor
+  function secondRoom(kind, c) { const { up, so, seat, X0, PX, FH, flat, sc, wood, dark, top, cream } = c, M = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, FH + y, z); q.castShadow = true; sc.add(q); return q; };
+    const legs = (x, z, w, d, h) => [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => up(0.25, h, 0.25, x + a * (w / 2 - 0.2), h / 2, z + b * (d / 2 - 0.2), dark));
+    const chair = (x, z, yaw, label) => { up(2, 0.3, 2, x, 2.3, z, wood); legs(x, z, 2, 2, 2.2); const bx = x - Math.sin(yaw) * 0.95, bz = z - Math.cos(yaw) * 0.95, bk = up(2, 2.6, 0.25, bx, 3.7, bz, wood); bk.rotation.y = yaw; so(x, z, 1.1, 1); seat(x, z, yaw, 2.45, label || 'chair'); };
+    const books = (x, z, n, len) => { for (let i = 0; i < n; i++) up(0.9, 1 + (i % 3) * 0.2, len / n * 0.85, x, 0, z - len / 2 + (i + 0.5) * len / n, mat(['#7a2a3a', '#2f4f7a', '#3e6a4a', '#8a6a3a', '#5a3a6a'][i % 5])); };
+    if (kind === 'study') { up(1.8, 8.4, 9, X0 + 1, 4.2, 4, dark); [1.6, 3.6, 5.6, 7.6].forEach(y => { up(1.7, 0.2, 8.6, X0 + 1.1, y - 0.2, 4, wood); const g0 = []; for (let i = 0; i < 11; i++) up(1.1, 1.2 + (i % 3) * 0.2, 0.62, X0 + 1.5, y + 0.6 + (i % 3) * 0.1, 4 - 3.7 + i * 0.74, mat(['#7a2a3a', '#2f4f7a', '#3e6a4a', '#8a6a3a', '#5a3a6a'][(i + y) % 5 | 0])); }); so(X0 + 1, 1, 1.4, 1); so(X0 + 1, 4, 1.4, 1); so(X0 + 1, 7, 1.4, 1);
+      up(5.2, 0.3, 2.6, PX - 4.5, 3.3, 3, top); legs(PX - 4.5, 3, 5.2, 2.6, 3.2); so(PX - 5.6, 3, 1.6, 1); so(PX - 3.4, 3, 1.6, 1); for (let i = 0; i < 4; i++) { const pp = up(1.1, 0.04, 0.8, PX - 5.4 + i * 0.5, 3.48 + i * 0.01, 2.8, cream); pp.rotation.y = i * 0.3; } M(new THREE.CylinderGeometry(0.16, 0.16, 0.7, 8), cream, PX - 3, 3.8, 2.3); M(new THREE.SphereGeometry(0.1, 6, 6), new THREE.MeshBasicMaterial({ color: '#ffd36a' }), PX - 3, 4.25, 2.3);
+      chair(PX - 4.5, 5.6, Math.PI, 'desk chair'); M(new THREE.CylinderGeometry(0.15, 0.3, 3.4, 8), dark, PX - 2, 1.7, 10.5); const gl = M(new THREE.SphereGeometry(1.1, 16, 12), mat('#4f7fb0'), PX - 2, 4.4, 10.5); M(new THREE.TorusGeometry(1.25, 0.07, 5, 20), mat('#c9a440', { metalness: 0.6 }), PX - 2, 4.4, 10.5).rotation.y = 0.5; so(PX - 2, 10.5, 1.3, 1);
+      up(3.6, 1.4, 3.2, X0 + 11, 0.7, 9, mat(c.quilt)); up(3.6, 2.6, 0.7, X0 + 11, 2.2, 10.4, mat(c.quilt)); [-1, 1].forEach(s => up(0.7, 2, 3.2, X0 + 11 + s * 1.9, 1.6, 9, mat(c.quilt))); so(X0 + 11, 9, 1.9, 1); seat(X0 + 11, 8.6, Math.PI, 1.4, 'armchair'); flat(3.4, c.rug, X0 + 11, 4, FH); }
+    else if (kind === 'sewing') { up(1.6, 0.25, 8, X0 + 1, 5, 4, wood); up(1.6, 0.25, 8, X0 + 1, 7.4, 4, wood); [5, 7.4].forEach((y, r) => { for (let i = 0; i < 5; i++) { const b = M(new THREE.CylinderGeometry(0.55, 0.55, 1.5, 12), mat(['#c8384a', '#e8b64c', '#3e6a8a', '#6f9a3a', '#e68fb0', '#7a4a8a'][(i + r * 2) % 6], { roughness: 1 }), X0 + 1.1, y + 0.7, 4 - 3.2 + i * 1.6); b.rotation.x = Math.PI / 2; } });
+      up(4.4, 0.3, 2.4, PX - 4.5, 3.1, 3, top); legs(PX - 4.5, 3, 4.4, 2.4, 3); so(PX - 5.4, 3, 1.5, 1); so(PX - 3.6, 3, 1.5, 1); for (let i = 0; i < 6; i++) M(new THREE.CylinderGeometry(0.16, 0.16, 0.4, 8), mat(['#c8384a', '#3e6a8a', '#e8b64c'][i % 3]), PX - 5.8 + i * 0.5, 3.45, 2.4); up(2, 0.05, 1.4, PX - 4, 3.28, 3.3, mat('#e68fb0')); chair(PX - 4.5, 5.4, Math.PI, 'sewing chair');
+      { const wx = X0 + 11, wz = 9; M(new THREE.TorusGeometry(1.6, 0.14, 6, 24), wood, wx, 3.4, wz).rotation.y = Math.PI / 2; for (let i = 0; i < 8; i++) { const sp = M(new THREE.CylinderGeometry(0.05, 0.05, 3.2, 4), wood, wx, 3.4, wz); sp.rotation.x = i / 8 * Math.PI; } up(0.3, 1.8, 3.6, wx, 0.9, wz, dark); up(0.3, 3.6, 0.3, wx, 1.8, wz - 1.6, dark); M(new THREE.CylinderGeometry(0.2, 0.25, 1.4, 8), mat('#efe8d8', { roughness: 1 }), wx, 4.3, wz - 2.3); so(wx, wz, 1.8, 1); }
+      { const bk = M(new THREE.CylinderGeometry(1, 0.8, 1, 14, 1, true), mat('#a07a44', { side: THREE.DoubleSide }), PX - 2, 0.5, 10.5); for (let i = 0; i < 5; i++) M(new THREE.SphereGeometry(0.38, 8, 6), mat(['#c8384a', '#e8b64c', '#3e6a8a', '#efe8d8', '#6f9a3a'][i]), PX - 2 + rnd(-0.45, 0.45), 0.9 + rnd(0, 0.3), 10.5 + rnd(-0.45, 0.45)); so(PX - 2, 10.5, 1.1, 1); } flat(3, c.rug, X0 + 9, 3, FH); }
+    else if (kind === 'guest') { const bx = X0 + 7.2, bz = 4; up(12.4, 1.8, 7.4, bx, 1.2, bz, wood); up(12, 0.9, 7, bx + 0.1, 2.5, bz, mat(c.quilt, { roughness: 1 })); up(2.4, 0.8, 5.4, bx - 4.6, 3.1, bz, cream); up(0.5, 6, 7.8, X0 + 0.7, 3, bz, dark); so(bx - 3.4, bz, 3.6, 1); so(bx + 2, bz, 3.6, 1);
+      up(2.6, 3.4, 2.2, PX - 3, 1.7, 3, wood); M(new THREE.CylinderGeometry(0.9, 0.6, 0.5, 14), cream, PX - 3, 3.65, 3); const jug = M(new THREE.CylinderGeometry(0.35, 0.45, 1.2, 10), mat('#3e6a8a'), PX - 3, 4.5, 3); so(PX - 3, 3, 1.5, 1); up(2.2, 3, 0.15, PX - 0.4, 6.5, 3, mat('#cfe6f0', { metalness: 0.4, roughness: 0.1 }));
+      up(4, 2, 2.4, PX - 2.6, 1, 10, mat('#7a4a2a')); up(4.1, 0.25, 2.5, PX - 2.6, 2.1, 10, dark); so(PX - 2.6, 10, 2, 1); flat(3.4, c.rug, X0 + 9, 10, FH); }
+    else if (kind === 'music') { { const hx = X0 + 3, hz = 3, hg = new THREE.Group(); hg.position.set(hx, FH, hz); hg.rotation.y = Math.PI / 2; sc.add(hg); const H2 = (w, h, d, x, y, z, m, rz) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.rotation.z = rz || 0; hg.add(q); }; H2(0.5, 6.4, 0.5, -1.5, 3.2, 0, wood); H2(3.6, 0.5, 0.5, 0.2, 6.3, 0, wood, -0.25); H2(0.5, 6.8, 0.6, 1.6, 3.2, 0, wood, 0.32); H2(2.6, 0.5, 1.2, 0, 0.25, 0, dark); for (let i = 0; i < 9; i++) H2(0.03, 5.6 - i * 0.32, 0.03, -1.1 + i * 0.32, 3.1 - i * 0.12, 0, cream); so(hx, hz, 1.8, 1); }
+      M(new THREE.CylinderGeometry(0.06, 0.06, 4, 6), dark, PX - 4.5, 2, 2); const ms = up(1.8, 1.4, 0.1, PX - 4.5, 4.2, 2, cream); ms.rotation.x = -0.4; so(PX - 4.5, 2, 0.6, 1); M(new THREE.CylinderGeometry(0.9, 0.8, 2.3, 12), wood, PX - 4.5, 1.15, 4.6); so(PX - 4.5, 4.6, 1, 1); seat(PX - 4.5, 4.6, Math.PI, 2.3, 'stool');
+      { const dr = M(new THREE.CylinderGeometry(1.2, 1.2, 1.8, 16), mat('#b5562b'), PX - 2.2, 0.9, 10.5); M(new THREE.CylinderGeometry(1.22, 1.22, 0.08, 16), cream, PX - 2.2, 1.82, 10.5); so(PX - 2.2, 10.5, 1.3, 1); }
+      { const lg = new THREE.Group(); lg.position.set(X0 + 11, FH + 0.1, 9); lg.rotation.set(-1.2, 0.4, 0); sc.add(lg); const bd = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 10), mat('#c98a4a')); bd.scale.set(1, 1.3, 0.45); lg.add(bd); const nk = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.6, 0.2), dark); nk.position.y = 2.3; lg.add(nk); } flat(3.6, c.rug, X0 + 10, 4, FH); }
+    else if (kind === 'store') { up(1.8, 8, 9, X0 + 1, 4, 4, wood); [2, 4.2, 6.4].forEach((y, r) => { for (let i = 0; i < 6; i++) { const j = jar(['#d9a33f', '#8fbf4a', '#b0203a', '#e9e2d0', '#7a4a8a'][(i + r) % 5], 1.1); j.position.set(X0 + 1.3, FH + y, 4 - 3.5 + i * 1.4); sc.add(j); } up(1.9, 0.2, 9, X0 + 1.1, y - 0.15, 4, dark); }); so(X0 + 1, 1, 1.4, 1); so(X0 + 1, 4, 1.4, 1); so(X0 + 1, 7, 1.4, 1);
+      [[PX - 3, 2.5], [PX - 5.2, 3.4], [PX - 3.6, 4.8]].forEach(([x, z], i) => { const sk = M(new THREE.SphereGeometry(1.1, 10, 8), mat('#d9c9a0', { roughness: 1 }), x, 1.3, z); sk.scale.set(1, 1.25, 0.85); so(x, z, 1.1, 1); });
+      [[PX - 2.2, 10], [PX - 2.2, 12.6]].forEach(([x, z]) => { M(new THREE.CylinderGeometry(1.1, 1.1, 2.8, 14), mat('#8a6438'), x, 1.4, z); [0.5, 2.3].forEach(y => M(new THREE.CylinderGeometry(1.15, 1.15, 0.2, 14), dark, x, y, z)); so(x, z, 1.2, 1); });
+      [[X0 + 10, 9], [X0 + 12.4, 9], [X0 + 11.2, 9]].forEach(([x, z], i) => up(2.2, 2.2, 2.2, x, 1.1 + (i === 2 ? 2.2 : 0), z, mat('#b08a5a', { roughness: 1 }))); so(X0 + 11.2, 9, 2.2, 1); }
+    else { /* hobby: paints, an easel and a workbench */ { const ex = X0 + 11, ez = 8; [[-0.9, 0.25], [0.9, 0.25], [0, -0.35]].forEach(([a, b]) => { const l = up(0.2, 7, 0.2, ex + a, 3.3, ez + b, wood); l.rotation.x = b > 0 ? 0.12 : -0.2; l.rotation.z = a * 0.12; }); up(3.6, 2.8, 0.15, ex, 4.6, ez + 0.5, cream); up(2.4, 0.9, 0.16, ex - 0.3, 4.3, ez + 0.6, mat('#6f9a3a')); up(1.5, 0.8, 0.16, ex + 0.6, 5.3, ez + 0.6, mat('#a9cfd6')); up(3.6, 0.25, 0.5, ex, 3.1, ez + 0.6, wood); so(ex, ez, 1.4, 1); }
+      [[X0 + 0.9, 1, '#d9a33f'], [X0 + 0.9, 3.4, '#8fb0d8'], [X0 + 0.9, 5.8, '#c8384a']].forEach(([x, z, col]) => { const cv = up(0.15, 3, 2.2, x + 0.3, 1.5, z, mat(col)); cv.rotation.z = -0.15; }); so(X0 + 1, 3.4, 1.4, 1);
+      up(5, 0.4, 2.6, PX - 4.5, 3.3, 3, wood); legs(PX - 4.5, 3, 5, 2.6, 3.2); so(PX - 5.6, 3, 1.6, 1); so(PX - 3.4, 3, 1.6, 1); [0, 1, 2, 3].forEach(i => { const p = paintPot(['#c8384a', '#3e6a8a', '#e8b64c', '#6f9a3a'][i]); p.position.set(PX - 6 + i * 0.8, FH + 3.5, 2.6); sc.add(p); });
+      M(new THREE.CylinderGeometry(0.62, 0.55, 2.2, 12), wood, PX - 4.5, 1.1, 5.4); so(PX - 4.5, 5.4, 0.7, 1); seat(PX - 4.5, 5.4, Math.PI, 2.2, 'stool');
+      const sp = M(new THREE.CircleGeometry(2.4, 18), mat('#d8c9a8', { roughness: 1 }), X0 + 11, 0.04, 8.5); sp.rotation.x = -Math.PI / 2; for (let i = 0; i < 8; i++) { const d2 = M(new THREE.CircleGeometry(0.15 + rnd(0, 0.15), 8), mat(['#c8384a', '#3e6a8a', '#e8b64c', '#6f9a3a'][i % 4]), X0 + 11 + rnd(-1.8, 1.8), 0.05, 8.5 + rnd(-1.8, 1.8)); d2.rotation.x = -Math.PI / 2; } } }
   function homeKit(sc, solids, k, o) {
     const { wall, W, D, H, trimM } = k;
     const wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 });
@@ -9615,7 +9780,7 @@
     f.solid = f.solid || T.sol.find(s => s.x === f.post.x && s.z === f.post.z);
     const ud = f.g.userData; f.g.userData = {}; const c = f.g.clone(true); f.g.userData = ud; c.visible = false; c.position.y = 0; interiors[f.home].scene.add(c); f.in = c;   // the same figure again, for indoors
     { const bg = new THREE.Group(); bg.visible = false; interiors[f.home].scene.add(bg); f.abed = bg; const hu = f.hd.userData; f.hd.userData = {}; const hc = f.hd.clone(true); f.hd.userData = hu; const md = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), mat('#f2ead8', { roughness: 1 }));
-      const B = f.bed || (f.kid ? KIDBED : BED); if (f.kid) { hc.position.set(B.x - 2.5, B.y + 2.55, B.z); md.scale.set(2.3, 0.5, 1.4); md.position.set(B.x + 0.5, B.y + 1.9, B.z); } else { hc.position.set(B.x - 4.1, B.y + 3.5 + 0.55, B.z); md.scale.set(4.3, 0.85, 2.3); md.position.set(B.x + 0.3, B.y + 2.95, B.z); }
+      const B = f.bed || (f.kid ? KIDBED : BED); bg.scale.x = (HOUSEHOLD[f.home] || {}).mir ? -1 : 1; if (f.kid) { hc.position.set(B.x - 2.5, B.y + 2.55, B.z); md.scale.set(2.3, 0.5, 1.4); md.position.set(B.x + 0.5, B.y + 1.9, B.z); } else { hc.position.set(B.x - 4.1, B.y + 3.5 + 0.55, B.z); md.scale.set(4.3, 0.85, 2.3); md.position.set(B.x + 0.3, B.y + 2.95, B.z); }
       hc.quaternion.copy(lyingQ); bg.add(hc); md.castShadow = true; bg.add(md); }
     const sp = new THREE.Object3D(); interiors[f.home].scene.add(sp); sp.userData = { pickable: true, kind: 'resident', who: id, world: 'in:' + f.home }; pickables.push(sp); f.inSpot = sp;
     const kn = new THREE.Object3D(); if (f.knock) { const kw = h.knock.w || 'wild'; kn.position.set(h.knock.x, h.knock.y !== undefined ? h.knock.y : TF.y, h.knock.z); (kw === 'lantern' ? lantScene : worldScene).add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: kw }; } else if (h) { kn.position.set(h.x, 0, h.z + h.sg * 19.6); T.sc.add(kn); kn.userData = { pickable: true, kind: 'knock', who: id, world: f.w || 'village' }; } if (!f.noKnock) pickables.push(kn); }
@@ -9763,8 +9928,8 @@
       // indoors: by the fire for the first hour, then upstairs in bed
       const home = f.mode === 'home', pose = !home ? 'out' : (hr >= 22 || hr < 6.6) ? 'bed' : 'fire';
       if (pose !== f.pose) { f.pose = pose; f.in.visible = pose === 'fire'; f.abed.visible = pose === 'bed';
-        if (pose === 'bed') { const B = f.bed || (f.kid ? KIDBED : BED); if (f.kid) f.inSpot.position.set(B.x + 1, B.y, B.z + 2.6); else f.inSpot.position.set(B.x - 0.5, B.y, B.z + 2.4); }
-        else if (pose === 'fire') { const [fx, fz] = f.fire || [5, -12.5]; f.in.position.set(fx, 0, fz); f.in.rotation.set(0, 0.5, 0); f.inSpot.position.set(fx, 0, fz); } } });
+        const ms = (HOUSEHOLD[f.home] || {}).mir ? -1 : 1; if (pose === 'bed') { const B = f.bed || (f.kid ? KIDBED : BED); if (f.kid) f.inSpot.position.set((B.x + 1) * ms, B.y, B.z + 2.6); else f.inSpot.position.set((B.x - 0.5) * ms, B.y, B.z + 2.4); }
+        else if (pose === 'fire') { const [fx, fz] = f.fire || [5, -12.5]; f.in.position.set(fx * ms, 0, fz); f.in.rotation.set(0, 0.5 * ms, 0); f.inSpot.position.set(fx * ms, 0, fz); } } });
     // shutting-up time, said once as it happens
     { const shut = abed; if (shutNow !== null && shut !== shutNow && where === 'wild' && live && Math.hypot(player.position.x - frameT.ox, player.position.z - frameT.oz) < 320 && !talking()) flash(shut ? 'Nine o\u2019clock. The carriage is coming down the hill to bring Emberdeep\u2019s people home to Tinderfold.' : 'Tinderfold is up. The carriage leaves for Emberdeep before seven.', 6000);
       if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { const fw = where === 'fernwater', ch = where === 'cairnhold'; if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : where === 'skyhaven' ? 'Nine o\u2019clock. The Guild is shut, and everyone is going down on the lift to their homes in Lanternreach.' : where === 'lantern' ? 'Nine by the clock. The sky never changes here, but everyone is walking home to Windward Row.' : where === 'emberdeep' ? 'The forges are banked for the night. Everyone is going out to the carriage at the west gate, to ride home to Tinderfold.' : where === 'cogsworth' ? 'The works are shut for the night, and everyone is walking home to Cliff Row.' : ch ? 'The Lodge is shut for the night, and everyone is walking home to Rim Row.' : fw ? 'The shops are shut, and everyone is walking home over the bridge to Heron Row.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : where === 'skyhaven' ? 'The first car of the morning is bringing everyone up from Lanternreach. The Guild opens at seven.' : where === 'lantern' ? 'Seven by the clock, and Lanternreach is up, under the same stars.' : where === 'emberdeep' ? 'The carriage is bringing everyone up from Tinderfold. The forges are lit at seven.' : where === 'cogsworth' ? 'Cogsworth is waking up. The works open at seven.' : ch ? 'Cairnhold is waking up. The Lodge opens at seven.' : fw ? 'The Crossing is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
