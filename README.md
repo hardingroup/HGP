@@ -163,6 +163,79 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## Nine fixes from the first walk round Tinderfold: the book, a swing, a rocking chair, shoulders, and signs you can read (build 128)
+
+**The book in your hands**
+- The panel that sat over the pages has gone. Nothing is in front of the book now except two small buttons in the top corner: **Close** and **Plain text**.
+- **Turning pages:** tap or click the right-hand page to go on and the left-hand page to go back. On a keyboard the right and left arrows do the same (so do Page Down and Page Up), and Esc closes the book. On a gamepad it is D-pad right and left, A to turn on, and B to close.
+- **Walking with it:** you can walk, run and jump with the book open. While you move, your elf lowers it and you see the world as usual; when you stop, the book comes back up and you are looking at the pages again. You can sit down with it too.
+- **Out of the bookcase:** when a book comes off a shelf or a table your elf turns away from it to read, and anything between your eye and the pages is left out of the picture, so a shelf no longer cuts across the page.
+- The pages now fill the screen instead of the top half of it.
+- The book shuts itself if somebody starts talking to you, or you open your satchel or the map.
+
+**A swing you can swing on (the Cinders' yard, Tinderfold)**
+- The ropes hang from the bough at each end of the seat, the right way round.
+- Sit on it and it starts to swing, gently at first and then higher, and your elf goes with it. Get up and it runs down by itself.
+- Tilly Cinder now stands beside the swing, not in it.
+
+**A rocking chair you can rock in (Odwin Flint's porch, Tinderfold)**
+- The chair has been rebuilt: curved rockers on the boards, four legs, a seat, a back and arms. Nothing is sunk into the porch.
+- Sit in it and it rocks.
+
+**Everybody's shoulders, heads and hats**
+- Arms are set into the body with a rounded shoulder, where they used to hang a little way off it.
+- Children and the short mountain folk get arms to their own size. A child's arms used to reach the ground.
+- Hair and hoods sit back off the face. They used to come down level with the eyes, which is what made Tilly's hat look like a mask.
+- Children get a slightly smaller head.
+
+**Sitting properly**
+- Gorse Tallow sits on the driving box with his knees bent and his hands out for the reins. He used to stand straight up through the seat.
+- The four passengers sit on the side benches.
+- The travellers at the inn's tables sit on their stools with their knees under the table. They used to stand sunk into the floor.
+
+**Green grass on Low graphics**
+- On Low and Medium, the land far from the Hollow was being left out of the picture by mistake, so the pale under-layer showed through and the ground looked like sand. The land is drawn everywhere now.
+
+**Signs and roofs in Tinderfold**
+- Flint: the name board stands on the front edge of the porch roof, facing the street. The top logs no longer poke through the roof.
+- Cinder: the name board is on the wall beside the door, clear of the little roof over it.
+
+**Not yet**
+- Putting a book back has no reach animation.
+- Only these two seats move. The rocking chairs indoors do not rock yet.
+- The swing and the rocking chair are not shared: another player sees you sitting, but not swinging.
+- The people of the Hollow who were made by hand (Bramblewick, Marigold, Aldric, Fen, Hollis, Pip, Oriel, Maudie) keep the shoulders they had.
+
+## The Goblin Hole: the first cave, goblins, a side quest, and a punch that gets better (build 127)
+
+**Where**
+- There is a mound of rock with a timbered mouth against the north fence of the Hollow, signed "Goblin Hole", north-east of the Village Stores. Walk into the mouth to go down.
+- Beside it is a post with a note and a tin. Read the note to take on the quest.
+
+**The quest: the pinched things**
+- Old Bramblewick's note says things have gone missing from the Hollow, and asks you to get them back from the goblins.
+- The pinched things are in the chest at the goblins' camp, at the far end of the cave. There are two ways to get at it:
+  - **Riddles.** Speak to Grizzlegob, the goblin chief, before any fighting starts. He asks three number riddles, each with three answers to pick from. Get all three and he keeps his word: the chest is yours and his goblins leave you alone from then on. Get one wrong and they all come for you.
+  - **Thumping.** See off all six goblins and the chief.
+- Carry the sack back up and leave it by the tin. There are 30 acorn coins in the tin.
+
+**The cave**
+- A long cave: rock underfoot, boulders along the walls, stalagmites and stalactites, a still pool, and clumps of glowing toadstools that give most of the light. The goblins' camp has a fire, crates, bedding and the chest.
+- Two goblins watch the way in, two are in the middle, two are at the fire, and the chief stands by the chest. A goblin that sees you runs at you and thumps you, which costs a little health. Health comes back by itself.
+- A goblin takes three weak hits. The chief takes six. A beaten goblin shrinks and scampers off. They are all back the next time you come down, so there is always somebody to practise on.
+
+**Punching**
+- Punch with the **F** key (it can be changed in Settings), the **right trigger** on a gamepad, or the **Punch** button, which shows on a touch screen while you are in the cave.
+- **A beginner's punch** is what you start with: your elf leans back away from it, turns its face aside and flaps both arms. It is slow, it reaches a short way, it does one point of harm, and it can only catch one goblin.
+- **After twelve punches that land**, the game tells you your punch is better. Now your elf puts its weight back, then drives forward behind a straight arm with a closed fist. It is faster, reaches farther, does two points, knocks a goblin well back, and can catch two standing together.
+- Punches landed are counted and saved, so the skill is yours to keep. This is the first step of a skill that a dojo can teach further.
+- You can throw a punch anywhere. It only lands on goblins.
+
+**Not yet**
+- Goblins are yours alone: another player in the cave sees their own goblins, not yours.
+- Goblins are only in this one cave. There are no other creatures and no dojo yet.
+- The punch cannot be thrown while sitting, riding or reading.
+
 ## A book in your hands: reach for it, hold it open, turn the pages (build 126)
 
 **Reaching for a book**
