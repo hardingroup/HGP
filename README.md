@@ -163,6 +163,21 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## One gondola for everyone, riding the ram carriage, Tinderfold on the map (build 116)
+
+**The gondola is shared**
+- **Everyone sees the same car.** The pier, the sky-lift and Skyhaven are now one meeting place online. Players there see each other even across the three: from the pier you can watch a friend ride up in the gondola, or stand on Skyhaven's dock waiting for it.
+- **How it stays in step.** Each trip is announced to everyone: when it set off (on the clock every game shares), where from, and where to. Every game works out the car's position from that alone, so everyone sees it in the same place on the cable.
+- **Riding together.** Whoever walks in or rings the bell sets the trip going for everyone. If you walk into the car while a friend is in it, you ride together. Someone who arrives later picks up where the car is from the last trip.
+
+**Riding the ram carriage**
+- **Getting on and off.** Walk up to the tailboard of Gorse Tallow's carriage when it stands still, at the shed in Tinderfold or at Emberdeep's west door, and press the pick-up key to climb on. You sit on the left bench by the driver's box. A moment later Gorse shakes the reins and Tuff and Biscuit pull you to the other end. You can climb down before it sets off; once it stops, move to step down beside it.
+- **When it runs.** Gorse takes you whenever he's awake (from about 6:20 in the morning to 9:20 at night), not just on the workers' morning and evening runs. On those runs you ride with the miners.
+- **It's shared too.** A trip anyone starts is shared with the other players on the road, just like the gondola.
+
+**Tinderfold on the map**
+- The first time you come within sight of Tinderfold, it's added to your map with its own marker. Click the marker to travel back there any time, to the street by the well, with the carriage shed at the far end.
+
 ## The sky-lift is a real car, fast travel, spinning your elf, talking mouths (build 115)
 
 **The sky-lift**

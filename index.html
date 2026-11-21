@@ -371,7 +371,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 115 · 20 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 116 · 20 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -2665,6 +2665,7 @@
     if (beetle) beetle.position.applyMatrix4(_M);
     vel.applyAxisAngle(new THREE.Vector3(0, 1, 0), dyaw);
     bodyYaw += dyaw; camYaw += dyaw; player.rotation.y = bodyYaw;
+    try { NET.peers.forEach(p => { [p, ...(p.buf || [])].forEach(q => { if (!Number.isFinite(q.x)) return; const v = new THREE.Vector3(q.x, q.y, q.z).applyMatrix4(_M); q.x = v.x; q.y = v.y; q.z = v.z; if (Number.isFinite(q.r)) q.r += dyaw; }); p.k.g.position.applyMatrix4(_M); p.k.g.rotation.y += dyaw; }); } catch (e) {}
     fallPeak += (from ? from.oy || 0 : 0) - (to ? to.oy || 0 : 0);
     where = toKey; lastGY = groundAt(player.position.x, player.position.z);
     flash(toKey === 'wild' ? 'The Long Road' : REGION_LABEL[toKey]);
@@ -4377,12 +4378,14 @@
   function cablePt(sv) { const { a, b, sag } = LIFTC; return new THREE.Vector3(a.x + (b.x - a.x) * sv, a.y + (b.y - a.y) * sv - sag * Math.sin(Math.PI * sv), 0); }
   function liftPos(t) { const p = cablePt(sstep(0, 1, t)); p.y -= LIFTC.hang; return p; }
   // ---- one car on the line. It waits at whichever end it last reached; walk in, and a moment later it sets off for the other end. If it is not at your end, the bell brings it ----
-  const LIFT = { t: 0, at: 0, moving: false, to: 0, wait: 0, call: null, rang: 0 };
-  function liftGo(to) { if (LIFT.moving) return; LIFT.moving = true; LIFT.to = to; LIFT.at = null; LIFT.wait = 0; }
+  const LIFT = { t: 0, at: 0, moving: false, to: 0, wait: 0, call: null, rang: 0, s: 0, f: 0 };
+  // every game works out where the car is from the last trip alone: when it set off (on the clock all the games share), where from, and where to. Whoever sets it going tells everyone else
+  function liftGo(to) { if (LIFT.moving) return; LIFT.moving = true; LIFT.to = to; LIFT.f = LIFT.t; LIFT.s = netNow(); LIFT.at = null; LIFT.wait = 0; try { NET.send({ lf: [+LIFT.s.toFixed(2), LIFT.f, to] }); } catch (e) {} }
+  function liftAdopt(a) { if (!Array.isArray(a) || a.length !== 3 || !a.every(Number.isFinite) || a[0] <= LIFT.s + 0.01 || a[0] > netNow() + 5) return; LIFT.s = a[0]; LIFT.f = clamp(a[1], 0, 1); LIFT.to = a[2] ? 1 : 0; LIFT.moving = true; LIFT.at = null; LIFT.wait = 0; }
   function liftCall(end) { if (LIFT.at === end && !LIFT.moving) return; if (LIFT.call !== end) { LIFT.call = end; if (performance.now() - LIFT.rang > 4000) { LIFT.rang = performance.now(); try { if (audioCtx && snd.fx) { const t0 = audioCtx.currentTime; [0, 0.32].forEach(d => { sndNote(snd.fx, 'triangle', 1318, 1310, t0 + d, 1.1, 0.08, 0.004); sndNote(snd.fx, 'sine', 2636, 2630, t0 + d, 0.6, 0.03, 0.004); }); } } catch (e) {} hint(end ? 'You ring the bell on the dock. The gondola is down at the pier; it is coming up for you.' : 'You pull the bell rope. The gondola is up at Skyhaven; it is coming down for you.'); } } }
   const _gp = new THREE.Vector3();
   function liftCarTick(dt) { const was = gondola.position.clone();
-    if (LIFT.moving) { const dir = LIFT.to > LIFT.t ? 1 : -1; LIFT.t = clamp(LIFT.t + dir * dt / LIFT_T, 0, 1); if (LIFT.t === LIFT.to) { LIFT.moving = false; LIFT.at = LIFT.to; if (LIFT.call === LIFT.at) LIFT.call = null; if (where === 'lift') flash(LIFT.at ? 'Skyhaven. Step out onto the dock.' : 'The pier. Step out when you like.'); } }
+    if (LIFT.moving) { const dir = LIFT.to > LIFT.f ? 1 : -1; LIFT.t = clamp(LIFT.f + dir * (netNow() - LIFT.s) / LIFT_T, 0, 1); if (LIFT.t === LIFT.to) { LIFT.moving = false; LIFT.at = LIFT.to; if (LIFT.call === LIFT.at) LIFT.call = null; if (where === 'lift') flash(LIFT.at ? 'Skyhaven. Step out onto the dock.' : 'The pier. Step out when you like.'); } }
     else if (LIFT.call !== null && LIFT.at !== LIFT.call && !LIFTRUN.on) liftGo(LIFT.call);
     liftT = LIFT.t; gondola.position.copy(liftPos(LIFT.t)); const sw = LIFT.moving ? Math.sin(performance.now() / 900) * 0.018 : 0; gondola.rotation.z = sw;
     _gp.copy(gondola.position).sub(was); if (gondola.userData.wheel) gondola.userData.wheel.rotation.z -= _gp.length() / 1.1 * Math.sign(_gp.x || 1);
@@ -5511,13 +5514,28 @@
     const pts = [[130, -242], [80, -240], [8, -240], [4, -200], [2, -150], [0, -100], [-4, -66], [-11, -40]].map(([a, b]) => toWorld(frameE, a, b)), seg = [];
     let L = 0; for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push([L, d]); L += d; }
     const spot = new THREE.Object3D(); worldScene.add(spot);
-    return { g, rams, wheels, riders, driver, pts, seg, L, spot, yaw: null, s: -1 };
+    // where you climb aboard: at the tailboard. And the free place on the left bench, by the box, where you sit
+    const board = new THREE.Object3D(); worldScene.add(board); board.userData = { pickable: true, kind: 'cart', world: 'wild' }; pickables.push(board);
+    return { g, rams, wheels, riders, driver, pts, seg, L, spot, board, yaw: null, s: -1, trip: null, rest: null, wait: 0, u: 0 };
   })();
+  // riding the carriage: Gorse will take you up to the mountain door or down to Tinderfold whenever he is awake, as well as on the workers' runs. A trip you start is shared like the gondola's
+  let cartRide = null; const CART_S = 80, _cv = new THREE.Vector3();
+  function cartAdopt(a) { const C = TF_CART; if (!Array.isArray(a) || a.length !== 3 || !a.every(Number.isFinite) || (C.trip && a[0] <= C.trip.s + 0.01) || a[0] > netNow() + 5) return; C.trip = { s: a[0], u0: clamp(a[1], 0, 1), dir: a[2] < 0 ? -1 : 1 }; }
+  function cartBoard() { const C = TF_CART, hr = clockHour();
+    if (C.moving) { hint('The carriage is on its way. Wait for it to stop.'); return; }
+    if (!(hr >= 6.3 && hr < 21.3)) { hint('Gorse has gone home to bed. The carriage runs again in the morning; the lane up to the mountain door is there to walk.'); return; }
+    if (riding) setRiding(false); sitting = true; sitSeat = C.board; cartRide = { yawOff: Math.PI / 2 }; C.wait = 0; bodyYaw = camYaw = C.yaw + Math.PI / 2; vy = 0;
+    hint(C.u > 0.5 ? 'Gorse Tallow: Down to Tinderfold? Sit tight and hold the side. (Move to climb down before we go.)' : 'Gorse Tallow: Up to the mountain door? Sit tight and hold the side. (Move to climb down before we go.)'); }
+  function cartAlight() { const C = TF_CART; if (C.moving) { hint('Not while it is moving! Wait till Gorse pulls up.'); return false; }
+    C.g.localToWorld(_cv.set(-6.6, 0, 2.6)); sitting = false; sitSeat = null; cartRide = null; py = 0; player.position.set(_cv.x, worldH(_cv.x, _cv.z), _cv.z); return true; }
   function tinderTick(dt, t) {
-    const C = TF_CART, hr = clockHour(); let u, moving = false, back = false;
-    if (hr >= TF.morn && hr < TF.morn + TF.tm) { u = (hr - TF.morn) / TF.tm; moving = true; }
-    else if (hr >= TF.eve && hr < TF.eve + TF.tm) { u = 1 - (hr - TF.eve) / TF.tm; moving = true; back = true; }
+    const C = TF_CART, hr = clockHour(); let u, moving = false, back = false, sched = false;
+    if (C.trip && !C.trip.done) { const tr = C.trip; u = clamp(tr.u0 + tr.dir * (netNow() - tr.s) / CART_S, 0, 1); moving = true; back = tr.dir < 0; if ((tr.dir > 0 && u >= 1) || (tr.dir < 0 && u <= 0)) { tr.done = true; moving = false; C.rest = u; if (cartRide) hint(u > 0.5 ? 'Gorse Tallow: Here we are, the mountain door. Mind the step down.' : 'Gorse Tallow: Tinderfold. Home again. Mind the step down.'); } }
+    else if (hr >= TF.morn && hr < TF.morn + TF.tm) { u = (hr - TF.morn) / TF.tm; moving = true; sched = true; }
+    else if (hr >= TF.eve && hr < TF.eve + TF.tm) { u = 1 - (hr - TF.eve) / TF.tm; moving = true; back = true; sched = true; }
     else u = hr >= TF.morn + TF.tm && hr < TF.eve ? 1 : 0;
+    if (sched) C.rest = null; else if (!moving && C.rest !== null) u = C.rest;
+    C.moving = moving; C.u = u;
     const s = clamp(u, 0, 1) * C.L; let i = C.seg.findIndex(([a, d]) => s <= a + d + 1e-6); if (i < 0) i = C.seg.length - 1; const [a, d] = C.seg[i], k = d ? (s - a) / d : 0, P = C.pts[i], Q = C.pts[i + 1];
     const x = P[0] + (Q[0] - P[0]) * k, z = P[1] + (Q[1] - P[1]) * k; let yaw = Math.atan2(Q[0] - P[0], Q[1] - P[1]); if (back || (!moving && u === 0)) yaw += Math.PI;
     if (C.yaw === null || !moving) C.yaw = yaw; else { let dy = yaw - C.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); C.yaw += dy * Math.min(1, dt * 2.5); }
@@ -5525,8 +5543,12 @@
     C.g.position.set(x, worldH(x, z), z); C.g.rotation.y = C.yaw;
     C.wheels.forEach(([w, r]) => { w.rotation.x += (back ? -1 : 1) * run / r; });
     C.rams.forEach((r, j) => r.userData.legs.forEach((l, q) => { l.rotation.x = moving ? Math.sin(t * 7 + q * 1.6 + j) * 0.5 : 0; }));
-    C.riders.forEach(e => { e.visible = moving; }); const awake = hr >= 6.3 && hr < 21.3; C.driver.visible = awake;
+    C.riders.forEach(e => { e.visible = sched; }); const awake = hr >= 6.3 && hr < 21.3; C.driver.visible = awake || moving;
     const sn = Math.sin(C.yaw), cs = Math.cos(C.yaw); C.spot.position.set(x + sn * 6.4 + cs * 4, 0, z + cs * 6.4 - sn * 4);   // beside the box, where you can call up to him C.spot.visible = awake;
+    C.board.position.set(x - sn * 10.5, 0, z - cs * 10.5);
+    // you, on the left bench by the box: carried along, and set going a moment after you sit down
+    if (cartRide) { C.g.updateMatrixWorld(true); C.g.localToWorld(_cv.set(-2.3, 0, 2.6)); player.position.x = _cv.x; player.position.z = _cv.z; py = Math.max(-0.4, C.g.position.y + 4.9 - groundAt(_cv.x, _cv.z) - 0.95 * kid.tall); bodyYaw = C.yaw + Math.PI / 2; player.rotation.y = bodyYaw;
+      if (!moving && !(C.trip && !C.trip.done)) { C.wait += dt; if (C.wait > 2.5) { C.trip = { s: netNow(), u0: u, dir: u > 0.5 ? -1 : 1 }; C.wait = 0; try { NET.send({ cr: [+C.trip.s.toFixed(2), C.trip.u0, C.trip.dir] }); } catch (e) {} } } }
     TF.dyn.length = 0; TF.dyn.push({ x: x - sn * 2, z: z - cs * 2, r: 4.6 }, { x: x + sn * 6, z: z + cs * 6, r: 3 }, { x: x + sn * 12.5, z: z + cs * 12.5, r: 4.4 });
   }
   // walls, posts and doors in Tinderfold, in the village's own frame; and the carriage, wherever it is
@@ -6314,7 +6336,8 @@
     const peers = new Map(), myId = (() => { try { let v = localStorage.getItem('long-road-pid'); if (!v) { v = 'p' + Math.random().toString(36).slice(2, 12); localStorage.setItem('long-road-pid', v); } return v; } catch (e) { return 'p' + Math.random().toString(36).slice(2, 12); } })();
     let ws = null, topic = '', state = 'off', why = '', ref = 0, beat = 0, sendT = 0, lookT = 0, last = [0, 0, 0, 0], retry = 0, retryAt = 0, wasMoving = false, critT = 0, force = false;
     const SEND = 0.095, BEHIND = 180;   // ten positions a second go out; everyone else is drawn this many milliseconds in the past, gliding between the two positions either side of that moment
-    const want = () => fam.see !== false && gameStarted && !titleUp && !dead ? 'lr:' + (where === 'in' ? 'in:' + interior.id + (interior.city && interior.door ? ':' + Math.round(interior.door.x) + ':' + Math.round(interior.door.z) : '') : where) : '';
+    const SKYLINE = { lantern: 1, lift: 1, skyhaven: 1 };   // the pier, the sky-lift and Skyhaven are one place for meeting: you can see a friend in the gondola from the pier
+    const want = () => fam.see !== false && gameStarted && !titleUp && !dead ? 'lr:' + (where === 'in' ? 'in:' + interior.id + (interior.city && interior.door ? ':' + Math.round(interior.door.x) + ':' + Math.round(interior.door.z) : '') : SKYLINE[where] ? 'skyline' : where) : '';
     const push = (t, event, payload) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ topic: t, event, payload, ref: String(++ref) })); };
     function nameTag(name) { const tex = canvasTex(256, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(27,43,30,.78)'; const tw = Math.min(w - 8, 30 + name.length * 17); g.beginPath(); g.rect((w - tw) / 2, 10, tw, 44); g.fill(); g.fillStyle = '#f6e7c2'; g.font = '600 30px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(name, w / 2, 33); }); const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false })); sp.scale.set(3.2, 0.8, 1); return sp; }
     // a speech bubble over an elf, and a gesture made with its arms
@@ -6375,7 +6398,7 @@
       if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: { id: myId, [kind]: n } }); }
     function dropAll() { peers.forEach(p => { p.k.g.parent && p.k.g.parent.remove(p.k.g); if (p.bt && p.bt.parent) p.bt.parent.remove(p.bt); }); peers.clear(); }
     // One game in each place runs the animals: the one whose id sorts first, among the elves near enough to share them. In a town that is everyone there; in open country it is everyone within a few hundred units.
-    const shares = p => { if (where !== 'wild') return true; const d = Math.hypot(p.x - player.position.x, p.z - player.position.z); p.near = d < (p.near ? 460 : 400); return p.near; };
+    const shares = p => { if (p.w && p.w !== where) return false; if (where !== 'wild') return true; const d = Math.hypot(p.x - player.position.x, p.z - player.position.z); p.near = d < (p.near ? 460 : 400); return p.near; };
     function puppet() { if (state !== 'on' || where === 'in') return false; for (const [id, p] of peers) if (id < myId && shares(p)) return true; return false; }
     function nearElf(pos) { let x = player.position.x, z = player.position.z, yaw = bodyYaw, best = Math.hypot(x - pos.x, z - pos.z); peers.forEach(p => { const g = p.k.g.position, d = Math.hypot(g.x - pos.x, g.z - pos.z); if (d < best) { best = d; x = g.x; z = g.z; yaw = p.r; } }); return { x, z, yaw }; }
     function critterList() { const out = [], now = performance.now(); critters.forEach((c, i) => { if (c.sceneKey !== where || c.kind === 'butterfly') return; const o = c.obj, f = (o.visible ? 0 : 1) | ((c.kind === 'crow' && c.state !== 'perch') || (c.kind === 'pheasant' && c.state === 'burst') || (c.kind === 'squirrel' && c.h >= 0.5) ? 2 : 0) | (c.state === 'wag' ? 4 : 0);
@@ -6384,12 +6407,14 @@
       if (!m || typeof m.id !== 'string' || m.id === myId || m.id.length > 40) return;
       let p = peers.get(m.id);
       if (m.rt) { if (m.to === myId) heardSig(m); return; }
+      if (m.lf) liftAdopt(m.lf); if (m.cr) cartAdopt(m.cr);
+      if (typeof m.w === 'string' && m.w !== where && TILES[m.w] && TILES[where] && [m.x, m.y, m.z, m.r].every(Number.isFinite)) { const A = TILES[m.w], B = TILES[where], v = new THREE.Vector3(m.x, m.y, m.z).applyMatrix4(A.m).applyMatrix4(B.inv); m.x = v.x; m.y = v.y; m.z = v.z; m.r += A.yaw - B.yaw; if (Array.isArray(m.b) && m.b.length >= 4) { const u = new THREE.Vector3(m.b[0], m.b[1], m.b[2]).applyMatrix4(A.m).applyMatrix4(B.inv); m.b = [u.x, u.y, u.z, m.b[3] + A.yaw - B.yaw, m.b[4]]; } m.c = null; m.dw = null; m.mt = 0; }
       if (m.hi) { lookT = 0; return; }   // somebody has just arrived: tell them at once what you look like
       if (m.bye) { if (p) { p.k.g.parent && p.k.g.parent.remove(p.k.g); if (p.bt && p.bt.parent) p.bt.parent.remove(p.bt); peers.delete(m.id); hang(m.id); } return; }
       if (p && (Number.isInteger(m.q) || Number.isInteger(m.e))) { if (fam.phrases === false) return; if (Number.isInteger(m.q) && PHRASES[m.q]) { bubble(p, p.k.g, p.k.tall || 1, PHRASES[m.q]); if (!talking() && Math.hypot(p.x - player.position.x, p.z - player.position.z) < 90) flash(`${p.name || 'An elf'}: ${PHRASES[m.q]}`, 4500); } else if (EMOTES[m.e]) { p.em = m.e; p.emT = performance.now(); } return; }
       if (![m.x, m.y, m.z, m.r].every(Number.isFinite)) return;
       if (!p) { if (peers.size >= 24) return; const k = makeKid(); k.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); k.satchel.visible = true; p = { k, id: m.id, x: m.x, y: m.y, z: m.z, r: m.r, name: '', tag: null, seen: 0, mv: 0, buf: [], sp: 0 }; force = true; k.g.position.set(m.x, m.y, m.z); peers.set(m.id, p); curScene().add(k.g); }
-      p.x = m.x; p.y = m.y; p.z = m.z; p.r = m.r; p.mv = m.m ? 1 : 0; p.sit = !!m.s; p.mt = m.mt | 0; p.seen = performance.now(); { const B = p.buf, L = B[B.length - 1]; if (L && Math.hypot(m.x - L.x, m.z - L.z) > 30) B.length = 0; let ts = p.seen; if (Number.isFinite(m.t)) { const d = p.seen - m.t; p.off = p.off === undefined || Math.abs(d - p.off) > 3000 ? d : Math.min(p.off + 0.4, d); ts = m.t + p.off; if (L && ts <= L.t) ts = L.t + 1; } p.run = !!m.u; B.push({ t: ts, x: m.x, y: m.y, z: m.z, r: m.r }); if (B.length > 16) B.shift();
+      p.x = m.x; p.y = m.y; p.z = m.z; p.r = m.r; p.w = typeof m.w === 'string' ? m.w : where; p.mv = m.m ? 1 : 0; p.sit = !!m.s; p.mt = m.mt | 0; p.seen = performance.now(); { const B = p.buf, L = B[B.length - 1]; if (L && Math.hypot(m.x - L.x, m.z - L.z) > 30) B.length = 0; let ts = p.seen; if (Number.isFinite(m.t)) { const d = p.seen - m.t; p.off = p.off === undefined || Math.abs(d - p.off) > 3000 ? d : Math.min(p.off + 0.4, d); ts = m.t + p.off; if (L && ts <= L.t) ts = L.t + 1; } p.run = !!m.u; B.push({ t: ts, x: m.x, y: m.y, z: m.z, r: m.r }); if (B.length > 16) B.shift();
         // the animals, if this is the game that runs them here
         if (Array.isArray(m.c) && m.v === BUILDN && m.id < myId && where !== 'in' && shares(p)) m.c.forEach(q => { const c = Array.isArray(q) ? critters[q[0]] : null; if (!c || c.sceneKey !== where || !q.slice(1, 5).every(Number.isFinite)) return; const pb = c.pb || (c.pb = []), l = pb[pb.length - 1]; pb.push({ t: l && ts <= l.t ? l.t + 1 : ts, x: q[1], y: q[2], z: q[3], r: q[4], f: q[5] | 0 }); if (pb.length > 10) pb.shift(); c.pfrom = m.id; });
         // and their beetle, if one is walking with them
@@ -6416,7 +6441,7 @@
         beat -= dt; if (beat <= 0) { beat = 25; push('phoenix', 'heartbeat', {}); }
         sendT -= dt; lookT -= dt; const P = player.position, moved = Math.hypot(P.x - last[0], P.z - last[2]) > 0.03 || Math.abs(P.y - last[1]) > 0.03 || Math.abs(bodyYaw - last[3]) > 0.02;
         let cl = null; critT -= dt; if (sendT <= 0 && critT <= 0 && where !== 'in' && peers.size && !puppet()) { critT = 0.2; cl = critterList(); if (!cl.length) cl = null; }
-        if (sendT <= 0 && (moved || wasMoving || cl || lookT <= 0 || sendT < -1)) { sendT = SEND; wasMoving = moved; const m = { id: myId, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), r: +bodyYaw.toFixed(2), m: moved ? 1 : 0, s: sitting ? 1 : 0, t: Math.round(performance.now()), u: running ? 1 : 0 }; if (riding) m.mt = mount === 'dog' ? 2 : 1; if (cl) { m.c = cl; m.v = BUILDN; } if (beetle && beetle.visible && beetle.parent === player.parent) m.b = [+beetle.position.x.toFixed(2), +beetle.position.y.toFixed(2), +beetle.position.z.toFixed(2), +beetle.rotation.y.toFixed(2), +beetle.scale.x.toFixed(2)];
+        if (sendT <= 0 && (moved || wasMoving || cl || lookT <= 0 || sendT < -1)) { sendT = SEND; wasMoving = moved; const m = { id: myId, w: where, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), r: +bodyYaw.toFixed(2), m: moved ? 1 : 0, s: sitting ? 1 : 0, t: Math.round(performance.now()), u: running ? 1 : 0 }; if (riding) m.mt = mount === 'dog' ? 2 : 1; if (LIFT.s && SKYLINE[where]) m.lf = [+LIFT.s.toFixed(2), LIFT.f, LIFT.to]; if (TF_CART.trip && where === 'wild') m.cr = [+TF_CART.trip.s.toFixed(2), TF_CART.trip.u0, TF_CART.trip.dir]; if (cl) { m.c = cl; m.v = BUILDN; } if (beetle && beetle.visible && beetle.parent === player.parent) m.b = [+beetle.position.x.toFixed(2), +beetle.position.y.toFixed(2), +beetle.position.z.toFixed(2), +beetle.rotation.y.toFixed(2), +beetle.scale.x.toFixed(2)];
           if (lookT <= 0) { lookT = 4; m.n = save.name || 'Elfling'; m.l = Object.assign({}, DEFAULT_LOOK, save.look || {}); m.h = save.hatStyle || ''; m.vc = RTC.on && voiceOK() ? 1 : 0; if (dogSt.mine && save.dog && !save.dog.on && save.dog.w === where) m.dw = [save.dog.p[0], save.dog.p[1], save.dog.p[2], save.dog.r]; }
           last = [P.x, P.y, P.z, bodyYaw]; push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: m }); } }
       bubbleTick(me, player, performance.now()); pose(me, kid, performance.now()); voiceTick(performance.now());
@@ -6435,7 +6460,8 @@
         p.sp += (Math.min(vv, 20) - p.sp) * Math.min(1, dt * 5); const going = p.sp > 0.5 && !p.sit;
         p.ph = (p.ph || 0) + (going ? dt * (p.run ? 16 : 11) * Math.min(1.2, Math.max(0.45, p.sp / 7.5)) : 0); p.amp = (p.amp || 0) + ((going ? (p.run ? 1.0 : 0.7) : 0) - (p.amp || 0)) * Math.min(1, dt * 7); const sw = Math.sin(p.ph) * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; { const rd = p.mt === 2; if (rd) ridePose(p.k); if (rd !== !!p.rd) { p.rd = rd; if (!rd) { p.k.legs.forEach(l => { l.rotation.z = 0; l.userData.knee.rotation.z = 0; }); gripAll(p.k.hands, 0.35); } } } bubbleTick(p, g, now); pose(p, p.k, now); });
     }
-    return { tick, hear, peers, puppet, nearElf, say, me, voice, voiceSync: () => { if (RTC.on && !voiceOK()) voiceOff(true); chip(); }, rtc: RTC, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
+    function send(extra) { if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: Object.assign({ id: myId }, extra) }); }
+    return { tick, hear, peers, puppet, nearElf, say, me, voice, send, voiceSync: () => { if (RTC.on && !voiceOK()) voiceOff(true); chip(); }, rtc: RTC, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
       note: () => state === 'on' ? `Connected. ${peers.size ? peers.size + (peers.size === 1 ? ' other elf is' : ' other elves are') + ' in this place with you.' : 'Nobody else is in this place just now.'}` : state === 'connecting' ? 'Connecting…' : state === 'failed' ? `Could not connect (${why}). It will keep trying.` : 'Not connected: it joins when you are in the game.' };
   })();
   async function sbAuth(path, body) {
@@ -6602,6 +6628,7 @@
     if (k === 'shape') return phase === 'sortshapes';
     if (k === 'grub') return phase === 'getgrub';
     if (k === 'rot') return phase === 'rot' && rotCount < 5;
+    if (k === 'cart') return !sitting && where === 'wild';
     if (k === 'seat') return !sitting && (where !== 'in' || Math.abs((o.userData.y0 || 0) - player.position.y) < 4);
     if (k === 'orow') return phase === 'orows';
     if (k === 'apple') return phase === 'apples' && applesGot < 12;
@@ -6626,6 +6653,7 @@
     else if (d.kind === 'measure') doMeasure(obj);
     else if (d.kind === 'shape') sortShape(obj);
     else if (d.kind === 'seat') sitDown(obj);
+    else if (d.kind === 'cart') cartBoard();
     else if (d.kind === 'find') takeFind(obj);
     else if (d.kind === 'shop') shopRing(d.shop);
     else if (d.kind === 'resident' || d.kind === 'knock') residentTalk(d.who, d.kind === 'knock');
@@ -6667,11 +6695,12 @@
     hint(`Sitting on the ${d.label}. Move to stand up.`);
   }
   function standUp() {
+    if (cartRide) { cartAlight(); return; }
     if (!sitting) return; sitting = false; py = 0; const yaw = bodyYaw;
     player.position.add(new THREE.Vector3(Math.sin(yaw) * 1.4, 0, Math.cos(yaw) * 1.4)); hint('');
   }
   // tier 0: whatever the lesson in hand wants picked; 1: things lying about; 2: a counter to trade at; 3: a seat
-  const PICK_TIER = { find: 1, book: 2, shelf: 2, mount: 2, stable: 3, lot: 2, wash: 2, decor: 3, store: 2, resident: 2, knock: 2, folk: 2, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
+  const PICK_TIER = { cart: 2, find: 1, book: 2, shelf: 2, mount: 2, stable: 3, lot: 2, wash: 2, decor: 3, store: 2, resident: 2, knock: 2, folk: 2, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
   function nearestPick(tier) { let best = null, bd = Infinity; pickables.forEach(o => { if ((PICK_TIER[o.userData.kind] || 0) !== tier || !canPick(o)) return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } }); return [best, bd]; }
   function pickNearest() {
     let [best, bd] = nearestPick(0);
@@ -9268,7 +9297,7 @@
     return 0;
   }
   function collide(prev) {
-    const p = player.position;
+    const p = player.position; if (cartRide) return;   // on the carriage, it carries you
     if (where === 'wild') { collideWild(p, prev); return; }
     if (where === 'village' && lastGY + py < 2.6) for (const bx of hollowBoxes) { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (bx.id && Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } }
     // the tree-house: handrails up the stair and round the platform. From up there, no step may drop you more than a stair or two.
@@ -10543,6 +10572,7 @@
       ${(() => { const [mx, my] = mapXY(frameH.ox, frameH.oz), [cx, cy] = mapXY(CITY.cx, CITY.cz); if (!isFound(8)) return ''; return `<ellipse cx="${mx}" cy="${my}" rx="17" ry="4" fill="#4a7fb8" opacity=".8" transform="rotate(${(-frameH.yaw * 180 / Math.PI).toFixed(1)} ${mx} ${my})"/>
       <g id="capmark" tabindex="0" style="cursor:pointer" transform="translate(${cx} ${cy})"><rect x="-13" y="-9" width="26" height="18" rx="3" fill="#f6e7c2" stroke="#b5562b" stroke-width="2.5"/><path d="M-9 6 V-1 L-6 -4 L-3 -1 V6 Z M-2 6 V-4 L1 -7 L4 -4 V6 Z M5 6 V0 L7.5 -2.5 L10 0 V6Z" fill="#b5562b"/><text y="24" text-anchor="middle" font-family="Uncial Antiqua, Georgia, serif" font-size="13" fill="#3a2a18">Hearthmoor</text><text y="36" text-anchor="middle" font-size="9" fill="#5a3d22">the capital</text></g>`; })()}
       <text x="${gx}" y="${gy - 7}" font-size="10" font-style="italic" fill="#3a2a18" text-anchor="middle">Cairn Gorge</text>
+      ${isFound(9) ? (() => { const [tx, ty] = mapXY(frameT.ox, frameT.oz); return `<g id="tindermark" tabindex="0" style="cursor:pointer" transform="translate(${tx.toFixed(1)} ${ty.toFixed(1)})"><circle r="11" fill="#f6e7c2" stroke="#8a3a2a" stroke-width="2"/><path d="M-6 5 V-1 L-3 -4 L0 -1 V5 Z M1 5 V0 L3.5 -2.5 L6 0 V5 Z" fill="#8a3a2a"/><text y="22" text-anchor="middle" font-family="Uncial Antiqua, Georgia, serif" font-size="11" fill="#3a2a18">Tinderfold</text></g>`; })() : ''}
       <text x="972" y="560" font-size="11" font-style="italic" fill="#2f4a6a" text-anchor="middle" transform="rotate(90 972 560)">the sea</text>
       ${isFound(7) ? `<path d="M${lx} ${ly} L${sx} ${sy}" stroke="#7a5a30" stroke-width="2" stroke-dasharray="3 5" fill="none"/>
       <path d="M${sx - 34} ${sy + 30} q0 -14 14 -14 q5 -14 20 -9 q15 -5 20 9 q12 0 10 14z" fill="#fff" stroke="#c7d6ee" stroke-width="1.5" opacity=".9"/>` : ''}
@@ -10565,22 +10595,24 @@
     mapSvgEl.innerHTML = svg; refreshSaveButtons();
     if (!gameStarted && save.started) $('maphint').textContent = `Welcome back: ${save.coins} acorn coins and ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished. Continue, or pick any lesson.`;
     mapSvgEl.querySelectorAll('.mapmark').forEach(g => { g.addEventListener('click', () => selectRegion(parseInt(g.dataset.i, 10))); g.setAttribute('tabindex', '0'); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRegion(parseInt(g.dataset.i, 10)); } }); });
+    { const tm = mapSvgEl.querySelector('#tindermark'); if (tm) { const go = () => { if (gameStarted) travelTo(9); }; tm.addEventListener('click', go); tm.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); } }
     { const cm = mapSvgEl.querySelector('#capmark'), go = () => { if (!master) { if (gameStarted) travelTo(8); return; } if (!gameStarted) { $('maphint').textContent = 'Start or continue the game first; then you can go to Hearthmoor from this map.'; return; } closeMap(); const [x, z] = toWorld(frameH, CITY.x0 - 24, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor, the capital.'); }; if (cm) { cm.addEventListener('click', go); cm.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); } }
     drawPanel();
   }
   // ---- places you have found. A town appears on the map only once you have been there, and from then on you can travel back to it from the map. Everywhere new, you walk to first ----
   const FOUND_KEY = { village: 0, orchards: 1, fernwater: 2, cairnhold: 3, cogsworth: 4, emberdeep: 5, lantern: 6, skyhaven: 7 };
-  function foundList() { if (!Array.isArray(save.found)) { const f = [0]; REGIONS.forEach((r, i) => { if (r.lessons && r.lessons.some(([, k]) => isDone(k))) f.push(i); }); const w = FOUND_KEY[save.where]; if (w !== undefined && !f.includes(w)) f.push(w); save.found = f; } return save.found; }
-  const isFound = i => master || foundList().includes(i);
+  function foundList() { if (!Array.isArray(save.found)) { const f = [0]; REGIONS.forEach((r, i) => { if (r.lessons && r.lessons.some(([, k]) => isDone(k)) && !f.includes(i)) f.push(i); }); const w = FOUND_KEY[save.where]; if (w !== undefined && !f.includes(w)) f.push(w); save.found = f; } return save.found; }
+  const isFound = i => master || foundList().includes(i);   // 0-7 the towns, 8 Hearthmoor, 9 Tinderfold
   let _foundW = null;
-  function discoverTick() { if (!gameStarted || fading) return; const w = regionOf(), key = CITY.here ? 'city' : w; if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : FOUND_KEY[key]; if (i === undefined) return; const f = foundList(); if (f.includes(i)) return; f.push(i); persist();
-    flash(`${i === 8 ? 'Hearthmoor' : REGIONS[i].name} is on your map now. You can travel back here from the map any time.`, 6000); }
+  function discoverTick() { if (!gameStarted || fading) return; const w = regionOf(); let key = CITY.here ? 'city' : w; if (w === 'wild' && Math.hypot(player.position.x - frameT.ox, player.position.z - frameT.oz) < 170) key = 'tinder'; if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : key === 'tinder' ? 9 : FOUND_KEY[key]; if (i === undefined) return; const f = foundList(); if (f.includes(i)) return; f.push(i); persist();
+    flash(`${i === 8 ? 'Hearthmoor' : i === 9 ? 'Tinderfold' : REGIONS[i].name} is on your map now. You can travel back here from the map any time.`, 6000); }
   // travel from the map to a place you have already found
   function travelTo(i) { const msg = t => { $('maphint').textContent = t; };
-    if (!gameStarted || fading) return; if (where === 'in') { msg('Step outside first, then travel.'); return; } if (where === 'lift' || where === 'flight') { msg('Wait till you are off the ' + (where === 'lift' ? 'sky-lift' : 'glider') + ', then travel.'); return; } if (dead) return;
+    if (!gameStarted || fading) return; if (where === 'in') { msg('Step outside first, then travel.'); return; } if (cartRide && TF_CART.moving) { msg('Wait till the carriage stops, then travel.'); return; } if (where === 'lift' || where === 'flight') { msg('Wait till you are off the ' + (where === 'lift' ? 'sky-lift' : 'glider') + ', then travel.'); return; } if (dead) return;
     if (!isFound(i)) { msg('You have not been there yet. Walk there once, and then you can travel back from the map.'); return; }
     closeMap(); if (sitting) standUp(); if (riding && mount === 'dog') hint('You get down, and Bracken trots off home to his stall.');
     if (i === 8) { const [x, z] = toWorld(frameH, CITY.x0 - 24, CITY.gateZ); enterWild(x, z, frameH.yaw + Math.PI / 2, 'The West Gate of Hearthmoor, the capital.'); }
+    else if (i === 9) { const [x, z] = toWorld(frameT, -40, 0); enterWild(x, z, frameT.yaw + Math.PI / 2, 'Tinderfold, down the hill from Emberdeep. The carriage shed is at the far end of the street.'); }
     else if (i === 0) fadeTo('Thistledown Hollow', () => { if (riding) setRiding(false); moveCompany(curScene(), scene); where = 'village'; player.position.set(0, 0, 17); py = 0; vy = 0; bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 15); const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }, () => hint('Thistledown Hollow.'));
     else [null, goToOrchards, goToFernwater, goToCairn, goToCogsworth, goToEmberdeep, goToLantern, goToSky][i](); }
   // the tester's ways round: straight to any town with no lesson begun, and everything in the satchel
