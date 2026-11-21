@@ -163,6 +163,26 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## Checkers for two, Bracken goes round things, and legs for the small animals (build 119)
+
+**Checkers you can play**
+- There is a real checkers board on a round table out on the green in the Hollow, just west of the Village Stores, with a stool each side. The Willowbys' house, Barnaby Ratchet's house and two town houses have the same board on their round tables.
+- Walk up and choose "Play checkers", or sit on one of the two stools. You take Red or White, whichever stool is free, and a board opens on the screen turned so your own pieces are nearest you.
+- A piece you may move has a gold ring. Pick it, then pick a gold spot. It works by tap, mouse, keyboard (arrows or the walking keys, then Enter or Space) and gamepad (stick or D-pad, then A).
+- The rules are the usual ones: pieces move one square on the diagonal, a jump must be taken when there is one, a piece that can jump again goes on, and a piece that reaches the far row is crowned and can move both ways. You win when the other side has no pieces or no move left.
+- **Two players:** when another elf sits on the other stool they take that side, and each move goes to everyone in that place. Anyone else who walks up sees the pieces move on the table and can open the board to watch.
+- **On your own:** while the other stool is empty, the board plays the other side. Its play is simple.
+- New game sets the pieces back. Stand up (or Esc, or B on a gamepad) leaves the game and frees your stool. If an elf shuts the game without standing up, their stool frees itself after about nine seconds.
+- **Not yet:** the chess, cards, dice and other table games in the houses are still only to look at. There is no draw rule, so a game of kings chasing each other goes on until someone presses New game.
+
+**Bracken goes round things**
+- When you whistle, the dog now looks a few steps ahead and runs round houses, trees, tables and the shop instead of through them, in every town and out on the road.
+- If he cannot reach you (you are indoors behind a wall, say), he stops as near as he can and waits, and the game tells you so.
+
+**Legs for the small animals**
+- Mice and hedgehogs have four little legs that step when they run, and the hedgehog has eyes.
+- Ducks have orange legs and webbed feet that paddle under them as they swim, and eyes.
+
 ## Other elves on the map, which way you face, voice on iPhone and iPad, and Bracken's tail (build 118)
 
 **Other elves on the map**

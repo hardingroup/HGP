@@ -134,6 +134,26 @@
   .act.main { width: 84px; height: 84px; border-color: var(--gold); font-size: 15px; }
   @media (min-width: 700px) { .acts { max-width: none; } }
   body.touchmode .pad { display: flex; }
+  #draughts { position: fixed; inset: 0; z-index: 56; background: rgba(14,22,16,.35); display: flex; align-items: center; justify-content: center; padding: 10px; overflow: auto; }
+  @media (min-aspect-ratio: 3/2) { #draughts { justify-content: flex-end; padding-right: 3vw; } }
+  #draughts[hidden] { display: none; }
+  #draughts .drsheet { background: var(--panel); border: 2px solid var(--panel-edge); border-radius: 16px; padding: 12px 14px 14px; width: min(94vw, 540px, max(230px, 100vh - 215px)); margin: auto 0; color: var(--ink); box-sizing: border-box; }
+  #drhead { font-size: 15px; line-height: 1.3; min-height: 3.9em; margin-bottom: 8px; }
+  #drgrid { display: grid; grid-template-columns: repeat(8, 1fr); border: 4px solid #5a3d22; border-radius: 6px; overflow: hidden; touch-action: manipulation; }
+  #drgrid button { -webkit-appearance: none; appearance: none; border: 0; padding: 0; margin: 0; background: #f2ead8; position: relative; aspect-ratio: 1; min-width: 0; cursor: default; -webkit-tap-highlight-color: transparent; }
+  #drgrid button.dk { background: #4f7a4a; }
+  #drgrid button.last { background: #6d9c60; }
+  #drgrid button i { position: absolute; inset: 11%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: min(5.4vw, 3.6vh, 30px); line-height: 1; color: #e0b23c; text-shadow: 0 1px 1px rgba(0,0,0,.6); box-shadow: inset 0 -4px 0 rgba(0,0,0,.22), 0 2px 3px rgba(0,0,0,.45); }
+  #drgrid button.pr i { background: #c0283a; }
+  #drgrid button.pw i { background: #f5efe0; color: #b8860b; }
+  #drgrid button.can { cursor: pointer; }
+  #drgrid button.can i { box-shadow: 0 0 0 3px var(--gold), inset 0 -4px 0 rgba(0,0,0,.22); }
+  #drgrid button.sel i { box-shadow: 0 0 0 4px #fff, inset 0 -4px 0 rgba(0,0,0,.22); }
+  #drgrid button.tg { cursor: pointer; }
+  #drgrid button.tg::before { content: ''; position: absolute; inset: 34%; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 3px rgba(0,0,0,.25); }
+  #drgrid button.cur::after { content: ''; position: absolute; inset: 0; border: 3px solid #fff; box-sizing: border-box; pointer-events: none; }
+  #drfoot { display: flex; gap: 8px; margin-top: 10px; }
+  #drfoot .btn { flex: 1; min-width: 0; padding-left: 6px; padding-right: 6px; }
   #bag { position: fixed; inset: 0; z-index: 55; background: rgba(14,22,16,.9); color: var(--ink); overflow: auto; padding: 14px 10px 32px; font-size: 15px; -webkit-overflow-scrolling: touch; }
   #bag .sheet { max-width: 1000px; margin: 0 auto; background: var(--panel); border: 2px solid var(--panel-edge); border-radius: 16px; padding: 14px 18px 18px; }
   .baghead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
@@ -253,6 +273,7 @@
 
 <canvas id="scene" aria-label="Bramblewick's shop and the forest clearing outside, seen from seven inches tall"></canvas>
 <div class="fade" id="fade" aria-live="polite"></div>
+<div id="draughts" hidden><div class="drsheet" role="dialog" aria-label="Checkers"><div id="drhead" aria-live="polite"></div><div id="drgrid"></div><div id="drfoot"><button class="btn" id="drnew">New game</button><button class="btn" id="drleave">Stand up</button></div></div></div>
 <div id="bag" hidden>
   <div class="sheet">
     <div class="baghead"><h1 id="bagtitle">Your satchel</h1><span class="chip gold" id="bagcoins"></span><span class="chip" id="bagload"></span><button class="btn primary" data-a="close">Close</button></div>
@@ -371,7 +392,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 118 · 20 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 119 · 21 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -724,6 +745,7 @@
 
   // ---------- benches and stools you can sit on ----------
   const seats = [], roomSeats = [], realHouses = [], shopSpots = [], storeSpots = [];
+  const DTABLES = {}; let drUp = false, drT = null, drSel = -1, drCur = 44, drKb = false;   // the checkers tables; the one you are sitting at, the piece you have picked, and where the keyboard's square is
   // somewhere to keep things: a chest, a wardrobe, a shelf, a drawer. If it has an owner it is theirs and locked; otherwise it is yours.
   function storeSpot(sc, world, x, y, z, data) { const o = new THREE.Object3D(); o.position.set(x, y, z); sc.add(o); o.userData = Object.assign({ pickable: true, kind: 'store', world, cap: 20 }, data); storeSpots.push(o); return o; }
   // a brass bell on a counter: ring it to trade. Where there is no counter, it stands on a barrel.
@@ -1061,6 +1083,11 @@
         add(2.4, 1.2, 2.6, 0, 0.9, 0); add(2.4, 2.6, 0.6, 0, 2.2, -1.3); [-1, 1].forEach(sd => add(0.5, 1.3, 2.4, sd * 1.2, 1.9, 0)); solids.push({ x, z, r: 1.5 }); seatSpot(scene, 'village', x + Math.sin(yaw) * 0.2, z + Math.cos(yaw) * 0.2, yaw, 1.5, 'armchair'); });
       { const tx = -10.2, tz = -7.8; I(new THREE.CylinderGeometry(1, 1, 0.2, 16), top, tx, 2.2, tz); I(new THREE.CylinderGeometry(0.15, 0.3, 2.1, 8), dark, tx, 1.05, tz); solids.push({ x: tx, z: tz, r: 1 }); const bk = B(0.9, 0.25, 1.2, tx + 0.2, 2.42, tz, mat('#7a2a3a')); bk.rotation.y = 0.4; I(new THREE.CylinderGeometry(0.2, 0.16, 0.35, 10), cream, tx - 0.4, 2.48, tz + 0.4);
         const rg = I(new THREE.CircleGeometry(3.4, 32), mat('#ffffff', { map: rugTex, roughness: 1 }), -9, 0.08, -6.2); rg.rotation.x = -Math.PI / 2; }
+      // a games table out on the green, west of the shop: a real checkers board and a stool each side
+      { const x = -20, z = 18, M = (geo, m, px, py, pz) => { const q = new THREE.Mesh(geo, m); q.position.set(px, py, pz); q.castShadow = true; q.receiveShadow = true; scene.add(q); return q; };
+        M(new THREE.CylinderGeometry(2.9, 2.9, 0.35, 20), top, x, 3.5, z); M(new THREE.CylinderGeometry(0.5, 0.9, 3.3, 10), dark, x, 1.65, z); M(new THREE.CylinderGeometry(1.5, 1.7, 0.3, 14), dark, x, 0.15, z); solids.push({ x, z, r: 2.6 });
+        const ss = [[-4.3, Math.PI / 2], [4.3, -Math.PI / 2]].map(([a, yaw]) => { M(new THREE.CylinderGeometry(1, 0.9, 2.5, 12), wood, x + a, 1.25, z); solids.push({ x: x + a, z, r: 1.1 }); return seatSpot(scene, 'village', x + a, z, yaw, 2.5, 'stool'); });
+        draughtsTable(scene, x, 3.68, z, Math.PI / 2, 'green', ss); }
       // a long display table down the left side of the shop floor, with the newest toys and a basket of acorns on it
       { const x = -7.4, z = 8.2; B(6, 0.3, 2.6, x, 2.4, z, top); [[-2.7, -1.1], [2.7, -1.1], [-2.7, 1.1], [2.7, 1.1]].forEach(([a, b]) => B(0.3, 2.3, 0.3, x + a, 1.15, z + b, dark)); [-2.2, 2.2, 0].forEach(o => solids.push({ x: x + o, z, r: 1.6 }));
         [acornPerson('#3e8a52'), acornCart(), acornTop(), acornPerson('#d9a33f'), acornTop()].forEach((t, i) => { t.position.set(x - 2.2 + i * 1.1, 2.55, z + (i % 2 ? 0.5 : -0.4)); t.rotation.y = i; inside.add(t); });
@@ -2982,8 +3009,9 @@
       [[5.8, 10.8, '#d9c08a', 0.025], [5, 10, o.runner || '#7a3e2a', 0.035]].forEach(([w, d, c, y]) => { const rn = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(c, { roughness: 1 })); rn.rotation.x = -Math.PI / 2; rn.position.set(0, y, S - 6.6); sc.add(rn); });
       // a round table with a game set out on it, and three stools
       { const x = PX + 7.5, z = 12.5, tp = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 2.9, 0.35, 20), top); tp.position.set(x, 3.5, z); sc.add(tp); const pd = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 3.3, 10), dark); pd.position.set(x, 1.65, z); sc.add(pd); so(x, z, 2.6);
-        tableGame((HOUSEHOLD[k.id] || {}).game || 'checkers', x, 3.68, z, (geo, m, px, py, pz) => { const q = new THREE.Mesh(geo, m); q.position.set(x + px, 3.68 + py, z + pz); sc.add(q); return q; });
-        [[0, -4.3, 0], [-4.3, 0, Math.PI / 2], [4.3, 0, -Math.PI / 2]].forEach(([a, b, yaw]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.9, 2.5, 12), wood); st.position.set(x + a, 1.25, z + b); sc.add(st); so(x + a, z + b, 1.1); k.seat(x + a, z + b, yaw, 2.5, 'stool'); }); }
+        const gm = (HOUSEHOLD[k.id] || {}).game || 'checkers'; if (gm !== 'checkers') tableGame(gm, x, 3.68, z, (geo, m, px, py, pz) => { const q = new THREE.Mesh(geo, m); q.position.set(x + px, 3.68 + py, z + pz); sc.add(q); return q; });
+        const sts = [[0, -4.3, 0], [-4.3, 0, Math.PI / 2], [4.3, 0, -Math.PI / 2]].map(([a, b, yaw]) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.9, 2.5, 12), wood); st.position.set(x + a, 1.25, z + b); sc.add(st); so(x + a, z + b, 1.1); return k.seat(x + a, z + b, yaw, 2.5, 'stool'); });
+        if (gm === 'checkers' && sts[1] && sts[2]) draughtsTable(sc, x, 3.68, z, Math.PI / 2, k.id, [sts[1], sts[2]]); }
       // a tall clock by the door, and cloaks on their pegs the other side of it
       { const x = 8.5, z = S - 1; wall(2.4, 9.6, 1.5, x, 4.8, z, dark); wall(2.9, 0.5, 1.9, x, 9.85, z, dark); wall(2.9, 0.6, 1.9, x, 0.3, z, dark); const fc = new THREE.Mesh(new THREE.CircleGeometry(0.85, 20), cream); fc.position.set(x, 7.9, z - 0.77); fc.rotation.y = Math.PI; sc.add(fc);
         wall(0.08, 0.6, 0.04, x, 8.15, z - 0.79, black); wall(0.45, 0.08, 0.04, x + 0.2, 7.9, z - 0.79, black); wall(0.08, 3, 0.05, x, 4.6, z - 0.77, brass); const bob = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.06, 14), brass); bob.rotation.x = Math.PI / 2; bob.position.set(x, 3.1, z - 0.78); sc.add(bob); so(x, z, 1.6);
@@ -3049,6 +3077,101 @@
     if (hh.mir) { sc.children.slice(n0).forEach(m => { m.position.x *= -1; m.rotation.y *= -1; m.rotation.z *= -1; m.scale.x *= -1; if (m.userData && m.userData.kind === 'seat') m.userData.yaw = -m.userData.yaw; });
       for (let i = s0; i < solids.length; i++) solids[i].x *= -1; for (let i = b0; i < k.boxes.length; i++) k.boxes[i].x *= -1; const fa = k.room.floorAt; if (fa) k.room.floorAt = (x, z, y) => fa(-x, z, y); } }; }
   // what is set out on the table in the hall: a different game in each house, or none
+  // ---------- checkers you can play ----------
+  // The board is 8 by 8 and only the dark squares are used. Red sits at row 0 and moves up the rows; White sits at row 7 and moves down. 1 is a red man, 2 a red king, 3 a white man, 4 a white king.
+  function drFresh() { const b = new Array(64).fill(0); for (let i = 0; i < 64; i++) if (((i >> 3) + (i & 7)) % 2) { if (i >> 3 < 3) b[i] = 1; else if (i >> 3 > 4) b[i] = 3; } return { gid: 0, n: 0, b, turn: 0, jump: -1, win: -1, who: [null, null], names: ['', ''], last: [-1, -1] }; }
+  function drSide(v) { return v === 0 ? -1 : v < 3 ? 0 : 1; }
+  function drKing(v) { return v === 2 || v === 4; }
+  // every move the side to play may make. A jump must be taken when there is one, and a piece that has just jumped and can jump again must go on (jump is its square)
+  function drMoves(b, turn, jump) { const mv = [], cap = [];
+    for (let i = 0; i < 64; i++) { const v = b[i]; if (!v || drSide(v) !== turn || (jump >= 0 && i !== jump)) continue; const r = i >> 3, c = i & 7, dirs = drKing(v) ? [1, -1] : [turn ? -1 : 1];
+      for (const dr of dirs) for (const dc of [-1, 1]) { const r1 = r + dr, c1 = c + dc; if (r1 < 0 || r1 > 7 || c1 < 0 || c1 > 7) continue; const j = r1 * 8 + c1;
+        if (!b[j]) mv.push({ from: i, to: j, cap: -1 }); else if (drSide(b[j]) !== turn) { const r2 = r1 + dr, c2 = c1 + dc; if (r2 >= 0 && r2 <= 7 && c2 >= 0 && c2 <= 7 && !b[r2 * 8 + c2]) cap.push({ from: i, to: r2 * 8 + c2, cap: j }); } } }
+    return cap.length ? cap : jump >= 0 ? [] : mv; }
+  function drApply(st, m) { const b = st.b, v = b[m.from]; let crowned = false; b[m.from] = 0; b[m.to] = v; if (m.cap >= 0) b[m.cap] = 0;
+    if (v === 1 && m.to >> 3 === 7) { b[m.to] = 2; crowned = true; } if (v === 3 && m.to >> 3 === 0) { b[m.to] = 4; crowned = true; }
+    st.last = [m.from, m.to]; st.n++;
+    if (m.cap >= 0 && !crowned && drMoves(b, st.turn, m.to).length) st.jump = m.to; else { st.jump = -1; st.turn ^= 1; }
+    if (!drMoves(b, st.turn, st.jump).length) { st.win = st.turn ^ 1; st.jump = -1; } }
+  function drReset(T) { const s = T.st, f = drFresh(); s.b = f.b; s.turn = 0; s.jump = -1; s.win = -1; s.last = [-1, -1]; s.gid = Math.max(s.gid + 1, Math.floor(netNow())); s.n = 0; }
+  // build a board on a table top. seats is [Red's stool, White's stool]
+  function draughtsTable(sc, x, y, z, yaw, id, seatList) { while (DTABLES[id]) id += '2';
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = yaw; sc.add(g);
+    const SQ = 0.45, add = (geo, m, px, py, pz) => { const q = new THREE.Mesh(geo, m); q.position.set(px, py, pz); q.castShadow = true; q.receiveShadow = true; g.add(q); return q; };
+    add(new THREE.BoxGeometry(SQ * 8 + 0.36, 0.1, SQ * 8 + 0.36), mat('#5a3d22'), 0, 0.05, 0); add(new THREE.BoxGeometry(SQ * 8, 0.12, SQ * 8), mat('#f2ead8'), 0, 0.06, 0);
+    { const sg = new THREE.BoxGeometry(SQ, 0.13, SQ), green = mat('#4f7a4a'); for (let i = 0; i < 64; i++) if (((i >> 3) + (i & 7)) % 2) add(sg, green, ((i & 7) - 3.5) * SQ, 0.065, ((i >> 3) - 3.5) * SQ); }
+    const pg = new THREE.CylinderGeometry(0.17, 0.17, 0.1, 14), cg = new THREE.TorusGeometry(0.1, 0.035, 5, 12), cols = [mat('#c0283a', { roughness: 0.5 }), mat('#f5efe0', { roughness: 0.5 })], gold = mat('#e0b23c', { roughness: 0.4, metalness: 0.4 });
+    const men = [0, 1].map(sd => Array.from({ length: 12 }, () => { const p = new THREE.Group(), a = new THREE.Mesh(pg, cols[sd]); a.castShadow = true; p.add(a); const kg = new THREE.Group(), b2 = new THREE.Mesh(pg, cols[sd]); b2.position.y = 0.1; b2.castShadow = true; kg.add(b2); const cr = new THREE.Mesh(cg, gold); cr.rotation.x = Math.PI / 2; cr.position.y = 0.17; kg.add(cr); kg.visible = false; p.add(kg); p.userData = { k: kg, to: new THREE.Vector3() }; p.visible = false; g.add(p); return p; }));
+    const s0 = seatList[0], spot = new THREE.Object3D(); spot.position.set((s0.position.x + seatList[1].position.x) / 2, s0.position.y, (s0.position.z + seatList[1].position.z) / 2); s0.parent.add(spot);
+    spot.userData = { pickable: true, kind: 'draughts', world: s0.userData.world, dr: id }; storeSpots.push(spot); seatList.forEach((q, i) => { q.userData.dr = [id, i]; });
+    const T = DTABLES[id] = { id, g, world: s0.userData.world, seats: seatList, men, st: drFresh(), heard: {}, hb: 0, ai: 0 }; drLayout(T, true); return T; }
+  // stand the pieces where the game says they are. Each piece on the table goes to the nearest square that wants one of its colour, so the piece that moved is the one you see move
+  function drLayout(T, snap) { const SQ = 0.45, b = T.st.b; [0, 1].forEach(sd => { const want = []; for (let i = 0; i < 64; i++) if (b[i] && drSide(b[i]) === sd) want.push(i); const pcs = T.men[sd], pairs = [];
+      want.forEach((i, wi) => { const tx = ((i & 7) - 3.5) * SQ, tz = ((i >> 3) - 3.5) * SQ; pcs.forEach((p, pi) => pairs.push([p.visible ? Math.hypot(p.userData.to.x - tx, p.userData.to.z - tz) : 99, wi, pi, tx, tz, i])); });
+      pairs.sort((a, c) => a[0] - c[0]); const usedW = new Set(), usedP = new Set();
+      pairs.forEach(([, wi, pi, tx, tz, i]) => { if (usedW.has(wi) || usedP.has(pi)) return; usedW.add(wi); usedP.add(pi); const p = pcs[pi]; p.userData.to.set(tx, 0.18, tz); if (snap || !p.visible) p.position.copy(p.userData.to); p.visible = true; p.userData.k.visible = drKing(b[i]); });
+      pcs.forEach((p, pi) => { if (!usedP.has(pi)) p.visible = false; }); }); }
+  const DRCH = '.rRwW', drName = v => String(v || '').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16);
+  function drPack(T) { const s = T.st; let bs = ''; for (let i = 0; i < 64; i++) if (((i >> 3) + (i & 7)) % 2) bs += DRCH[s.b[i]]; return [T.id, s.gid, s.n, bs, s.turn, s.jump, s.win, s.who[0] || '', s.who[1] || '', s.names[0], s.names[1], s.last[0], s.last[1]]; }
+  function drSend(T) { T.hb = 2; try { NET.send({ dg: drPack(T) }); } catch (e) {} }
+  // word of a game from another elf. The newer game wins, then the one further on; if two elves did something at the same moment, the one whose name sorts first keeps theirs
+  function drHeard(a, from) { if (!Array.isArray(a) || a.length < 13) return; const T = DTABLES[a[0]]; if (!T || typeof a[3] !== 'string' || a[3].length !== 32 || /[^.rRwW]/.test(a[3])) return;
+    if (![a[1], a[2], a[4], a[5], a[6], a[11], a[12]].every(Number.isFinite)) return; const s = T.st, now = performance.now(); T.heard[from] = now;
+    const newer = a[1] > s.gid || (a[1] === s.gid && (a[2] > s.n || (a[2] === s.n && from < NET.id && JSON.stringify(a) !== JSON.stringify(drPack(T))))); if (!newer) return;
+    const was = s.who.slice(), hadMe = s.who.indexOf(NET.id); let k = 0; for (let i = 0; i < 64; i++) s.b[i] = ((i >> 3) + (i & 7)) % 2 ? DRCH.indexOf(a[3][k++]) : 0;
+    s.gid = a[1]; s.n = a[2]; s.turn = a[4] ? 1 : 0; s.jump = a[5] >= 0 && a[5] < 64 ? a[5] | 0 : -1; s.win = a[6] === 0 || a[6] === 1 ? a[6] : -1; s.who = [a[7], a[8]].map(v => (typeof v === 'string' && v && v.length <= 40 ? v : null)); s.names = [drName(a[9]), drName(a[10])]; s.last = [a[11] | 0, a[12] | 0];
+    s.who.forEach(id => { if (id && id !== NET.id && !T.heard[id]) T.heard[id] = now; });
+    if (drUp && T === drT) { drSel = -1; if (hadMe >= 0 && s.who.indexOf(NET.id) < 0 && drClaim(T, hadMe) < 0) { standUp(); flash('Another elf took that stool at the same moment. Try the other one.', 4500); drLayout(T); return; }   // somebody's word of the game left you out: sit back down in it if a stool is free
+      [0, 1].forEach(sd => { if (s.who[sd] && s.who[sd] !== NET.id && s.who[sd] !== was[sd]) flash(`${s.names[sd] || 'An elf'} sits down to play ${sd ? 'White' : 'Red'}.`, 3500); }); chink(660); }
+    drChanged(T); }
+  function drChanged(T) { drLayout(T); T.ai = 0; if (drUp && T === drT) drDraw(); }
+  // take a seat in the game: the side you asked for if it is free, or else whichever is
+  function drClaim(T, pref) { const s = T.st, id = NET.id, now = performance.now(); [0, 1].forEach(sd => { const o = s.who[sd]; if (o && o !== id && now - (T.heard[o] || 0) > 9000) { s.who[sd] = null; s.names[sd] = ''; s.n++; } });   // an elf who left without standing up
+    let side = s.who.indexOf(id); if (side < 0) { side = pref >= 0 && !s.who[pref] ? pref : !s.who[0] ? 0 : !s.who[1] ? 1 : -1;
+      if (side >= 0) { if (s.win >= 0 || (!s.who[0] && !s.who[1])) drReset(T); s.who[side] = id; s.names[side] = drName(save.name) || 'Elfling'; s.n++; drSend(T); drLayout(T); } }
+    if (side >= 0 && T.seats[side] && sitSeat !== T.seats[side]) sitDown(T.seats[side]); return side; }
+  function drSit(T, pref) { if (!T || drUp || fading) return; drUp = true; drT = T; drSel = -1; drKb = settings.input === 'keyboard' || settings.input === 'gamepad'; const side = drClaim(T, pref === undefined ? -1 : pref); drCur = 44;
+    $('draughts').hidden = false; hint(''); drDraw(); if (side < 0) flash('Both stools are taken, so you are watching this game.', 4000); }
+  function drLeave(quiet) { if (!drUp) return; const T = drT, s = T.st, side = s.who.indexOf(NET.id); drUp = false; $('draughts').hidden = true; if (side >= 0) { s.who[side] = null; s.names[side] = ''; s.n++; drSend(T); } if (!quiet && sitting) standUp(); }
+  function drNew() { if (!drUp) return; const T = drT; if (T.st.who.indexOf(NET.id) < 0) return; drReset(T); drSel = -1; drSend(T); drChanged(T); chink(880); }
+  // the board on the screen, turned so your own pieces are nearest you
+  function drDraw() { const T = drT, s = T.st, me = s.who.indexOf(NET.id), grid = $('drgrid'), flip = me !== 1, col = ['Red', 'White'];
+    if (!grid.children.length) { for (let g = 0; g < 64; g++) { const bt = document.createElement('button'); bt.type = 'button'; bt.tabIndex = -1; bt.appendChild(document.createElement('i')); bt.addEventListener('click', () => { drKb = false; drClick(drAt(g)); }); grid.appendChild(bt); }
+      $('drnew').addEventListener('click', drNew); $('drleave').addEventListener('click', () => drLeave()); }
+    const mine = me >= 0 && s.win < 0 && s.turn === me, mv = mine ? drMoves(s.b, s.turn, s.jump) : [];
+    for (let g = 0; g < 64; g++) { const i = drAt(g), v = s.b[i], bt = grid.children[g], dk = ((i >> 3) + (i & 7)) % 2; let c = dk ? 'dk' : '';
+      if (v) c += drSide(v) ? ' pw' : ' pr'; if (dk && (i === s.last[0] || i === s.last[1])) c += ' last'; if (mv.some(q => q.from === i)) c += ' can'; if (i === drSel) c += ' sel'; if (drSel >= 0 && mv.some(q => q.from === drSel && q.to === i)) c += ' tg'; if (drKb && g === drCur) c += ' cur';
+      if (bt.className !== c) bt.className = c; const ic = bt.firstChild; ic.style.display = v ? '' : 'none'; const kt = drKing(v) ? '♛' : ''; if (ic.textContent !== kt) ic.textContent = kt;
+      bt.setAttribute('aria-label', `${'abcdefgh'[i & 7]}${(i >> 3) + 1}` + (v ? `, ${col[drSide(v)]} ${drKing(v) ? 'king' : 'piece'}` : dk ? ', empty' : '')); }
+    const nm = sd => (s.who[sd] ? (sd === me ? 'you' : s.names[sd] || 'an elf') : 'the board'); let l1, l2;
+    if (me < 0) l1 = `You are watching. Red is ${nm(0)} and White is ${nm(1)}.`; else l1 = `You are <b>${col[me]}</b>. ${col[me ^ 1]} is ${s.who[me ^ 1] ? nm(me ^ 1) : 'played by the board until an elf sits down'}.`;
+    if (s.win >= 0) l2 = s.win === me ? 'You win! Well played.' : `${col[s.win]} wins.` + (me >= 0 ? ' New game plays again.' : '');
+    else if (mine) l2 = s.jump >= 0 ? 'Jump again with the same piece.' : mv.length && mv[0].cap >= 0 ? 'Your move. You must jump.' : 'Your move. Pick a piece with a gold ring, then a gold spot.';
+    else l2 = `${col[s.turn]} to move.`;
+    const pad = settings.input === 'gamepad', kb = settings.input === 'keyboard'; $('drhead').innerHTML = l1 + '<br><b>' + l2 + '</b>';
+    $('drnew').textContent = 'New game' + (pad ? ' (Y)' : kb ? ' (N)' : ''); $('drnew').disabled = me < 0; $('drleave').textContent = (sitting ? 'Stand up' : 'Close') + (pad ? ' (B)' : kb ? ' (Esc)' : ''); }
+  function drAt(g) { return drT && drT.st.who.indexOf(NET.id) === 1 ? g : 63 - g; }   // the square on the board under a square on the screen: Red and anyone watching see row 0 at the bottom, White sees row 7 there
+  function drClick(i) { const T = drT, s = T.st, me = s.who.indexOf(NET.id); if (me < 0 || s.win >= 0 || s.turn !== me) { drDraw(); return; }
+    const mv = drMoves(s.b, s.turn, s.jump), m = mv.find(q => q.from === drSel && q.to === i);
+    if (m) { drApply(s, m); drSel = s.jump >= 0 && s.turn === me ? s.jump : -1; chink(m.cap >= 0 ? 520 : 700); if (s.win >= 0) chink(1040); drSend(T); drChanged(T); return; }
+    drSel = mv.some(q => q.from === i) ? i : -1; if (drSel < 0 && mv.length === 1 && s.jump >= 0) drSel = s.jump; drDraw(); }
+  function drNav(dx, dy) { drKb = true; const c = Math.max(0, Math.min(7, (drCur & 7) + dx)), r = Math.max(0, Math.min(7, (drCur >> 3) + dy)); drCur = r * 8 + c; drDraw(); }
+  function drKey(e) { const k = e.code, a = actionOf(k); if (k === 'Escape') { if (!e.repeat) drLeave(); return; }
+    const dx = k === 'ArrowLeft' || a === 'l' ? -1 : k === 'ArrowRight' || a === 'r' ? 1 : 0, dy = k === 'ArrowUp' || a === 'f' ? -1 : k === 'ArrowDown' || a === 'b' ? 1 : 0;
+    if (dx || dy) { e.preventDefault(); drNav(dx, dy); } else if (k === 'Enter' || k === 'Space' || a === 'pick' || a === 'jump') { e.preventDefault(); if (e.repeat) return; if (!drKb) { drKb = true; drDraw(); } else drClick(drAt(drCur)); } else if (k === 'KeyN' && !e.repeat) drNew(); }
+  function drPad(hit, ax, ay, dt) { drPad.t = (drPad.t || 0) - dt; let dx = hit(14) ? -1 : hit(15) ? 1 : 0, dy = hit(12) ? -1 : hit(13) ? 1 : 0; if (!dx && !dy && (ax || ay) && drPad.t <= 0) { if (Math.abs(ax) > Math.abs(ay)) dx = ax > 0 ? 1 : -1; else dy = ay > 0 ? 1 : -1; } if (!ax && !ay) drPad.t = 0;
+    if (dx || dy) { drPad.t = 0.2; drNav(dx, dy); } if (hit(0)) { if (!drKb) { drKb = true; drDraw(); } else drClick(drAt(drCur)); } if (hit(1)) drLeave(); if (hit(3)) drNew(); }
+  // the board's own hand, for when nobody sits across from you: it takes a jump when it must, likes a crown, and would rather not step where it will be jumped
+  function drBoardMove(T) { const s = T.st, mv = drMoves(s.b, s.turn, s.jump); if (!mv.length) return; let best = null, bs = -1e9;
+    mv.forEach(m => { const t = { b: s.b.slice(), turn: s.turn, jump: s.jump, win: -1, last: [], n: 0 }, v = s.b[m.from]; drApply(t, m); let sc = Math.random() * 2; if (t.win >= 0) sc += 50; if (t.b[m.to] !== v) sc += 4; if (t.turn !== s.turn && drMoves(t.b, t.turn, -1).some(q => q.cap >= 0)) sc -= 5; if (t.turn === s.turn) sc += 3; if (sc > bs) { bs = sc; best = m; } });
+    drApply(s, best); chink(best.cap >= 0 ? 470 : 620); drSend(T); drChanged(T); }
+  function drTick(dt) { const here = where === 'in' ? 'in:' + interior.id : where;
+    for (const id in DTABLES) { const T = DTABLES[id]; if (T.world !== here) continue; T.men.forEach(side => side.forEach(p => { if (!p.visible) return; const to = p.userData.to, dx = to.x - p.position.x, dz = to.z - p.position.z, d = Math.hypot(dx, dz); if (d < 0.004) { p.position.copy(to); return; } const st = Math.min(d, dt * Math.max(1.6, d * 5)); p.position.x += dx / d * st; p.position.z += dz / d * st; p.position.y = to.y + Math.min(0.3, (d - st) * 0.8); })); }
+    if (!drUp) return; const T = drT, s = T.st, me = s.who.indexOf(NET.id), now = performance.now();
+    if (fading || T.world !== here || (me >= 0 && !sitting)) { drLeave(true); return; }
+    [0, 1].forEach(sd => { const o = s.who[sd]; if (o && o !== NET.id && now - (T.heard[o] || 0) > 9000) { s.who[sd] = null; s.names[sd] = ''; s.n++; drSend(T); drChanged(T); flash('The other elf has left the table.', 3500); } });
+    if (me < 0) return; T.hb -= dt; if (T.hb <= 0) drSend(T);
+    if (s.win < 0 && !s.who[s.turn]) { T.ai += dt; if (T.ai > 0.9) { T.ai = 0; drBoardMove(T); } } }
   function tableGame(game, x, y, z, P) { const B = (w, h, d, px, py, pz, m) => P(new THREE.BoxGeometry(w, h, d), m, px, py, pz), cream = mat('#f2ead8'), dark = mat('#3a2a1e'), red = mat('#b0203a'), blue = mat('#2f4f7a'), wood = mat('#8a6438');
     if (game === 'checkers') { B(2, 0.12, 2, 0, 0.06, 0, cream); for (let q = 0; q < 16; q++) if ((q + (q >> 2)) % 2) B(0.5, 0.13, 0.5, -0.75 + (q % 4) * 0.5, 0.07, -0.75 + (q >> 2) * 0.5, dark); [[-0.5, 0.25, red], [0.25, -0.5, blue], [0.75, 0.5, red], [-0.25, -0.25, blue]].forEach(([a, b, c]) => P(new THREE.CylinderGeometry(0.17, 0.17, 0.16, 10), c, a, 0.22, b)); }
     else if (game === 'chess') { B(2.3, 0.12, 2.3, 0, 0.06, 0, dark); for (let q = 0; q < 64; q++) if ((q + (q >> 3)) % 2) B(0.26, 0.13, 0.26, -0.91 + (q % 8) * 0.26, 0.07, -0.91 + (q >> 3) * 0.26, cream);
@@ -4766,12 +4889,12 @@
   function makeHedgehog() {
     const g = new THREE.Group(); blob(g, sph(1.5), mat('#5a4a3a', { roughness: 1 }), 0, 1.4, 0, 1, 0.9, 1.4);
     for (let k = 0; k < 40; k++) { const a = rnd(0, 6.28), e = rnd(0.2, 1.4); const sp = blob(g, new THREE.ConeGeometry(0.08, 1.1, 4), mat(pick(['#2a2420', '#8a7a66'])), Math.cos(a) * Math.sin(e) * 1.4, 1.4 + Math.cos(e) * 1.3, Math.sin(a) * Math.sin(e) * 1.9 - 0.3); sp.lookAt(0, 1.4, 0); sp.rotateX(-Math.PI / 2); }
-    blob(g, sph(0.7), mat('#b59a7c'), 0, 1.0, 1.7, 1, 0.8, 1.3); blob(g, sph(0.18), mat('#1b1b1b'), 0, 1.0, 2.6); return g;
+    blob(g, sph(0.7), mat('#b59a7c'), 0, 1.0, 1.7, 1, 0.8, 1.3); blob(g, sph(0.18), mat('#1b1b1b'), 0, 1.0, 2.6); [-1, 1].forEach(d => blob(g, sph(0.1), mat('#1b1b1b'), d * 0.32, 1.3, 2.2)); g.userData.legs = legSet(g, mat('#b59a7c'), [[-0.85, 1.05], [0.85, 1.05], [-0.9, -0.95], [0.9, -0.95]], 0.75, 0.17); return g;
   }
-  function makeMouse() { const g = new THREE.Group(), m = mat('#8a7a66'); blob(g, sph(0.45), m, 0, 0.45, 0, 0.9, 0.9, 1.5); blob(g, sph(0.3), m, 0, 0.55, 0.6); [-1, 1].forEach(d => blob(g, sph(0.18), mat('#d9a7a0'), d * 0.25, 0.85, 0.5)); const tail = blob(g, new THREE.CylinderGeometry(0.03, 0.06, 1.6, 4), m, 0, 0.35, -1.3); tail.rotation.x = Math.PI / 2 + 0.2; return g; }
+  function makeMouse() { const g = new THREE.Group(), m = mat('#8a7a66'); blob(g, sph(0.45), m, 0, 0.45, 0, 0.9, 0.9, 1.5); blob(g, sph(0.3), m, 0, 0.55, 0.6); [-1, 1].forEach(d => blob(g, sph(0.18), mat('#d9a7a0'), d * 0.25, 0.85, 0.5)); const tail = blob(g, new THREE.CylinderGeometry(0.03, 0.06, 1.6, 4), m, 0, 0.35, -1.3); tail.rotation.x = Math.PI / 2 + 0.2; g.userData.legs = legSet(g, mat('#d9a7a0'), [[-0.26, 0.4], [0.26, 0.4], [-0.28, -0.36], [0.28, -0.36]], 0.26, 0.055); return g; }
   function makeBadger() { const g = new THREE.Group(), m = mat('#6e6e6e', { roughness: 1 }); blob(g, sph(2.4), m, 0, 3, 0, 1, 0.8, 2.3); blob(g, sph(1.3), mat('#f1ece2'), 0, 3.6, 5.2, 1, 0.8, 1.6); [-1, 1].forEach(d => { blob(g, new THREE.BoxGeometry(0.5, 1.4, 3.2), mat('#1b1b1b'), d * 0.7, 3.7, 5.4); blob(g, sph(0.2), mat('#1b1b1b'), d * 0.7, 3.9, 6.9); }); blob(g, sph(0.3), mat('#1b1b1b'), 0, 3.4, 7.3); g.userData.legs = legSet(g, mat('#2a2420'), [[-1.3, 3], [1.3, 3], [-1.3, -3], [1.3, -3]], 2.2, 0.45); return g; }
   function makePheasant() { const g = new THREE.Group(), m = mat('#a0522d'); blob(g, sph(1.6), m, 0, 2.6, 0, 1, 0.9, 1.6); blob(g, sph(0.7), mat('#2e5a3a'), 0, 4.6, 2.4); blob(g, sph(0.5), mat('#c8384a'), 0, 4.6, 2.9, 1, 0.8, 0.8); blob(g, new THREE.ConeGeometry(0.2, 0.9, 5), mat('#e0b23c'), 0, 4.5, 3.6).rotation.x = Math.PI / 2; blob(g, new THREE.CylinderGeometry(0.1, 0.35, 7, 5), mat('#7a4a2a'), 0, 3.2, -4.6).rotation.x = Math.PI / 2 + 0.25; g.userData.legs = legSet(g, mat('#8a7a66'), [[-0.5, 0], [0.5, 0]], 1.6, 0.12); g.userData.wings = [-1, 1].map(d => { const piv = new THREE.Group(); piv.position.set(d * 1.2, 3.2, 0); const w = blob(piv, new THREE.PlaneGeometry(3, 1.6), mat('#8a5a2a', { side: THREE.DoubleSide }), d * 1.5, 0, 0); w.rotation.x = -Math.PI / 2; g.add(piv); return piv; }); return g; }
-  function makeDuck() { const g = new THREE.Group(), m = mat(pick(['#8a6a3a', '#5a4a3a'])); blob(g, sph(1.5), m, 0, 0.6, 0, 1, 0.8, 1.6); blob(g, sph(0.8), pick([mat('#2e6b3a'), m]), 0, 2.6, 1.8); blob(g, new THREE.BoxGeometry(0.7, 0.3, 1.1), mat('#e0b23c'), 0, 2.4, 2.8); blob(g, sph(0.5), m, 0, 1.2, -2, 0.6, 0.6, 1).rotation.x = -0.5; return g; }
+  function makeDuck() { const g = new THREE.Group(), m = mat(pick(['#8a6a3a', '#5a4a3a'])); blob(g, sph(1.5), m, 0, 0.6, 0, 1, 0.8, 1.6); blob(g, sph(0.8), pick([mat('#2e6b3a'), m]), 0, 2.6, 1.8); blob(g, new THREE.BoxGeometry(0.7, 0.3, 1.1), mat('#e0b23c'), 0, 2.4, 2.8); blob(g, sph(0.5), m, 0, 1.2, -2, 0.6, 0.6, 1).rotation.x = -0.5; [-1, 1].forEach(d => blob(g, sph(0.09), mat('#1b1b1b'), d * 0.42, 2.85, 2.35)); { const om = mat('#e08a2a'); g.userData.legs = [-1, 1].map(d => { const piv = new THREE.Group(); piv.position.set(d * 0.55, 0.15, -0.3); g.add(piv); blob(piv, new THREE.CylinderGeometry(0.1, 0.08, 0.95, 6), om, 0, -0.47, 0); blob(piv, new THREE.BoxGeometry(0.6, 0.07, 0.85), om, 0, -0.95, 0.28); return piv; }); } return g; }
   function makeFrog() { const g = new THREE.Group(), m = mat('#5f9a3a'); blob(g, sph(0.7), m, 0, 0.5, 0, 1, 0.7, 1.2); const H = [-1, 1].map(d => { blob(g, sph(0.22), mat('#f4c53a'), d * 0.35, 0.95, 0.4); blob(g, sph(0.1), mat('#1b1b1b'), d * 0.35, 1.0, 0.55); const l = limb(g, m, d * 0.45, 0, -0.5, [[0.42, 0.13], [0.42, 0.1], [0.36, 0.1]]); l.rotation.z = d * 0.75; limbFit(g, l, [-1.1, 2.5, -2.9]); const f = limb(g, m, d * 0.4, 0, 0.45, [[0.3, 0.08], [0.25, 0.07]]); f.rotation.z = d * 0.35; limbFit(g, f, [0.3, -0.5]); return l; }); g.userData.limbs = { H }; return g; }
   function makeDog() { const g = new THREE.Group(); g.scale.setScalar(0.66); const m = mat(pick(['#c9a06a', '#3a2a1e', '#e6dcc2'])); blob(g, sph(2.2), m, 0, 5.4, 0, 1, 0.9, 2.2); blob(g, new THREE.CylinderGeometry(1.1, 1.5, 3.2, 8), m, 0, 6.5, 3.6).rotation.x = 0.75; const head = blob(g, sph(1.5), m, 0, 7.2, 5, 1, 0.9, 1.3); blob(g, sph(0.9), m, 0, 6.6, 6.8, 0.8, 0.7, 1.3); blob(g, sph(0.3), mat('#1b1b1b'), 0, 6.8, 7.9); [-1, 1].forEach(d => { blob(g, sph(0.2), mat('#1b1b1b'), d * 0.6, 7.6, 6.1); blob(g, sph(0.6), m, d * 1.4, 7.6, 4.6, 0.6, 1.4, 0.8).rotation.z = -d * 0.5; }); const tail = new THREE.Group(); tail.position.set(0, 5.95, -4.3); g.add(tail); { const tm = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.32, 3.5, 6), m); tm.rotation.x = -1.1; tm.position.set(0, 0.79, -1.56); tail.add(tm); const root = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6), m); tail.add(root); } g.userData.tail = tail; /* hinged where it leaves the rump, so it wags from the base */ g.userData.legs = legSet(g, m, [[-1.2, 3], [1.2, 3], [-1.2, -3], [1.2, -3]], 4.2, 0.4); return g; }
   function makeCrow() {
@@ -4804,7 +4927,7 @@
   function squirrelOn(sc, x, z, baseY, key, trunkR, climb) { const sq = makeSquirrel(); sq.position.set(x + trunkR, baseY, z); sc.add(sq); critters.push({ obj: sq, kind: 'squirrel', sceneKey: key, tx: x, tz: z, baseY, h: 0, dir: 1, timer: rnd(1, 3), a: rnd(0, 6.3), r: trunkR, climb }); }
   squirrelOn(scene, OAK.x, OAK.z, 0, 'village', 5.2, 30);
   // ducks on the river, frogs on the bank
-  for (let i = 0; i < 3; i++) { const x = (i % 2 ? 1 : -1) * rnd(14, 44), z = rnd(62, 94); const du = makeDuck(); du.position.set(x, -0.3, z); fernScene.add(du); wanderer(du, { sceneKey: 'fernwater', speed: 2.2, fleeSpeed: 6, flee: 7, radius: 25, ground: () => -0.3, bob: 0, gait: 0, ok: (nx, nz) => nz > 61 && nz < 95 && Math.abs(nx) > 8 && Math.abs(nx) < 60 }); }
+  for (let i = 0; i < 3; i++) { const x = (i % 2 ? 1 : -1) * rnd(14, 44), z = rnd(62, 94); const du = makeDuck(); du.position.set(x, -0.3, z); fernScene.add(du); wanderer(du, { sceneKey: 'fernwater', speed: 2.2, fleeSpeed: 6, flee: 7, radius: 25, ground: () => -0.3, bob: 0, gait: 7, ok: (nx, nz) => nz > 61 && nz < 95 && Math.abs(nx) > 8 && Math.abs(nx) < 60 }); }
   for (let i = 0; i < 2; i++) { const x = (i % 2 ? 1 : -1) * rnd(10, 30), z = i < 1 ? 55.8 : 100.2; const fr = makeFrog(); fr.position.set(x, 0.9, z); fr.rotation.y = i < 2 ? 0 : Math.PI; fernScene.add(fr); critters.push({ obj: fr, kind: 'frog', sceneKey: 'fernwater', home: fr.position.clone(), state: 'sit', timer: 0 }); }
   // dogs: one in the Hollow, one in Fernwater; they come and say hello
   [[scene, 6, 40, 'village', (nx, nz) => inFence(nx, nz, 3) && Math.hypot(nx, nz) > 14], [fernScene, 0, 24, 'fernwater', (nx, nz) => Math.abs(nx) < 14 && nz > 3 && nz < 50], [lantScene, -8, 80, 'lantern', (nx, nz) => Math.abs(nx) < 16 && nz > 4 && nz < 130]].forEach(([sc, x, z, key, okf]) => { const dg = makeDog(); dg.position.set(x, 0, z); sc.add(dg); wanderer(dg, { sceneKey: key, kind: 'dog', speed: 6, fleeSpeed: 11, flee: 0, radius: 30, ground: () => 0, bob: 0.25, gait: 10, ok: okf }); });
@@ -5353,7 +5476,24 @@
   function dogComeTick(dt) { if (!dogCome) return; if (!save.dog || save.dog.on || save.dog.w !== where || where === 'in') { dogCome = null; rdog.userData.gait = 0; return; }
     const P = player.position, p = save.dog.p, dx = P.x - p[0], dz = P.z - p[2], d = Math.hypot(dx, dz); dogCome.t += dt;
     if (d < 4.4 || dogCome.t > 40) { dogCome = null; rdog.userData.gait = 0; persist(); hint(`${DOGNAME} is here, wagging. ${pickName()} at him to ride.`); return; }
-    const sp = Math.min(26, 7 + d * 0.6); p[0] += dx / d * sp * dt; p[2] += dz / d * sp * dt; p[1] = groundAt(p[0], p[2]); save.dog.r = Math.atan2(dx, dz); rdog.userData.gait = sp; }
+    // he looks a few steps ahead; if something stands in the straight line he swings round it, keeping to the side he chose until the way is clear
+    const sp = Math.min(26, 7 + d * 0.6), O = dogObst(p[0], p[2]), want = Math.atan2(dx, dz), stuckIn = dogHit(O, p[0], p[2], 1.0), look = Math.min(4, d);
+    const free = a => stuckIn || (!dogHit(O, p[0] + Math.sin(a) * 1.7, p[2] + Math.cos(a) * 1.7, 1.5) && !dogHit(O, p[0] + Math.sin(a) * look, p[2] + Math.cos(a) * look, 1.5));
+    let ang = want, ok = free(want);
+    if (ok) dogCome.side = 0; else { const sides = dogCome.side ? [dogCome.side] : [1, -1]; search: for (const k of [0.45, 0.8, 1.15, 1.5, 1.9, 2.3]) for (const sg of sides) if (free(want + sg * k)) { ang = want + sg * k; ok = true; dogCome.side = sg; break search; } if (!ok) dogCome.side = -(dogCome.side || 1); }
+    if (dogCome.best === undefined || d < dogCome.best - 0.5) { dogCome.best = d; dogCome.stall = 0; } else dogCome.stall = (dogCome.stall || 0) + dt;
+    if (dogCome.stall > 5) { if (d < 45) { dogCome = null; rdog.userData.gait = 0; persist(); hint(`${DOGNAME} has come as near as he can. He is waiting for you.`); return; }
+      const a = bodyYaw + Math.PI + rnd(-0.8, 0.8); p[0] = P.x + Math.sin(a) * 30; p[2] = P.z + Math.cos(a) * 30; p[1] = groundAt(p[0], p[2]); dogCome.best = undefined; dogCome.stall = 0; return; }
+    if (!ok) { rdog.userData.gait = 0; return; }
+    p[0] += Math.sin(ang) * sp * dt; p[2] += Math.cos(ang) * sp * dt; p[1] = groundAt(p[0], p[2]); save.dog.r += wrap(ang - save.dog.r) * Math.min(1, dt * 9); rdog.userData.gait = sp; }
+  // what the dog must go round, wherever you are: round things and square ones
+  function dogObst(x, z) { let C = [], B = []; try {
+      if (where === 'wild') C = chunkSolidsNear(x, z).concat(worldScene.userData.roadSolids || []);
+      else if (where === 'village') { C = solids.concat([{ x: SHOP.x, z: SHOP.z, r: R + 0.4 }]); B = hollowBoxes.concat(realHouses); }
+      else if (where === 'orchards') { C = orchSolids; B = orchBoxes; } else if (where === 'fernwater') { C = fernSolids; B = fernHB.concat(fernBoxes); }
+      else if (where === 'cairnhold') { C = cairnSolids; B = cairnBoxes.concat(cairnHB); } else if (where === 'cogsworth') { C = cogSolids; B = cogBoxes.concat(cogHB); }
+      else if (where === 'emberdeep') { C = embSolids; B = embHB; } else if (where === 'lantern') { C = lantSolids; B = lantHB.concat(lantBoxes); } else if (where === 'skyhaven') { C = skySolids; B = skyBoxes; } } catch (e) {} return { C, B }; }
+  function dogHit(O, x, z, pad) { return O.C.some(q => Math.hypot(q.x - x, q.z - z) < q.r + pad) || O.B.some(b => Math.abs(x - b.x) < b.hw + pad && Math.abs(z - b.z) < b.hd + pad); }
   function rideKey() { if (talking()) return; if (riding) { setRiding(false); return; }
     if (dogSt.mine && rdog.visible && rdog.parent === player.parent && Math.hypot(rdog.position.x - player.position.x, rdog.position.z - player.position.z) < 10) { dogMount(); return; }
     if (bikeOwned) { mount = 'bike'; setRiding(true); } else if (dogSt.mine) flash(DOGNAME + ' is not beside you. Walk up to him and press the ride key.', 4500); }
@@ -6005,7 +6145,7 @@
   const storeLocked = id => !(save.unlocked && save.unlocked[id]);
   function openStore(u) { if (u.owner) { flash(`The ${u.label} belongs to ${u.owner}, and it is locked.`, 4500); return; } openBag(null, false, u); }
   function openBag(shopId, honest, store) {
-    if (bagOpen || talking() || fading || mapOpen || !gameStarted || !$('settings').hidden) return;
+    if (bagOpen || drUp || talking() || fading || mapOpen || !gameStarted || !$('settings').hidden) return;
     bagShop = shopId ? SHOPS[shopId] : null; bagHonest = !!honest && !!bagShop; bagStore = store || null; bagOpen = true; bagTab = 'all'; bagMsg = '';
     if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} }
     Object.keys(keys).forEach(k => (keys[k] = false)); stickV.x = stickV.y = 0;
@@ -6316,7 +6456,7 @@
     let text = '', word = 'Pick up';
     if (!talking() && !bagOpen && !mapOpen && !fading && !sitting) { const [b0, d0] = nearestPick(0); if (b0 && d0 <= REACH && b0.userData.kind === 'sci') { text = 'Look at ' + b0.userData.label; word = 'Look'; }
       if (!(b0 && d0 <= REACH)) for (let tier = 1; tier < 5 && !text; tier++) { const [b, d] = nearestPick(tier); if (!b || d > REACH) continue; const u = b.userData;
-        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'readteach') { text = 'Speak to Fen Dewberry'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { const sh = SHOPS[u.shop]; if (!shopShut(u.shop)) { text = 'Trade at ' + sh.n; word = 'Trade'; } else if (honestStock(sh).length) { text = 'Honesty box at ' + sh.n; word = 'Open'; } else { text = sh.n + ' is shut till seven'; word = 'Look'; } } else if (u.kind === 'folk') { text = 'Speak to ' + folk[u.fi].n; word = 'Speak'; } else if (u.kind === 'decor') { text = 'Choose your room’s colours'; word = 'Choose'; } else if (u.kind === 'book') { text = 'Read “' + BOOKS[u.book].t + '”'; word = 'Read'; } else if (u.kind === 'shelf') { text = 'Look along the shelf: ' + u.label; word = 'Look'; } else if (u.kind === 'wash') { text = 'Wash at the washstand'; word = 'Wash'; } else if (u.kind === 'mount') { text = dogSt.mine ? 'Ride ' + DOGNAME : dogSt.owner ? `${DOGNAME}, ${dogSt.owner}’s dog` : 'Meet ' + DOGNAME; word = dogSt.mine ? 'Ride' : 'Greet'; } else if (u.kind === 'stable') { text = 'Read the stable’s board'; word = 'Read'; } else if (u.kind === 'lot') { const st = lotState[u.no]; text = st ? (st.mine ? `Lot ${u.no} is yours` : `Lot ${u.no} is ${st.name}’s`) : `Claim Lot ${u.no}`; word = st ? 'Look' : 'Claim'; } else if (u.kind === 'store') { text = (u.owner ? 'Look at the ' : 'Open the ') + u.label; word = u.owner ? 'Look' : 'Open'; } else if (u.kind === 'knock') { text = 'Knock at ' + FOLK[u.who].n + '’s door'; word = 'Knock'; } else if (u.kind === 'resident') { text = (FOLK[u.who].pose === 'bed' ? 'Wake ' : 'Speak to ') + FOLK[u.who].n; word = 'Speak'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
+        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'readteach') { text = 'Speak to Fen Dewberry'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { const sh = SHOPS[u.shop]; if (!shopShut(u.shop)) { text = 'Trade at ' + sh.n; word = 'Trade'; } else if (honestStock(sh).length) { text = 'Honesty box at ' + sh.n; word = 'Open'; } else { text = sh.n + ' is shut till seven'; word = 'Look'; } } else if (u.kind === 'folk') { text = 'Speak to ' + folk[u.fi].n; word = 'Speak'; } else if (u.kind === 'draughts') { text = 'Play checkers'; word = 'Play'; } else if (u.kind === 'decor') { text = 'Choose your room’s colours'; word = 'Choose'; } else if (u.kind === 'book') { text = 'Read “' + BOOKS[u.book].t + '”'; word = 'Read'; } else if (u.kind === 'shelf') { text = 'Look along the shelf: ' + u.label; word = 'Look'; } else if (u.kind === 'wash') { text = 'Wash at the washstand'; word = 'Wash'; } else if (u.kind === 'mount') { text = dogSt.mine ? 'Ride ' + DOGNAME : dogSt.owner ? `${DOGNAME}, ${dogSt.owner}’s dog` : 'Meet ' + DOGNAME; word = dogSt.mine ? 'Ride' : 'Greet'; } else if (u.kind === 'stable') { text = 'Read the stable’s board'; word = 'Read'; } else if (u.kind === 'lot') { const st = lotState[u.no]; text = st ? (st.mine ? `Lot ${u.no} is yours` : `Lot ${u.no} is ${st.name}’s`) : `Claim Lot ${u.no}`; word = st ? 'Look' : 'Claim'; } else if (u.kind === 'store') { text = (u.owner ? 'Look at the ' : 'Open the ') + u.label; word = u.owner ? 'Look' : 'Open'; } else if (u.kind === 'knock') { text = 'Knock at ' + FOLK[u.who].n + '’s door'; word = 'Knock'; } else if (u.kind === 'resident') { text = (FOLK[u.who].pose === 'bed' ? 'Wake ' : 'Speak to ') + FOLK[u.who].n; word = 'Speak'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
     if (text !== promptText) { promptText = text; const p = $('prompt'); p.hidden = !text; if (text) p.innerHTML = settings.input === 'touch' ? text : `<kbd>${settings.input === 'gamepad' ? 'X' : keyLabel(settings.binds.pick)}</kbd> ${text}`; $('grab').textContent = word; }
   }
 
@@ -6448,6 +6588,7 @@
       if (!m || typeof m.id !== 'string' || m.id === myId || m.id.length > 40) return;
       let p = peers.get(m.id);
       if (m.rt) { if (m.to === myId) heardSig(m); return; }
+      if (m.dg) { drHeard(m.dg, m.id); return; }
       if (m.lf) liftAdopt(m.lf); if (m.cr) cartAdopt(m.cr);
       if (typeof m.w === 'string' && m.w !== where && TILES[m.w] && TILES[where] && [m.x, m.y, m.z, m.r].every(Number.isFinite)) { const A = TILES[m.w], B = TILES[where], v = new THREE.Vector3(m.x, m.y, m.z).applyMatrix4(A.m).applyMatrix4(B.inv); m.x = v.x; m.y = v.y; m.z = v.z; m.r += A.yaw - B.yaw; if (Array.isArray(m.b) && m.b.length >= 4) { const u = new THREE.Vector3(m.b[0], m.b[1], m.b[2]).applyMatrix4(A.m).applyMatrix4(B.inv); m.b = [u.x, u.y, u.z, m.b[3] + A.yaw - B.yaw, m.b[4]]; } m.c = null; m.dw = null; m.mt = 0; }
       if (m.hi) { lookT = 0; return; }   // somebody has just arrived: tell them at once what you look like
@@ -6508,7 +6649,7 @@
     }
     function farList() { return Array.from(FAR.values()); }
     function send(extra) { if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: Object.assign({ id: myId }, extra) }); }
-    return { tick, hear, peers, puppet, nearElf, say, me, voice, send, farList, hearFar: heardFar, voiceSync: () => { if (RTC.on && !voiceOK()) voiceOff(true); chip(); }, rtc: RTC, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
+    return { id: myId, tick, hear, peers, puppet, nearElf, say, me, voice, send, farList, hearFar: heardFar, voiceSync: () => { if (RTC.on && !voiceOK()) voiceOff(true); chip(); }, rtc: RTC, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
       note: () => state === 'on' ? `Connected. ${peers.size ? peers.size + (peers.size === 1 ? ' other elf is' : ' other elves are') + ' in this place with you.' : 'Nobody else is in this place just now.'}` : state === 'connecting' ? 'Connecting…' : state === 'failed' ? `Could not connect (${why}). It will keep trying.` : 'Not connected: it joins when you are in the game.' };
   })();
   async function sbAuth(path, body) {
@@ -6655,6 +6796,7 @@
     if (k === 'ferry') return o.userData.world === where && !ferryRide;
     if (k === 'follower') return (o === beetle && !!beetleName && beetle.userData.follow) || (!!parked && o === parked.obj && !parked.leave && parked.world === curWorld());
     if ((o.userData.world || 'village') !== (where === 'in' ? 'in:' + interior.id : where)) return false;
+    if (k === 'draughts') return !talking();
     if (k === 'resident') return FOLK[o.userData.who].mode === 'home' && Math.abs(player.position.y - o.position.y) < 5 && !talking();
     if (k === 'knock') return FOLK[o.userData.who].mode === 'home' && phase === 'free' && !talking();
     if (k === 'folk') return o.visible && !talking();
@@ -6701,6 +6843,7 @@
     else if (d.kind === 'shape') sortShape(obj);
     else if (d.kind === 'seat') sitDown(obj);
     else if (d.kind === 'cart') cartBoard();
+    else if (d.kind === 'draughts') drSit(DTABLES[d.dr]);
     else if (d.kind === 'find') takeFind(obj);
     else if (d.kind === 'shop') shopRing(d.shop);
     else if (d.kind === 'resident' || d.kind === 'knock') residentTalk(d.who, d.kind === 'knock');
@@ -6740,14 +6883,16 @@
     sitting = true; sitSeat = seat; const d = seat.userData;
     player.position.set(seat.position.x, d.y0 || 0, seat.position.z); py = Math.max(-0.4, d.seatTop - 0.95 * kid.tall); vy = 0; bodyYaw = d.yaw; camYaw = d.yaw; player.rotation.y = bodyYaw;
     hint(`Sitting on the ${d.label}. Move to stand up.`);
+    if (d.dr && !drUp) drSit(DTABLES[d.dr[0]], d.dr[1]);
   }
   function standUp() {
     if (cartRide) { cartAlight(); return; }
+    if (drUp) drLeave(true);
     if (!sitting) return; sitting = false; py = 0; const yaw = bodyYaw;
     player.position.add(new THREE.Vector3(Math.sin(yaw) * 1.4, 0, Math.cos(yaw) * 1.4)); hint('');
   }
   // tier 0: whatever the lesson in hand wants picked; 1: things lying about; 2: a counter to trade at; 3: a seat
-  const PICK_TIER = { cart: 2, find: 1, book: 2, shelf: 2, mount: 2, stable: 3, lot: 2, wash: 2, decor: 3, store: 2, resident: 2, knock: 2, folk: 2, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
+  const PICK_TIER = { draughts: 3, cart: 2, find: 1, book: 2, shelf: 2, mount: 2, stable: 3, lot: 2, wash: 2, decor: 3, store: 2, resident: 2, knock: 2, folk: 2, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
   function nearestPick(tier) { let best = null, bd = Infinity; pickables.forEach(o => { if ((PICK_TIER[o.userData.kind] || 0) !== tier || !canPick(o)) return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } }); return [best, bd]; }
   function pickNearest() {
     let [best, bd] = nearestPick(0);
@@ -9177,6 +9322,7 @@
   const SENS = 0.0022;
   function toggleView() { view = view === 'back' ? 'front' : 'back'; if (view === 'front') camYaw = bodyYaw; }
   window.addEventListener('keydown', e => {
+    if (drUp) { if ($('settings').hidden) drKey(e); return; }
     if (bagOpen) { if (!e.repeat && (e.code === 'Escape' || actionOf(e.code) === 'bag')) closeBag(); return; }
     if (talking() || mapOpen) return;
     const a = actionOf(e.code); if (!a) return;
@@ -9233,11 +9379,12 @@
     if (!gp.seen) { gp.seen = true; if (settings.input === 'keyboard' && !settings.chosen) { settings.input = 'gamepad'; applySettings(); } }
     const dz = v => (Math.abs(v) < 0.18 ? 0 : v);
     const ax = dz(pad.axes[0] || 0), ay = dz(pad.axes[1] || 0), rx = dz(pad.axes[2] || 0), ry = dz(pad.axes[3] || 0);
-    if (!talking() && !mapOpen && !bagOpen) { gp.mx = -ax; gp.mz = -ay; if (rx || ry) look(rx * dt * 1000, ry * dt * 750 * (settings.gpInvert === false ? -1 : 1) * (settings.invert ? 1 : -1)); }
+    if (!talking() && !mapOpen && !bagOpen && !drUp) { gp.mx = -ax; gp.mz = -ay; if (rx || ry) look(rx * dt * 1000, ry * dt * 750 * (settings.gpInvert === false ? -1 : 1) * (settings.invert ? 1 : -1)); }
     gp.run = !!(pad.buttons[10] && pad.buttons[10].pressed) || !!(pad.buttons[1] && pad.buttons[1].pressed);
     const now = pad.buttons.map(b => b.pressed);
     const hit = i => now[i] && !gp.prev[i];
     const picker = $('start');
+    if (drUp) { drPad(hit, ax, ay, dt); gp.prev = now; gp.run = false; return; }
     if (bagOpen) {
       // the satchel and the shop counters, worked from the pad: up and down the rows, left and right along a row, A to press, B to close, the bumpers for the tabs
       const bs = Array.from($('bag').querySelectorAll('button')).filter(q => !q.disabled && q.offsetParent !== null), cur = bs.indexOf(document.activeElement);
@@ -9599,7 +9746,7 @@
     // walking, running, sitting
     pollGamepad(dt);
     let mx = gp.mx, mz = gp.mz;
-    if (!talking() && !fading && !mapOpen && !bagOpen) { if (keys.f) mz += 1; if (keys.b) mz -= 1; if (keys.l) mx += 1; if (keys.r) mx -= 1; mx -= stickV.x; mz -= stickV.y; }
+    if (!talking() && !fading && !mapOpen && !bagOpen && !drUp) { if (keys.f) mz += 1; if (keys.b) mz -= 1; if (keys.l) mx += 1; if (keys.r) mx -= 1; mx -= stickV.x; mz -= stickV.y; }
     const mag = Math.min(1, Math.hypot(mx, mz));
     if (sitting && mag > 0.05) standUp();
     const moving = mag > 0.05 && !sitting;
@@ -9723,7 +9870,7 @@
     if (!reduce) aldHead.rotation.x = Math.sin(t * 0.7) * 0.04;
     if (inV && dAld < 7.5 && !nearAld && !talking() && ['towood', 'sortshapes', 'sacks'].includes(phase)) { nearAld = true; offer(reachAldric); }
     if (dAld > 10.5) nearAld = false;
-    nightLifeTick(dt, t); tinderTick(dt, t); liftRunTick(); liftCarTick(dt); discoverTick(); dogComeTick(dt); NET.tick(dt, t);
+    nightLifeTick(dt, t); tinderTick(dt, t); liftRunTick(); liftCarTick(dt); discoverTick(); dogComeTick(dt); drTick(dt); NET.tick(dt, t);
     grown.forEach(s => { const tg = s.userData.target; if (s.scale.x < tg) { s.scale.setScalar(Math.min(tg, s.scale.x + dt * 0.8)); } });
 
     // the orchards: Hollis and Pip, the mill wheel and its mice, bouncing trees
@@ -10753,7 +10900,7 @@
   }
   let restoreAfter = null;
   tapButton($('mapbtn'), toggleMap); tapButton($('saybtn'), () => openSay()); $('saybtn').hidden = fam.phrases === false; tapButton($('voicebtn'), () => NET.voice()); NET.voiceSync();
-  window.addEventListener('keydown', e => { if (!$('settings').hidden || bagOpen) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
+  window.addEventListener('keydown', e => { if (!$('settings').hidden || bagOpen || drUp) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; save.started = true; if (save.beetle && !beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(-3, 0, 8); restoreCompanion(); } if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
