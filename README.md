@@ -163,6 +163,100 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## Swimming, the pier ladders, softer water and fire, and the camera at doors (build 138)
+
+- **Swimming.** When you swim somewhere, your elf lies flat and does a front crawl: one arm comes over the top while the other pulls underneath, the legs flutter, and the head turns to the side for a breath every other stroke. When you stop, you tread water upright, sculling with your arms out. Other players' elves swim the same way.
+- **The Lanternreach pier.** The ladders were there, but you had to hit one almost exactly, and the sea current pushed you along the pier and away from it, so you drifted past. Now:
+  - there is a ladder at every pair of piles on both sides (twelve in all);
+  - each ladder catches you from a wider space around it;
+  - you go up as soon as you swim into a ladder, or press Jump beside it;
+  - holding on to a ladder gets your breath back;
+  - the current is gentle close to the pier and only pulls out in open water.
+- **Water sound.** The river is a quiet creek now: a soft trickle, much lower in volume, with bubbles and little babbles over it. It used to be a loud rushing roar.
+- **Fire sound.** A low, warm breath of flame that rises and falls, with a gentle pop now and then and a log settling once in a while. It used to be constant crackling.
+- **Coming through a door.** You come out a step clear of the doorway, facing the way you are going, with the camera behind your shoulder. Near a door, the camera checks for walls, doors and posts between you and it, and comes in close in front of them instead of sitting inside them. The place's name shows for a moment when you arrive, inside or out.
+
+## Friends and typed chat (build 137)
+
+- **Friends.** Open **Friends** from the map, press **O**, or choose **Friends…** in the Say menu. Everyone signed in has a six-letter friend code. Give it to somebody; when they put it in, you are asked whether to say yes. Friends are kept with the account in Supabase, so they follow you to any device.
+- **Seeing friends.** The list shows which friends are playing now and where they are. **Go to …** takes you to the nearest place to them that you have already found, the same as travelling from the map.
+- **Messages to friends.** Short typed messages go to a friend wherever they are and wait for them if they are not playing. They arrive as a note at the top of the screen. Messages are kept for two weeks, are limited to twelve a minute, and only work between friends who have both said yes. Removing a friend deletes the messages between you.
+- **Typed chat nearby.** Press **Enter**, or choose **Type…** in the Say menu, to say something to everyone in the same place. It shows as a speech bubble over your elf and as a note on their screen.
+- **Parental controls.** A new **Typed chat** setting sits beside voice: off, friends only, or anyone nearby. By default it is off under 13, friends only for 13 to 17, and on for adults. For anyone under 18, web links, email addresses, phone numbers and bad words are hidden. The voice setting **Friends and party only** now works: voice links only to elves on your friends list.
+- **Sign-in.** If the connection drops at the moment the game renews your sign-in, you are no longer signed out. Only a renewal the server refuses signs you out.
+- **Server.** New tables `game_friends` and `game_messages`, both locked behind row-level security, with all access through signed-in-only functions: `game_my_code`, `game_friends_list`, `game_friend_add`, `game_friend_answer`, `game_friend_remove`, `game_msg_send` and `game_msg_inbox`.
+
+## Shared goblins: friends in the same cave fight the same goblins (build 136)
+
+- In the Goblin Hole, the Ice Cave and the Glass Cave, everybody in the cave now sees the same goblins in the same places. A goblin one of you knocks out is gone for all of you.
+- **Who runs the goblins:** whoever has been in the cave longest. Several times a second, their game tells everybody else's where every goblin is, what it is doing and how hurt it is. If they leave, the next longest takes over from where things stand.
+- **Goblins go for whoever is nearest.** That includes another player, not only you. A thump or a snowball that lands on a friend comes off their health, not yours.
+- **Your blows count wherever you are.** When somebody else is running the cave, your punch makes the goblin flinch on your screen at once, and the blow is sent to them to count.
+- **Riddles:** if anybody beats Grizzlegob at riddles, his goblins leave everybody alone. If anybody gets one wrong, they come for everybody.
+- **The Glass Cave's walls** are shared too: a wall one of you breaks is broken for all of you.
+- **Still each player's own:** what's in the chests, the heap, the scroll and the tin by the Goblin Hole, so everybody gets their own reward.
+- **On your own,** a cave works exactly as before.
+
+## The Glass Cave, the monks' day, and pieces that slide on every board (build 135)
+
+**The Glass Cave, lower on the Frostpeak trail**
+- About a quarter of the way up, on the uphill side, there is a second cave mouth with a sign: "The Glass Cave".
+- Inside, three walls of clear ice stand across the cave, one behind another. You can see through each one to what is behind it.
+  - The **first wall** wants a yellow belt, the **second** a green belt, and the **third** a black belt. A fist that is not ready bounces off, and the game tells you which belt the wall wants.
+  - A belt that is ready cracks the wall. It shakes and clouds with each blow and then comes down in pieces. The black belt's palm takes the last wall down in a few presses.
+- **Frost goblins** stand between the walls: two near the way in, two behind the first wall, two behind the second. They can't come through a wall that is still standing.
+- **Rewards:** a chest behind the first wall (15 coins), another behind the second (25 coins), and, behind the third, a scroll from Hessa Frostmantle, who built the monastery, with 60 coins in front of it. Each pays once. The scroll can be read again any time.
+- The walls and goblins are back the next time you come in.
+- Sister Linden now tells you about both caves.
+
+**The monks keep a day**
+- **6 to 8 in the morning:** morning forms in the yard. The four monks stand in a row facing the hall and punch slowly, and Master Oren faces them.
+- **Through the day:** at their usual posts.
+- **Noon to 1, and 6 to 7:30 in the evening:** they sit on the stones round the fire bowl. There are five stones now.
+- **9:30 at night to 6 in the morning:** asleep. Sorrel, Tobin and Linden sleep in their cells, and Pim and Master Oren on the mats in the hall. Master Oren won't run a drill while he's asleep.
+- They say something different at each time of day.
+- They only change place when you aren't standing close to them, so nobody jumps across the yard in front of you.
+
+**Caves look like caves**
+- The Goblin Hole and both caves on Frostpeak had a house's beamed wooden ceiling. They now have a rock roof with lumps hanging down, in the same stone as the walls, and no wooden posts or skirting.
+
+**Every screen board**
+- Pieces now slide from square to square on chess, and tiles slide on the sliding puzzle, as on checkers.
+
+**Your elf's hair**
+- The jagged edge at the back of the head is smooth now.
+
+## Real shoulders for everybody (build 134)
+
+- **Your elf, and every other player's,** has a new body shape: the tunic flares at the hem, comes in at the belt, fills out at the chest, and rounds over at the shoulders into the neck. It used to be a cone narrowing to the neck. The arms hang from the outside of the shoulders, and the satchel strap rides over the new chest. Girls' dresses have the same top.
+- **The townsfolk, travellers, monks and teachers** built from the plain elf have the same shape, sized to each one's height and width.
+- **The eight hand-made folk of the Hollow** each get a rounded yoke across the top of the body, from shoulder to shoulder.
+- Goblins are unchanged.
+
+## Checkers you can see, pieces that slide, chairs that rock indoors, and a few small fixes (build 133)
+
+**Checkers and the other table games**
+- When you sit down at a board, the camera rises over your shoulder and looks down at the table, so your head is no longer in the way.
+- On a wide screen the real board sits in the left half of the picture, clear of the screen board on the right.
+- This works for checkers, chess, pairs, pig, stones and the sliding puzzle alike.
+- On the screen board, a piece that moves now slides from its old square to its new one, and a piece that is taken shrinks and fades away. This is skipped if your device is set to reduce motion.
+
+**Sitting indoors (a fix)**
+- Since build 128 you could not sit on any seat inside a building: stools, benches, chairs, the inn, the table games. A check meant for the swing compared the wrong names. Every indoor seat works again.
+
+**Rocking chairs indoors**
+- Aldric Bough's rocking chair, in his house in the Hollow, rocks when you sit in it, and now has legs between the seat and the rockers.
+- Mabel's rocking chair, in Spoke Cottage at Skyhaven, has been rebuilt like the one on Odwin Flint's porch, with the rockers on the floor and not sunk into the rug, and it rocks too.
+
+**Putting a book back**
+- Choose a gap on a shelf and a book to put in it: your elf now reaches up with the book in hand, and it is on the shelf when the hand gets there.
+
+**Your belt, seen by others**
+- Other players now see the colour of your belt, and you see theirs.
+
+**Pip**
+- Pip Willowby's hair sits back off his eyes. It used to come down level with them, like a mask.
+
 ## The Ice Cave on Frostpeak: frost goblins, and Old Rimeclaw who throws snow (build 132)
 
 **Where**

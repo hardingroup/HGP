@@ -193,7 +193,9 @@
   #drgrid button.last { background: #6d9c60; }
   #drgrid button i { position: absolute; inset: 11%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: min(5.4vw, 3.6vh, 30px); line-height: 1; color: #e0b23c; text-shadow: 0 1px 1px rgba(0,0,0,.6); box-shadow: inset 0 -4px 0 rgba(0,0,0,.22), 0 2px 3px rgba(0,0,0,.45); }
   #drgrid button.pr i { background: #c0283a; }
-  #drgrid button.pw i { background: #f5efe0; color: #b8860b; }
+  #drgrid b.gh { position: absolute; inset: 11%; border-radius: 50%; pointer-events: none; transition: opacity .5s ease-in .12s, transform .5s ease-in .12s; box-shadow: inset 0 -4px 0 rgba(0,0,0,.22); }
+#drgrid b.gh.r { background: #c0283a; } #drgrid b.gh.w { background: #f5efe0; }
+#drgrid button.pw i { background: #f5efe0; color: #b8860b; }
   #drgrid button.can { cursor: pointer; }
   #drgrid button.can i { box-shadow: 0 0 0 3px var(--gold), inset 0 -4px 0 rgba(0,0,0,.22); }
   #drgrid button.sel i { box-shadow: 0 0 0 4px #fff, inset 0 -4px 0 rgba(0,0,0,.22); }
@@ -310,6 +312,24 @@
   #settings .binds .btn.small.listen { background: #e8b64c; color: #1b2b1e; }
   #settings input[type=range] { width: 180px; }
   #settings .note { color: var(--ink-soft); font-size: 13px; }
+#friends { position: fixed; inset: 0; z-index: 61; background: rgba(14,22,16,.94); color: var(--ink); overflow: auto; padding: 24px 16px 40px; font-size: 15px; }
+#friends[hidden] { display: none; }
+#friends .sheet { max-width: 640px; margin: 0 auto; background: var(--panel); border: 2px solid var(--panel-edge); border-radius: 16px; padding: 18px 22px; }
+#friends h1 { margin: 0 0 6px; font-size: 26px; }
+#friends h2 { margin: 18px 0 8px; font-size: 17px; color: var(--ink-soft); border-bottom: 1px solid var(--panel-edge); padding-bottom: 4px; }
+#friends .row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: flex-start; margin: 6px 0; }
+#friends .sheet > .row:last-child { justify-content: center; }
+#friends .frsub { color: var(--ink-soft); font-size: 13px; margin: 4px 0; } #friends .frsub:empty { display: none; }
+#friends input { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--panel-edge); background: #f6efd8; color: #1b2b1e; min-width: 0; flex: 1 1 160px; }
+#friends .frcode { font: 700 26px/1 ui-monospace, Menlo, monospace; letter-spacing: .18em; padding: 6px 12px; background: #f6efd8; color: #1b2b1e; border-radius: 8px; }
+#friends .frrow { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+#friends .frdot { color: var(--ink-soft); } #friends .frdot.on { color: #7fd36a; }
+#friends .frmsgs { max-height: 46vh; overflow: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px; background: rgba(0,0,0,.18); border-radius: 10px; }
+#friends .frmsg { max-width: 82%; padding: 6px 10px; border-radius: 10px; background: rgba(255,255,255,.08); overflow-wrap: anywhere; }
+#friends .frmsg.me { align-self: flex-end; background: rgba(232,182,76,.22); }
+#chatbox { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 58; display: flex; gap: 8px; align-items: center; background: var(--panel); border: 2px solid var(--panel-edge); border-radius: 12px; padding: 8px; width: min(92vw, 560px); box-sizing: border-box; }
+#chatbox[hidden] { display: none; }
+#chatbox input { flex: 1; min-width: 0; font: inherit; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--panel-edge); background: #f6efd8; color: #1b2b1e; }
   .account select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--panel-edge); background: var(--bg); color: var(--ink); }
   .account input { font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--panel-edge); background: var(--bg); color: var(--ink); width: 170px; }
   .account .status { flex-basis: 100%; font-size: 13px; min-height: 1.2em; }
@@ -336,6 +356,8 @@
     <div class="bagcols"><section id="bagshopcol"><h2 id="bagshoph">For sale</h2><div id="bagshop"></div></section><section><h2 id="bagmineh">You are carrying</h2><div id="bagmine"></div></section></div>
   </div>
 </div>
+  <div id="friends" hidden><div class="sheet" role="dialog" aria-label="Friends"><h1>Friends</h1><p class="frsub" id="frnote" aria-live="polite"></p><div id="frbody"></div><div class="row" style="margin-top:16px"><button class="btn primary" id="frdone">Done</button></div></div></div>
+  <div id="chatbox" hidden><input id="chatin" maxlength="200" autocomplete="off" aria-label="Message"><button class="btn small primary" id="chatsend">Send</button><button class="btn small" id="chatx">Cancel</button></div>
   <div id="settings" hidden>
     <div class="sheet">
       <h1>Settings</h1>
@@ -431,6 +453,7 @@
     <button class="btn primary" id="mapcontinue" hidden>Continue where you left off</button>
     <button class="btn" id="maptitle">Title screen</button>
     <button class="btn" id="mapsettings">Settings</button>
+    <button class="btn" id="mapfriends">Friends</button>
     <button class="btn" id="mapreset" hidden>Start over</button>
     <div class="account" id="account">
       <span id="acctwho" hidden></span>
@@ -444,7 +467,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 132 · 21 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 138 · 21 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -859,8 +882,11 @@
   function shTake(cost, loan) { const C = shC, id = caseIds(C)[shSel], b = BOOKS[id], ow = C.mode === 'home' ? shOwner(C) : null; if (!b) return; if (cost) setCoins(coins - cost);
     (Array.isArray(save.books) ? save.books : (save.books = [])).push(loan ? { b: id, due: Date.now() + 3 * 86400000, k: C.key, i: shSel } : { b: id }); caseSet(C, shSel, ''); chink(700);
     flash(ow ? (loan ? `${ow.n}: “Of course. Bring it back within three days.”` : `${ow.n}: “It is yours, and welcome.”`) : loan ? `Borrowed: ${b.t}. It is due back in three days.` : C.mode === 'own' ? `${b.t} is in your satchel.` : `${b.t} is yours to keep.`, 5000); shSel = -1; shZone = 0; }
-  function shPut(q) { const C = shC, e = save.books[q]; if (!e) return; const from = e.due && bookHome(e); if (from && from.world !== C.world) { flash(`That one is borrowed from ${caseName(from)}. It has to go back there.`, 5000); return; }
-    save.books.splice(q, 1); caseSet(C, shSel, e.b); C.drop = { i: shSel, y: 1.2 }; chink(440); flash(e.due ? 'Returned, with thanks.' : C.mode === 'own' ? `${BOOKS[e.b].t} is on your shelf.` : `You have left ${BOOKS[e.b].t} on this shelf for others.`, 4500); shSel = -1; shZone = 0; }
+  function shPut(q) { const C = shC, e = save.books[q], i = shSel; if (!e || reach) return; const from = e.due && bookHome(e); if (from && from.world !== C.world) { flash(`That one is borrowed from ${caseName(from)}. It has to go back there.`, 5000); return; }
+    const b0 = BOOKS[e.b]; reachTo(slotAt(C, i), b0 ? b0.col : '#8a5a2b', () => shPutDone(C, i, e), true); }
+  function shPutDone(C, shSel, e) { const q = save.books.indexOf(e); if (q < 0) return;
+    save.books.splice(q, 1); caseSet(C, shSel, e.b); C.drop = { i: shSel, y: 1.2 }; chink(440); flash(e.due ? 'Returned, with thanks.' : C.mode === 'own' ? `${BOOKS[e.b].t} is on your shelf.` : `You have left ${BOOKS[e.b].t} on this shelf for others.`, 4500); if (shC === C) { shSelSet(-1); shZone = 0; if (shUp) shDraw(); } }
+  function shSelSet(v) { shSel = v; }
   function shActs() { const C = shC, ids = caseIds(C), mine = Array.isArray(save.books) ? save.books : [];
     if (shSel < 0) return [{ t: '▲ Shelf above', off: shRow >= C.rows - 1, fn: () => { shRow++; } }, { t: '▼ Shelf below', off: shRow <= 0, fn: () => { shRow--; } }, { t: 'Step away', fn: shClose }];
     const id = ids[shSel], back = { t: 'Back', fn: () => { shSel = -1; shZone = 0; } };
@@ -1861,6 +1887,21 @@
       sh.children.slice().forEach(c => { if (c === el || c.position.y >= el.position.y - 0.05) return; c.position.sub(el.position); el.add(c); if (hand && c.position.distanceTo(hand.position) < 2.2) hand.userData.setCurl(1); }); }); }
   function gripAll(hands, c) { (hands || []).forEach(h => { if (h.userData.curl !== c) h.userData.setCurl(c); }); }
   function kneeFlex(hip) { const s = hip.rotation.x; hip.userData.knee.rotation.x = 0.04 + (s > 0 ? s * 1.3 : s < -0.5 ? Math.min(-s, (-s - 0.5) * 2) : 0); }
+  // b: 0 is treading water upright, 1 is lying flat doing the crawl. ph counts strokes. sc is how big the elf has grown, because the water is the same depth whatever size you are.
+  function swimPose(k, t, b, ph, sc) {
+    const B = k.body, ws = 1.45 / sc, u = ph % 1, odd = Math.floor(ph) % 2;
+    B.rotation.x = 1.38 * b; B.position.set(0, b * (ws - 0.48) + (1 - b) * Math.sin(t * 2.4) * 0.05, -1.55 * b);
+    k.arms.forEach((sh, i) => { const d = i ? 1 : -1, ui = (u + i * 0.5) % 1;
+      // one arm comes over the top, elbow high, while the other pulls back under the water; the pull takes longer than the reach
+      const a = ui < 0.4 ? Math.PI * (ui / 0.4) : Math.PI + Math.PI * ((ui - 0.4) / 0.6), up = a < Math.PI;
+      const cx = a, cz = d * (up ? 0.22 + 0.5 * Math.sin(a) : 0.1), cf = up ? -1.25 * Math.sin(a) : -0.35 - 0.5 * Math.sin(a - Math.PI);
+      const tw = Math.sin(t * 3.1 + i * Math.PI), tx = -0.2 + tw * 0.25, tz = d * (1.2 + tw * 0.18), tf = -0.5;
+      sh.rotation.x = cx * b + tx * (1 - b); sh.rotation.z = cz * b + tz * (1 - b); sh.userData.fx = cf * b + tf * (1 - b); });
+    k.legs.forEach((l, i) => { const kick = Math.sin(ph * Math.PI * 6 + i * Math.PI) * 0.32, tread = Math.sin(t * 3.4 + i * Math.PI) * 0.45 - 0.25; l.rotation.x = kick * b + tread * (1 - b); });
+    // the face is in the water, and turns to one side for a breath on every other stroke
+    const br = odd ? Math.max(0, Math.sin((u - 0.05) * Math.PI * 2)) : 0;
+    k.swimHX = -0.5 * b; k.swimHY = br * 1.05 * b; k.swimHZ = 0; k.swum = true; }
+  function swimOff(k) { if (!k.swum) return; k.swum = false; k.body.rotation.x = 0; k.body.position.set(0, 0, 0); k.arms.forEach((sh, i) => { sh.rotation.z = (i ? 1 : -1) * 0.42; sh.userData.fx = undefined; }); k.legs.forEach(l => (l.rotation.x = 0)); k.swimB = 0; }
   function elbowFlex(sh) { sh.userData.elbow.rotation.x = sh.userData.fx !== undefined ? sh.userData.fx : -(0.12 + Math.max(0, -sh.rotation.x) * 0.55); }
   // a grown elf walking: the legs swing with the distance they cover, so anyone who walks anywhere strides, and anyone carried along (in a cart, in the lift) does not
   function elfStride(g) { const u = g.userData, now = performance.now(); if (u.sit) { u.legs[0].rotation.x = u.legs[1].rotation.x = -1.5; return; } if (u.sT === now) return; const dt = Math.min(0.1, u.sT ? (now - u.sT) / 1000 : 0); u.sT = now;
@@ -1901,19 +1942,20 @@
       const boot = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 8), bootM); boot.scale.set(1, 0.7, 1.45); boot.position.set(0, -0.5, 0.1); knee.add(boot);
       hip.userData.knee = knee; thigh.onBeforeRender = () => kneeFlex(hip); legs.push(hip);
     });
-    const tprof = []; for (let i = 0; i <= 8; i++) { const t = i / 8; tprof.push(new THREE.Vector2(0.75 - t * 0.35 + (t < 0.15 ? 0.08 : 0), 0.9 + t * 1.15)); }
+    const tprof = new THREE.SplineCurve([[0.83, 0.9], [0.74, 1.04], [0.6, 1.24], [0.55, 1.36], [0.57, 1.56], [0.62, 1.78], [0.6, 1.94], [0.46, 2.07], [0.25, 2.15], [0.001, 2.17]].map(([r, y]) => new THREE.Vector2(r, y))).getPoints(30);
+    const torsoR = y => { for (let i = 1; i < tprof.length; i++) if (tprof[i].y >= y) { const a = tprof[i - 1], b = tprof[i], t = (y - a.y) / ((b.y - a.y) || 1); return a.x + (b.x - a.x) * t; } return 0; };
     const tunic = new THREE.Mesh(new THREE.LatheGeometry(tprof, 18), tunicM); player.add(tunic);
     // a girl's dress: fuller and longer in the skirt, drawn in at the waist
-    const dprof = []; for (let i = 0; i <= 10; i++) { const t = i / 10; dprof.push(new THREE.Vector2((t < 0.6 ? 0.96 - (t / 0.6) * 0.52 : 0.44 - ((t - 0.6) / 0.4) * 0.04) + (t < 0.08 ? 0.05 : 0), 0.5 + t * 1.55)); }
+    const dprof = new THREE.SplineCurve([[1.01, 0.5], [0.9, 0.72], [0.72, 1.0], [0.55, 1.26], [0.47, 1.42], [0.5, 1.6], [0.6, 1.8], [0.59, 1.94], [0.46, 2.07], [0.25, 2.15], [0.001, 2.17]].map(([r, y]) => new THREE.Vector2(r, y))).getPoints(34);
     const dress = new THREE.Mesh(new THREE.LatheGeometry(dprof, 20), tunicM); dress.visible = false; player.add(dress);
     // the shoulders close the top of the tunic, and a neck joins them to the head
-    const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.41, 16, 10), tunicM); shoulders.scale.y = 0.3; shoulders.position.y = 2.05; player.add(shoulders);
+    const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.41, 16, 10), tunicM); shoulders.scale.y = 0.3; shoulders.position.y = 2.05; shoulders.visible = false; player.add(shoulders);
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.6, 10), skinK); neck.position.y = 2.3; player.add(neck);
     const belt = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.08, 6, 18), mat('#7a4e26')); belt.rotation.x = Math.PI / 2; belt.position.y = 1.35; player.add(belt);
     const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.08), mat('#e8b64c', { metalness: 0.6, roughness: 0.3 })); buckle.position.set(0, 1.35, 0.62); player.add(buckle);
     const arms = [];
     [-1, 1].forEach(d => {
-      const sh = new THREE.Group(); sh.position.set(d * 0.52, 1.9, 0); player.add(sh); sh.add(new THREE.Mesh(new THREE.SphereGeometry(0.165, 10, 8), tunicM));
+      const sh = new THREE.Group(); sh.position.set(d * 0.66, 1.88, 0); player.add(sh); sh.add(new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), tunicM));
       const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.14, 0.44, 8), tunicM); arm.position.y = -0.22; sh.add(arm);
       const elbow = new THREE.Group(); elbow.position.y = -0.42; sh.add(elbow); elbow.add(new THREE.Mesh(new THREE.SphereGeometry(0.135, 8, 6), tunicM));
       const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.15, 0.38, 8), tunicM); fore.position.y = -0.19; elbow.add(fore);
@@ -1933,7 +1975,7 @@
     });
     const smile = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.025, 5, 12, Math.PI), mat('#a0503a')); smile.position.set(0, -0.2, 0.5); smile.rotation.z = Math.PI; hd.add(smile);
     const nose = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), skinK); nose.position.set(0, -0.04, 0.56); hd.add(nose);
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.58, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hairM); hair.position.y = 0.05; hair.rotation.x = -0.25; hd.add(hair); { const nape = new THREE.Mesh(new THREE.SphereGeometry(0.578, 16, 8, Math.PI, Math.PI, Math.PI * 0.45, Math.PI * 0.36), hairM); nape.rotation.x = 0.25; nape.castShadow = true; hair.add(nape); }
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.58, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hairM); hair.position.y = 0.05; hair.rotation.x = -0.25; hd.add(hair); { const nape = new THREE.Mesh(new THREE.SphereGeometry(0.6, 26, 10, Math.PI, Math.PI, Math.PI * 0.45, Math.PI * 0.36), hairM); nape.rotation.x = 0.25; nape.castShadow = true; hair.add(nape); }
     const cap = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.25, 18), mat('#b0472f')); cap.position.set(0, 0.9, -0.07); cap.rotation.x = -0.17; hd.add(cap);   // pulled down: the brim sits just above the ears and covers the top of the hair
     { const band = new THREE.Mesh(new THREE.TorusGeometry(0.59, 0.07, 6, 22), cap.material); band.rotation.x = Math.PI / 2; band.position.y = -0.6; cap.add(band); }
     const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), mat('#8fbf4a')); leaf.scale.set(0.4, 0.12, 1); leaf.position.set(0.3, 0.5, -0.42); leaf.rotation.set(0.9, 0.5, 0.4); hd.add(leaf);
@@ -1946,7 +1988,7 @@
       const lip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.52, 6), darkL); lip.rotation.z = Math.PI / 2; lip.position.set(0, 0.215, 0.09); bg.add(lip);
       const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.08, 0.03), brass); buckle.position.set(0, -0.03, 0.13); bg.add(buckle);
       [-1, 1].forEach(s => { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.014, 4, 10), brass); ring.position.set(s * 0.25, 0.2, 0); ring.rotation.y = Math.PI / 2; bg.add(ring); });
-      const path = new THREE.CatmullRomCurve3([[0.667, 1.42, -0.436], [0.69, 1.5, 0.02], [0.45, 1.6, 0.43], [0.05, 1.78, 0.57], [-0.3, 1.98, 0.39], [-0.38, 2.14, 0], [-0.3, 1.98, -0.39], [0, 1.75, -0.57], [0.3, 1.55, -0.65], [0.333, 1.42, -0.724]].map(p => new THREE.Vector3(...p)));
+      const path = new THREE.CatmullRomCurve3([[0.667, 1.42, -0.436], [0.69, 1.5, 0.02], [0.45, 1.6, 0.43], [0.05, 1.78, 0.57], [-0.3, 1.98, 0.39], [-0.42, 2.06, 0], [-0.3, 1.98, -0.39], [0, 1.75, -0.57], [0.3, 1.55, -0.65], [0.333, 1.42, -0.724]].map(p => { const v = new THREE.Vector3(...p), rr = Math.hypot(v.x, v.z), need = torsoR(v.y) + 0.045; if (rr < need && rr > 0.001) { v.x *= need / rr; v.z *= need / rr; } return v; }));
       const strap = new THREE.Mesh(new THREE.TubeGeometry(path, 48, 0.035, 5, false), darkL); strap.scale.set(1, 1, 1); satchel.add(strap); }
     satchel.visible = false; player.add(satchel);
     // the faces to choose from. A brow's tilt is measured so that a positive number pulls its inner end down, toward the nose: that is a frown, a set jaw, a scowl. Inner ends up is worry
@@ -1998,11 +2040,12 @@
     kid.tall = 1;
     kid.setBuild = (h, girl) => { h = clamp(+h || 1, 1, 2.45); const w = 1 + (h - 1) * 0.66, r = h / w, hs = (1 + (h - 1) * 0.45) / w;
       kid.tall = h; player.scale.setScalar(w);
-      legs.forEach(l => { l.position.y = 1.15 * r; l.scale.y = r; }); arms.forEach(q => { q.position.y = 1.9 * r; q.scale.y = r; });
+      legs.forEach(l => { l.position.y = 1.15 * r; l.scale.y = r; }); arms.forEach(q => { q.position.y = 1.88 * r; q.scale.y = r; });
       tunic.scale.y = r; dress.scale.y = r; tunic.visible = !girl; dress.visible = !!girl; satchel.scale.y = r;
       belt.position.y = 1.35 * r; buckle.position.y = 1.35 * r; belt.scale.set(girl ? 0.83 : 1, girl ? 0.83 : 1, 1); buckle.position.z = girl ? 0.52 : 0.62;
       shoulders.position.y = 2.05 * r; neck.position.y = 2.05 * r + 0.25; hd.scale.setScalar(hs); hd.position.y = 2.05 * r + 0.5 * hs + 0.32 + (h - 1) * 0.01; };
     Object.assign(kid, { legs, arms, hd, satchel, beltMesh: belt, mats: { tunic: tunicM, skin: skinK, hair: hairM, hat: cap.material } });
+    kid.body = new THREE.Group(); player.children.slice().forEach(o => kid.body.add(o)); player.add(kid.body);
     return kid;
   }
   const kid = makeKid(), player = kid.g;   // yours; other players' elves are made the same way
@@ -2288,7 +2331,7 @@
     pipHead.position.y = 2.65; pip.add(pipHead);
     pipHead.add(new THREE.Mesh(new THREE.SphereGeometry(0.55, 20, 16), skinP));
     [-1, 1].forEach(d => { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.75, 8), skinP); ear.position.set(d * 0.58, 0.12, -0.05); ear.rotation.z = -d * 1.15; pipHead.add(ear); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), mat('#2a3a2a')); eye.position.set(d * 0.2, 0.06, 0.52); pipHead.add(eye); for (let k = 0; k < 3; k++) { const fr = new THREE.Mesh(new THREE.CircleGeometry(0.02, 6), mat('#b8865a')); fr.position.set(d * (0.12 + k * 0.1), -0.1 - (k % 2) * 0.06, 0.52); pipHead.add(fr); } });
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.58, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), mat('#2a2a2a')); hair.position.y = 0.05; hair.rotation.x = -0.25; pipHead.add(hair);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.58, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), mat('#2a2a2a')); hair.position.y = 0.05; hair.rotation.x = -0.55; pipHead.add(hair);
     const cap = new THREE.Mesh(new THREE.SphereGeometry(0.6, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat('#4a5fb8')); cap.position.y = 0.3; pipHead.add(cap);
     const peak = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.4), mat('#3a4a9a')); peak.position.set(0, 0.4, 0.6); pipHead.add(peak);
     const held = crate(0.5); held.position.set(0, 1.6, 0.9); pip.add(held);
@@ -2492,7 +2535,8 @@
   // ---------- Frostpeak: one great mountain of snow, north-west of Fernwater, with a monastery on its flat top ----------
   // It is a cone with a level crown. A trail winds once round it from the foot (on the side nearest the Long Road) to the crown, cut level across so it can be walked.
   var FP = (() => { const F = { x: 14900, z: 12300, R: 700, H: 320, top: 86, y0: 6, turns: 0.8, jx: 0, jz: 0 }; let bd = 1e9; ROADS.forEach(Rd => Rd.pts.forEach(q => { const d = Math.hypot(q.x - F.x, q.z - F.z); if (d < bd) { bd = d; F.jx = q.x; F.jz = q.z; } }));
-    F.a0 = Math.atan2(F.jz - F.z, F.jx - F.x); F.a1 = F.a0 + F.turns * Math.PI * 2; F.yaw = Math.atan2(Math.cos(F.a1), Math.sin(F.a1)); F.py = F.y0 + F.H; { const k = 0.55, a = F.a0 + F.turns * Math.PI * 2 * k, rs = F.R - (F.R - F.top) * k, c = Math.cos(a), sn = Math.sin(a); F.cave = { a, c, sn, x: F.x + c * (rs - 14), z: F.z + sn * (rs - 14), dx: F.x + c * (rs - 9.4), dz: F.z + sn * (rs - 9.4), ex: F.x + c * (rs + 1), ez: F.z + sn * (rs + 1), yaw: Math.atan2(c, sn) }; } return F; })();
+    F.a0 = Math.atan2(F.jz - F.z, F.jx - F.x); F.a1 = F.a0 + F.turns * Math.PI * 2; F.yaw = Math.atan2(Math.cos(F.a1), Math.sin(F.a1)); F.py = F.y0 + F.H; { const k = 0.55, a = F.a0 + F.turns * Math.PI * 2 * k, rs = F.R - (F.R - F.top) * k, c = Math.cos(a), sn = Math.sin(a); F.cave = { a, c, sn, x: F.x + c * (rs - 14), z: F.z + sn * (rs - 14), dx: F.x + c * (rs - 9.4), dz: F.z + sn * (rs - 9.4), ex: F.x + c * (rs + 1), ez: F.z + sn * (rs + 1), yaw: Math.atan2(c, sn) }; }
+    { const k = 0.26, a = F.a0 + F.turns * Math.PI * 2 * k, rs = F.R - (F.R - F.top) * k, c = Math.cos(a), sn = Math.sin(a); F.cave2 = { a, c, sn, x: F.x + c * (rs - 14), z: F.z + sn * (rs - 14), dx: F.x + c * (rs - 9.4), dz: F.z + sn * (rs - 9.4), ex: F.x + c * (rs + 1), ez: F.z + sn * (rs + 1), yaw: Math.atan2(c, sn) }; } return F; })();
   const fpProf = r => r <= FP.top ? FP.H : r >= FP.R ? 0 : FP.H * (0.5 + 0.5 * Math.cos(Math.PI * (r - FP.top) / (FP.R - FP.top)));
   // the trail: how far this spot is from it, and the height the trail runs at just here
   function fpPath(dx, dz, r) { const T = FP.turns * Math.PI * 2; let a = (Math.atan2(dz, dx) - FP.a0) % (Math.PI * 2); if (a < 0) a += Math.PI * 2; if (a > T) return null;
@@ -3039,10 +3083,12 @@
     const gap = 2.2; wall(W / 2 - gap, H, 0.5, -(gap + W / 4) + gap / 2, H / 2, D / 2 + 0.25); wall(W / 2 - gap, H, 0.5, (gap + W / 4) - gap / 2, H / 2, D / 2 + 0.25);
     wall(gap * 2 + 0.4, H - DH, 0.5, 0, DH + (H - DH) / 2, D / 2 + 0.25);
     // dark wainscot, posts, beams and a plank ceiling
-    [[0, -D / 2 - 0.2, W + 1, 0], [-W / 2 - 0.2, 0, D + 1, Math.PI / 2], [W / 2 + 0.2, 0, D + 1, Math.PI / 2]].forEach(([x, z, len, ry]) => { const b = wall(len, 1.6, 0.6, x, 0.8, z, trimM); b.rotation.y = ry; });
-    [[-W / 2, -D / 2], [W / 2, -D / 2], [-W / 2, D / 2], [W / 2, D / 2]].forEach(([x, z]) => wall(0.7, H, 0.7, x, H / 2, z, trimM));
-    for (let x = -W / 2 + 4; x < W / 2; x += 4) wall(0.45, 0.45, D + 1, x, H - 0.25, 0, trimM);
-    wall(W + 1, 0.3, D + 1, 0, H + 0.15, 0, mat('#6b4a2b'));
+    if (!o.cave) [[0, -D / 2 - 0.2, W + 1, 0], [-W / 2 - 0.2, 0, D + 1, Math.PI / 2], [W / 2 + 0.2, 0, D + 1, Math.PI / 2]].forEach(([x, z, len, ry]) => { const b = wall(len, 1.6, 0.6, x, 0.8, z, trimM); b.rotation.y = ry; });
+    if (!o.cave) [[-W / 2, -D / 2], [W / 2, -D / 2], [-W / 2, D / 2], [W / 2, D / 2]].forEach(([x, z]) => wall(0.7, H, 0.7, x, H / 2, z, trimM));
+    if (!o.cave) for (let x = -W / 2 + 4; x < W / 2; x += 4) wall(0.45, 0.45, D + 1, x, H - 0.25, 0, trimM);
+    wall(W + 1, 0.3, D + 1, 0, H + 0.15, 0, o.cave ? wallM : mat('#6b4a2b'));
+    // a cave's roof is the rock itself: lumps of it hanging down, the same stone as the walls
+    if (o.cave) for (let k = 0; k < Math.round(W * D / 70); k++) { const r = 2.4 + (k % 5) * 0.8, q = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), wallM); q.position.set(((k * 37.3) % (W - 4)) - (W - 4) / 2, H + 0.2 - r * 0.25, ((k * 61.7) % (D - 4)) - (D - 4) / 2); q.scale.y = 0.45; q.rotation.y = k; sc.add(q); }
     const dframe = wall(gap * 2 + 0.8, 0.5, 0.8, 0, DH - 0.1, D / 2 + 0.25, trimM); dframe.castShadow = true;
     const hinge = new THREE.Group(); hinge.position.set(-gap, 0, D / 2 + 0.4); sc.add(hinge);
     const leaf = new THREE.Mesh(new THREE.BoxGeometry(gap * 2, DH - 0.35, 0.2), mat('#3e2812')); leaf.position.set(gap, (DH - 0.35) / 2, 0); leaf.castShadow = true; hinge.add(leaf);
@@ -3065,17 +3111,19 @@
     const it = interiors[id]; if (!it || fading) return;
     fadeTo(it.label, () => {
       const from = curScene(); from.remove(player); it.scene.add(player); if (beetle) { from.remove(beetle); it.scene.add(beetle); beetle.position.set(1.8, 0, it.d / 2 - 3.2); }
-      interior = it; where = 'in'; roomNight(it); it.doorA = 1; player.position.set(0, 0, it.d / 2 - 5); py = 0; vy = 0; bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI;
+      interior = it; where = 'in'; roomNight(it); it.doorA = 1; player.position.set(0, 0, it.d / 2 - 5); py = 0; vy = 0; bodyYaw = camYaw = Math.PI; player.rotation.y = Math.PI; pitch = Math.min(pitch, 0.12);
+      doorCam.on = true; doorCam.where = 'in'; doorCam.x = 0; doorCam.z = it.d / 2 - 5;
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => { hint(it.hint); then && then(); });
+    }, () => { flash(it.label, 2200); hint(it.hint); then && then(); });
   }
   function exitInterior() {
     const it = interior; if (!it || fading) return; const back = it.door;
     fadeTo(it.out || REGION_LABEL[it.region], () => {
       const to = sceneOf(it.region); it.scene.remove(player); to.add(player); if (beetle) { it.scene.remove(beetle); to.add(beetle); beetle.position.set(back.x + 1.5, 0, back.z + 1); }
-      interior = null; where = it.region; player.position.set(back.x, 0, back.z); py = 0; vy = 0; bodyYaw = camYaw = back.yaw; player.rotation.y = back.yaw;
+      interior = null; where = it.region; player.position.set(back.x + Math.sin(back.yaw) * 1.5, 0, back.z + Math.cos(back.yaw) * 1.5); py = 0; vy = 0; bodyYaw = camYaw = back.yaw; player.rotation.y = back.yaw; pitch = Math.min(pitch, 0.12);
+      doorCam.on = true; doorCam.where = where; doorCam.x = player.position.x; doorCam.z = player.position.z;
       const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0);
-    }, () => hint(''));
+    }, () => { hint(''); flash(it.out || REGION_LABEL[it.region] || '', 2200); });
   }
   // Marigold's potting shed, in the Hollow
   makeRoom('potting', { w: 24, d: 18, h: 8, wall: '#e6dfc6', trim: '#3e6b52', label: 'Fernsby’s Potting Shed', region: 'village', hint: 'Seed trays, clay pots and the smell of damp earth.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
@@ -3090,7 +3138,7 @@
   } });
   interiors.potting.door = { x: NURS.x, z: NURS.z - 7.5 + 4.5, yaw: 0 };
   // ---------- the Goblin Hole: a cave under the north edge of the Hollow. Six goblins and their chief, who have been pinching things ----------
-  let CAVE = { gobs: [], chief: null, peace: false, inside: false, chest: null }; const CAVE1 = CAVE, CAVE2 = { gobs: [], chief: null, peace: false, inside: false, chest: null, ice: true, balls: [] };
+  let CAVE = { gobs: [], chief: null, peace: false, inside: false, chest: null }; const CAVE3 = { gobs: [], chief: null, peace: false, inside: false, chest: null, ice: true, balls: [], walls: [] }, CAVE1 = CAVE, CAVE2 = { gobs: [], chief: null, peace: false, inside: false, chest: null, ice: true, balls: [] };
   function makeGoblin(chief, ice) { const g = new THREE.Group(), skin = mat(ice ? (chief ? '#86b6d2' : '#a6d4e6') : chief ? '#6f8f3e' : '#7fa34a'), rag = mat(ice ? (chief ? '#dfe8f0' : '#f1f4f8') : chief ? '#5a2a3a' : '#6a5238', { roughness: 1 }), dark = mat('#2a2a1e'), M = (geo, m, x, y, z, par) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); q.castShadow = true; (par || g).add(q); return q; };
     M(new THREE.SphereGeometry(0.95, 10, 8), rag, 0, 1.75, 0).scale.set(1, 1.15, 0.85);
     const hd = new THREE.Group(); hd.position.set(0, 3.05, 0.1); g.add(hd); M(new THREE.SphereGeometry(0.85, 12, 10), skin, 0, 0, 0, hd).scale.set(1.1, 0.95, 1);
@@ -3145,21 +3193,81 @@
     [[-9, 28], [10, 30], [-16, 4], [15, 0], [0, -12], [0, -29]].forEach(([x, z], i) => { const chief = i === 5, g = makeGoblin(chief, true); g.position.set(x, 0, z); g.rotation.y = chief ? 0 : i; sc.add(g); const o = { g, chief, home: { x, z }, hp: 0, max: chief ? 14 : 4, sc: chief ? 1.9 : 1.05, st: 'idle', t: 0, ph: i * 1.7, cd: 0, kt: 0, kb: [0, 0], hot: false, wa: i * 2.1, fl: 0, sb: 1.5, thr: 0 }; CAVE2.gobs.push(o); if (chief) CAVE2.chief = o; });
   } });
   interiors.frost1.door = { x: FP.cave.ex, z: FP.cave.ez, yaw: FP.cave.yaw };
+  makeRoom('frost2', { cave: true, w: 44, d: 124, h: 13, doorH: 8.6, wall: '#9cbad0', trim: '#4a6278', label: 'The Glass Cave', region: 'wild', out: 'Frostpeak', hint: 'Walls of clear ice, one behind another, and something glinting beyond the last of them.', decorate: (sc, solids, { W, D, H, boxes }) => {
+    const ice = mat('#bfe4f4', { roughness: 0.15, metalness: 0.1, emissive: '#2a6a8a', emissiveIntensity: 0.35 }), snow = mat('#f2f6fa', { roughness: 1 }), rock = mat('#6f7a86', { roughness: 1 }), M = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); sc.add(q); return q; }, so = (x, z, r) => solids.push({ x, z, r });
+    sc.add(new THREE.HemisphereLight('#dff2ff', '#5a7a92', 0.42));
+    { const fl = M(new THREE.PlaneGeometry(W, D), mat('#e6eef5', { roughness: 0.5 }), 0, 0.03, 0); fl.rotation.x = -Math.PI / 2; fl.receiveShadow = true; }
+    for (let i = 0; i < 40; i++) { const x = ((i * 31) % 40) - 20, z = ((i * 53) % 118) - 59, hh = 1.4 + (i % 5) * 0.8, st = M(new THREE.ConeGeometry(0.3 + (i % 3) * 0.18, hh, 5), ice, x, H - hh / 2, z); st.rotation.x = Math.PI; }
+    for (let i = 0; i < 30; i++) { const sd = i % 2 ? 1 : -1, z = -D / 2 + 4 + (i >> 1) * 8.2, r = 2.8 + ((i * 7) % 5) * 0.5, b = M(new THREE.SphereGeometry(r, 10, 7), i % 3 ? snow : rock, sd * (W / 2 - 0.8), r * 0.25, z); b.scale.y = 0.7 + ((i * 3) % 4) * 0.2; so(sd * (W / 2 - 0.3), z, r * 0.8); }
+    [[-12, 44, '#9fe8ff'], [12, 14, '#7ad0ff'], [-12, -20, '#b0c8ff'], [12, -50, '#ffe9a8']].forEach(([x, z, c]) => { const gm = mat(c, { emissive: c, emissiveIntensity: 1.1 }); for (let i = 0; i < 5; i++) { const a = i * 1.26, r = 0.5 + (i % 3) * 0.6, hh = 1 + (i % 4) * 0.6; M(new THREE.ConeGeometry(0.3, hh, 5), gm, x + Math.cos(a) * r, hh / 2, z + Math.sin(a) * r).rotation.z = Math.cos(a) * 0.3; } const l = new THREE.PointLight(c, 0.8, 30); l.position.set(x, 2.6, z); sc.add(l); });
+    // the walls of ice: clear enough to see what is behind them. The thicker the wall, the better the belt it wants
+    [[30, 1, 0.9, 4], [-6, 2, 1.5, 8], [-40, 3, 2.4, 15]].forEach(([z, need, th, hp]) => { const m = M(new THREE.BoxGeometry(W, H, th), mat('#cfeeff', { roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.78, emissive: '#2a6a8a', emissiveIntensity: 0.25 }), 0, H / 2, z); m.material = m.material.clone();
+      for (let k = 0; k < [3, 6, 12][need - 1]; k++) { const ln = M(new THREE.BoxGeometry(0.06, 2 + (k % 3) * 1.6, 0.02), mat('#ffffff', { emissive: '#ffffff', emissiveIntensity: 0.3 }), ((k * 37) % 36) - 18, 3 + (k % 4) * 2, z + th / 2 + 0.02); ln.rotation.z = (k % 5 - 2) * 0.4; m.attach(ln); }
+      const box = { x: 0, z, hw: W / 2, hd: th / 2 + 0.2 }; boxes.push(box); const shards = []; for (let k = 0; k < 18; k++) { const q = M(new THREE.BoxGeometry(1 + (k % 3) * 0.5, 0.8 + (k % 4) * 0.4, th * 0.6), ice, 0, 0, z); q.visible = false; shards.push(q); }
+      CAVE3.walls.push({ z, need, max: hp, hp, m, box, shards, st: 0 }); });
+    // a chest behind each of the first two walls, and the founder's scroll behind the last
+    [[10, 22], [-10, -14]].forEach(([x, z], k) => { M(new THREE.BoxGeometry(2.4, 1.5, 1.7), mat('#7a5a34'), x, 0.75, z); M(new THREE.BoxGeometry(2.5, 0.25, 1.8), mat('#c9a23a', { metalness: 0.6, roughness: 0.35 }), x, 1.5, z); so(x, z, 1.5); const sp = new THREE.Object3D(); sp.position.set(x, 0, z + 2.2); sc.add(sp); sp.userData = { pickable: true, kind: 'glasschest', world: 'in:frost2', gk: k }; storeSpots.push(sp); });
+    { M(new THREE.CylinderGeometry(1.6, 1.9, 2.4, 10), rock, 0, 1.2, -54); const cs = M(new THREE.BoxGeometry(3, 1, 1), mat('#bfe4f4', { roughness: 0.1, transparent: true, opacity: 0.6 }), 0, 2.9, -54); M(new THREE.CylinderGeometry(0.28, 0.28, 2.6, 10), mat('#efe3c4'), 0, 2.9, -54).rotation.z = Math.PI / 2; M(new THREE.CylinderGeometry(0.8, 0.6, 0.2, 12), mat('#c9a23a', { metalness: 0.6, roughness: 0.35 }), 0, 2.5, -52.4); so(0, -54, 2); const sp = new THREE.Object3D(); sp.position.set(0, 0, -50.6); sc.add(sp); sp.userData = { pickable: true, kind: 'glasschest', world: 'in:frost2', gk: 2 }; storeSpots.push(sp); }
+    // frost goblins between the walls: two near the way in, two behind the first wall, two behind the second
+    [[-8, 46], [9, 40], [-9, 16], [8, 8], [-7, -20], [7, -28]].forEach(([x, z], i) => { const g = makeGoblin(false, true); g.position.set(x, 0, z); g.rotation.y = i; sc.add(g); CAVE3.gobs.push({ g, chief: false, home: { x, z }, hp: 0, max: 4, sc: 1.05, st: 'idle', t: 0, ph: i * 1.7, cd: 0, kt: 0, kb: [0, 0], hot: false, wa: i * 2.1, fl: 0, sb: 0, thr: 0 }); });
+  } });
+  interiors.frost2.door = { x: FP.cave2.ex, z: FP.cave2.ez, yaw: FP.cave2.yaw };
   const RIDDLES = [['Three sacks, and four turnips in every sack. How many turnips have I got?', 12, [7, 12, 34]], ['Seven goblins. Two boots each. How many boots?', 14, [9, 14, 72]], ['I had twenty buttons. A rat took six. How many now?', 14, [14, 16, 26]], ['Half of eighteen spoons is how many spoons?', 9, [6, 8, 9]], ['Three, six, nine, twelve. What comes next?', 15, [13, 14, 15]], ['A spider has eight legs. Three spiders have how many?', 24, [11, 24, 38]], ['Five rows of mushrooms, five in a row. How many mushrooms?', 25, [10, 25, 55]], ['I am thinking of a number. Double it and you get sixteen. What is it?', 8, [6, 8, 32]]];
   function caveReset() { CAVE.gobs.forEach(o => { o.hp = o.max; o.st = 'idle'; o.hot = false; o.kt = 0; o.fl = 0; o.g.visible = true; o.g.scale.setScalar(o.sc || (o.chief ? 1.4 : 1)); o.g.position.set(o.home.x, 0, o.home.z); o.g.rotation.x = 0; o.sb = 1.5; }); CAVE.peace = CAVE.ice ? false : !!save.gobPeace; if (CAVE.balls) { CAVE.balls.forEach(b => { b.m.visible = false; b.on = false; }); } }
   // the ice cave's own: Old Rimeclaw sees you from a long way off, and throws snow at you till you are close enough to hit
-  function iceTick(dt, P, it, busy) { const c = CAVE.chief; if (!c) return; const g = c.g, alive = c.st !== 'gone' && c.st !== 'flee', dx = P.x - g.position.x, dz = P.z - g.position.z, d = Math.hypot(dx, dz) || 1;
-    if (alive && !busy && d < 40) { c.hot = true; CAVE.gobs.forEach(o => { if (Math.hypot(P.x - o.g.position.x, P.z - o.g.position.z) < 26) o.hot = true; });
+  function iceTick(dt, P, it, busy, TG, near) { const c = CAVE.chief; if (!c) return; const g = c.g, alive = c.st !== 'gone' && c.st !== 'flee', tg = near(g.position.x, g.position.z), dx = (tg || P).x - g.position.x, dz = (tg || P).z - g.position.z, d = Math.hypot(dx, dz) || 1;
+    if (alive && tg && d < 40) { c.hot = true; CAVE.gobs.forEach(o => { if (TG.some(q => Math.hypot(q.x - o.g.position.x, q.z - o.g.position.z) < 26)) o.hot = true; });
       if (d > 8 && c.st !== 'wind' && (c.sb -= dt) <= 0) { c.sb = 2.3 + Math.random() * 0.9; c.thr = 0.4; let b = CAVE.balls.find(q => !q.on); if (!b) { b = { m: new THREE.Mesh(new THREE.SphereGeometry(0.75, 10, 8), mat('#f4f8fc')), on: false }; it.scene.add(b.m); CAVE.balls.push(b); } b.on = true; b.t = 0; b.x = g.position.x + dx / d * 2; b.z = g.position.z + dz / d * 2; b.vx = dx / d * 24; b.vz = dz / d * 24; b.d = d; b.m.visible = true; chink(420); } }
     if (c.thr > 0) { c.thr -= dt; g.userData.arms.forEach(q => { q.rotation.x = -2.9 * Math.min(1, c.thr / 0.2); }); }
     CAVE.balls.forEach(b => { if (!b.on) return; b.t += dt; b.x += b.vx * dt; b.z += b.vz * dt; const fr = clamp(b.t * 24 / b.d, 0, 1.4); b.m.position.set(b.x, 3.4 + Math.sin(Math.min(1, fr) * Math.PI) * 2.4 - Math.max(0, fr - 1) * 9, b.z);
-      if (!busy && Math.hypot(b.x - P.x, b.z - P.z) < 1.5 && b.m.position.y < 5.5) { b.on = false; b.m.visible = false; hurt(5, 'A snowball from Old Rimeclaw catches you full on.'); chink(160); }
+      const hitQ = b.m.position.y < 5.5 ? TG.find(q => Math.hypot(b.x - q.x, b.z - q.z) < 1.5) : null; if (hitQ) { b.on = false; b.m.visible = false; caveHurt(hitQ, 5, 'A snowball from Old Rimeclaw catches you full on.'); }
       else if (b.t > 3 || fr >= 1.4 || Math.abs(b.x) > it.w / 2 || Math.abs(b.z) > it.d / 2) { b.on = false; b.m.visible = false; } }); }
   function iceChest() { const free = CAVE2.gobs.every(o => o.st === 'gone' || o.st === 'flee'); if (!free) { flash('Not while there are frost goblins about. Old Rimeclaw keeps his heap behind him.', 4500); return; }
     if (save.q2) { flash('Only the mitten and the sandal are left, and neither is yours.', 3500); return; } save.q2 = 1; setCoins(coins + 45); persist(); chink(1320);
     choose('The heap in the ice', 'Everything the frost goblins have pinched off travellers on the trail: a monk’s sandal, a left mitten, half a walking staff, and a purse somebody dropped a long time ago. There are 45 acorn coins in the purse.', [['Take the coins', () => {}]]); }
-  function chiefTalk() { const pick = RIDDLES.slice().sort(() => Math.random() - 0.5).slice(0, 3); let i = 0; const rage = () => { CAVE.gobs.forEach(o => { o.hot = true; }); flash('“WRONG! Get the elf, lads!”', 4000); chink(180); };
-    const ask = () => { if (i === 3) { CAVE.peace = true; save.gobPeace = 1; persist(); choose('Grizzlegob', 'Three out of three. Bah! A deal is a deal, and a goblin keeps a deal. Take your pinched things out of the chest. My lads will leave you be. You are welcome to come back and be beaten at riddles another day.', [['Thank you', () => {}]]); return; }
+  // the Glass Cave's walls: a fist that is not ready for them bounces off; one that is cracks them, and they come down in pieces
+  const GLASS_NEED = ['', 'a yellow belt', 'a green belt', 'a black belt'];
+  function glassReset() { CAVE3.walls.forEach(w => { w.hp = w.max; w.m.visible = true; w.m.material.opacity = 0.78; w.m.position.x = 0; if (!interiors.frost2.boxes.includes(w.box)) interiors.frost2.boxes.push(w.box); w.shards.forEach(q => { q.visible = false; }); w.st = 0; }); }
+  function glassHit(lvl, fz, reachD) { const P = player.position; let n = 0; CAVE3.walls.forEach(w => { if (w.hp <= 0) return; const dz = w.z - P.z; if (Math.abs(dz) > reachD + 1.3 || dz * fz <= 0 || Math.abs(fz) < 0.35) return; n++;
+      if (lvl < w.need) { w.st = 0.25; chink(260); flash(`Your fist bounces off. This ice wants ${GLASS_NEED[w.need]} at least.`, 3500); return; }
+      if (CAVE.remote) { w.st = 0.3; chink(900); try { NET.send({ gw: [interior.id, CAVE3.walls.indexOf(w), [1, 2, 2, 5][lvl]] }); } catch (e) {} return; } glassDamage(w, [1, 2, 2, 5][lvl], fz); });
+    return n; }
+  function glassDamage(w, dmg, fz) { if (w.hp <= 0) return; { w.hp -= dmg; w.st = 0.3; chink(1180 - w.hp * 40); w.m.material.opacity = 0.35 + 0.43 * Math.max(0, w.hp) / w.max;
+      if (w.hp <= 0) glassBreak(w, fz); } }
+  function glassBreak(w, fz) { { const i = interiors.frost2.boxes.indexOf(w.box); if (i >= 0) interiors.frost2.boxes.splice(i, 1); w.m.visible = false; chink(1480); w.shards.forEach((q, k) => { q.visible = true; q.position.set((k % 6 - 2.5) * 3.4, 1 + (k % 4) * 2.2, w.z); q.userData.v = [(Math.random() - 0.5) * 9, 5 + Math.random() * 6, -fz * (6 + Math.random() * 7)]; q.userData.t = 0; }); flash(['', 'The ice gives way.', 'The ice splits and falls.', 'The wall goes all at once, as if it had only been waiting to be asked properly.'][w.need], 4000); } }
+  function glassTick(dt) { if (!(where === 'in' && interior === interiors.frost2)) return; CAVE3.walls.forEach(w => { if (w.st > 0) { w.st -= dt; w.m.position.x = Math.sin(w.st * 90) * 0.12 * w.st; } else if (w.m.position.x) w.m.position.x = 0;
+      w.shards.forEach(q => { if (!q.visible) return; const u = q.userData; u.t += dt; u.v[1] -= 30 * dt; q.position.x += u.v[0] * dt; q.position.y = Math.max(0.3, q.position.y + u.v[1] * dt); q.position.z += u.v[2] * dt; q.rotation.x += dt * 5; q.rotation.y += dt * 4; if (u.t > 1.6) q.visible = false; }); }); }
+  function glassChest(k) { const bit = 1 << k, got = (save.q3 | 0) & bit; if (got) { flash(['The little chest is empty now.', 'The chest is empty now.', 'The scroll is back in its case. You have read it.'][k], 3500); if (k === 2) glassScroll(); return; }
+    save.q3 = (save.q3 | 0) | bit; const c = [15, 25, 60][k]; setCoins(coins + c); persist(); chink(1320);
+    if (k < 2) choose('A chest in the ice', `Frozen in, and worth the trouble: ${c} acorn coins somebody left here a long time ago, and a note: “${['Not bad for a yellow belt.', 'Now you are getting somewhere. One more wall.'][k]}”`, [['Take the coins', () => {}]]);
+    else glassScroll(c); }
+  function glassScroll(c) { choose('The founder’s scroll', (c ? `Behind the last wall, in a case of ice, is a scroll, and ${c} acorn coins in a dish in front of it. ` : '') + 'It says: “Whoever reads this broke three walls of ice to do it, which is three more than most. I cut this cave when I was young, so that I would have to come back up the mountain to get my own scroll back. I came back. So did you. Now go down and teach somebody. — Hessa Frostmantle, who built the monastery.”', [['Put it back', () => {}]]); }
+  // ---------- sharing a cave. Whoever has been in it longest runs the goblins and says where they are, several times a second; everybody else draws what they are told, and sends their blows ----------
+  const GST = ['idle', 'chase', 'wind', 'flee', 'gone'];
+  function cavePeers() { const now = performance.now(), out = []; NET.peers.forEach(p => { if (p.w === 'in' && Number.isFinite(p.ca) && now - p.seen < 5000) out.push(p); }); return out; }
+  function caveHost(others) { let b = { ca: CAVE.at || 0, id: NET.id }; (others || cavePeers()).forEach(p => { if (p.ca < b.ca || (p.ca === b.ca && p.id < b.id)) b = { ca: p.ca, id: p.id }; }); return b.id; }
+  function gobHit(o, dmg, kx, kz) { if (o.st === 'gone' || o.st === 'flee') return; o.hp -= dmg; o.fl = 1; o.kt = 0.22; o.kb = [kx, kz]; CAVE.peace = false; CAVE.gobs.forEach(q => { q.hot = true; }); if (o.hp <= 0) { o.st = 'flee'; o.t = 0; } }
+  function caveHurt(tg, n, why) { if (!tg) return; if (tg.id) { try { NET.send({ gx: [tg.id, n, why] }); } catch (e) {} } else { hurt(n, why); if (/snowball/.test(why)) chink(160); } }
+  function caveSend(it) { const r = v => Math.round(v * 100) / 100; try { NET.send({ gb: [it.id, CAVE.peace ? 1 : 0, CAVE.gobs.map(o => [r(o.g.position.x), r(o.g.position.z), r(o.g.rotation.y), GST.indexOf(o.st) < 0 ? 0 : GST.indexOf(o.st), o.hp, r(o.g.scale.x), r(o.g.position.y)]), CAVE.walls ? CAVE.walls.map(w => w.hp) : 0, CAVE.balls ? CAVE.balls.filter(b => b.on).map(b => [r(b.x), r(b.z), r(b.vx), r(b.vz), r(b.t), r(b.d)]) : 0] }); } catch (e) {} }
+  function caveHeard(m) { const inCave = where === 'in' && interior && interior.cave; if (m.gx) { const [to, n, why] = m.gx; if (to === NET.id && inCave && Number.isFinite(n) && !talking() && !fading && !dead) { hurt(clamp(n, 0, 20), String(why || 'Something thumps you.').slice(0, 80)); if (/snowball/.test(String(why))) chink(160); } return; }
+    if (!inCave) return; const key = (m.gb || m.gh || m.gw || m.gp || m.gr)[0]; if (key !== interior.id) return; const host = caveHost();
+    if (m.gb) { if (m.id !== host || host === NET.id) return; const [, pe, G, W, B] = m.gb; CAVE.peace = !!pe; if (Array.isArray(G)) G.forEach((q, i) => { const o = CAVE.gobs[i]; if (o && Array.isArray(q) && q.length >= 7 && q.every(Number.isFinite)) o.net = { x: q[0], z: q[1], ry: q[2], st: q[3] | 0, hp: q[4], sc: q[5], y: q[6] }; });
+      if (Array.isArray(W) && CAVE.walls) W.forEach((hp, i) => { const w = CAVE.walls[i]; if (!w || !Number.isFinite(hp)) return; if (hp < w.hp) w.st = 0.3; if (hp <= 0 && w.hp > 0) { if (CAVE.synced) glassBreak(w, -1); else { const bi = interiors.frost2.boxes.indexOf(w.box); if (bi >= 0) interiors.frost2.boxes.splice(bi, 1); w.m.visible = false; } } w.hp = hp; if (hp > 0) w.m.material.opacity = 0.35 + 0.43 * hp / w.max; });
+      CAVE.synced = true; if (CAVE.balls) CAVE.netBalls = Array.isArray(B) ? B.filter(b => Array.isArray(b) && b.length === 6 && b.every(Number.isFinite)) : []; return; }
+    if (host !== NET.id) return;
+    if (m.gh) { const [, i, dmg, kx, kz] = m.gh, o = CAVE.gobs[i]; if (o && [dmg, kx, kz].every(Number.isFinite)) { gobHit(o, clamp(dmg, 0, 5), clamp(kx, -20, 20), clamp(kz, -20, 20)); chink(220); } }
+    else if (m.gw) { const [, i, dmg] = m.gw, w = CAVE.walls && CAVE.walls[i]; if (w && Number.isFinite(dmg)) glassDamage(w, clamp(dmg, 0, 5), -1); }
+    else if (m.gp) { CAVE.peace = true; }
+    else if (m.gr) { CAVE.peace = false; CAVE.gobs.forEach(o => { o.hot = true; }); } }
+  // a goblin drawn from what the cave's runner says: it walks to where it is said to be, and moves its arms and legs to match
+  function remoteGob(o, dt, t) { const g = o.g, u = g.userData, q = o.net; if (!q) return; if (q.st === 4) { o.st = 'gone'; g.visible = false; return; } g.visible = true; o.st = GST[q.st] || 'idle'; o.hp = q.hp;
+    const k = Math.min(1, dt * 10), ox = g.position.x, oz = g.position.z; if (Math.hypot(q.x - ox, q.z - oz) > 12) { g.position.x = q.x; g.position.z = q.z; } else { g.position.x += (q.x - ox) * k; g.position.z += (q.z - oz) * k; } g.position.y += (q.y - g.position.y) * k; g.rotation.y += wrap(q.ry - g.rotation.y) * k; g.scale.setScalar(g.scale.x + (q.sc - g.scale.x) * k);
+    const sp = Math.hypot(g.position.x - ox, g.position.z - oz) / Math.max(dt, 1e-3), moving = sp > 0.6 ? Math.min(1, sp / 7.5) : 0; if (o.fl > 0) o.fl = Math.max(0, o.fl - dt * 4); g.rotation.x = -o.fl * 0.5;
+    if (o.st === 'flee') u.arms.forEach(a => { a.rotation.x = -2.8; }); else if (o.st === 'wind') { o.wt = (o.wt || 0) + dt; const w = Math.sin(Math.min(1, o.wt / 0.8) * Math.PI); u.arms.forEach(a => { a.rotation.x = -2.6 * w; }); } else { o.wt = 0; if (!moving) u.arms.forEach(a => { a.rotation.x *= 0.9; }); }
+    o.ph += dt * (moving ? 14 * moving + 4 : 0); const sw = moving ? Math.sin(o.ph) * 0.9 : 0; u.legs[0].rotation.x = sw; u.legs[1].rotation.x = -sw; if (moving && o.st === 'chase') { u.arms[0].rotation.x = -sw * 0.8; u.arms[1].rotation.x = sw * 0.8; } u.hd.rotation.z = Math.sin(t * 2 + o.wa) * 0.08; }
+  function remoteBalls(it) { if (!CAVE.balls) return; const B = CAVE.netBalls || []; CAVE.balls.forEach(b => { b.m.visible = false; b.on = false; }); B.forEach((q, i) => { let b = CAVE.balls[i]; if (!b) { b = { m: new THREE.Mesh(new THREE.SphereGeometry(0.75, 10, 8), mat('#f4f8fc')), on: false }; it.scene.add(b.m); CAVE.balls.push(b); } const [x, z, vx, vz, tt, d] = q, fr = clamp(tt * 24 / (d || 1), 0, 1.4); b.m.visible = true; b.m.position.set(x, 3.4 + Math.sin(Math.min(1, fr) * Math.PI) * 2.4 - Math.max(0, fr - 1) * 9, z); }); }
+  function chiefTalk() { const pick = RIDDLES.slice().sort(() => Math.random() - 0.5).slice(0, 3); let i = 0; const rage = () => { CAVE.gobs.forEach(o => { o.hot = true; }); if (CAVE.remote) { try { NET.send({ gr: [interior.id] }); } catch (e) {} } flash('“WRONG! Get the elf, lads!”', 4000); chink(180); };
+    const ask = () => { if (i === 3) { CAVE.peace = true; save.gobPeace = 1; persist(); if (CAVE.remote) { try { NET.send({ gp: [interior.id] }); } catch (e) {} } choose('Grizzlegob', 'Three out of three. Bah! A deal is a deal, and a goblin keeps a deal. Take your pinched things out of the chest. My lads will leave you be. You are welcome to come back and be beaten at riddles another day.', [['Thank you', () => {}]]); return; }
       const [q, ok, opts] = pick[i]; choose('Grizzlegob', (i ? ['', 'Hmf. Lucky. Another. ', 'Grr. Last one. '][i] : 'An ELF, in MY hole? Answer three riddles and the pinched things are yours. Get one wrong and my lads will thump you. First. ') + q, opts.map(v => [String(v), () => { if (v === ok) { i++; chink(880); ask(); } else rage(); }]).concat(i ? [] : [['Not now', () => {}]])); }; ask(); }
   function chestOpen() { const free = CAVE.peace || CAVE.gobs.every(o => o.st === 'gone' || o.st === 'flee'); if (!free) { flash('Grizzlegob is sitting on it, more or less. Beat him at riddles, or see them all off.', 4500); return; }
     if (save.q1 === 'sack' || save.q1 === 'done') { flash('The chest is empty now, apart from one sock.', 3500); return; } save.q1 = 'sack'; persist(); chink(1040);
@@ -3174,9 +3282,9 @@
   function punchGo() { if (punchA || !gameStarted || talking() || fading || dead || sitting || mapOpen || bagOpen || drUp || tgUp || shUp || rd || reach || !kid.arms || kid.arms.length < 2) return; const lvl = punchLevel(); punchA = { t: 0, lvl, hit: 0, dur: [0.9, 0.55, 0.66, 0.72][lvl] }; player.rotation.order = 'YXZ'; }
   function punchLand(lvl) { const yaw = player.rotation.y, fx = Math.sin(yaw), fz = Math.cos(yaw), reachD = [3.0, 3.9, 4.1, 4.8][lvl], dmg = [1, 2, 2, 5][lvl], many = [1, 2, 2, 4][lvl], kb = [4, 11, 8, 17][lvl]; let n = 0;
     if (lvl === 3) { if (!pRing) { pRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.09, 6, 28), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false })); } curScene().add(pRing); const sc0 = player.scale.x; pRing.position.set(player.position.x + fx * 2.2 * sc0, player.position.y + 1.7 * sc0, player.position.z + fz * 2.2 * sc0); pRing.rotation.set(0, yaw, 0); pRing.scale.setScalar(0.3); pRing.userData.t = 0; pRing.visible = true; }
-    if (where === 'wild' && frostNear()) n += dojoHit(lvl, fx, fz, reachD);   // a beginner's flap can only catch one goblin; a proper punch can catch two that stand together
+    if (where === 'wild' && frostNear()) n += dojoHit(lvl, fx, fz, reachD); if (where === 'in' && interior === interiors.frost2) n += glassHit(lvl, fz, reachD);   // a beginner's flap can only catch one goblin; a proper punch can catch two that stand together
     if (where === 'in' && interior.cave) CAVE.gobs.map(o => [Math.hypot(o.g.position.x - player.position.x, o.g.position.z - player.position.z), o]).sort((p, q) => p[0] - q[0]).forEach(([, o]) => { if (n >= many || o.st === 'gone' || o.st === 'flee') return; const dx = o.g.position.x - player.position.x, dz = o.g.position.z - player.position.z, d = Math.hypot(dx, dz) || 1; if (d > reachD + (o.chief ? 0.6 : 0) || (dx * fx + dz * fz) / d < 0.25) return;
-      n++; o.hp -= dmg; o.fl = 1; o.kt = 0.22; o.kb = [dx / d * kb, dz / d * kb]; CAVE.peace = false; CAVE.gobs.forEach(q => { q.hot = true; }); if (o.hp <= 0) { o.st = 'flee'; o.t = 0; } });
+      n++; o.fl = 1; if (CAVE.remote) { NET.send({ gh: [interior.id, CAVE.gobs.indexOf(o), dmg, +(dx / d * kb).toFixed(2), +(dz / d * kb).toFixed(2)] }); return; } gobHit(o, dmg, dx / d * kb, dz / d * kb); });
     if (n) { chink([240, 150, 170, 95][lvl]); if (!(where === 'in' && interior.cave)) return; const was = save.fight || 0; save.fight = was + 1; if (was < 12 && save.fight >= 12) { flash('That one landed properly. You have stopped shutting your eyes, and your feet know where to go. Your punch is better.', 6500); chink(990); } persist(); } }
   function punchPose(dt) { if (pRing && pRing.visible) { const q = pRing.userData.t += dt; pRing.scale.setScalar(0.3 + q * 9); pRing.material.opacity = Math.max(0, 0.9 - q * 2.6); if (q > 0.36) { pRing.visible = false; if (pRing.parent) pRing.parent.remove(pRing); } }
     const a = punchA; if (!a) return; a.t += dt; const u = Math.min(1, a.t / a.dur), A0 = kid.arms[0], A1 = kid.arms[1];
@@ -3196,26 +3304,30 @@
     else if (!a.hit && u >= [0.55, 0.5, 0, 0.46][a.lvl]) { a.hit = 1; punchLand(a.lvl); }
     if (u >= 1) { punchA = null; player.rotation.x = 0; A0.rotation.z = -0.42; A1.rotation.z = 0.42; kid.hd.rotation.x = 0; A0.userData.fx = A1.userData.fx = undefined; gripAll(kid.hands, 0.35); } }
   function caveTick(dt, t) { const inCave = where === 'in' && !!interior && interior.cave; { const pb = inCave || frostNear(); if ($('punchbtn').hidden === pb) $('punchbtn').hidden = !pb; } dojoTick(dt, t); if (!inCave) { CAVE.inside = false; return; }
-    { const C = interior === interiors.frost1 ? CAVE2 : CAVE1; if (CAVE !== C) { CAVE.inside = false; CAVE = C; } }
-    if (!CAVE.inside) { CAVE.inside = true; caveReset(); if (!save.punchTold) { save.punchTold = 1; flash('To punch: the F key, the right trigger, or the Punch button.', 6000); } }
+    { const C = interior === interiors.frost1 ? CAVE2 : interior === interiors.frost2 ? CAVE3 : CAVE1; if (CAVE !== C) { CAVE.inside = false; CAVE = C; } }
+    if (!CAVE.inside) { CAVE.inside = true; CAVE.at = Date.now(); CAVE.remote = false; CAVE.synced = false; caveReset(); if (CAVE.walls) glassReset(); if (!save.punchTold) { save.punchTold = 1; flash('To punch: the F key, the right trigger, or the Punch button.', 6000); } }
     if (CAVE.flame) { CAVE.flame.scale.set(1 + Math.sin(t * 9) * 0.08, 1 + Math.sin(t * 13) * 0.14, 1 + Math.cos(t * 7) * 0.08); CAVE.fire.intensity = 1.05 + Math.sin(t * 11) * 0.12; }
-    const P = player.position, it = interior, busy = talking() || fading || dead;
-    if (CAVE.ice) iceTick(dt, P, it, busy);
+    const P = player.position, it = interior, busy = talking() || fading || dead, others = cavePeers(), host = caveHost(others) === NET.id; CAVE.remote = !host;
+    if (!host) { CAVE.gobs.forEach(o => remoteGob(o, dt, t)); remoteBalls(it); return; }
+    const TG = (busy ? [] : [{ x: P.x, z: P.z, id: null }]).concat(others.map(p => ({ x: p.x, z: p.z, id: p.id }))), near = (x, z) => { let b = null, bd = 1e9; TG.forEach(q => { const dd = Math.hypot(q.x - x, q.z - z); if (dd < bd) { bd = dd; b = q; } }); return b; };
+    if (CAVE.ice) iceTick(dt, P, it, busy, TG, near);
     CAVE.gobs.forEach(o => { const g = o.g, u = g.userData; if (o.st === 'gone') return;
-      if (o.st === 'flee') { o.t += dt; const ax = g.position.x - P.x, az = g.position.z - P.z, ad = Math.hypot(ax, az) || 1; g.position.x += ax / ad * 13 * dt; g.position.z += az / ad * 13 * dt; g.rotation.y = Math.atan2(ax, az); g.scale.multiplyScalar(Math.max(0, 1 - dt * 1.6)); o.ph += dt * 22; u.legs[0].rotation.x = Math.sin(o.ph) * 1.1; u.legs[1].rotation.x = -Math.sin(o.ph) * 1.1; u.arms.forEach(q => { q.rotation.x = -2.8; }); if (o.t > 1.3) { o.st = 'gone'; g.visible = false; } return; }
-      const dx = P.x - g.position.x, dz = P.z - g.position.z, d = Math.hypot(dx, dz) || 1, angry = !busy && !CAVE.peace && (o.hot || (!o.chief && d < 21)); let moving = 0;
+      if (o.st === 'flee') { o.t += dt; const fq = near(g.position.x, g.position.z) || P, ax = g.position.x - fq.x, az = g.position.z - fq.z, ad = Math.hypot(ax, az) || 1; g.position.x += ax / ad * 13 * dt; g.position.z += az / ad * 13 * dt; g.rotation.y = Math.atan2(ax, az); g.scale.multiplyScalar(Math.max(0, 1 - dt * 1.6)); o.ph += dt * 22; u.legs[0].rotation.x = Math.sin(o.ph) * 1.1; u.legs[1].rotation.x = -Math.sin(o.ph) * 1.1; u.arms.forEach(q => { q.rotation.x = -2.8; }); if (o.t > 1.3) { o.st = 'gone'; g.visible = false; } return; }
+      const tg = near(g.position.x, g.position.z), dx = (tg || P).x - g.position.x, dz = (tg || P).z - g.position.z, d = Math.hypot(dx, dz) || 1, angry = !!tg && !CAVE.peace && (o.hot || (!o.chief && d < 21)); let moving = 0;
       if (o.fl > 0) o.fl = Math.max(0, o.fl - dt * 4); g.rotation.x = -o.fl * 0.5;
       if (o.kt > 0) { o.kt -= dt; g.position.x += o.kb[0] * dt; g.position.z += o.kb[1] * dt; }
       else if (angry) { g.rotation.y += wrap(Math.atan2(dx, dz) - g.rotation.y) * Math.min(1, dt * 9);
-        if (o.st === 'wind') { o.t += dt; const w = Math.sin(Math.min(1, o.t / 0.8) * Math.PI); u.arms.forEach(q => { q.rotation.x = -2.6 * w; }); g.position.y = w * 0.5; if (!o.done && o.t > 0.45) { o.done = true; if (d < 3.4 + (o.chief ? 0.8 : 0)) hurt(o.chief ? 9 : 6, CAVE.ice ? (o.chief ? 'Old Rimeclaw clouts you.' : 'A frost goblin thumps you.') : o.chief ? 'Grizzlegob thumps you.' : 'A goblin thumps you.'); } if (o.t > 0.8) { o.st = 'chase'; o.cd = 0.6 + Math.random() * 0.7; g.position.y = 0; } }
+        if (o.st === 'wind') { o.t += dt; const w = Math.sin(Math.min(1, o.t / 0.8) * Math.PI); u.arms.forEach(q => { q.rotation.x = -2.6 * w; }); g.position.y = w * 0.5; if (!o.done && o.t > 0.45) { o.done = true; if (d < 3.4 + (o.chief ? 0.8 : 0)) caveHurt(tg, o.chief ? 9 : 6, CAVE.ice ? (o.chief ? 'Old Rimeclaw clouts you.' : 'A frost goblin thumps you.') : o.chief ? 'Grizzlegob thumps you.' : 'A goblin thumps you.'); } if (o.t > 0.8) { o.st = 'chase'; o.cd = 0.6 + Math.random() * 0.7; g.position.y = 0; } }
         else if (d > 2.7 + (o.chief ? 0.7 : 0)) { const sp = o.chief ? 5.5 : 7.5; g.position.x += dx / d * sp * dt; g.position.z += dz / d * sp * dt; moving = 1; o.st = 'chase'; }
         else if ((o.cd -= dt) <= 0) { o.st = 'wind'; o.t = 0; o.done = false; } }
       else { o.st = 'idle'; if (!o.chief) { o.wa += dt * 0.5; const tx = o.home.x + Math.cos(o.wa) * 3, tz = o.home.z + Math.sin(o.wa * 0.7) * 3, wx = tx - g.position.x, wz = tz - g.position.z, wd = Math.hypot(wx, wz); if (wd > 0.4) { g.position.x += wx / wd * 2 * dt; g.position.z += wz / wd * 2 * dt; g.rotation.y += wrap(Math.atan2(wx, wz) - g.rotation.y) * Math.min(1, dt * 4); moving = 0.4; } } else if (d < 16) g.rotation.y += wrap(Math.atan2(dx, dz) - g.rotation.y) * Math.min(1, dt * 3); u.arms.forEach(q => { q.rotation.x *= 0.9; }); g.position.y = 0; }
       // keep out of the rocks, out of each other and inside the cave
       it.solids.forEach(q => { const ex = g.position.x - q.x, ez = g.position.z - q.z, ed = Math.hypot(ex, ez), mn = q.r + 0.9; if (ed < mn && ed > 0.001) { g.position.x = q.x + ex / ed * mn; g.position.z = q.z + ez / ed * mn; if (moving) { const sd = o.wa % 2 < 1 ? 1 : -1; g.position.x += -ez / ed * sd * 5 * dt; g.position.z += ex / ed * sd * 5 * dt; } } });
       CAVE.gobs.forEach(q => { if (q === o || q.st === 'gone') return; const ex = g.position.x - q.g.position.x, ez = g.position.z - q.g.position.z, ed = Math.hypot(ex, ez); if (ed < 2 && ed > 0.001) { g.position.x += ex / ed * (2 - ed) * 0.5; g.position.z += ez / ed * (2 - ed) * 0.5; } });
+      it.boxes.forEach(b => { const ex = g.position.x - b.x, ez = g.position.z - b.z, hx = b.hw + 0.9, hz = b.hd + 0.9; if (Math.abs(ex) < hx && Math.abs(ez) < hz) { if (hx - Math.abs(ex) < hz - Math.abs(ez)) g.position.x = b.x + (ex < 0 ? -1 : 1) * hx; else g.position.z = b.z + (ez < 0 ? -1 : 1) * hz; } });
       g.position.x = clamp(g.position.x, -it.w / 2 + 1.5, it.w / 2 - 1.5); g.position.z = clamp(g.position.z, -it.d / 2 + 1.5, it.d / 2 - 3);
-      o.ph += dt * (moving ? 14 * moving + 4 : 0); const sw = moving ? Math.sin(o.ph) * 0.9 : 0; u.legs[0].rotation.x = sw; u.legs[1].rotation.x = -sw; if (moving && o.st !== 'wind') { u.arms[0].rotation.x = -sw * 0.8; u.arms[1].rotation.x = sw * 0.8; g.position.y = Math.abs(Math.sin(o.ph)) * 0.18; } u.hd.rotation.z = Math.sin(t * 2 + o.wa) * 0.08; }); }
+      o.ph += dt * (moving ? 14 * moving + 4 : 0); const sw = moving ? Math.sin(o.ph) * 0.9 : 0; u.legs[0].rotation.x = sw; u.legs[1].rotation.x = -sw; if (moving && o.st !== 'wind') { u.arms[0].rotation.x = -sw * 0.8; u.arms[1].rotation.x = sw * 0.8; g.position.y = Math.abs(Math.sin(o.ph)) * 0.18; } u.hd.rotation.z = Math.sin(t * 2 + o.wa) * 0.08; });
+    if (others.length) { CAVE.bt = (CAVE.bt || 0) - dt; if (CAVE.bt <= 0) { CAVE.bt = 0.12; caveSend(it); } } }
   // inside The Sleepy Beetle: the great hearth, the bar, tables and stools, and whoever is in tonight
   const INN_SEATS = {}, HEARTH_SEATS = {};   // where the keepers stand and the travellers sit, for the night life to fill
   const innDecor = (id, name, SEATS) => (sc, solids, k) => {
@@ -3609,7 +3721,12 @@
     let l1 = K.free ? (me >= 0 ? `You are doing ${K.n}.` : `You are watching ${nm(0)} and ${nm(1)} do ${K.n}.`) : me < 0 ? `You are watching ${nm(0)} play ${nm(1)} at ${K.n}.` : K.sides ? `You are <b>${K.sides[me]}</b>. ${K.sides[me ^ 1]} is ${opp}.` : `You are playing ${K.n} against ${opp}.`;
     const l2 = s.win < 0 ? K.status(s, me, mine, nm) : K.free ? `Solved in ${s.d.m} moves! New game mixes it up again.` : s.win === 2 ? 'A draw.' : s.win === me ? 'You win! Well played.' : `${K.sides ? K.sides[s.win] : nm(s.win, 1)} win${K.sides || s.who[s.win] !== NET.id ? 's' : ''}.` + (me >= 0 ? ' New game plays again.' : '');
     const pad = settings.input === 'gamepad', kb = settings.input === 'keyboard'; $('tghead').innerHTML = l1 + '<br>' + l2;
-    $('tgnew').textContent = 'New game' + (pad ? ' (Y)' : kb ? ' (N)' : ''); $('tgnew').disabled = me < 0; $('tgleave').textContent = (sitting ? 'Stand up' : 'Close') + (pad ? ' (B)' : kb ? ' (Esc)' : ''); }
+    $('tgnew').textContent = 'New game' + (pad ? ' (Y)' : kb ? ' (N)' : ''); $('tgnew').disabled = me < 0; $('tgleave').textContent = (sitting ? 'Stand up' : 'Close') + (pad ? ' (B)' : kb ? ' (Esc)' : ''); tgGlide(T, grid, cells); }
+  function tgGlide(T, grid, cells) { const key = T.id + ':' + T.kind + ':' + cells.length, now = cells.map(q => q.h || ''), was = tgGlide.key === key ? tgGlide.h : null; tgGlide.key = key; tgGlide.h = now; if (!was || reduce) return;
+    const ch = []; now.forEach((h, i) => { if (h !== was[i]) ch.push(i); }); if (!ch.length || ch.length > 4) return; const used = new Set();
+    ch.forEach(b => { if (!now[b] || !/[^\s]/.test(now[b].replace(/<[^>]*>/g, ''))) return; const a = ch.find(q => q !== b && !used.has(q) && was[q] === now[b]); if (a === undefined) return; used.add(a);
+      const A = grid.children[a], B = grid.children[b], ra = A.getBoundingClientRect(), rb = B.getBoundingClientRect(), dx = ra.left - rb.left, dy = ra.top - rb.top, els = B.children.length ? [...B.children] : [B];
+      B.style.zIndex = 3; B.style.position = B.style.position || 'relative'; els.forEach(e => { e.style.transition = 'none'; e.style.transform = `translate(${dx}px, ${dy}px)`; }); void B.offsetWidth; els.forEach(e => { e.style.transition = 'transform .36s cubic-bezier(.3,.7,.25,1)'; e.style.transform = ''; }); setTimeout(() => { B.style.zIndex = ''; }, 420); }); }
   function tgClick(i) { const T = tgT, K = T.K, s = T.st, me = s.who.indexOf(NET.id); if (me < 0 || s.win >= 0 || (!K.free && s.turn !== me)) { tgDraw(); return; }
     if (K.act(s, me, i)) { s.n++; chink(s.win >= 0 ? 1040 : 700); tgSend(T); tgChanged(T); } else tgDraw(); }
   function tgNav(dx, dy) { tgKb = true; const K = tgT.K, n = $('tggrid').children.length, rows = Math.ceil(n / K.cols), c = Math.max(0, Math.min(K.cols - 1, (tgCur % K.cols) + dx)), r = Math.max(0, Math.min(rows - 1, Math.floor(tgCur / K.cols) + dy)); tgCur = Math.min(n - 1, r * K.cols + c); tgDraw(); }
@@ -3695,7 +3812,13 @@
     else if (mine) l2 = s.jump >= 0 ? 'Jump again with the same piece.' : mv.length && mv[0].cap >= 0 ? 'Your move. You must jump.' : 'Your move. Pick a piece with a gold ring, then a gold spot.';
     else l2 = `${col[s.turn]} to move.`;
     const pad = settings.input === 'gamepad', kb = settings.input === 'keyboard'; $('drhead').innerHTML = l1 + '<br><b>' + l2 + '</b>';
-    $('drnew').textContent = 'New game' + (pad ? ' (Y)' : kb ? ' (N)' : ''); $('drnew').disabled = me < 0; $('drleave').textContent = (sitting ? 'Stand up' : 'Close') + (pad ? ' (B)' : kb ? ' (Esc)' : ''); }
+    $('drnew').textContent = 'New game' + (pad ? ' (Y)' : kb ? ' (N)' : ''); $('drnew').disabled = me < 0; $('drleave').textContent = (sitting ? 'Stand up' : 'Close') + (pad ? ' (B)' : kb ? ' (Esc)' : '');
+    drGlide(T, grid, me); }
+  function drGlide(T, grid, me) { const s = T.st, pb = drGlide.b, key = T.id + ':' + me; drGlide.b = s.b.slice(); if (!pb || drGlide.k !== key) { drGlide.k = key; return; } if (reduce) return;
+    const gOf = i => (me === 1 ? i : 63 - i), [a, b] = s.last || []; if (a === undefined || b === undefined || a === b || !pb[a] || s.b[a] || !s.b[b] || pb[b]) return;
+    const A = grid.children[gOf(a)], B = grid.children[gOf(b)], ic = B.firstChild, ra = A.getBoundingClientRect(), rb = B.getBoundingClientRect();
+    B.style.zIndex = 3; ic.style.transition = 'none'; ic.style.transform = `translate(${ra.left - rb.left}px, ${ra.top - rb.top}px)`; void ic.offsetWidth; ic.style.transition = 'transform .36s cubic-bezier(.3,.7,.25,1)'; ic.style.transform = ''; setTimeout(() => { B.style.zIndex = ''; }, 420);
+    for (let i = 0; i < 64; i++) if (pb[i] && !s.b[i] && i !== a) { const C = grid.children[gOf(i)], gh = document.createElement('b'); gh.className = 'gh ' + (drSide(pb[i]) ? 'w' : 'r'); C.appendChild(gh); requestAnimationFrame(() => requestAnimationFrame(() => { gh.style.opacity = '0'; gh.style.transform = 'scale(.4)'; })); setTimeout(() => gh.remove(), 560); } }
   function drAt(g) { return drT && drT.st.who.indexOf(NET.id) === 1 ? g : 63 - g; }   // the square on the board under a square on the screen: Red and anyone watching see row 0 at the bottom, White sees row 7 there
   function drClick(i) { const T = drT, s = T.st, me = s.who.indexOf(NET.id); if (me < 0 || s.win >= 0 || s.turn !== me) { drDraw(); return; }
     const mv = drMoves(s.b, s.turn, s.jump), m = mv.find(q => q.from === drSel && q.to === i);
@@ -3711,6 +3834,7 @@
   function drBoardMove(T) { const s = T.st, mv = drMoves(s.b, s.turn, s.jump); if (!mv.length) return; let best = null, bs = -1e9;
     mv.forEach(m => { const t = { b: s.b.slice(), turn: s.turn, jump: s.jump, win: -1, last: [], n: 0 }, v = s.b[m.from]; drApply(t, m); let sc = Math.random() * 2; if (t.win >= 0) sc += 50; if (t.b[m.to] !== v) sc += 4; if (t.turn !== s.turn && drMoves(t.b, t.turn, -1).some(q => q.cap >= 0)) sc -= 5; if (t.turn === s.turn) sc += 3; if (sc > bs) { bs = sc; best = m; } });
     drApply(s, best); chink(best.cap >= 0 ? 470 : 620); drSend(T); drChanged(T); }
+  function beltOn(k, b) { if (!k || !k.beltMesh) return; if (!k._beltM) { k._beltM = k.beltMesh.material.clone(); k.beltMesh.material = k._beltM; } k._beltM.color.set(BELT_COL[Math.max(0, Math.min(3, b | 0))]); }
   function drTick(dt) { const here = where === 'in' ? 'in:' + interior.id : where;
     for (const id in DTABLES) { const T = DTABLES[id]; if (T.world !== here) continue; T.men.forEach(side => side.forEach(p => { if (!p.visible) return; const to = p.userData.to, dx = to.x - p.position.x, dz = to.z - p.position.z, d = Math.hypot(dx, dz); if (d < 0.004) { p.position.copy(to); return; } const st = Math.min(d, dt * Math.max(1.6, d * 5)); p.position.x += dx / d * st; p.position.z += dz / d * st; p.position.y = to.y + Math.min(0.3, (d - st) * 0.8); })); }
     if (!drUp) return; const T = drT, s = T.st, me = s.who.indexOf(NET.id), now = performance.now();
@@ -3851,9 +3975,9 @@
     const mt = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 1.6, 8), mat('#6b4a2b')); mt.position.y = 0.8; model.add(mt);
     const mp = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.5, 0.1, 12), wood); mp.position.y = 1.1; model.add(mp);
     const mc = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6, 0), mat('#4a7a31', { flatShading: true })); mc.position.y = 2; model.add(mc);
-    const rx = -4.6, rz = -D / 2 + 5.4;
-    [-0.9, 0.9].forEach(d => { const rk = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.1, 6, 16, 1.5), dark); rk.position.set(rx + d, 1.75, rz); rk.rotation.set(0, Math.PI / 2, -Math.PI / 2 - 0.75); sc.add(rk); });
-    wall(2, 0.2, 1.8, rx, 1.3, rz, wood); wall(2, 2.4, 0.2, rx, 2.4, rz - 0.9, wood); solids.push({ x: rx, z: rz, r: 1.5 }); k.seat(rx, rz + 0.1, 0, 1.4, 'rocking chair');
+    const rx = -4.6, rz = -D / 2 + 5.4, rparts = [];
+    [-0.9, 0.9].forEach(d => { const rk = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.1, 6, 16, 1.5), dark); rk.position.set(rx + d, 1.75, rz); rk.rotation.set(0, Math.PI / 2, -Math.PI / 2 - 0.75); sc.add(rk); rparts.push(rk); });
+    rparts.push(wall(2, 0.2, 1.8, rx, 1.3, rz, wood), wall(2, 2.4, 0.2, rx, 2.4, rz - 0.9, wood)); [-0.9, 0.9].forEach(d => [-0.6, 0.6].forEach(q => rparts.push(wall(0.16, 1.05, 0.16, rx + d, 0.75, rz + q, dark)))); solids.push({ x: rx, z: rz, r: 1.5 }); { const g = rockerOf(sc, rparts, rx, rz, 0); movingSeat(sc, g, rx, rz + 0.1, new THREE.Vector3(0, 1.45, 0.1), 'rocking chair', 0.13, 2.4, { sc, world: 'in:aldhome', yaw: 0 }); }
   }) });
   makeRoom('fenhome', { w: 76, d: 40, h: 20, doorH: 9.4, wall: '#f0e2d8', trim: '#8a3a4a', label: 'Dewberry Cottage', region: 'village', hint: 'Jam jars to the ceiling. It smells of berries and sugar.', decorate: familyHome({ wall: '#f0e2d8', quilt: '#f4d35e', kidQuilt: '#e68fb0', rug: '#b8a070' }, (sc, solids, k) => {
     const { wall, W, D } = k, { tx, tz } = homeKit(sc, solids, k, { rug: '#c8384a', quilt: '#f4d35e' });
@@ -4046,7 +4170,9 @@
     mabhome: { w: 60, d: 34, h: 14, wall: '#f2efe6', trim: '#4a3420', label: 'Spoke Cottage', hint: 'Balloon silk in every colour, folded and labelled, and a canary who sings when the kettle does.', dec: (sc, solids, k) => {
       const { wall, W, D } = k, wood = mat('#8a6438'), dark = mat('#4a3420'), top = mat('#ffffff', { map: plankTex }), cream = mat('#efe6d2');
       roomFire(sc, wall, -W / 2 + 1.2, -2, Math.PI / 2, 1.1); [-5, -2, 1].forEach(z => solids.push({ x: -W / 2 + 1.4, z, r: 2 }));
-      { const cx = -21, cz = 1, wd = mat('#6b4a2b'); wall(2.6, 0.3, 2.4, cx, 2.3, cz, wd); wall(0.3, 3.4, 2.6, cx + 1.2, 4, cz, wd); [-1.2, 1.2].forEach(o => { const rk = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.12, 6, 14, Math.PI / 2), wd); rk.position.set(cx, 1.5, cz + o); rk.rotation.z = -Math.PI * 0.75; sc.add(rk); }); solids.push({ x: cx, z: cz, r: 1.6 }); k.seat(cx, cz, -Math.PI / 2, 2.4, 'rocking chair'); }
+      { const cx = -21, cz = 1, wd = mat('#6b4a2b'), g = new THREE.Group(); g.position.set(cx, 0, cz); g.rotation.order = 'YXZ'; g.rotation.y = -Math.PI / 2; sc.add(g); const bx = (w, h, d, x, y, z) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wd); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; };
+      bx(2.6, 0.3, 2.4, 0, 2.3, 0); bx(2.6, 3.6, 0.3, 0, 4.2, -1.3).rotation.x = -0.14; [-1.2, 1.2].forEach(o => { const geo = new THREE.TorusGeometry(3.4, 0.13, 6, 16, 1.0); geo.rotateZ(-Math.PI / 2 - 0.5); geo.rotateY(Math.PI / 2); geo.translate(o, 3.53, 0); const rk = new THREE.Mesh(geo, wd); rk.castShadow = true; g.add(rk); [-1, 1].forEach(q => bx(0.24, 2, 0.24, o, 1.2, q)); bx(0.26, 0.2, 2.4, o * 1.08, 3.6, -0.1); bx(0.2, 1.2, 0.2, o * 1.08, 3, 1); });
+      solids.push({ x: cx, z: cz, r: 1.6 }); { movingSeat(sc, g, cx, cz, new THREE.Vector3(0, 2.45, 0), 'rocking chair', 0.13, 2.4, { sc, world: 'in:mabhome', yaw: -Math.PI / 2 }); } }
       // the sewing table, with silk, spools and a pincushion
       { const tx = 2, tz = -D / 2 + 3.5; wall(14, 0.4, 4.4, tx, 4.2, tz, top); [[-6.6, -2], [6.6, -2], [-6.6, 2], [6.6, 2]].forEach(([a, b]) => wall(0.4, 4, 0.4, tx + a, 2, tz + b, dark)); solids.push({ x: tx - 4, z: tz, r: 2.5 }, { x: tx, z: tz, r: 2.5 }, { x: tx + 4, z: tz, r: 2.5 });
         [['#c8384a', -4], ['#e8b64c', 0], ['#3f6f4a', 4]].forEach(([c, x]) => wall(3.4, 0.5, 3, tx + x, 4.65, tz, mat(c))); for (let q = 0; q < 6; q++) { const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.6, 10), mat(['#c8384a', '#e8b64c', '#3f6f4a', '#9fc8e8', '#ffffff', '#5a3d8a'][q])); sp.position.set(tx - 5 + q * 0.7, 4.7, tz + 1.6); sc.add(sp); }
@@ -4423,7 +4549,7 @@
   function makeElfNPC(o) {
     const g = new THREE.Group(), skin = mat(o.skin || '#c9956a'), coat = mat(o.coat || '#5a6b7a');
     const T = o.tall || 6, Wd = o.wide || 1.6, hem = T * 0.36; g.userData.tall = T;
-    const prof = []; for (let i = 0; i <= 8; i++) { const y = hem + (i / 8) * (T - hem); prof.push(new THREE.Vector2(Wd - (y / T) * 0.55, y)); }
+    const HS0 = T < 4 ? 0.8 : 1, prof = new THREE.SplineCurve([[Wd - 0.18, hem], [Wd - 0.3, T * 0.45], [Wd * 0.78 - 0.04, T * 0.55], [Wd * 0.8, T * 0.68], [Wd * 0.86, T * 0.8], [Wd * 0.84, T * 0.9], [Wd * 0.62, T * 0.97], [0.36 * HS0, T + 0.08], [0.001, T + 0.1]].map(([r, y]) => new THREE.Vector2(Math.max(0.001, r), y))).getPoints(32);
     g.add(new THREE.Mesh(new THREE.LatheGeometry(prof, 20), coat));
     // legs under the coat: a thigh, a knee, a shin and a boot, the boot's sole on the ground
     { const trou = mat(o.trou || '#3a3430'), bootM = mat('#2a2a2a'), L1 = T * 0.23, L2 = T * 0.23 - 0.27, lr = Math.max(0.24, Wd * 0.2);
@@ -4434,10 +4560,10 @@
         const boot = new THREE.Mesh(new THREE.SphereGeometry(0.45 * Math.max(0.7, Wd / 1.6), 10, 8), bootM); boot.scale.set(1, 0.6, 1.6); boot.position.set(0, -L2, 0.35); knee.add(boot);
         hip.userData.knee = knee; th.onBeforeRender = () => { if (d < 0) elfStride(g); kneeFlex(hip); }; return hip; }); }
     const belt = new THREE.Mesh(new THREE.TorusGeometry((o.wide || 1.6) * 0.78, 0.14, 8, 20), mat('#3a2a1e')); belt.rotation.x = Math.PI / 2; belt.position.y = (o.tall || 6) * 0.55; g.add(belt);
-    const AK = Math.max(0.6, Math.min(1, T / 5.6)); g.userData.arms = [-1, 1].map(d => { const sh = new THREE.Group(); sh.position.set(d * (Wd - 0.6 + 0.3 * AK), T * 0.9, 0); sh.scale.setScalar(AK); sh.rotation.z = d * 0.1; g.add(sh); { const cap = new THREE.Mesh(new THREE.SphereGeometry(0.43, 10, 8), coat); cap.position.y = -0.04; sh.add(cap); } const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.33, 1.35, 8), coat); arm.position.y = -0.67; sh.add(arm);
+    const AK = Math.max(0.6, Math.min(1, T / 5.6)); g.userData.arms = [-1, 1].map(d => { const sh = new THREE.Group(); sh.position.set(d * (Wd * 0.84 + 0.1 * AK), T * 0.89, 0); sh.scale.setScalar(AK); sh.rotation.z = d * 0.1; g.add(sh); { const cap = new THREE.Mesh(new THREE.SphereGeometry(0.43, 10, 8), coat); cap.position.y = -0.04; sh.add(cap); } const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.33, 1.35, 8), coat); arm.position.y = -0.67; sh.add(arm);
       const elbow = new THREE.Group(); elbow.position.y = -1.3; sh.add(elbow); elbow.add(new THREE.Mesh(new THREE.SphereGeometry(0.31, 8, 6), coat)); const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.36, 1.3, 8), coat); fore.position.y = -0.65; elbow.add(fore);
       const hand = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), skin); hand.position.y = -1.4; elbow.add(hand); sh.userData.elbow = elbow; arm.onBeforeRender = () => elbowFlex(sh); return sh; });
-    const head = new THREE.Group(); const HS = T < 4 ? 0.8 : 1; head.scale.setScalar(HS); head.position.y = T + 1.2 * HS + 0.3; g.add(head); { const nk = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * HS, 0.34 * HS, 1, 10), skin); nk.position.y = T + 0.35; g.add(nk); const yoke = new THREE.Mesh(new THREE.SphereGeometry(Wd - 0.55, 14, 8), coat); yoke.scale.y = 0.35; yoke.position.y = T; g.add(yoke); } g.userData.head = head;
+    const head = new THREE.Group(); const HS = T < 4 ? 0.8 : 1; head.scale.setScalar(HS); head.position.y = T + 1.2 * HS + 0.3; g.add(head); { const nk = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * HS, 0.34 * HS, 1, 10), skin); nk.position.y = T + 0.35; g.add(nk); } g.userData.head = head;
     head.add(new THREE.Mesh(new THREE.SphereGeometry(0.95, 20, 16), skin));
     [-1, 1].forEach(d => { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.26, 1.5, 8), skin); ear.position.set(d * 1.0, 0.3, -0.05); ear.rotation.z = -d * 1.25; head.add(ear); const eyeW = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), mat('#eee8dc')); eyeW.position.set(d * 0.35, 0.12, 0.85); head.add(eyeW); const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), mat('#1b1b1b')); pupil.position.set(d * 0.35, 0.12, 0.98); head.add(pupil); });
     const nose = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), skin); nose.scale.z = 1.5; nose.position.set(0, -0.08, 0.95); head.add(nose);
@@ -4676,7 +4802,7 @@
     g.traverse(o => { if (o.isMesh) o.castShadow = true; }); g.visible = false; return g;
   }
   // the elf's whole body in one group, so it can sit, lean and be lifted onto a saddle
-  kid.body = new THREE.Group(); player.children.slice().forEach(o => kid.body.add(o)); player.add(kid.body);
+  player.children.slice().forEach(o => { if (o !== kid.body) kid.body.add(o); });
   bike = makeBike(); player.add(bike);
   function setRiding(on) {
     const dg = mount === 'dog';
@@ -4797,8 +4923,11 @@
     if (x > edge) { const d = x - edge; h -= Math.min(d * Math.max(0.48, 3.5 - 3.02 * cove), 30); }
     return Math.max(h, SEA_Y - 4);
   }
-  const PIER_LADDERS = [[78, 1], [78, -1], [92, 1], [92, -1], [105, 1], [105, -1]];
-  function atLadder(x, z) { return PIER_LADDERS.some(([lx, sd]) => Math.abs(x - lx) < 1.7 && Math.abs(z - (PIER.z + sd * 2.6)) < 1.6); }
+  const PIER_LADDERS = [74, 82, 90, 98, 106, 113].flatMap(x => [[x, 1], [x, -1]]);
+  function atLadder(x, z) { return ladderAt(x, z) !== null; }
+  function ladderAt(x, z) { if (where !== 'lantern') return null; let best = null, bd = 9; PIER_LADDERS.forEach(L => { const [lx, sd] = L, dz = (z - PIER.z) * sd; if (dz > 1.9 && dz < 5.5 && Math.abs(x - lx) < 3.2) { const d = Math.abs(x - lx) + Math.abs(dz - 2.6); if (d < bd) { bd = d; best = L; } } }); return best; }
+  // climbing up: you come out on the pier at the top of the ladder
+  function climbLadder(L) { const [lx, sd] = L; player.position.set(lx, PIER.y, PIER.z + sd * 1.3); py = 0; vy = 0; vel.set(0, 0, 0); bodyYaw = sd > 0 ? Math.PI : 0; stamina = Math.max(stamina, 20); drowning = false; chink(660); hint('You climb the ladder onto the pier.'); }
   // the boardwalk down to the cove is cleated like a ship's gangway: it is steep, but your feet hold on it
   function onCovePath(x, z) { return where === 'lantern' && Math.abs(z - PIER.z) < 2.6 && x > 34 && x < PIER.x0 + 1; }
   function onPier(x, z) { return Math.abs(z - PIER.z) < 2.4 && x > PIER.x0 - 1 && x < PIER.x1 + 1; }
@@ -5644,13 +5773,13 @@
     snd.fx = c.createGain(); snd.fx.gain.value = 0; snd.fx.connect(snd.master);
     const nb = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; snd.noise = nb;
     const loop = (type, freq, q) => { const src = c.createBufferSource(); src.buffer = nb; src.loop = true; const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = c.createGain(); g.gain.value = 0; src.connect(f); f.connect(g); g.connect(snd.fx); src.start(); return { f, g }; };
-    snd.wind = loop('lowpass', 380, 0.4); snd.river = loop('bandpass', 1150, 0.5); snd.sea = loop('lowpass', 520, 0.3); snd.fire = loop('bandpass', 1500, 0.7); snd.room = loop('lowpass', 150, 0.5);
+    snd.wind = loop('lowpass', 380, 0.4); snd.river = loop('bandpass', 2300, 1.1); snd.sea = loop('lowpass', 520, 0.3); snd.fire = loop('lowpass', 260, 0.7); snd.room = loop('lowpass', 150, 0.5);
     snd.hum = c.createGain(); snd.hum.gain.value = 0; snd.hum.connect(snd.fx); [55, 82.6, 110.4].forEach((f, i) => { const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = c.createGain(); g.gain.value = [1, 0.5, 0.22][i]; o.connect(g); g.connect(snd.hum); o.start(); });
-    snd.next = { pop: 0, gull: 6, drip: 2, ring: 5 };
+    snd.next = { pop: 0, gull: 6, drip: 2, ring: 5, bub: 0, log: 4 };
   }
   const sndSet = (node, v, tc = 0.4) => node.gain.setTargetAtTime(v, audioCtx.currentTime, tc);
   // a short burst of noise: a spark popping in the fire
-  function sndPop(vol) { const c = audioCtx, t = c.currentTime, src = c.createBufferSource(); src.buffer = snd.noise; const f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = rnd(1400, 3800); const g = c.createGain(); g.gain.setValueAtTime(vol * rnd(0.4, 1), t); g.gain.exponentialRampToValueAtTime(0.0008, t + rnd(0.02, 0.07)); src.connect(f); f.connect(g); g.connect(snd.fx); src.start(t, Math.random() * 1.8); src.stop(t + 0.09); }
+  function sndPop(vol, lo = 1400, hi = 3800) { const c = audioCtx, t = c.currentTime, src = c.createBufferSource(); src.buffer = snd.noise; const f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = rnd(lo, hi); const g = c.createGain(); g.gain.setValueAtTime(vol * rnd(0.4, 1), t); g.gain.exponentialRampToValueAtTime(0.0008, t + rnd(0.02, 0.07)); src.connect(f); f.connect(g); g.connect(snd.fx); src.start(t, Math.random() * 1.8); src.stop(t + 0.09); }
   // one plain note with a shaped loudness; everything small is built from this
   function sndNote(dest, type, f0, f1, t, dur, vol, att = 0.01) { const c = audioCtx, o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(0.0006, t + dur); o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.03); return o; }
   function sndTick(dt, t) {
@@ -5665,8 +5794,10 @@
     sndSet(snd.wind.g, windy * (0.65 + 0.35 * Math.sin(t * 0.23) * Math.sin(t * 0.071 + 1)), 0.5); snd.wind.f.frequency.setTargetAtTime(330 + 170 * Math.sin(t * 0.13), c.currentTime, 0.5);
     // the Fern: loud on its banks, gone a little way off
     let rv = 0, sea = 0;
-    if (out && (where === 'fernwater' || where === 'wild')) { const [wx, wz] = playerWorldXZ(), l = toLocal(tileF, wx, wz), dd = Math.max(0, Math.abs(l[1] - RIVER.z) - RIVER.hw); rv = 0.6 * Math.pow(clamp(1 - dd / 70, 0, 1), 2); }
-    sndSet(snd.river.g, rv, 0.5);
+    if (out && (where === 'fernwater' || where === 'wild')) { const [wx, wz] = playerWorldXZ(), l = toLocal(tileF, wx, wz), dd = Math.max(0, Math.abs(l[1] - RIVER.z) - RIVER.hw); rv = 0.13 * Math.pow(clamp(1 - dd / 45, 0, 1), 2); }
+    sndSet(snd.river.g, rv * (0.7 + 0.3 * Math.sin(t * 0.9) * Math.sin(t * 0.37 + 2)), 0.5); snd.river.f.frequency.setTargetAtTime(2100 + 500 * Math.sin(t * 0.31), c.currentTime, 0.6);
+    // the babble: little bubbles, one at a time or a few together, the way water talks over stones
+    if (rv > 0.01) { snd.next.bub -= dt; if (snd.next.bub <= 0) { snd.next.bub = rnd(0.08, 0.55); const t0 = c.currentTime, n = Math.random() < 0.3 ? 2 + Math.floor(Math.random() * 3) : 1; for (let k = 0; k < n; k++) { const f = rnd(380, 1050); sndNote(snd.fx, 'sine', f, f * rnd(1.5, 2.3), t0 + k * rnd(0.04, 0.09), rnd(0.03, 0.07), rv * rnd(0.25, 0.55), 0.004); } } }
     // the sea: a slow swell near the Lanternreach shore, with a gull now and then
     if (out && (where === 'lantern' || where === 'wild' || where === 'lift')) { const [wx, wz] = playerWorldXZ(), l = toLocal(tileL, wx, wz), dd = Math.max(0, 52 - l[0]); sea = 0.9 * Math.pow(clamp(1 - dd / 220, 0, 1), 2) * (where === 'lift' ? 1 - liftT : 1); }
     sndSet(snd.sea.g, sea * (0.45 + 0.55 * Math.pow(Math.sin(t * 0.42), 2)), 0.4); snd.sea.f.frequency.setTargetAtTime(380 + 300 * Math.pow(Math.sin(t * 0.42), 2), c.currentTime, 0.4);
@@ -5679,8 +5810,9 @@
     }
     // fire: it crackles where it burns, and you hear it only when you stand near
     let fv = 0; const sc = curScene(); for (const f of fires) { if (f.sc !== sc) continue; if (!f.wp) { f.g.updateWorldMatrix(true, false); f.wp = f.g.getWorldPosition(new THREE.Vector3()); } const dd = Math.hypot(p.x - f.wp.x, p.z - f.wp.z), reach = 9 + 5 * f.g.scale.x; fv = Math.max(fv, Math.pow(clamp(1 - dd / reach, 0, 1), 2)); }
-    sndSet(snd.fire.g, fv * 0.2 * (0.8 + 0.2 * Math.sin(t * 7.3)), 0.15);
-    if (fv > 0.01) { snd.next.pop -= dt; if (snd.next.pop <= 0) { snd.next.pop = rnd(0.03, 0.34); sndPop(0.3 * fv); } }
+    sndSet(snd.fire.g, fv * 0.3 * (0.72 + 0.28 * Math.sin(t * 1.7) * Math.sin(t * 0.61 + 1)), 0.3); snd.fire.f.frequency.setTargetAtTime(220 + 70 * Math.sin(t * 2.3) * Math.sin(t * 0.9), c.currentTime, 0.2);
+    if (fv > 0.01) { snd.next.pop -= dt; if (snd.next.pop <= 0) { snd.next.pop = rnd(0.5, 2.6); sndPop(0.09 * fv, 900, 2200); if (Math.random() < 0.3) setTimeout(() => sndPop(0.05 * fv, 900, 2200), rnd(60, 160)); }
+      snd.next.log -= dt; if (snd.next.log <= 0) { snd.next.log = rnd(9, 22); sndNote(snd.fx, 'sine', 95, 58, c.currentTime, 0.3, 0.08 * fv, 0.01); } }
   }
 
   // ---- music: a harp and a flute. Each town has its own key, pace and tune, made up once from the town's name so it is always the same tune there.
@@ -5934,12 +6066,13 @@
     const look = c.clone().addScaledVector(right, port ? (rd.side ? 0.6 : -0.6) * sc : 0).addScaledVector(top, 0.09 * d * tanV), pos = look.clone().addScaledVector(n, d);
     { const nr = Math.max(rd.near0, d * 0.4); if (Math.abs(camera.near - nr) > 0.01) { camera.near = nr; camera.updateProjectionMatrix(); } } if (!rd.cp) { rd.cp = pos.clone(); rd.cl = look.clone(); } const kk = 1 - Math.pow(0.0005, dt); rd.cp.lerp(pos, kk); rd.cl.lerp(look, kk); rd.hid.forEach(c => { c.visible = false; }); camera.up.copy(top); camera.position.copy(rd.cp); camera.lookAt(rd.cl); camPos.copy(rd.cp); camLook.copy(rd.cl); }
   // reaching for a book: you turn to it, your arm goes up to the very place, and the book comes away in your hand
-  function reachTo(wp, col, then) { if (reach) return; const dx = wp.x - player.position.x, dz = wp.z - player.position.z; if (Math.hypot(dx, dz) > 0.3) { bodyYaw = Math.atan2(dx, dz); player.rotation.y = bodyYaw; }
-    const fly = new THREE.Mesh(new THREE.BoxGeometry(0.58, 1.6, 1.1), new THREE.MeshStandardMaterial({ color: col, roughness: 0.85 })); fly.userData._r = 9; fly.visible = false; curScene().add(fly); reach = { wp: wp.clone(), t: 0, then, fly }; }
+  function reachTo(wp, col, then, back) { if (reach) return; const dx = wp.x - player.position.x, dz = wp.z - player.position.z; if (Math.hypot(dx, dz) > 0.3) { bodyYaw = Math.atan2(dx, dz); player.rotation.y = bodyYaw; }
+    const fly = new THREE.Mesh(new THREE.BoxGeometry(0.58, 1.6, 1.1), new THREE.MeshStandardMaterial({ color: col, roughness: 0.85 })); fly.userData._r = 9; fly.visible = false; curScene().add(fly); reach = { wp: wp.clone(), t: 0, then, fly, back: !!back }; }
   function reachTick(dt) { const r = reach; r.t += dt / 1.05; const arm = kid.arms[0], sh = arm.getWorldPosition(new THREE.Vector3()), dh = Math.hypot(r.wp.x - sh.x, r.wp.z - sh.z), ang = -Math.max(0.5, Math.min(3.0, Math.PI / 2 + Math.atan2(r.wp.y - sh.y, Math.max(0.3, dh))));
-    const up = r.t < 0.35 ? r.t / 0.35 : r.t < 0.7 ? 1 : Math.max(0, 1 - (r.t - 0.7) / 0.3), e = up * up * (3 - 2 * up); arm.rotation.x = ang * e; elbowFlex(arm); gripAll(kid.hands, r.t > 0.3 ? 0.9 : 0.1);
-    if (r.t >= 0.33) { const h = (kid.hands && kid.hands[0] ? kid.hands[0] : arm).getWorldPosition(new THREE.Vector3()), f = Math.min(1, (r.t - 0.33) / 0.3); r.fly.visible = true; r.fly.position.lerpVectors(r.wp, h, f * f * (3 - 2 * f)); r.fly.rotation.y = player.rotation.y; r.fly.scale.setScalar(1 - 0.35 * f); }
-    if (r.t >= 1) { if (r.fly.parent) r.fly.parent.remove(r.fly); reach = null; gripAll(kid.hands, 0.35); rdFrom = { x: r.wp.x, z: r.wp.z, t: performance.now() }; r.then(); } }
+    const up = r.t < 0.35 ? r.t / 0.35 : r.t < 0.7 ? 1 : Math.max(0, 1 - (r.t - 0.7) / 0.3), e = up * up * (3 - 2 * up); arm.rotation.x = ang * e; elbowFlex(arm); if (!r.back) gripAll(kid.hands, r.t > 0.3 ? 0.9 : 0.1);
+    if (r.back) { if (!r.done) { const h = (kid.hands && kid.hands[0] ? kid.hands[0] : arm).getWorldPosition(new THREE.Vector3()), f = Math.max(0, Math.min(1, (r.t - 0.12) / 0.46)), e2 = f * f * (3 - 2 * f); r.fly.visible = true; r.fly.position.lerpVectors(h, r.wp, e2); r.fly.rotation.y = player.rotation.y; r.fly.scale.setScalar(0.65 + 0.35 * e2); if (f >= 1) { r.done = true; r.fly.visible = false; r.then(); } } gripAll(kid.hands, r.t < 0.6 ? 0.9 : 0.2); }
+    else if (r.t >= 0.33) { const h = (kid.hands && kid.hands[0] ? kid.hands[0] : arm).getWorldPosition(new THREE.Vector3()), f = Math.min(1, (r.t - 0.33) / 0.3); r.fly.visible = true; r.fly.position.lerpVectors(r.wp, h, f * f * (3 - 2 * f)); r.fly.rotation.y = player.rotation.y; r.fly.scale.setScalar(1 - 0.35 * f); }
+    if (r.t >= 1) { if (r.fly.parent) r.fly.parent.remove(r.fly); reach = null; gripAll(kid.hands, 0.35); if (!r.back) { rdFrom = { x: r.wp.x, z: r.wp.z, t: performance.now() }; r.then(); } } }
   function readBook(id, back) {
     if (!save.plainBooks && kid.arms && kid.arms.length === 2) { rdOpen(id, back); return; }
     const b = BOOKS[id]; if (!b) return; let i = -1; const n = b.p.length;
@@ -7123,7 +7256,7 @@
     let text = '', word = 'Pick up';
     if (!talking() && !bagOpen && !mapOpen && !fading && !sitting) { const [b0, d0] = nearestPick(0); if (b0 && d0 <= REACH && b0.userData.kind === 'sci') { text = 'Look at ' + b0.userData.label; word = 'Look'; }
       if (!(b0 && d0 <= REACH)) for (let tier = 1; tier < 5 && !text; tier++) { const [b, d] = nearestPick(tier); if (!b || d > REACH) continue; const u = b.userData;
-        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'readteach') { text = 'Speak to Fen Dewberry'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { const sh = SHOPS[u.shop]; if (!shopShut(u.shop)) { text = 'Trade at ' + sh.n; word = 'Trade'; } else if (honestStock(sh).length) { text = 'Honesty box at ' + sh.n; word = 'Open'; } else { text = sh.n + ' is shut till seven'; word = 'Look'; } } else if (u.kind === 'folk') { text = 'Speak to ' + folk[u.fi].n; word = 'Speak'; } else if (u.kind === 'draughts') { text = 'Play checkers'; word = 'Play'; } else if (u.kind === 'scope') { text = 'Look through the telescope'; word = 'Look'; } else if (u.kind === 'tgame') { text = TGT[u.tg].K.verb; word = 'Play'; } else if (u.kind === 'bay') { text = 'Look along ' + caseName(CASES[u.bay[0]]); word = 'Books'; } else if (u.kind === 'icechest') { text = 'Look through the heap'; word = 'Look'; } else if (u.kind === 'sensei') { text = 'Speak to Master Oren'; word = 'Speak'; } else if (u.kind === 'frbell') { text = 'Ring the bell'; word = 'Ring'; } else if (u.kind === 'cavetin') { text = save.q1 === 'sack' ? 'Leave the sack by the tin' : 'Read the note on the post'; word = 'Read'; } else if (u.kind === 'gobchest') { text = 'Open the goblins’ chest'; word = 'Open'; } else if (u.kind === 'gobchief') { text = 'Speak to Grizzlegob, the goblin chief'; word = 'Speak'; } else if (u.kind === 'decor') { text = 'Choose your room’s colours'; word = 'Choose'; } else if (u.kind === 'book') { text = !u.loose ? 'Read “' + BOOKS[u.book].t + '”' : BOOKS[u.book] ? 'Pick up “' + BOOKS[u.book].t + '”' : 'Put a book down here'; word = !u.loose ? 'Read' : BOOKS[u.book] ? 'Book' : 'Put'; } else if (u.kind === 'shelf') { text = 'Look along the shelf: ' + u.label; word = 'Look'; } else if (u.kind === 'wash') { text = 'Wash at the washstand'; word = 'Wash'; } else if (u.kind === 'mount') { text = dogSt.mine ? 'Ride ' + DOGNAME : dogSt.owner ? `${DOGNAME}, ${dogSt.owner}’s dog` : 'Meet ' + DOGNAME; word = dogSt.mine ? 'Ride' : 'Greet'; } else if (u.kind === 'stable') { text = 'Read the stable’s board'; word = 'Read'; } else if (u.kind === 'lot') { const st = lotState[u.no]; text = st ? (st.mine ? `Lot ${u.no} is yours` : `Lot ${u.no} is ${st.name}’s`) : `Claim Lot ${u.no}`; word = st ? 'Look' : 'Claim'; } else if (u.kind === 'store') { text = (u.owner ? 'Look at the ' : 'Open the ') + u.label; word = u.owner ? 'Look' : 'Open'; } else if (u.kind === 'knock') { text = 'Knock at ' + FOLK[u.who].n + '’s door'; word = 'Knock'; } else if (u.kind === 'resident') { text = (FOLK[u.who].pose === 'bed' ? 'Wake ' : 'Speak to ') + FOLK[u.who].n; word = 'Speak'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
+        if (u.kind === 'find') text = 'Pick up: ' + ITEMS[u.item].n.toLowerCase(); else if (u.kind === 'follower') { text = 'Speak to ' + beetleName; word = 'Speak'; } else if (u.kind === 'teacher') { text = 'Speak to ' + TEACH[u.i].n; word = 'Speak'; } else if (u.kind === 'quest') { text = 'Look at the compost heap'; word = 'Look'; } else if (u.kind === 'sciteach') { text = 'Speak to Marigold Fernsby'; word = 'Speak'; } else if (u.kind === 'readteach') { text = 'Speak to Fen Dewberry'; word = 'Speak'; } else if (u.kind === 'ferry') { text = 'Ring for the ferry'; word = 'Ring'; } else if (u.kind === 'shop') { const sh = SHOPS[u.shop]; if (!shopShut(u.shop)) { text = 'Trade at ' + sh.n; word = 'Trade'; } else if (honestStock(sh).length) { text = 'Honesty box at ' + sh.n; word = 'Open'; } else { text = sh.n + ' is shut till seven'; word = 'Look'; } } else if (u.kind === 'folk') { text = 'Speak to ' + folk[u.fi].n; word = 'Speak'; } else if (u.kind === 'draughts') { text = 'Play checkers'; word = 'Play'; } else if (u.kind === 'scope') { text = 'Look through the telescope'; word = 'Look'; } else if (u.kind === 'tgame') { text = TGT[u.tg].K.verb; word = 'Play'; } else if (u.kind === 'bay') { text = 'Look along ' + caseName(CASES[u.bay[0]]); word = 'Books'; } else if (u.kind === 'glasschest') { text = u.gk === 2 ? 'Read the scroll' : 'Open the chest'; word = u.gk === 2 ? 'Read' : 'Open'; } else if (u.kind === 'icechest') { text = 'Look through the heap'; word = 'Look'; } else if (u.kind === 'sensei') { text = 'Speak to Master Oren'; word = 'Speak'; } else if (u.kind === 'frbell') { text = 'Ring the bell'; word = 'Ring'; } else if (u.kind === 'cavetin') { text = save.q1 === 'sack' ? 'Leave the sack by the tin' : 'Read the note on the post'; word = 'Read'; } else if (u.kind === 'gobchest') { text = 'Open the goblins’ chest'; word = 'Open'; } else if (u.kind === 'gobchief') { text = 'Speak to Grizzlegob, the goblin chief'; word = 'Speak'; } else if (u.kind === 'decor') { text = 'Choose your room’s colours'; word = 'Choose'; } else if (u.kind === 'book') { text = !u.loose ? 'Read “' + BOOKS[u.book].t + '”' : BOOKS[u.book] ? 'Pick up “' + BOOKS[u.book].t + '”' : 'Put a book down here'; word = !u.loose ? 'Read' : BOOKS[u.book] ? 'Book' : 'Put'; } else if (u.kind === 'shelf') { text = 'Look along the shelf: ' + u.label; word = 'Look'; } else if (u.kind === 'wash') { text = 'Wash at the washstand'; word = 'Wash'; } else if (u.kind === 'mount') { text = dogSt.mine ? 'Ride ' + DOGNAME : dogSt.owner ? `${DOGNAME}, ${dogSt.owner}’s dog` : 'Meet ' + DOGNAME; word = dogSt.mine ? 'Ride' : 'Greet'; } else if (u.kind === 'stable') { text = 'Read the stable’s board'; word = 'Read'; } else if (u.kind === 'lot') { const st = lotState[u.no]; text = st ? (st.mine ? `Lot ${u.no} is yours` : `Lot ${u.no} is ${st.name}’s`) : `Claim Lot ${u.no}`; word = st ? 'Look' : 'Claim'; } else if (u.kind === 'store') { text = (u.owner ? 'Look at the ' : 'Open the ') + u.label; word = u.owner ? 'Look' : 'Open'; } else if (u.kind === 'knock') { text = 'Knock at ' + FOLK[u.who].n + '’s door'; word = 'Knock'; } else if (u.kind === 'resident') { text = (FOLK[u.who].pose === 'bed' ? 'Wake ' : 'Speak to ') + FOLK[u.who].n; word = 'Speak'; } else { text = 'Sit on the ' + u.label; word = 'Sit'; } } }
     if (text !== promptText) { promptText = text; const p = $('prompt'); p.hidden = !text; if (text) p.innerHTML = settings.input === 'touch' ? text : `<kbd>${settings.input === 'gamepad' ? 'X' : keyLabel(settings.binds.pick)}</kbd> ${text}`; $('grab').textContent = word; }
   }
 
@@ -7147,17 +7280,18 @@
     const tier = famTier(), locked = !!fam.pin && !famOpen, can = !locked && (famOpen || tier !== 'child'), VW = { off: 'Off', friends: 'Friends and party only', all: 'Anyone nearby' };
     $('seeopt').classList.toggle('on', fam.see !== false); $('seeopt').classList.toggle('off', locked);
     $('netnote').textContent = fam.see === false ? 'Off. You will not see anyone else, and they will not see you.' : NET.note();
-    $('famnote').innerHTML = (fam.year ? `Born in <b>${fam.year}</b>. ` : 'No birth year has been given on this device yet, so it is treated as a young child’s. ') + (tier === 'child' ? 'Under 13: voice chat is off, and only a parent can turn it on.' : tier === 'teen' ? '13 to 17: voice chat is for friends and party only, unless that is changed here.' : 'Grown-up: voice chat with anyone nearby, unless that is changed here.') + ' <i>Voice chat and ready-made phrases are not built yet; this is where they are decided, ready for when they are.</i>' + (fam.pin ? (famOpen ? ' <b>Unlocked</b> until you leave Settings.' : ' <b>Locked with a parent’s passcode.</b>') : ' No passcode is set.') + (famMsg ? `<br><b>${famMsg}</b>` : '');
+    $('famnote').innerHTML = (fam.year ? `Born in <b>${fam.year}</b>. ` : 'No birth year has been given on this device yet, so it is treated as a young child’s. ') + (tier === 'child' ? 'Under 13: voice chat is off, and only a parent can turn it on.' : tier === 'teen' ? '13 to 17: voice chat is for friends and party only, unless that is changed here.' : 'Grown-up: voice chat with anyone nearby, unless that is changed here.') + ' Typed chat follows the same rule as voice unless it is changed here: ' + ({ off: 'it is <b>off</b>.', friends: 'it is for <b>friends only</b>.', all: 'it is <b>on</b>, with friends and with anyone nearby.' })[chatRule()] + ' Web links, email addresses, phone numbers and bad words are hidden for anybody under 18.' + (fam.pin ? (famOpen ? ' <b>Unlocked</b> until you leave Settings.' : ' <b>Locked with a parent’s passcode.</b>') : ' No passcode is set.') + (famMsg ? `<br><b>${famMsg}</b>` : '');
     const row = $('famrow'); row.innerHTML = '';
     const btn = (t, fn) => { const b = document.createElement('button'); b.className = 'btn small'; b.textContent = t; b.onclick = fn; row.appendChild(b); return b; };
     const pinBox = ph => { const i = document.createElement('input'); i.type = 'password'; i.inputMode = 'numeric'; i.maxLength = 8; i.placeholder = ph; i.autocomplete = 'off'; i.style.width = '9em'; row.appendChild(i); return i; };
     if (locked) { const i = pinBox('Passcode'); btn('Unlock', () => { if (pinHash(i.value) === fam.pin) { famOpen = true; famMsg = ''; } else famMsg = 'That is not the passcode.'; renderFam(); }); return; }
     if (can) {
       const sel = document.createElement('select'); Object.keys(VW).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = 'Voice: ' + VW[k]; sel.appendChild(o); }); sel.value = voiceRule(); sel.onchange = () => { fam.voice = sel.value; famSave(); renderFam(); NET.voiceSync(); }; row.appendChild(sel);
+      { const cs = document.createElement('select'), CW = { off: 'Off', friends: 'Friends only', all: 'Anyone nearby, and friends' }; Object.keys(CW).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = 'Typed chat: ' + CW[k]; cs.appendChild(o); }); cs.value = chatRule(); cs.onchange = () => { fam.chat = cs.value; famSave(); renderFam(); frBadge(); }; row.appendChild(cs); }
       btn('Ready-made phrases and gestures: ' + (fam.phrases !== false ? 'on' : 'off'), () => { fam.phrases = fam.phrases === false; famSave(); renderFam(); $('saybtn').hidden = fam.phrases === false; });
     }
     if (famOpen || !fam.pin) { const i = pinBox(fam.pin ? 'New passcode' : 'Parent: choose a passcode'); btn(fam.pin ? 'Change passcode' : 'Set passcode', () => { if (!/^\d{4,8}$/.test(i.value)) { famMsg = 'Use 4 to 8 digits.'; renderFam(); return; } fam.pin = pinHash(i.value); famOpen = true; famMsg = 'Passcode set. Do not lose it: it is the only way to change these.'; famSave(); renderFam(); }); }
-    if (famOpen || (!fam.year && !fam.pin)) { const ys = document.createElement('select'); ys.innerHTML = yearOptions(); ys.value = String(fam.year || ''); ys.onchange = () => { if (ys.value) { fam.year = +ys.value; fam.voice = ''; famSave(); renderFam(); NET.voiceSync(); } }; row.appendChild(ys); if (famOpen) btn('Lock', () => { famOpen = false; famMsg = ''; renderFam(); }); }
+    if (famOpen || (!fam.year && !fam.pin)) { const ys = document.createElement('select'); ys.innerHTML = yearOptions(); ys.value = String(fam.year || ''); ys.onchange = () => { if (ys.value) { fam.year = +ys.value; fam.voice = ''; fam.chat = ''; famSave(); renderFam(); NET.voiceSync(); } }; row.appendChild(ys); if (famOpen) btn('Lock', () => { famOpen = false; famMsg = ''; renderFam(); }); }
   }
   $('seeopt').addEventListener('click', () => { if (fam.pin && !famOpen) return; fam.see = fam.see === false; famSave(); renderFam(); NET.sync(); });
 
@@ -7168,14 +7302,70 @@
   const EMOTES = [['Wave', 2.6], ['Cheer', 2.6], ['Bow', 2.2], ['Dance', 4.2], ['Point', 2.4]];
   function openSay(tab, again) {
     if ((talking() && !again) || bagOpen || mapOpen || !gameStarted || titleUp) return;
-    if (fam.phrases === false) { flash('Ready-made phrases are turned off in the parental controls.', 4500); return; }
+    if (fam.phrases === false) { if (chatRule() !== 'off') { chatOpen(); return; } flash('Ready-made phrases are turned off in the parental controls.', 4500); return; }
     showDialog(true); hint(''); clearDialog(); $('speaker').textContent = save.name || 'You'; const ges = tab === 'g';
     line.textContent = ges ? 'Which gesture?' : NET.peers.size ? 'What will you say?' : 'What will you say? (Nobody else is in this place just now, so only you will see it.)';
     const mk = (label, fn, prim) => { const b = document.createElement('button'); b.className = 'btn' + (prim ? ' primary' : ''); b.textContent = label; b.onclick = fn; actions.appendChild(b); return b; };
     if (ges) EMOTES.forEach(([n], i) => mk(n, () => { showDialog(false); NET.say('e', i); }, !i)); else PHRASES.forEach((q, i) => mk(q, () => { showDialog(false); NET.say('q', i); }, !i));
-    mk(ges ? 'Phrases…' : 'Gestures…', () => openSay(ges ? '' : 'g', true)); mk('Never mind', () => showDialog(false));
+    mk(ges ? 'Phrases…' : 'Gestures…', () => openSay(ges ? '' : 'g', true)); if (chatRule() !== 'off') mk('Type…', () => { showDialog(false); chatOpen(); }); mk('Friends…', () => { showDialog(false); frOpen(); }); mk('Never mind', () => showDialog(false));
     const f = actions.querySelector('button'); if (f) f.focus({ preventScroll: true });
   }
+  // ---------- friends, and typed chat. Friends are kept in the account, on the server: you give somebody your code, they put it in, and you are friends once you have said yes.
+  // Messages to a friend go through the server and reach them wherever they are. Typed chat to everybody in the same place goes straight to them, like the phrases do.
+  // What a child may do is decided in the parental controls, the same as voice: off, friends only, or anybody nearby.
+  const chatRule = () => fam.chat || { child: 'off', teen: 'friends', adult: 'all' }[famTier()];
+  const FR = { list: [], code: '', msgs: [], last: 0, seen: 0, loaded: false, open: false, talk: null, t: 3, busy: false, note: '', ask: null };
+  try { FR.seen = +localStorage.getItem('long-road-msgseen') || 0; } catch (e) {}
+  const isFriend = uid => !!uid && FR.list.some(f => f.id === uid && f.st === 'friend');
+  const frName = uid => (FR.list.find(f => f.id === uid) || {}).name || 'A friend';
+  const CHAT_BAD = ['fuck', 'shit', 'bitch', 'cunt', 'dick', 'pussy', 'asshole', 'bastard', 'slut', 'whore', 'nigg', 'fag', 'retard', 'cock', 'wank', 'twat'];
+  function chatClean(t) { t = String(t || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200); if (famTier() !== 'adult') { t = t.replace(/https?:\/\/\S+|www\.\S+|\b\S+\.(com|net|org|gg|io|co|uk|me)\b\S*/gi, '•••').replace(/\S+@\S+\.\S+/g, '•••').replace(/\+?\d[\d\s().-]{6,}\d/g, '•••'); CHAT_BAD.forEach(w => { t = t.replace(new RegExp('\\b' + w + '\\w*', 'gi'), m => '•'.repeat(m.length)); }); } return t; }
+  const frUnread = () => FR.msgs.filter(q => q.from !== FR.me && q.id > FR.seen).length;
+  function frBadge() { const n = chatRule() === 'off' ? 0 : frUnread(), b = $('mapfriends'); if (b) b.textContent = n ? `Friends (${n} new)` : 'Friends'; }
+  async function frRefresh() { if (!session || FR.busy) return; FR.busy = true;
+    try { if (!FR.code) { const c = await rpc('game_my_code', {}); if (c && c.status === 'ok') { FR.code = c.code; FR.me = c.id; } }
+      const [l, ib] = await Promise.all([rpc('game_friends_list', {}), rpc('game_msg_inbox', { p_after: FR.last })]);
+      if (l && l.status === 'ok' && Array.isArray(l.list)) { const before = FR.list.filter(f => f.st === 'in').map(f => f.id); FR.list = l.list.filter(f => f && typeof f.id === 'string').map(f => ({ id: f.id, name: String(f.name || 'Elfling').slice(0, 16), st: f.st }));
+        if (FR.loaded) FR.list.forEach(f => { if (f.st === 'in' && !before.includes(f.id)) flash(`${f.name} would like to be your friend. Open Friends from the map to say yes or no.`, 7000); }); }
+      if (ib && ib.status === 'ok' && Array.isArray(ib.list)) ib.list.forEach(q => { if (!q || !Number.isFinite(q.id) || q.id <= FR.last) return; FR.last = q.id; const m = { id: q.id, from: q.from, to: q.to, body: String(q.body || ''), at: q.at }; FR.msgs.push(m);
+        if (FR.loaded && m.from !== FR.me && chatRule() !== 'off' && !(FR.open && FR.talk === m.from)) { flash(`✉ ${frName(m.from)}: ${chatClean(m.body)}`, 7000); chink(1320); } });
+      if (FR.msgs.length > 300) FR.msgs.splice(0, FR.msgs.length - 300); if (FR.open && FR.talk) frSeen(FR.talk); FR.loaded = true; frBadge(); if (FR.open) frDraw();
+    } catch (e) { FR.note = 'The friends list could not be reached just now. It will try again in a moment.'; if (FR.open) frDraw(); } finally { FR.busy = false; } }
+  function frSeen(uid) { FR.msgs.forEach(q => { if (q.from === uid && q.id > FR.seen) FR.seen = q.id; }); try { localStorage.setItem('long-road-msgseen', String(FR.seen)); } catch (e) {} frBadge(); }
+  function frTick(dt) { if (!session || !gameStarted) return; FR.t -= dt; if (FR.t <= 0) { FR.t = FR.open ? 5 : 20; frRefresh(); } }
+  function frOnline(uid) { let at = null; NET.farList().forEach(f => { if (f.u === uid) at = f.at || 'somewhere on the road'; }); NET.peers.forEach(p => { if (p.u === uid) at = 'right here with you'; }); return at; }
+  // going to a friend: the nearest place to them on the map that you have already found, the same as travelling from the map
+  const FR_PLACES = ['Thistledown Hollow', 'the Mallow Orchards', 'Fernwater Crossing', 'Cairnhold', 'Cogsworth', 'Emberdeep', 'Lanternreach', 'Skyhaven', 'Hearthmoor', 'Tinderfold', 'Frostpeak'];
+  function frNearest(uid) { let f = null; NET.farList().forEach(q => { if (q.u === uid) f = q; }); if (!f) return null; const pos = MAPPOS.slice(0, 8).concat([mapXY(CITY.cx, CITY.cz), mapXY(frameT.ox, frameT.oz), mapXY(FP.x, FP.z)]); let best = -1, bd = 1e9; pos.forEach((p, i) => { if (!isFound(i)) return; const d = Math.hypot(p[0] - f.mx, p[1] - f.my); if (d < bd) { bd = d; best = i; } }); return best < 0 ? null : best; }
+  function frGo(uid) { const k = frNearest(uid); if (k === null) return; const h = $('maphint'); h.textContent = ''; frClose(); travelTo(k); if (h.textContent) flash(h.textContent, 5000); }
+  function frOpen() { if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} } Object.keys(keys).forEach(k => (keys[k] = false)); FR.open = true; FR.note = ''; $('friends').hidden = false; frDraw(); FR.t = 0; }
+  function frClose() { FR.open = false; FR.talk = null; FR.ask = null; $('friends').hidden = true; }
+  async function frDo(fn, args, ok) { try { const r = await rpc(fn, args); FR.note = ok(r || {}); } catch (e) { FR.note = 'That did not go through. Try again in a moment.'; } FR.t = 0; frRefresh(); frDraw(); }
+  function frDraw() { const B = $('frbody'), el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x !== undefined) e.textContent = x; return e; }, bt = (label, fn, prim) => { const b = el('button', 'btn small' + (prim ? ' primary' : ''), label); b.type = 'button'; b.onclick = fn; return b; }; B.innerHTML = '';
+    const rule = chatRule(); $('frnote').textContent = FR.note || (rule === 'off' ? 'Typed messages are turned off in the parental controls. You can still add friends, see where they are, and play together.' : rule === 'friends' ? 'Typed messages are for friends only, set in the parental controls.' : '');
+    if (!session) { B.appendChild(el('p', '', 'Sign in on the map screen to have friends. Your friends are kept with your account, so they are there on any device.')); return; }
+    if (FR.talk) { const f = FR.list.find(q => q.id === FR.talk); if (!f || f.st !== 'friend') { FR.talk = null; return frDraw(); } frSeen(f.id);
+      B.appendChild(el('h2', '', 'Messages with ' + f.name)); const box = el('div', 'frmsgs'); FR.msgs.filter(q => q.from === f.id || q.to === f.id).slice(-40).forEach(q => { const r = el('div', 'frmsg' + (q.from === f.id ? '' : ' me')); r.appendChild(el('b', '', q.from === f.id ? f.name : 'You')); r.appendChild(el('span', '', ' ' + chatClean(q.body))); box.appendChild(r); }); if (!box.children.length) box.appendChild(el('p', 'frsub', 'Nothing yet. Say hello.')); B.appendChild(box);
+      if (rule !== 'off') { const row = el('div', 'row'), inp = el('input'); inp.id = 'frmsgin'; inp.maxLength = 200; inp.placeholder = 'Write to ' + f.name; inp.autocomplete = 'off'; const send = () => { const v = inp.value.trim(); if (!v) return; inp.value = ''; frDo('game_msg_send', { p_to: f.id, p_body: v }, r => r.status === 'ok' ? '' : r.status === 'slow' ? 'That is a lot of messages at once. Wait a minute and try again.' : 'That did not send.'); };
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); send(); } }); row.appendChild(inp); row.appendChild(bt('Send', send, true)); B.appendChild(row); setTimeout(() => inp.focus(), 30); }
+      const r2 = el('div', 'row'); r2.appendChild(bt('Back to the list', () => { FR.talk = null; frDraw(); })); B.appendChild(r2); box.scrollTop = box.scrollHeight; return; }
+    B.appendChild(el('h2', '', 'Your friend code')); { const row = el('div', 'row'); row.appendChild(el('span', 'frcode', FR.code || '······')); row.appendChild(bt('Copy', () => { try { navigator.clipboard.writeText(FR.code).then(() => { FR.note = 'Copied.'; frDraw(); }, () => {}); } catch (e) {} })); B.appendChild(row); B.appendChild(el('p', 'frsub', 'Give it to somebody you know. When they put it in below on their own game, you will be asked whether to say yes.')); }
+    B.appendChild(el('h2', '', 'Add a friend')); { const row = el('div', 'row'), inp = el('input'); inp.id = 'fradd'; inp.maxLength = 6; inp.placeholder = 'Their code'; inp.autocomplete = 'off'; inp.style.textTransform = 'uppercase'; const go = () => { const v = inp.value.trim(); if (v.length !== 6) { FR.note = 'A friend code is six letters and numbers.'; frDraw(); return; } frDo('game_friend_add', { p_code: v }, r => ({ sent: `Asked. ${r.name} will see it next time they look.`, accepted: `You and ${r.name} are friends now.`, already: `You and ${r.name} are friends already.`, waiting: `Still waiting for ${r.name} to say yes.`, self: 'That is your own code.', nocode: 'Nobody has that code. Check it and try again.', full: 'You have as many friends as the list will hold.', slow: 'You have asked a lot of people today. Try again tomorrow.' })[r.status] || 'That did not go through.'); };
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } }); row.appendChild(inp); row.appendChild(bt('Add', go, true)); B.appendChild(row); }
+    const ins = FR.list.filter(f => f.st === 'in'), frs = FR.list.filter(f => f.st === 'friend'), outs = FR.list.filter(f => f.st === 'out');
+    if (ins.length) { B.appendChild(el('h2', '', 'Asking to be your friend')); ins.forEach(f => { const row = el('div', 'row frrow'); row.appendChild(el('b', '', f.name)); row.appendChild(bt('Yes', () => frDo('game_friend_answer', { p_other: f.id, p_yes: true }, () => `You and ${f.name} are friends now.`), true)); row.appendChild(bt('No', () => frDo('game_friend_answer', { p_other: f.id, p_yes: false }, () => ''))); B.appendChild(row); }); }
+    B.appendChild(el('h2', '', 'Friends')); if (!frs.length) B.appendChild(el('p', 'frsub', 'None yet.'));
+    frs.forEach(f => { const row = el('div', 'row frrow'), at = frOnline(f.id), n = FR.msgs.filter(q => q.from === f.id && q.id > FR.seen).length; row.appendChild(el('span', 'frdot' + (at ? ' on' : ''), at ? '●' : '○')); const nm = el('b', '', f.name); row.appendChild(nm); row.appendChild(el('span', 'frsub', at ? 'Playing now · ' + at : 'Not playing just now'));
+      if (at && at !== 'right here with you') { const k = frNearest(f.id); if (k !== null) row.appendChild(bt('Go to ' + FR_PLACES[k], () => frGo(f.id))); }
+      if (rule !== 'off') row.appendChild(bt(n ? `Messages (${n} new)` : 'Messages', () => { FR.talk = f.id; frDraw(); }, !!n));
+      if (FR.ask === f.id) { row.appendChild(el('span', 'frsub', 'Remove ' + f.name + '?')); row.appendChild(bt('Yes, remove', () => { FR.ask = null; frDo('game_friend_remove', { p_other: f.id }, () => `${f.name} is no longer on your list.`); })); row.appendChild(bt('Keep', () => { FR.ask = null; frDraw(); })); } else row.appendChild(bt('Remove', () => { FR.ask = f.id; frDraw(); }));
+      B.appendChild(row); });
+    if (outs.length) { B.appendChild(el('h2', '', 'Waiting for them to say yes')); outs.forEach(f => { const row = el('div', 'row frrow'); row.appendChild(el('b', '', f.name)); row.appendChild(bt('Take it back', () => frDo('game_friend_answer', { p_other: f.id, p_yes: false }, () => ''))); B.appendChild(row); }); } }
+  // typed chat to everybody in the same place
+  function chatOpen() { if (chatRule() === 'off') { flash('Typed chat is turned off in the parental controls.', 4500); return; } if (!gameStarted || talking() || mapOpen) return; if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) {} } Object.keys(keys).forEach(k => (keys[k] = false)); $('chatin').placeholder = chatRule() === 'friends' ? 'Say something to your friends here' : 'Say something to everybody here'; $('chatbox').hidden = false; setTimeout(() => $('chatin').focus(), 20); }
+  function chatClose() { $('chatbox').hidden = true; $('chatin').value = ''; $('chatin').blur(); }
+  function chatSend() { const v = chatClean($('chatin').value); chatClose(); if (!v) return; const short = v.length > 26 ? v.slice(0, 25) + '…' : v; NET.bubble(NET.me, player, kid.tall || 1, short); try { NET.send({ ch: v, fo: chatRule() === 'friends' ? 1 : 0 }); } catch (e) {} if (!NET.peers.size) flash('Nobody else is here just now, so only you saw that.', 3500); }
+  function chatHeard(p, m) { const rule = chatRule(); if (rule === 'off') return; const fr = isFriend(p.u); if ((rule === 'friends' || m.fo) && !fr) return; const v = chatClean(m.ch); if (!v) return; NET.bubble(p, p.k.g, p.k.tall || 1, v.length > 26 ? v.slice(0, 25) + '…' : v); flash(`${p.name || 'An elf'}: ${v}`, 6500); }
   const NET = (() => {
     const peers = new Map(), myId = (() => { try { let v = localStorage.getItem('long-road-pid'); if (!v) { v = 'p' + Math.random().toString(36).slice(2, 12); localStorage.setItem('long-road-pid', v); } return v; } catch (e) { return 'p' + Math.random().toString(36).slice(2, 12); } })();
     let ws = null, topic = '', state = 'off', why = '', ref = 0, beat = 0, sendT = 0, lookT = 0, last = [0, 0, 0, 0], retry = 0, retryAt = 0, wasMoving = false, critT = 0, force = false;
@@ -7200,7 +7390,7 @@
     // It is on only for an elf whose voice rule is 'all' (grown-ups by default; a child only if a parent has changed it behind the passcode), and only once that player has switched it on and let the browser use the microphone.
     const RTC = { on: false, stream: null, pcs: new Map(), again: new Map() };
     const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const voiceOK = () => voiceRule() === 'all';
+    const voiceOK = () => voiceRule() !== 'off', voiceWith = p => voiceRule() === 'all' || (voiceRule() === 'friends' && !!p && isFriend(p.u));
     const sig = (to, body) => { if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: Object.assign({ id: myId, to, rt: 1 }, body) }); };
     function chip() { let c = $('voicechip'); if (!c) { c = document.createElement('button'); c.id = 'voicechip'; c.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:30;font:600 13px Inter,system-ui,sans-serif;padding:6px 12px;border-radius:999px;border:2px solid #e8b64c;background:rgba(27,43,30,.9);color:#f6e7c2;pointer-events:auto;cursor:pointer'; c.onclick = () => voice(); document.body.appendChild(c); }
       c.hidden = !RTC.on; if (RTC.on) { let n = 0; RTC.pcs.forEach(q => { if (q.pc.connectionState === 'connected') n++; }); const t = '🎙 Voice on · ' + (n ? n + ' connected' : 'nobody connected') + ' · tap to turn off'; if (c.textContent !== t) c.textContent = t; } const vb = $('voicebtn'); if (vb) { vb.hidden = !gameStarted || fam.see === false; vb.textContent = RTC.on ? 'Voice ✓' : voiceOK() ? 'Voice' : 'Voice (off)'; } }
@@ -7215,7 +7405,7 @@
       pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed' || pc.connectionState === 'closed') { if (RTC.pcs.get(id) === q) hang(id); } };
       if (first) pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => sig(id, { sdp: pc.localDescription.toJSON ? pc.localDescription.toJSON() : pc.localDescription })).catch(() => hang(id));
       return q; }
-    async function heardSig(m) { if (!RTC.on || !voiceOK() || !RTC.stream || typeof m.id !== 'string') return;
+    async function heardSig(m) { if (!RTC.on || !voiceOK() || !RTC.stream || typeof m.id !== 'string' || !voiceWith(peers.get(m.id))) return;
       try { if (m.sdp && m.sdp.type === 'offer') { if (m.id > myId) return; hang(m.id); RTC.again.delete(m.id); const q = link(m.id, false); await q.pc.setRemoteDescription(m.sdp); q.ready = true; for (const c of q.ice.splice(0)) await q.pc.addIceCandidate(c).catch(() => {}); const a = await q.pc.createAnswer(); await q.pc.setLocalDescription(a); sig(m.id, { sdp: q.pc.localDescription.toJSON ? q.pc.localDescription.toJSON() : q.pc.localDescription }); }
         else if (m.sdp && m.sdp.type === 'answer') { const q = RTC.pcs.get(m.id); if (q && !q.ready) { await q.pc.setRemoteDescription(m.sdp); q.ready = true; for (const c of q.ice.splice(0)) await q.pc.addIceCandidate(c).catch(() => {}); } }
         else if (m.ice) { const q = RTC.pcs.get(m.id); if (q) { if (q.ready) await q.pc.addIceCandidate(m.ice).catch(() => {}); else q.ice.push(m.ice); } } } catch (e) { hang(m.id); } }
@@ -7238,7 +7428,7 @@
       kid.setTalk(levelOf(RTC.myAn));
       peers.forEach((p, id) => { const q = RTC.pcs.get(id); if (q && q.src && !q.an) q.an = analyser(q.src); if (p.k.setTalk) p.k.setTalk(q && q.an ? levelOf(q.an) : 0); }); }
     function voiceTick(now) { mouthTick(); if ((RTC.chipT = (RTC.chipT || 0) + 1) % 30 === 0) chip(); if (!RTC.on) return; if (!voiceOK()) return voiceOff(true);
-      peers.forEach((p, id) => { const q = RTC.pcs.get(id); if (p.vc && !q && myId < id && state === 'on' && now > (RTC.again.get(id) || 0)) link(id, true); else if (q && !p.vc) hang(id);
+      peers.forEach((p, id) => { const q = RTC.pcs.get(id); if (p.vc && !q && myId < id && state === 'on' && now > (RTC.again.get(id) || 0) && voiceWith(p)) link(id, true); else if (q && (!p.vc || !voiceWith(p))) hang(id);
         if (q && q.el) { const d = Math.hypot(p.k.g.position.x - player.position.x, p.k.g.position.z - player.position.z, p.k.g.position.y - player.position.y), v = d < 25 ? 1 : d > 150 ? 0 : Math.pow((150 - d) / 125, 2); if (q.gain) { if (Math.abs(q.gain.gain.value - v) > 0.01) q.gain.gain.value = v; } else if (Math.abs(q.el.volume - v) > 0.01) q.el.volume = v; q.vol = v; } });
       RTC.pcs.forEach((q, id) => { if (!peers.has(id)) hang(id); }); }
     const me = {}; let sayAt = 0;
@@ -7257,6 +7447,8 @@
       if (m.rt) { if (m.to === myId) heardSig(m); return; }
       if (m.dg) { drHeard(m.dg, m.id); return; }
       if (m.tg) { tgHeard(m.tg, m.id); return; }
+      if (m.gb || m.gh || m.gx || m.gw || m.gp || m.gr) { caveHeard(m); return; }
+      if (typeof m.ch === 'string') { if (p) chatHeard(p, m); return; }
       if (m.lf) liftAdopt(m.lf); if (m.cr) cartAdopt(m.cr);
       if (typeof m.w === 'string' && m.w !== where && TILES[m.w] && TILES[where] && [m.x, m.y, m.z, m.r].every(Number.isFinite)) { const A = TILES[m.w], B = TILES[where], v = new THREE.Vector3(m.x, m.y, m.z).applyMatrix4(A.m).applyMatrix4(B.inv); m.x = v.x; m.y = v.y; m.z = v.z; m.r += A.yaw - B.yaw; if (Array.isArray(m.b) && m.b.length >= 4) { const u = new THREE.Vector3(m.b[0], m.b[1], m.b[2]).applyMatrix4(A.m).applyMatrix4(B.inv); m.b = [u.x, u.y, u.z, m.b[3] + A.yaw - B.yaw, m.b[4]]; } m.c = null; m.dw = null; m.mt = 0; }
       if (m.hi) { lookT = 0; return; }   // somebody has just arrived: tell them at once what you look like
@@ -7264,12 +7456,12 @@
       if (p && (Number.isInteger(m.q) || Number.isInteger(m.e))) { if (fam.phrases === false) return; if (Number.isInteger(m.q) && PHRASES[m.q]) { bubble(p, p.k.g, p.k.tall || 1, PHRASES[m.q]); if (!talking() && Math.hypot(p.x - player.position.x, p.z - player.position.z) < 90) flash(`${p.name || 'An elf'}: ${PHRASES[m.q]}`, 4500); } else if (EMOTES[m.e]) { p.em = m.e; p.emT = performance.now(); } return; }
       if (![m.x, m.y, m.z, m.r].every(Number.isFinite)) return;
       if (!p) { if (peers.size >= 24) return; const k = makeKid(); k.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); k.satchel.visible = true; p = { k, id: m.id, x: m.x, y: m.y, z: m.z, r: m.r, name: '', tag: null, seen: 0, mv: 0, buf: [], sp: 0 }; force = true; k.g.position.set(m.x, m.y, m.z); peers.set(m.id, p); curScene().add(k.g); }
-      p.x = m.x; p.y = m.y; p.z = m.z; p.r = m.r; p.w = typeof m.w === 'string' ? m.w : where; p.mv = m.m ? 1 : 0; p.sit = !!m.s; p.mt = m.mt | 0; p.seen = performance.now(); { const B = p.buf, L = B[B.length - 1]; if (L && Math.hypot(m.x - L.x, m.z - L.z) > 30) B.length = 0; let ts = p.seen; if (Number.isFinite(m.t)) { const d = p.seen - m.t; p.off = p.off === undefined || Math.abs(d - p.off) > 3000 ? d : Math.min(p.off + 0.4, d); ts = m.t + p.off; if (L && ts <= L.t) ts = L.t + 1; } p.run = !!m.u; B.push({ t: ts, x: m.x, y: m.y, z: m.z, r: m.r }); if (B.length > 16) B.shift();
+      p.x = m.x; p.y = m.y; p.z = m.z; p.r = m.r; p.ca = Number.isFinite(m.ca) ? m.ca : undefined; p.w = typeof m.w === 'string' ? m.w : where; p.mv = m.m ? 1 : 0; p.sit = !!m.s; p.mt = m.mt | 0; p.seen = performance.now(); { const B = p.buf, L = B[B.length - 1]; if (L && Math.hypot(m.x - L.x, m.z - L.z) > 30) B.length = 0; let ts = p.seen; if (Number.isFinite(m.t)) { const d = p.seen - m.t; p.off = p.off === undefined || Math.abs(d - p.off) > 3000 ? d : Math.min(p.off + 0.4, d); ts = m.t + p.off; if (L && ts <= L.t) ts = L.t + 1; } p.run = !!m.u; B.push({ t: ts, x: m.x, y: m.y, z: m.z, r: m.r }); if (B.length > 16) B.shift();
         // the animals, if this is the game that runs them here
         if (Array.isArray(m.c) && m.v === BUILDN && m.id < myId && where !== 'in' && shares(p)) m.c.forEach(q => { const c = Array.isArray(q) ? critters[q[0]] : null; if (!c || c.sceneKey !== where || !q.slice(1, 5).every(Number.isFinite)) return; const pb = c.pb || (c.pb = []), l = pb[pb.length - 1]; pb.push({ t: l && ts <= l.t ? l.t + 1 : ts, x: q[1], y: q[2], z: q[3], r: q[4], f: q[5] | 0 }); if (pb.length > 10) pb.shift(); c.pfrom = m.id; });
         // and their beetle, if one is walking with them
         if (Array.isArray(m.b) && m.b.slice(0, 5).every(Number.isFinite)) { if (!p.bt) { p.bt = makeBeetle(); p.bt.traverse(o => { if (o.isMesh) o.castShadow = true; }); p.bt.position.set(m.b[0], m.b[1], m.b[2]); } p.bb = m.b; p.btSeen = p.seen; } }
-      if (m.l && typeof m.l === 'object') { p.vc = m.vc === 1; p.dw = Array.isArray(m.dw) && m.dw.length === 4 && m.dw.every(Number.isFinite) ? m.dw : null; applyLookTo(p.k, m.l, typeof m.h === 'string' ? m.h : ''); const nm = String(m.n || 'Elfling').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16) || 'Elfling'; if (nm !== p.name) { if (p.tag) p.k.g.remove(p.tag); p.name = nm; p.tag = nameTag(nm); p.k.g.add(p.tag); if (!p.hello) { p.hello = true; if (!talking()) flash(`${nm} is here.`, 3500); } } if (p.tag) p.tag.position.y = (3.9 * p.k.tall + 0.6) / p.k.g.scale.x; }
+      if (m.l && typeof m.l === 'object') { p.vc = m.vc === 1; p.dw = Array.isArray(m.dw) && m.dw.length === 4 && m.dw.every(Number.isFinite) ? m.dw : null; applyLookTo(p.k, m.l, typeof m.h === 'string' ? m.h : ''); p.u = typeof m.u === 'string' ? m.u.slice(0, 40) : ''; beltOn(p.k, Number.isFinite(m.bl) ? m.bl : 0); const nm = String(m.n || 'Elfling').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16) || 'Elfling'; if (nm !== p.name) { if (p.tag) p.k.g.remove(p.tag); p.name = nm; p.tag = nameTag(nm); p.k.g.add(p.tag); if (!p.hello) { p.hello = true; if (!talking()) flash(`${nm} is here.`, 3500); } } if (p.tag) p.tag.position.y = (3.9 * p.k.tall + 0.6) / p.k.g.scale.x; }
     }
     const FAR = new Map(), FAR_T = 'realtime:lr:world'; let farT = 0;
     function open(t) {
@@ -7286,8 +7478,8 @@
     }
     function shut(keep) { if (ws) { const s = ws, T = 'realtime:' + topic; try { push(T, 'broadcast', { type: 'broadcast', event: 'p', payload: { id: myId, bye: 1 } }); } catch (e) {} ws = null; try { s.close(); } catch (e) {} } if (!keep) dropAll(); topic = ''; state = 'off'; }
     function heardFar(m) { if (!m || typeof m.id !== 'string' || m.id === myId || m.id.length > 40 || !Number.isFinite(m.mx) || !Number.isFinite(m.my)) return; if (m.bye) { FAR.delete(m.id); return; }
-      const nm = String(m.n || 'Elfling').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16) || 'Elfling'; FAR.set(m.id, { n: nm, mx: clamp(m.mx, 0, 1000), my: clamp(m.my, 0, 640), at: String(m.at || '').slice(0, 40), seen: performance.now() }); }
-    function farTick(dt) { if (!ws || state !== 'on') return; farT -= dt; if (farT > 0) return; farT = 3; const [mx, my] = youAreHere(); push(FAR_T, 'broadcast', { type: 'broadcast', event: 'g', payload: { id: myId, n: save.name || 'Elfling', mx: +mx.toFixed(1), my: +my.toFixed(1), at: hereWords() } }); }
+      const nm = String(m.n || 'Elfling').replace(/[^\p{L}\p{N} '’-]/gu, '').slice(0, 16) || 'Elfling'; FAR.set(m.id, { n: nm, mx: clamp(m.mx, 0, 1000), my: clamp(m.my, 0, 640), at: String(m.at || '').slice(0, 40), u: typeof m.u === 'string' ? m.u.slice(0, 40) : '', seen: performance.now() }); }
+    function farTick(dt) { if (!ws || state !== 'on') return; farT -= dt; if (farT > 0) return; farT = 3; const [mx, my] = youAreHere(); push(FAR_T, 'broadcast', { type: 'broadcast', event: 'g', payload: { id: myId, n: save.name || 'Elfling', mx: +mx.toFixed(1), my: +my.toFixed(1), at: hereWords(), u: uidOf(session) || '' } }); }
     function tick(dt, t) {
       const w = want(); farTick(dt); FAR.forEach((f, id) => { if (performance.now() - f.seen > 15000) FAR.delete(id); });
       if (w !== topic && !(state === 'failed' && w && w === topic)) { if (w) open(w); else shut(); }
@@ -7296,8 +7488,8 @@
         beat -= dt; if (beat <= 0) { beat = 25; push('phoenix', 'heartbeat', {}); }
         sendT -= dt; lookT -= dt; const P = player.position, moved = Math.hypot(P.x - last[0], P.z - last[2]) > 0.03 || Math.abs(P.y - last[1]) > 0.03 || Math.abs(bodyYaw - last[3]) > 0.02;
         let cl = null; critT -= dt; if (sendT <= 0 && critT <= 0 && where !== 'in' && peers.size && !puppet()) { critT = 0.2; cl = critterList(); if (!cl.length) cl = null; }
-        if (sendT <= 0 && (moved || wasMoving || cl || lookT <= 0 || sendT < -1)) { sendT = SEND; wasMoving = moved; const m = { id: myId, w: where, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), r: +bodyYaw.toFixed(2), m: moved ? 1 : 0, s: sitting ? 1 : 0, t: Math.round(performance.now()), u: running ? 1 : 0 }; if (riding) m.mt = mount === 'dog' ? 2 : 1; if (LIFT.s && SKYLINE[where]) m.lf = [+LIFT.s.toFixed(2), LIFT.f, LIFT.to]; if (TF_CART.trip && where === 'wild') m.cr = [+TF_CART.trip.s.toFixed(2), TF_CART.trip.u0, TF_CART.trip.dir]; if (cl) { m.c = cl; m.v = BUILDN; } if (beetle && beetle.visible && beetle.parent === player.parent) m.b = [+beetle.position.x.toFixed(2), +beetle.position.y.toFixed(2), +beetle.position.z.toFixed(2), +beetle.rotation.y.toFixed(2), +beetle.scale.x.toFixed(2)];
-          if (lookT <= 0) { lookT = 4; m.n = save.name || 'Elfling'; m.l = Object.assign({}, DEFAULT_LOOK, save.look || {}); m.h = save.hatStyle || ''; m.vc = RTC.on && voiceOK() ? 1 : 0; if (dogSt.mine && save.dog && !save.dog.on && save.dog.w === where) m.dw = [save.dog.p[0], save.dog.p[1], save.dog.p[2], save.dog.r]; }
+        if (sendT <= 0 && (moved || wasMoving || cl || lookT <= 0 || sendT < -1)) { sendT = SEND; wasMoving = moved; const m = { id: myId, w: where, x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), r: +bodyYaw.toFixed(2), m: moved ? 1 : 0, s: sitting ? 1 : 0, t: Math.round(performance.now()), u: running ? 1 : 0 }; if (where === 'in' && interior && interior.cave && CAVE.inside) m.ca = CAVE.at; if (riding) m.mt = mount === 'dog' ? 2 : 1; if (LIFT.s && SKYLINE[where]) m.lf = [+LIFT.s.toFixed(2), LIFT.f, LIFT.to]; if (TF_CART.trip && where === 'wild') m.cr = [+TF_CART.trip.s.toFixed(2), TF_CART.trip.u0, TF_CART.trip.dir]; if (cl) { m.c = cl; m.v = BUILDN; } if (beetle && beetle.visible && beetle.parent === player.parent) m.b = [+beetle.position.x.toFixed(2), +beetle.position.y.toFixed(2), +beetle.position.z.toFixed(2), +beetle.rotation.y.toFixed(2), +beetle.scale.x.toFixed(2)];
+          if (lookT <= 0) { lookT = 4; m.n = save.name || 'Elfling'; m.l = Object.assign({}, DEFAULT_LOOK, save.look || {}); m.h = save.hatStyle || ''; m.bl = Math.min(3, save.belt || 0); m.u = uidOf(session) || ''; m.vc = RTC.on && voiceOK() ? 1 : 0; if (dogSt.mine && save.dog && !save.dog.on && save.dog.w === where) m.dw = [save.dog.p[0], save.dog.p[1], save.dog.p[2], save.dog.r]; }
           last = [P.x, P.y, P.z, bodyYaw]; push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: m }); } }
       bubbleTick(me, player, performance.now()); pose(me, kid, performance.now()); voiceTick(performance.now());
       // draw the others: ease each toward where it was last heard to be, swing its legs while it walks, and let go of anyone not heard from for a while
@@ -7313,17 +7505,17 @@
         { let dr = tr - g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); g.rotation.y += dr * Math.min(1, dt * 16); }
         // the legs: the same stride the elf's own player sees, paced by how fast it is going between the two positions, never by one frame's movement
         p.sp += (Math.min(vv, 20) - p.sp) * Math.min(1, dt * 5); const going = p.sp > 0.5 && !p.sit;
-        p.ph = (p.ph || 0) + (going ? dt * (p.run ? 16 : 11) * Math.min(1.2, Math.max(0.45, p.sp / 7.5)) : 0); p.amp = (p.amp || 0) + ((going ? (p.run ? 1.0 : 0.7) : 0) - (p.amp || 0)) * Math.min(1, dt * 7); const sw = Math.sin(p.ph) * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; { const rd = p.mt === 2; if (rd) ridePose(p.k); if (rd !== !!p.rd) { p.rd = rd; if (!rd) { p.k.legs.forEach(l => { l.rotation.z = 0; l.userData.knee.rotation.z = 0; }); gripAll(p.k.hands, 0.35); } } } bubbleTick(p, g, now); pose(p, p.k, now); });
+        p.ph = (p.ph || 0) + (going ? dt * (p.run ? 16 : 11) * Math.min(1.2, Math.max(0.45, p.sp / 7.5)) : 0); p.amp = (p.amp || 0) + ((going ? (p.run ? 1.0 : 0.7) : 0) - (p.amp || 0)) * Math.min(1, dt * 7); const sw = Math.sin(p.ph) * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; { const rd = p.mt === 2; if (rd) ridePose(p.k); if (rd !== !!p.rd) { p.rd = rd; if (!rd) { p.k.legs.forEach(l => { l.rotation.z = 0; l.userData.knee.rotation.z = 0; }); gripAll(p.k.hands, 0.35); } } } bubbleTick(p, g, now); pose(p, p.k, now); { const sw = !p.sit && p.mt !== 2 && inRiver(g.position.x, g.position.z); if (sw) { const sp = Math.min(1, (p.sp || 0) / 2.2); p.k.swimB = (p.k.swimB || 0) + (sp - (p.k.swimB || 0)) * Math.min(1, dt * 2.5); p.k.swimPh = (p.k.swimPh || 0) + dt * (0.12 + 0.55 * sp); swimPose(p.k, now / 1000, p.k.swimB, p.k.swimPh, g.scale.x); p.k.hd.rotation.x = p.k.swimHX; p.k.hd.rotation.y = p.k.swimHY; } else if (p.k.swum) swimOff(p.k); } });
     }
     function farList() { return Array.from(FAR.values()); }
     function send(extra) { if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: Object.assign({ id: myId }, extra) }); }
-    return { id: myId, tick, hear, peers, puppet, nearElf, say, me, voice, send, farList, hearFar: heardFar, voiceSync: () => { if (RTC.on && !voiceOK()) voiceOff(true); chip(); }, rtc: RTC, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
+    return { id: myId, tick, hear, peers, puppet, nearElf, say, me, voice, send, farList, bubble, voiceWith, hearFar: heardFar, voiceSync: () => { if (RTC.on && !voiceOK()) voiceOff(true); chip(); }, rtc: RTC, sync: () => { if (fam.see === false) shut(); }, get state() { return state; }, get topic() { return topic; },
       note: () => state === 'on' ? `Connected. ${peers.size ? peers.size + (peers.size === 1 ? ' other elf is' : ' other elves are') + ' in this place with you.' : 'Nobody else is in this place just now.'}` : state === 'connecting' ? 'Connecting…' : state === 'failed' ? `Could not connect (${why}). It will keep trying.` : 'Not connected: it joins when you are in the game.' };
   })();
   async function sbAuth(path, body) {
     const r = await fetch(`${SB_URL}/auth/v1/${path}`, { method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.msg || j.error_description || j.message || j.error || `Sign-in failed (${r.status})`);
+    if (!r.ok) { const er = new Error(j.msg || j.error_description || j.message || j.error || `Sign-in failed (${r.status})`); er.status = r.status; throw er; }
     return j;
   }
   function sessionFrom(j) { return j && j.access_token ? { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Math.floor(Date.now() / 1000) + (j.expires_in || 3600), email: (j.user && j.user.email) || '', id: (j.user && j.user.id) || '', by: (j.user && j.user.user_metadata && +j.user.user_metadata.by) || 0 } : null; }
@@ -7335,7 +7527,7 @@
     if (!session) return null;
     if (session.expires_at - 60 > Date.now() / 1000) return session.access_token;
     try { const j = await sbAuth('token?grant_type=refresh_token', { refresh_token: session.refresh_token }); keepSession(sessionFrom(j)); return session.access_token; }
-    catch (e) { keepSession(null); acctRefresh('Your sign-in expired. Sign in again to keep saving to the cloud.', 'err'); return null; }
+    catch (e) { if (!(e.status >= 400 && e.status < 500)) throw e; keepSession(null); acctRefresh('Your sign-in expired. Sign in again to keep saving to the cloud.', 'err'); return null; }
   }
   async function rpc(name, args) {
     const token = await freshToken(); if (!token) throw new Error('not signed in');
@@ -7346,7 +7538,7 @@
   function cloudSoon() { if (!session) return; cloudDirty = true; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudPush, 3000); }
   async function cloudPush() {
     if (!session || cloudBusy || !cloudDirty) return; cloudBusy = true; cloudDirty = false;
-    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null, inv: save.inv || {}, hat: save.hatStyle || '', lamp: !!save.lamp, stam: save.stamMax || 100, ts: save.ts || 0, bm: save.beetleMode || '', pl: Array.isArray(save.places) ? save.places : null, sn: typeof save.seen === 'string' ? save.seen : '', sk: Array.isArray(save.sky) ? save.sky : [], bk: Array.isArray(save.books) ? save.books : [], sh: save.shelves || {}, lo: save.loose || {}, q2: save.q2 ? 1 : 0, q1: save.q1 || '', bl: save.belt || 0, fi: save.fight || 0, gp: save.gobPeace ? 1 : 0, ba: save.beetleAt || null, lv: save.level || 0, td: save.tested || [], st: save.stores || {}, ul: save.unlocked || {}, rd: save.read || {}, dg: save.dog || null } }); rpc('game_stores_put', { p_stores: save.stores || {}, p_unlocked: save.unlocked || {} }).catch(() => {}); acctRefresh('Saved to the cloud.', 'ok'); }
+    try { await rpc('game_save_progress', { p_coins: save.coins || 0, p_region: save.where, p_pos: save.pos, p_yaw: save.yaw || 0, p_beetle: save.beetle || '', p_done: save.done, p_blob: { started: !!save.started, lay: save.lay || 0, bike: !!save.bike, name: save.name || '', look: save.look || null, inv: save.inv || {}, hat: save.hatStyle || '', lamp: !!save.lamp, stam: save.stamMax || 100, ts: save.ts || 0, bm: save.beetleMode || '', pl: Array.isArray(save.places) ? save.places : null, sn: typeof save.seen === 'string' ? save.seen : '', sk: Array.isArray(save.sky) ? save.sky : [], bk: Array.isArray(save.books) ? save.books : [], sh: save.shelves || {}, lo: save.loose || {}, q2: save.q2 ? 1 : 0, q3: save.q3 | 0, q1: save.q1 || '', bl: save.belt || 0, fi: save.fight || 0, gp: save.gobPeace ? 1 : 0, ba: save.beetleAt || null, lv: save.level || 0, td: save.tested || [], st: save.stores || {}, ul: save.unlocked || {}, rd: save.read || {}, dg: save.dog || null } }); rpc('game_stores_put', { p_stores: save.stores || {}, p_unlocked: save.unlocked || {} }).catch(() => {}); acctRefresh('Saved to the cloud.', 'ok'); }
     catch (e) { cloudDirty = true; acctRefresh('Cloud save failed, kept locally. ' + e.message, 'err'); }
     cloudBusy = false;
   }
@@ -7466,7 +7658,7 @@
     if ((o.userData.world || 'village') !== (where === 'in' ? 'in:' + interior.id : where)) return false;
     if (k === 'draughts' || k === 'scope' || k === 'tgame') return !talking();
     if (k === 'bay') return !talking() && Math.abs(player.position.y - o.position.y) < 5;
-    if (k === 'cavetin' || k === 'gobchest' || k === 'icechest') return !talking();
+    if (k === 'cavetin' || k === 'gobchest' || k === 'icechest' || k === 'glasschest') return !talking();
     if (k === 'sensei' || k === 'frbell') return where === 'wild' && !talking() && !DOJO.drill;
     if (k === 'gobchief') return !talking() && !CAVE.peace && CAVE.chief.st === 'idle' && !CAVE.chief.hot;
     if (k === 'resident') return FOLK[o.userData.who].mode === 'home' && Math.abs(player.position.y - o.position.y) < 5 && !talking();
@@ -7490,7 +7682,7 @@
     if (k === 'grub') return phase === 'getgrub';
     if (k === 'rot') return phase === 'rot' && rotCount < 5;
     if (k === 'cart') return !sitting && where === 'wild';
-    if (k === 'seat') return !sitting && (!o.userData.world || o.userData.world === where) && (where !== 'in' || Math.abs((o.userData.y0 || 0) - player.position.y) < 4);
+    if (k === 'seat') return !sitting && (!o.userData.world || o.userData.world === (where === 'in' && interior ? 'in:' + interior.id : where)) && (where !== 'in' || Math.abs((o.userData.y0 || 0) - player.position.y) < 4);
     if (k === 'orow') return phase === 'orows';
     if (k === 'apple') return phase === 'apples' && applesGot < 12;
     if (k === 'press') return phase === 'press';
@@ -7519,7 +7711,7 @@
     else if (d.kind === 'scope') scopeOpen();
     else if (d.kind === 'tgame') tgSit(TGT[d.tg]);
     else if (d.kind === 'bay') shOpen(d.bay[0], d.bay[1]);
-    else if (d.kind === 'icechest') iceChest(); else if (d.kind === 'sensei') senseiTalk(); else if (d.kind === 'frbell') frostBell(); else if (d.kind === 'cavetin') caveTin(); else if (d.kind === 'gobchest') chestOpen(); else if (d.kind === 'gobchief') chiefTalk();
+    else if (d.kind === 'glasschest') glassChest(d.gk); else if (d.kind === 'icechest') iceChest(); else if (d.kind === 'sensei') senseiTalk(); else if (d.kind === 'frbell') frostBell(); else if (d.kind === 'cavetin') caveTin(); else if (d.kind === 'gobchest') chestOpen(); else if (d.kind === 'gobchief') chiefTalk();
     else if (d.kind === 'find') takeFind(obj);
     else if (d.kind === 'shop') shopRing(d.shop);
     else if (d.kind === 'resident' || d.kind === 'knock') residentTalk(d.who, d.kind === 'knock');
@@ -7556,11 +7748,13 @@
     }
   }
   // a seat that moves under you: a swing on its ropes, a chair on its rockers. It starts when you sit and runs down after you get up
-  function movingSeat(g, node, lx, lz, seatLocal, label, amp, w) { (movingSeat.all || (movingSeat.all = [])).push({ g, node, lx, lz, seatLocal, label, max: amp, w, amp: 0, ph: 0, was: false, m: null }); }
+  function movingSeat(g, node, lx, lz, seatLocal, label, amp, w, o) { (movingSeat.all || (movingSeat.all = [])).push({ g, node, lx, lz, seatLocal, label, max: amp, w, amp: 0, ph: 0, was: false, m: null, o: o || {} }); }
+  // a chair that was built piece by piece straight into a room: gather its pieces into one group that can rock
+  function rockerOf(sc, parts, x, z, yaw) { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.order = 'YXZ'; g.rotation.y = yaw; sc.add(g); g.updateMatrixWorld(true); parts.forEach(p => g.attach(p)); return g; }
   const _sv = new THREE.Vector3();
   function swingTick(dt) { (movingSeat.all || []).forEach(S => {
-    if (!S.m) { S.g.updateWorldMatrix(true, true); const p = S.g.localToWorld(new THREE.Vector3(S.lx, 0, S.lz)), q = S.g.localToWorld(new THREE.Vector3(S.lx, 0, S.lz + 1)), m = new THREE.Object3D(); m.position.copy(p); worldScene.add(m);
-      m.userData = { pickable: true, kind: 'seat', world: 'wild', yaw: Math.atan2(q.x - p.x, q.z - p.z), seatTop: S.node.localToWorld(S.seatLocal.clone()).y - p.y, label: S.label, swing: S }; pickables.push(m); S.m = m; }
+    if (!S.m) { S.g.updateWorldMatrix(true, true); const p = S.g.localToWorld(new THREE.Vector3(S.lx, 0, S.lz)), q = S.g.localToWorld(new THREE.Vector3(S.lx, 0, S.lz + 1)), m = new THREE.Object3D(); m.position.copy(p); { let root = S.o.sc || worldScene; while (root.parent) root = root.parent; root.add(m); }
+      m.userData = { pickable: true, kind: 'seat', world: S.o.world || 'wild', yaw: S.o.yaw !== undefined ? S.o.yaw : Math.atan2(q.x - p.x, q.z - p.z), seatTop: S.node.localToWorld(S.seatLocal.clone()).y - p.y, label: S.label, swing: S }; pickables.push(m); S.m = m; }
     const on = sitting && sitSeat === S.m; S.amp += ((on ? S.max * (reduce ? 0.4 : 1) : 0) - S.amp) * Math.min(1, dt * (on ? 0.5 : 0.35));
     if (!on && S.amp < 0.004) { S.amp = 0; S.node.rotation.x = 0; if (S.was) { player.rotation.x = 0; S.was = false; } return; }
     S.ph += dt * S.w; const a = Math.sin(S.ph) * S.amp; S.node.rotation.x = a;
@@ -7573,7 +7767,8 @@
     arms.forEach(sh => { const up = sh.children.find(c => c.isMesh && c.geometry.type === 'CylinderGeometry'); if (!up) return; const r = up.geometry.parameters.radiusTop, d = Math.sign(sh.position.x) || 1, y = sh.position.y;
       let edge = null; for (const dy of [0, -r, -2 * r]) { const o = g.localToWorld(new THREE.Vector3(d * 30, y + dy, sh.position.z)), t = g.localToWorld(new THREE.Vector3(0, y + dy, sh.position.z)); rc.set(o, t.sub(o).normalize()); rc.far = 30 * g.scale.x; const h = rc.intersectObjects(body, false)[0]; if (h) { const x = Math.abs(h.point.applyMatrix4(inv).x); if (edge === null || x > edge) edge = x; if (dy === 0) break; } }
       if (edge !== null && Math.abs(sh.position.x) > edge + r * 0.45) sh.position.x = d * (edge + r * 0.45);
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(r * 1.3, 12, 10), up.material); ball.castShadow = true; ball.userData.lod = up.userData.lod; sh.add(ball); g.userData.shEdge = edge; });
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(r * 1.3, 12, 10), up.material); ball.castShadow = true; ball.userData.lod = up.userData.lod; sh.add(ball); g.userData.shEdge = edge; if (edge !== null && d > 0) g.userData.yk = { edge, r, y, m: up.material }; });
+    if (g.userData.yk) { const { edge, r, y, m } = g.userData.yk, yk = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), m); yk.scale.set(edge + r * 0.55, r * 1.9, edge * 0.82); yk.position.y = y - r * 0.9; yk.castShadow = true; g.add(yk); }
     if (hd && hd.parent === g) { const hm = hd.children.find(c => c.isMesh && c.geometry.type === 'SphereGeometry'); if (hm) { const Rr = hm.geometry.parameters.radius * hd.scale.y, y0 = hd.position.y; hd.position.y = y0 + 0.3 * Rr; const nk = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * Rr, 0.34 * Rr, 0.6 * Rr, 10), hm.material); nk.position.set(hd.position.x, y0 - 0.85 * Rr, hd.position.z); nk.castShadow = true; g.add(nk); } } }
   function sitDown(seat) {
     sitting = true; sitSeat = seat; const d = seat.userData;
@@ -7590,7 +7785,7 @@
     player.position.add(new THREE.Vector3(Math.sin(yaw) * 1.4, 0, Math.cos(yaw) * 1.4)); hint('');
   }
   // tier 0: whatever the lesson in hand wants picked; 1: things lying about; 2: a counter to trade at; 3: a seat
-  const PICK_TIER = { icechest: 2, frbell: 2, cavetin: 2, gobchest: 2, gobchief: 2, bay: 3, tgame: 3, scope: 2, draughts: 3, cart: 2, find: 1, book: 2, shelf: 2, mount: 2, stable: 3, lot: 2, wash: 2, decor: 3, store: 2, resident: 2, knock: 2, folk: 2, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
+  const PICK_TIER = { glasschest: 2, icechest: 2, frbell: 2, cavetin: 2, gobchest: 2, gobchief: 2, bay: 3, tgame: 3, scope: 2, draughts: 3, cart: 2, find: 1, book: 2, shelf: 2, mount: 2, stable: 3, lot: 2, wash: 2, decor: 3, store: 2, resident: 2, knock: 2, folk: 2, shop: 2, teacher: 2, sciteach: 2, readteach: 2, quest: 2, ferry: 2, follower: 3, seat: 4 };   // your own beetle is always beside you, so anything else you are standing at comes first
   function nearestPick(tier) { let best = null, bd = Infinity; pickables.forEach(o => { if ((PICK_TIER[o.userData.kind] || 0) !== tier || !canPick(o)) return; const d = flatDist(o); if (d < bd) { bd = d; best = o; } }); return [best, bd]; }
   function pickNearest() {
     if (rd) { rdNext(); return; }
@@ -9969,8 +10164,8 @@
   const keys = {};
   // ---------- input settings: device, key binds, mouse ----------
   const SET_KEY = 'long-road-settings-v1';
-  const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', ride: 'KeyR', whistle: 'KeyG', punch: 'KeyF', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', bag: 'KeyI', keys: 'KeyH', settings: 'KeyP', say: 'KeyT', voice: 'KeyB' };
-  const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', ride: 'Ride / get off the bicycle', whistle: 'Whistle for your dog', punch: 'Punch', view: 'Flip view', zoom: 'Zoom', map: 'World map', bag: 'Satchel', keys: 'Show / hide controls', settings: 'Settings', say: 'Say something / gesture', voice: 'Voice chat on / off' };
+  const DEFAULT_BINDS = { f: 'KeyW', b: 'KeyS', l: 'KeyA', r: 'KeyD', run: 'ShiftLeft', jump: 'Space', pick: 'KeyE', ride: 'KeyR', whistle: 'KeyG', punch: 'KeyF', view: 'KeyV', zoom: 'KeyZ', map: 'KeyM', bag: 'KeyI', keys: 'KeyH', settings: 'KeyP', say: 'KeyT', voice: 'KeyB', friends: 'KeyO' };
+  const BIND_NAMES = { f: 'Walk forward', b: 'Walk back', l: 'Walk left', r: 'Walk right', run: 'Run', jump: 'Jump', pick: 'Pick up / talk / sit', ride: 'Ride / get off the bicycle', whistle: 'Whistle for your dog', punch: 'Punch', view: 'Flip view', zoom: 'Zoom', map: 'World map', bag: 'Satchel', keys: 'Show / hide controls', settings: 'Settings', say: 'Say something / gesture', voice: 'Voice chat on / off', friends: 'Friends and messages' };
   const settings = { input: null, binds: Object.assign({}, DEFAULT_BINDS), invert: true, sens: 100, birds: true, music: true, musicVol: 60, sounds: true, soundVol: 70, showKeys: true };
   try { const sv = JSON.parse(localStorage.getItem(SET_KEY) || '{}'); Object.assign(settings, sv); settings.binds = Object.assign({}, DEFAULT_BINDS, sv.binds || {}); } catch (e) {}
   function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) {} }
@@ -10017,17 +10212,20 @@
   }
   let camYaw = Math.PI, bodyYaw = Math.PI, pitch = 0.08, view = 'back', vy = 0, py = 0, wantJump = false;
   const vel = new THREE.Vector3(), targetV = new THREE.Vector3(); // momentum: where your feet are actually carrying you
-  function currentAt(x, z) { if (where === 'fernwater') return targetV.set(-1.3, 0, 0); if (where === 'wild') return wildRiver(x, z) ? targetV.set(-1.3 * Math.cos(tileF.yaw), 0, 1.3 * Math.sin(tileF.yaw)) : wildSea(x, z) ? targetV.set(-0.45, 0, 0.8) : targetV.set(0, 0, 0); if (where === 'lantern') return targetV.set(-0.45, 0, 0.8); return targetV.set(0, 0, 0); }
+  function currentAt(x, z) { if (where === 'fernwater') return targetV.set(-1.3, 0, 0); if (where === 'wild') return wildRiver(x, z) ? targetV.set(-1.3 * Math.cos(tileF.yaw), 0, 1.3 * Math.sin(tileF.yaw)) : wildSea(x, z) ? targetV.set(-0.45, 0, 0.8) : targetV.set(0, 0, 0); if (where === 'lantern') { const near = Math.abs(z - PIER.z) < 16 && x > PIER.x0 - 6 && x < PIER.x1 + 6 ? Math.min(1, Math.max(0, (Math.abs(z - PIER.z) - 4) / 12)) : 1; return targetV.set(-0.45 * near, 0, 0.8 * near); } return targetV.set(0, 0, 0); }
   const SENS = 0.0022;
   function toggleView() { view = view === 'back' ? 'front' : 'back'; if (view === 'front') camYaw = bodyYaw; }
   window.addEventListener('keydown', e => {
+    if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
     if (rd && !talking() && $('settings').hidden && rdKey(e)) return;
     if (drUp) { if ($('settings').hidden) drKey(e); return; }
     if (tgUp) { if ($('settings').hidden) tgKey(e); return; }
     if (shUp && !talking()) { if ($('settings').hidden) shKey(e); return; }
     if (bagOpen) { if (!e.repeat && (e.code === 'Escape' || actionOf(e.code) === 'bag')) closeBag(); return; }
     if (talking() || mapOpen) return;
+    if (e.code === 'Enter' && !e.repeat && gameStarted && !titleUp) { e.preventDefault(); chatOpen(); return; }
     const a = actionOf(e.code); if (!a) return;
+    if (a === 'friends' && !e.repeat) { e.preventDefault(); frOpen(); return; }
     if (a === 'bag' && !e.repeat) { openBag(); return; }
     if (a === 'say' && !e.repeat) { e.preventDefault(); openSay(); return; }
     if (a === 'voice' && !e.repeat) { e.preventDefault(); NET.voice(); return; }
@@ -10286,7 +10484,7 @@
       const dh = groundAt(p.x, p.z) - groundAt(prev.x, prev.z), run = Math.hypot(p.x - prev.x, p.z - prev.z);
       if (run > 0.001 && dh / run > 1.0 && !onPier(p.x, p.z) && !(onPier(prev.x, prev.z) && dh < 1.6)) { p.x = prev.x; p.z = prev.z; }   // stepping off the foot of the pier onto the path is a step, not a cliff
       // from the water or the sand below, you get onto the pier only at a ladder
-      if (onPier(p.x, p.z) && !onPier(prev.x, prev.z) && groundAt(prev.x, prev.z) + py < PIER.y - 0.9 && !atLadder(prev.x, prev.z)) { p.x = prev.x; p.z = prev.z; }
+      if (onPier(p.x, p.z) && !onPier(prev.x, prev.z) && groundAt(prev.x, prev.z) + py < PIER.y - 0.9) { const L = ladderAt(prev.x, prev.z); p.x = prev.x; p.z = prev.z; if (L) climbLadder(L); }
       if (onPier(p.x, p.z) && p.x > PIER.x1 - 0.2 && !fading) { if (!LIFT.moving && LIFT.at === 0 && !LIFTRUN.on && Math.abs(p.z - PIER.z) < 2.3) { if (riding) setRiding(false); switchFrame('lift', prev); return; } p.x = Math.min(p.x, PIER.x1 - 0.2); liftCall(0); }
       if (Math.hypot(p.x - (-34 + 15.6), p.z - 32) < 3 && !fading) enterInterior('observatory');
       lantBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + Math.sign(dx || 1) * ex; else p.z = bx.z + Math.sign(dz || 1) * ez; } });
@@ -10315,6 +10513,15 @@
   }
   const sameSideOfWall = (a, b) => where !== 'village' || ((Math.hypot(a.x, a.z) < R) === (Math.hypot(b.x, b.z) < R));
   // the camera stays out of buildings: the shop wall in the Hollow, the shop boxes in Fernwater, the mill tower
+  const doorCam = { on: false, where: '', x: 0, z: 0 }, dcRay = new THREE.Raycaster(), dcN = new THREE.Vector3();
+  function doorClear(base, pos) {
+    const dir = pos.clone().sub(base), len = dir.length(); if (len < 0.01) return pos; dir.divideScalar(len); dcRay.set(base, dir); dcRay.far = len + 0.5; dcRay.camera = camera;
+    const hits = dcRay.intersectObjects(curScene().children, true);
+    for (const h of hits) { const o = h.object; if (!o.isMesh || !o.visible || o.isSprite) continue; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (!m || (m.transparent && m.opacity < 0.9) || m.side === THREE.BackSide) continue;
+      let q = o, mine = false; while (q) { if (q === player || q === beetle || q === camera) { mine = true; break; } q = q.parent; } if (mine) continue;
+      if (h.face) { dcN.copy(h.face.normal).transformDirection(o.matrixWorld); if (Math.abs(dcN.y) > 0.75) continue; }   // ground, floors and roofs are handled already
+      return base.clone().addScaledVector(dir, Math.max(0.5, h.distance - 0.45)); }
+    return pos; }
   function camFree(pos) {
     if (!sameSideOfWall(pos, player.position)) return false;
     if (where === 'fernwater') return !fernBoxes.some(bx => Math.abs(pos.x - bx.x) < bx.hw + 0.4 && Math.abs(pos.z - bx.z) < bx.hd + 0.4 && pos.y < 19) && !fernHB.some(bx => bx.hw > 20 && Math.abs(pos.x - bx.x) < bx.hw + 0.6 && Math.abs(pos.z - bx.z) < bx.hd + 0.6 && pos.y < 30);
@@ -10340,6 +10547,10 @@
   const ZOOMS = [1, 1.7, 2.6]; let zoom = 0;
   function setZoom(z) { const nz = clamp(z, 0, ZOOMS.length - 1); if (nz === zoom) return; zoom = nz; flash(['Close view', 'Mid view', 'Wide view'][zoom]); }
   function camTarget() {
+    if (sitting && ((drUp && drT) || (tgUp && tgT))) { const T = drUp ? drT : tgT, c = T.g.getWorldPosition(new THREE.Vector3()), dx = player.position.x - c.x, dz = player.position.z - c.z, d = Math.max(0.6, Math.hypot(dx, dz)), ux = dx / d, uz = dz / d, H = 4.6 + 0.8 * kid.tall;
+      const pos = new THREE.Vector3(c.x + ux * (d + 0.7), c.y + H, c.z + uz * (d + 0.7)); if (where === 'in') pos.y = Math.min(pos.y, interior.h - 0.6);
+      const sh = document.querySelector(drUp ? '#draughts .drsheet' : '#tgame .drsheet, #tgame > div'), fr = sh && innerWidth > innerHeight * 1.05 ? Math.min(0.6, sh.offsetWidth / innerWidth) : 0, D = pos.distanceTo(c), half = D * Math.tan(camera.fov * Math.PI / 360) * camera.aspect, k = fr * half;
+      const look = c.clone(); look.x += -uz * k * -1; look.z += ux * k * -1; return [pos, look]; }
     const rh = where === 'village' ? realIn(player.position.x, player.position.z) : null;
     const dist = (view === 'front' ? 6.5 : 8) * (where === 'in' || rh ? 0.62 : ZOOMS[zoom]) * (1 + (kid.tall - 1) * 0.5), off = view === 'front' ? bodyYaw : camYaw + Math.PI;
     const base = player.position.clone(); base.y = groundAt(player.position.x, player.position.z) + py + 2.4 * kid.tall;
@@ -10356,6 +10567,7 @@
     if (where === 'in') { pos.x = clamp(pos.x, -interior.w / 2 + 0.6, interior.w / 2 - 0.6); pos.z = clamp(pos.z, -interior.d / 2 + 0.6, interior.d / 2 - 0.6); pos.y = Math.min(pos.y, interior.h - 0.6); }
     if (where === 'in' && interior.boxes.length) { const lvC = interior.upY && player.position.y > interior.upY - 1.4 ? 1 : 0, hit = (x, z) => interior.boxes.some(b => (b.lv === undefined || b.lv === lvC) && Math.abs(x - b.x) < b.hw + 0.5 && Math.abs(z - b.z) < b.hd + 0.5); let t = 1; for (let q = 1; q <= 12; q++) { const u = q / 12; if (hit(base.x + (pos.x - base.x) * u, base.z + (pos.z - base.z) * u)) { t = Math.max(0.22, (q - 1) / 12); break; } } if (t < 1) pos.lerpVectors(base, pos, t); }   // the camera stays in the room you are in
     if (rh) { pos.x = clamp(pos.x, rh.x - rh.hw + 0.9, rh.x + rh.hw - 0.9); pos.z = clamp(pos.z, rh.z - rh.hd + 0.9, rh.z + rh.hd - 0.9); pos.y = Math.min(pos.y, rh.h - 0.6); }
+    if (doorCam.on) { if (where !== doorCam.where || Math.hypot(player.position.x - doorCam.x, player.position.z - doorCam.z) > 14) doorCam.on = false; else pos = doorClear(base, pos); }
     const look = view === 'front' ? base.clone() : base.clone().add(new THREE.Vector3(Math.sin(camYaw) * Math.cos(pitch) * 3, -Math.sin(pitch) * 3, Math.cos(camYaw) * Math.cos(pitch) * 3));
     return [pos, look];
   }
@@ -10393,6 +10605,9 @@
   const setEl = $('settings'); let settingsFrom = null, listening = null;
   function openSettings() { if (!setEl.hidden) return; settingsFrom = mapOpen ? 'map' : 'game'; if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => (keys[k] = false)); renderSettings(); setEl.hidden = false; }
   function closeSettings() { famOpen = false; famMsg = ''; setEl.hidden = true; listening = null; settings.chosen = true; saveSettings(); applySettings(); }
+  $('frdone').addEventListener('click', frClose); $('mapfriends').addEventListener('click', frOpen); $('chatsend').addEventListener('click', chatSend); $('chatx').addEventListener('click', chatClose);
+  $('chatin').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); chatSend(); } else if (e.key === 'Escape') { e.preventDefault(); chatClose(); } e.stopPropagation(); });
+  $('friends').addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); if (FR.talk) { FR.talk = null; frDraw(); } else frClose(); } e.stopPropagation(); });
   $('settingsdone').addEventListener('click', closeSettings); $('mapsettings').addEventListener('click', openSettings);
   function renderSettings() {
     document.querySelectorAll('#inputrow .opt').forEach(l => l.classList.toggle('on', l.dataset.v === settings.input));
@@ -10467,7 +10682,9 @@
     const inWater = inRiver(player.position.x, player.position.z) && where !== 'in';
     const wantRun = (keys.run || gp.run) && moving && stamina > 0 && !inWater && (!riding || mz > 0.1);   // on the bike, Run is pedalling hard
     running = wantRun && (running || stamina > 15);
-    if (running) stamina -= dt * 22 * (has('boots') ? 0.75 : 1); else if (inWater) stamina -= dt * (moving ? 4 : 2.5); else stamina += dt * (moving ? 10 : 20) * (has('stick') ? 1.3 : 1);   // good boots make running cheaper; a stick gets your breath back sooner
+    const onLadder = inWater && ladderAt(player.position.x, player.position.z) !== null;
+    if (onLadder && !ladderAt.told) { ladderAt.told = true; hint('A ladder. Swim into it, or jump, to climb up onto the pier.'); } else if (!onLadder) ladderAt.told = false;
+    if (running) stamina -= dt * 22 * (has('boots') ? 0.75 : 1); else if (onLadder) stamina += dt * 12; else if (inWater) stamina -= dt * (moving ? 4 : 2.5); else stamina += dt * (moving ? 10 : 20) * (has('stick') ? 1.3 : 1);   // good boots make running cheaper; a stick gets your breath back sooner
     stamina = clamp(stamina, 0, stamMax);
     // stamina grows from your own effort: running, swimming, climbing, and pedalling hard (never from coasting)
     if (moving && (running || inWater)) growStam(dt * (inWater ? 0.035 : riding ? 0.02 : 0.025));
@@ -10513,7 +10730,7 @@
     player.rotation.y = bodyYaw;
 
     // jumping
-    if (wantJump) { wantJump = false; if (sitting) standUp(); else if (py <= 0.001 && !inRiver(player.position.x, player.position.z) && !riding) { vy = 9.5; if (vel.length() > 1) vel.multiplyScalar(1.15); dropAcorn(); } }
+    if (wantJump) { wantJump = false; const lad = inRiver(player.position.x, player.position.z) ? ladderAt(player.position.x, player.position.z) : null; if (lad) climbLadder(lad); else if (sitting) standUp(); else if (py <= 0.001 && !inRiver(player.position.x, player.position.z) && !riding) { vy = 9.5; if (vel.length() > 1) vel.multiplyScalar(1.15); dropAcorn(); } }
     // dropped acorns sprout if left too long; seedlings grow
     pickables.slice().forEach(o => { if (o.userData.dropped) { o.userData.age += dt; if (o.userData.age > 12) sproutAt(o); } });
     sprouts.forEach(g => { if (g.userData.grow < 1) { g.userData.grow = Math.min(1, g.userData.grow + dt * 0.5); g.scale.setScalar(0.01 + g.userData.grow * 0.99); } });
@@ -10531,7 +10748,8 @@
     const onGround = sitting || py <= 0.001;
     const gliding = vel.length() > 0.4;
     const swing = Math.sin(walkPhase) * (gliding && onGround ? (running ? 1.0 : 0.7) : 0);
-    if (inRiver(player.position.x, player.position.z) && !sitting) { const st = Math.sin(t * 5); kid.arms[0].rotation.x = -1.2 + st * 0.9; kid.arms[1].rotation.x = -1.2 - st * 0.9; kid.legs[0].rotation.x = st * 0.5; kid.legs[1].rotation.x = -st * 0.5; }
+    const swimA = inRiver(player.position.x, player.position.z) && !sitting && !riding; if (!swimA && kid.swum) swimOff(kid);
+    if (swimA) { const sp = Math.min(1, vel.length() / 2.2); kid.swimB = (kid.swimB || 0) + (sp - (kid.swimB || 0)) * Math.min(1, dt * 2.5); kid.swimPh = (kid.swimPh || 0) + dt * (0.12 + 0.55 * sp); swimPose(kid, t, kid.swimB, kid.swimPh, player.scale.x); }
     else if (sitting) { kid.legs[0].rotation.x = kid.legs[1].rotation.x = -1.5; kid.arms[0].rotation.x = kid.arms[1].rotation.x = -0.5; }
     else {
       kid.legs[0].rotation.x = onGround ? swing : -0.5; kid.legs[1].rotation.x = onGround ? -swing : 0.5;
@@ -10540,9 +10758,9 @@
     }
     const gY = groundAt(player.position.x, player.position.z);
     player.position.y = gY + (sitting ? py : py + (gliding && onGround && !riding ? Math.abs(Math.sin(walkPhase)) * (running ? 0.18 : 0.12) : 0));
-    kid.hd.rotation.y = headYaw; kid.hd.rotation.x = -pitch * 0.5 + (reduce ? 0 : Math.sin(t * 1.3) * 0.02);
+    if (kid.swum) { kid.hd.rotation.y = kid.swimHY + headYaw * (1 - kid.swimB); kid.hd.rotation.x = kid.swimHX; } else { kid.hd.rotation.y = headYaw; kid.hd.rotation.x = -pitch * 0.5 + (reduce ? 0 : Math.sin(t * 1.3) * 0.02); }
     if (grabT < 1) grabT = Math.min(1, grabT + dt * 3);
-    if (!shoulderJoin.done) { shoulderJoin.done = true; ['bw', 'mari', 'ald', 'fen', 'hol', 'pip', 'ori', 'maud'].forEach(k => { const f = FOLK[k]; if (f) shoulderJoin(f.g, f.hd); }); } swingTick(dt); rdPose(dt); punchPose(dt);
+    if (!shoulderJoin.done) { shoulderJoin.done = true; ['bw', 'mari', 'ald', 'fen', 'hol', 'pip', 'ori', 'maud'].forEach(k => { const f = FOLK[k]; if (f) shoulderJoin(f.g, f.hd); }); } swingTick(dt); glassTick(dt); frTick(dt); rdPose(dt); punchPose(dt);
 
     // camera
     const [cp, cl] = camTarget();
@@ -10875,7 +11093,7 @@
   // ---------- Frostpeak Monastery: the gate, the yard and its striking posts, the hall, the cells, the bell, and the monks ----------
   const frostW = (lx, lz) => { const c = Math.cos(FP.yaw), sn = Math.sin(FP.yaw); return [FP.x + lx * c + lz * sn, FP.z - lx * sn + lz * c]; };
   const FR_G = new THREE.Group(); FR_G.position.set(FP.x, FP.py, FP.z); FR_G.rotation.y = FP.yaw; worldScene.add(FR_G);
-  const DOJO = { pines: [], posts: [], drill: null, bp: -1, sol: [], box: [], wsol: [], bell: null, bellT: 9, lamp: null, lampM: null, flame: null, snow: null, far: null, told: false };
+  const DOJO = { monks: [], slot: '', pines: [], posts: [], drill: null, bp: -1, sol: [], box: [], wsol: [], bell: null, bellT: 9, lamp: null, lampM: null, flame: null, snow: null, far: null, told: false };
   {
     const G = FR_G, S = DOJO.sol, BX = DOJO.box, M = (c, o) => mat(c, Object.assign({ roughness: 1 }, o || {}));
     const bx = (w, h, d, x, y, z, m, p) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); (p || G).add(q); return q; };
@@ -10919,7 +11137,7 @@
       const sp = new THREE.Object3D(); { const [wx, wz] = frostW(x, z + 4.6); sp.position.set(wx, 0, wz); } worldScene.add(sp); sp.userData = { pickable: true, kind: 'frbell', world: 'wild' }; pickables.push(sp); }
     // the fire bowl, with three stones to sit on round it
     { const x = -24, z = 34; cy(2, 1.3, 1.5, x, 0.75, z, stone, 10); S.push({ x, z, r: 2.2 }); DOJO.flame = new THREE.Mesh(new THREE.ConeGeometry(1.1, 2.6, 8), mat('#ffb040', { emissive: '#ff8a1e', emissiveIntensity: 1.4 })); DOJO.flame.position.set(x, 2.6, z); G.add(DOJO.flame); const fl = new THREE.PointLight('#ffb060', 1, 34); fl.position.set(x, 4, z); G.add(fl); DOJO.fire = fl;
-      [0.5, 2.6, 4.7].forEach(a => { const sx = x + Math.cos(a) * 5.2, sz = z + Math.sin(a) * 5.2; bx(2.6, 1.5, 2.6, sx, 0.75, sz, stone).rotation.y = a; bx(2.7, 0.14, 2.7, sx, 1.57, sz, snow).rotation.y = a; const m = new THREE.Object3D(), [wx, wz] = frostW(sx, sz); m.position.set(wx, 0, wz); worldScene.add(m);
+      [0.3, 1.55, 2.8, 4.05, 5.3].forEach(a => { const sx = x + Math.cos(a) * 5.2, sz = z + Math.sin(a) * 5.2; bx(2.6, 1.5, 2.6, sx, 0.75, sz, stone).rotation.y = a; bx(2.7, 0.14, 2.7, sx, 1.57, sz, snow).rotation.y = a; const m = new THREE.Object3D(), [wx, wz] = frostW(sx, sz); m.position.set(wx, 0, wz); worldScene.add(m);
         m.userData = { pickable: true, kind: 'seat', world: 'wild', yaw: FP.yaw + Math.atan2(x - sx, z - sz), seatTop: 1.6, label: 'stone by the fire' }; pickables.push(m); }); }
     // a pond, frozen over
     { const x = 40, z = -22; cy(11, 11, 0.14, x, 0.07, z, mat('#8fc6e0', { roughness: 0.12, metalness: 0.2 }), 28); for (let k = 0; k < 14; k++) { const a = k / 14 * 6.283, r = 11.6 + (k % 3) * 0.4, q = new THREE.Mesh(new THREE.SphereGeometry(1 + (k % 4) * 0.25, 7, 5), stone); q.scale.y = 0.55; q.position.set(x + Math.cos(a) * r, 0.3, z + Math.sin(a) * r); G.add(q); } }
@@ -10943,25 +11161,25 @@
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); DOJO.far = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE.DoubleSide })); DOJO.far.frustumCulled = false; DOJO.far.visible = false; DOJO.far.userData.whole = true; worldScene.add(DOJO.far); }
     // the monks
     const robe = { coat: '#d98a2b', trou: '#7a3a1e', skin: '#c9956a', hair: '#2a2420' };
-    const monk = (o, lx, lz, ly, n, lines) => { const [x, z] = frostW(lx, lz), F = addFolk(worldScene, 'wild', Object.assign({}, robe, o), x, z, FP.yaw + ly, n, lines, () => true); F.g.position.y = FP.py; return F; };
+    const monk = (o, lx, lz, ly, n, lines) => { const [x, z] = frostW(lx, lz), F = addFolk(worldScene, 'wild', Object.assign({}, robe, o), x, z, FP.yaw + ly, n, lines, () => true); F.g.position.y = FP.py; F.g.rotation.order = 'YXZ'; DOJO.monks.push({ F, n, lx, lz, ly, T: o.tall || 6, Wd: o.wide || 1.6, base: lines.slice(), slot: 'day' }); return F; };
     monk({ skin: '#b98a63' }, 10, 68, 0.5, 'Brother Sorrel Deepsnow', ['Brother Sorrel Deepsnow. I keep the gate. You are the first up the trail since the last snow, and there is always a last snow.', 'Master Oren is in the hall, or in the yard hitting a post. If it is quiet, he is in the hall.', 'Ring the bell if you like. We ring it for dawn, for supper, and for anybody who makes it to the top.', 'Nine hundred paces from the foot to this gate. I have counted them going down. Coming up, I lose count.']);
     { const F = monk({ skin: '#e8b890', hair: '#5a3d22' }, -17, 24, 2.2, 'Brother Tobin Quietfoot', ['Brother Tobin Quietfoot. I sweep the yard. Then it snows, and I sweep the yard.', 'The posts are for striking. Go on, they like it. The middle one is for the drills, when the Master lights the lantern over it.', 'A white belt flaps. A yellow belt punches. A green belt punches twice. A black belt does not seem to do anything at all, and then you are on the floor.']);
-      const br = new THREE.Group(); br.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 5.4, 5), wood)); const hd = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.2, 8), M('#c9a85a')); hd.position.y = -3.1; hd.rotation.x = Math.PI; br.add(hd); br.position.set(1.5, 3.3, 0.9); br.rotation.z = -0.12; F.g.add(br); }
-    monk({ skin: '#c9956a', hair: '#1b1b1b', tall: 5.6, wide: 1.5 }, 47, 25, -1.1, 'Sister Linden Hush', ['Sister Linden Hush. I keep the bell and the hours. Yes, I do talk. People are always surprised.', 'From the bell you can see the whole Long Road on a clear day: the Hollow at one end and the sea at the other.', 'There is a cave half way down the trail, on the uphill side. We do not go in. Something in there throws the snow back out. A black belt might go and ask it to stop.']);
+      const br = new THREE.Group(); br.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 5.4, 5), wood)); const hd = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.2, 8), M('#c9a85a')); hd.position.y = -3.1; hd.rotation.x = Math.PI; br.add(hd); br.position.set(1.5, 3.3, 0.9); br.rotation.z = -0.12; F.g.add(br); F.g.userData.prop = br; }
+    monk({ skin: '#c9956a', hair: '#1b1b1b', tall: 5.6, wide: 1.5 }, 47, 25, -1.1, 'Sister Linden Hush', ['Sister Linden Hush. I keep the bell and the hours. Yes, I do talk. People are always surprised.', 'From the bell you can see the whole Long Road on a clear day: the Hollow at one end and the sea at the other.', 'There are two caves on the trail, both on the uphill side. The one half way down has something in it that throws the snow back out. The one near the bottom has walls of ice across it, and the founder’s scroll behind the last one. Each wall wants a better belt than the one before.']);
     monk({ tall: 3, wide: 1, skin: '#f0c9a0', hair: '#8a4a2a' }, -29, 38, 2.4, 'Pim Snowberry', ['Pim Snowberry. I am the newest. I have a white belt and I am allowed to carry the firewood.', 'Master Oren says the punch starts in your feet. I tried punching with my feet and he said that was not what he meant.', 'I can sit by the fire as long as I like, as long as it does not go out.']);
     { const F = monk({ coat: '#8a2f24', skin: '#d9a070', hair: '#e8e8e8', tall: 6.4, wide: 1.5 }, 0, -27, 0, 'Master Oren Frostmantle', ['Master Oren Frostmantle. I teach the hand. You have climbed a long way to hit a post.', 'A punch is a promise your whole body makes. Most people only send the arm.']);
       const bd = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.6, 10), M('#eeeeee')); bd.position.set(0, -0.95, 0.62); bd.rotation.x = Math.PI + 0.25; F.g.userData.head.add(bd); { const bt = new THREE.Mesh(new THREE.TorusGeometry(0.98, 0.16, 6, 20), M('#1c1c1c')); bt.rotation.x = Math.PI / 2; bt.position.y = 3.5; F.g.add(bt); } F.g.userData.kind = 'sensei'; DOJO.master = F; }
   }
-  // the mouth of the Ice Cave, on the uphill side of the trail: rock, a fringe of icicles, and snow thrown out across the path
-  { const C = FP.cave, y = worldH(C.dx, C.dz), g = new THREE.Group(); g.position.set(C.x, y, C.z); g.rotation.y = C.yaw; worldScene.add(g); const rock = mat('#6f7a86', { roughness: 1 }), rock2 = mat('#5a6470', { roughness: 1 }), ice = mat('#bfe4f4', { roughness: 0.15, emissive: '#2a6a8a', emissiveIntensity: 0.3 }), snow = mat('#f4f7fb'), M = (geo, m, x, yy, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, yy, z); q.castShadow = true; g.add(q); return q; };
+  // the mouths of the caves, on the uphill side of the trail: rock, a fringe of icicles, and snow thrown out across the path
+  [[FP.cave, 'The Ice Cave'], [FP.cave2, 'The Glass Cave']].forEach(([C, label]) => { const y = worldH(C.dx, C.dz), g = new THREE.Group(); g.position.set(C.x, y, C.z); g.rotation.y = C.yaw; worldScene.add(g); const rock = mat('#6f7a86', { roughness: 1 }), rock2 = mat('#5a6470', { roughness: 1 }), ice = mat('#bfe4f4', { roughness: 0.15, emissive: '#2a6a8a', emissiveIntensity: 0.3 }), snow = mat('#f4f7fb'), M = (geo, m, x, yy, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, yy, z); q.castShadow = true; g.add(q); return q; };
     [[0, 6.5, -4.2, 8.6, 1.05], [-6.6, 3.8, -1, 5.2, 1], [6.8, 4.2, -1.2, 5.4, 1], [-2.6, 10.4, -4.6, 4.8, 0.8], [3.2, 9.8, -5, 5, 0.8]].forEach(([x, yy, z, r, sy], i) => { const b = M(new THREE.IcosahedronGeometry(r, 1), i % 2 ? rock2 : rock, x, yy * 0.6, z); b.scale.y = sy; b.rotation.y = i * 1.3; const cp = M(new THREE.SphereGeometry(r * 0.8, 9, 6), snow, x, yy * 0.6 + r * sy * 0.55, z - 0.4); cp.scale.y = 0.35; });
     const dark = new THREE.Mesh(new THREE.PlaneGeometry(5, 8.8), new THREE.MeshBasicMaterial({ color: '#0a0d12' })); dark.position.set(0, 4.4, 4.72); g.add(dark);
     for (let i = 0; i < 7; i++) { const ic = M(new THREE.ConeGeometry(0.22 + (i % 3) * 0.08, 1.2 + (i % 4) * 0.5, 5), ice, -2.3 + i * 0.77, 8.6 - (i % 4) * 0.2, 4.9); ic.rotation.x = Math.PI; }
     [[-3.4, 5], [3.6, 5.4], [-1.5, 7.5], [2.2, 8.2], [0.4, 10]].forEach(([x, z], i) => { M(new THREE.SphereGeometry(0.75, 8, 6), snow, x, 0.5, z); });
-    const sg = signBoard('The Ice Cave', 4.6, 0.95, '#3d4a5c', '#f6f7fb'); sg.position.set(0, 10.6, 5.4); g.add(sg);
-    [[-6.6, -1, 4.2], [6.8, -1.2, 4.4], [0, -4.2, 6.5]].forEach(([lx, lz, r]) => DOJO.wsol.push({ x: C.x + lx * Math.cos(C.yaw) + lz * Math.sin(C.yaw), z: C.z - lx * Math.sin(C.yaw) + lz * Math.cos(C.yaw), r })); }
+    const sg = signBoard(label, 4.6, 0.95, '#3d4a5c', '#f6f7fb'); sg.position.set(0, 10.6, 5.4); g.add(sg);
+    [[-6.6, -1, 4.2], [6.8, -1.2, 4.4], [0, -4.2, 6.5]].forEach(([lx, lz, r]) => DOJO.wsol.push({ x: C.x + lx * Math.cos(C.yaw) + lz * Math.sin(C.yaw), z: C.z - lx * Math.sin(C.yaw) + lz * Math.cos(C.yaw), r })); });
   // walls and posts on the crown (in the monastery's own frame), and the pines and cairns on the slopes
-  function frostCollide(p) { if (!fading && gameStarted && where === 'wild' && Math.hypot(p.x - FP.cave.dx, p.z - FP.cave.dz) < 2.6) { enterInterior('frost1'); return; } const dx = p.x - FP.x, dz = p.z - FP.z; if (Math.abs(dx) > FP.R + 900 || Math.abs(dz) > FP.R + 900) return;
+  function frostCollide(p) { if (!fading && gameStarted && where === 'wild') { if (Math.hypot(p.x - FP.cave.dx, p.z - FP.cave.dz) < 2.6) { enterInterior('frost1'); return; } if (Math.hypot(p.x - FP.cave2.dx, p.z - FP.cave2.dz) < 2.6) { enterInterior('frost2'); return; } } const dx = p.x - FP.x, dz = p.z - FP.z; if (Math.abs(dx) > FP.R + 900 || Math.abs(dz) > FP.R + 900) return;
     for (const s of DOJO.wsol) { const ex = p.x - s.x, ez = p.z - s.z; if (Math.abs(ex) > 8 || Math.abs(ez) > 8) continue; const dd = Math.hypot(ex, ez), min = s.r + 0.6; if (dd < min && dd > 0.001) { p.x = s.x + ex / dd * min; p.z = s.z + ez / dd * min; } }
     if (Math.hypot(dx, dz) > FP.top + 20) return; const c = Math.cos(FP.yaw), sn = Math.sin(FP.yaw); let lx = dx * c - dz * sn, lz = dx * sn + dz * c; const m = 0.6;
     for (const s of DOJO.sol) { const ex = lx - s.x, ez = lz - s.z, dd = Math.hypot(ex, ez), min = s.r + m; if (dd < min && dd > 0.001) { lx = s.x + ex / dd * min; lz = s.z + ez / dd * min; } }
@@ -10977,14 +11195,26 @@
   function drillEnd() { const d = DOJO.drill; DOJO.drill = null; hint('');
     if (d.good >= d.need) { save.belt = d.b; persist(); chink(1320); choose('Master Oren', [`${d.good} out of ${d.of}. `, 'That is a yellow belt. Tie it on. From now on you do not flap: you stand, you look at what you are hitting, and you send one straight arm with your weight behind it.', 'That is a green belt. Now you have two hands, so use two: a quick one to open the door and a heavy one to walk through it. One press, two blows.', 'That is a black belt, and I have nothing left to show your hands. Draw both back, breathe, and give everything at once with open palms. Be careful what you point it at.'][0] + ['', 'That is a yellow belt. Tie it on. From now on you do not flap: you stand, you look at what you are hitting, and you send one straight arm with your weight behind it.', 'That is a green belt. Now you have two hands, so use two: a quick one to open the door and a heavy one to walk through it. One press, two blows.', 'That is a black belt, and I have nothing left to show your hands. Draw both back, breathe, and give everything at once with open palms. Be careful what you point it at.'][d.b], [['Thank you, Master', () => { flash(`You have the ${BELTS[d.b]} belt. Your punch has changed: try it on a post.`, 6000); }]]); }
     else choose('Master Oren', `${d.good} out of ${d.of}. You need ${d.need}. ${d.good < d.of / 3 ? 'You are hitting when you feel like it. The lantern tells you when.' : 'Closer. Your hand starts late, so start it as the light comes, not after.'}`, [['Again', () => drillStart(d.b)], ['Later', () => {}]]); }
-  function senseiTalk() { const b = Math.min(3, save.belt || 0), self = (save.fight || 0) >= 12;
+  function senseiTalk() { if (MONK_SLOT(clockHour()) === 'sleep') { flash('Master Oren is asleep on his mat in the hall. The yard opens at six.', 4500); return; } const b = Math.min(3, save.belt || 0), self = (save.fight || 0) >= 12;
     if (b >= 3) { choose('Master Oren', 'A black belt, come back up the mountain to visit an old man. The posts are there if your hands are restless. There is nothing more I can teach them.', [['Thank you, Master', () => {}]]); return; }
     const nx = b + 1, what = ['', 'the straight punch', 'the one-two', 'the open palm'][nx], first = !save.dojoMet; save.dojoMet = 1;
     choose('Master Oren', (first ? 'Master Oren Frostmantle. You have climbed a long way to hit a post. Good. The post does not mind. ' : '') + (b === 0 ? (self ? 'I see a goblin hole has already taught you to keep your eyes open. That is the yellow belt’s lesson, but you have not earned the belt. ' : 'You wear a white belt, which is to say no belt. At the moment you shut your eyes and flap. ') : `You wear the ${BELTS[b]} belt. `) + `The ${BELTS[nx]} belt is ${what}. The drill: stand at the middle post. When I light the lantern over it, strike. Not before, and not after. ${[0, 6, 8, 10][nx]} lights; land ${[0, 4, 6, 8][nx]} of them${nx > 1 ? ', and the light is quicker than last time' : ''}.`,
       [[`Begin the drill for the ${BELTS[nx]} belt`, () => drillStart(nx)], ['What are the belts?', () => choose('Master Oren', 'White: you flap, and hope. Yellow: one straight punch with your weight behind it. Green: the one-two, a quick blow and then a heavy one. Black: the open palm, both hands at once, and whatever is in front of you goes backwards. Each one is earned at the post, under the lantern.', [['I see', () => {}]])], ['Not now', () => {}]]); }
+  // the monks' day: up at six for the morning forms in the yard, at their posts through the day, round the fire at noon and at supper, and asleep in their cells (the two in the hall on its mats) from half past nine
+  const MONK_SLOT = h => h >= 21.5 || h < 6 ? 'sleep' : h < 8 ? 'train' : (h >= 12 && h < 13) || (h >= 18 && h < 19.5) ? 'meal' : 'day';
+  const MONK_SAY = { sleep: '(Asleep. Better let them be till six.)', train: 'Morning forms. We go through them slowly, every morning, so that they are there when we need them fast. Watch if you like.', meal: 'Barley and turnip, the same as yesterday. Nobody climbs a mountain for the food.' };
+  const MONK_BED = [[-60.8, -18, 0], [-60.8, 4, 0], [-60.8, 26, 0], [-13, -46, Math.PI / 2], [13, -46, Math.PI / 2]];
+  function monkPlace(m, slot, i) { const g = m.F.g, u = g.userData, F = m.F; let lx = m.lx, lz = m.lz, ly = m.ly, y = FP.py, lie = false, sit = false;
+    if (slot === 'train') { if (m.n.startsWith('Master')) { lx = 0; lz = -9; ly = 0; } else { lx = -15 + i * 10; lz = 16; ly = Math.PI; } }
+    else if (slot === 'meal') { const a = [0.3, 1.55, 2.8, 4.05, 5.3][i], fx = -24, fz = 34; lx = fx + Math.cos(a) * 5.2; lz = fz + Math.sin(a) * 5.2; ly = Math.atan2(fx - lx, fz - lz); sit = true; }
+    else if (slot === 'sleep') { const b = MONK_BED[m.n.startsWith('Master') ? 4 : m.n.startsWith('Pim') ? 3 : i]; ly = b[2]; lx = b[0] + Math.sin(ly) * 3.2; lz = b[1] + Math.cos(ly) * 3.2; lie = true; }
+    const [x, z] = frostW(lx, lz); g.position.set(x, sit ? y + 1.6 - (0.46 * m.T - 1.1 * Math.max(0.24, m.Wd * 0.2)) : lie ? y + 0.45 + m.Wd * 0.8 : y, z); g.rotation.set(lie ? -Math.PI / 2 : 0, FP.yaw + ly, 0); u.sit = sit; if (u.prop) u.prop.visible = slot === 'day'; if (F.solid) { F.solid.x = x; F.solid.z = z; F.solid.r = lie || sit ? 0.01 : 1.7; } F.sx = x;
+    u.arms.forEach(q => { q.rotation.x = sit ? -0.5 : 0; }); F.lines.length = 0; (MONK_SAY[slot] ? [m.n.startsWith('Master') && slot === 'train' ? 'Watch the others, not me. I have been doing this for sixty years and I still get it wrong on Thursdays.' : MONK_SAY[slot]] : m.base).forEach(l => F.lines.push(l)); F.k = 0; m.slot = slot; }
+  function monksTick(t) { const slot = MONK_SLOT(clockHour()); DOJO.monks.forEach((m, i) => { if (m.slot !== slot) { const g = m.F.g, near = where === 'wild' && Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z) < 26; if (!near || !m.placed) { monkPlace(m, slot, i); m.placed = true; } } });
+    if (slot === 'train') DOJO.monks.forEach((m, i) => { const A = m.F.g.userData.arms, w = Math.sin(t * 1.4 + i * 0.3); if (!A) return; A[0].rotation.x = -1.3 * Math.max(0, w); A[1].rotation.x = -1.3 * Math.max(0, -w); }); }
   function frostBell() { if (DOJO.bellT < 2.5) return; DOJO.bellT = 0; chink(196); setTimeout(() => chink(147), 120); flash('The bell rolls out over the snow and comes back off the far side of the valley.', 4500); }
   function dojoTick(dt, t) {
-    { const b = Math.min(3, save.belt || 0); if (DOJO.bp !== b && kid.beltMesh) { if (!kid._beltM) { kid._beltM = kid.beltMesh.material.clone(); kid.beltMesh.material = kid._beltM; } kid._beltM.color.set(BELT_COL[b]); DOJO.bp = b; } }
+    { const b = Math.min(3, save.belt || 0); if (DOJO.bp !== b && kid.beltMesh) { beltOn(kid, b); DOJO.bp = b; } }
     if (where !== 'wild') { if (DOJO.snow.visible) DOJO.snow.visible = false; if (DOJO.far.visible) DOJO.far.visible = false; if (DOJO.drill) { DOJO.drill = null; DOJO.lampM.emissiveIntensity = 0; } return; }
     const P = player.position, dC = Math.hypot(P.x - FP.x, P.z - FP.z);
     // the far view
@@ -10994,7 +11224,7 @@
     if (dC > FP.top + 60) { if (DOJO.drill) { DOJO.drill = null; DOJO.lampM.emissiveIntensity = 0; hint(''); flash('You have left the yard. Master Oren puts the lantern out. Speak to him to begin again.', 5000); } return; }
     if (!DOJO.told && dC < FP.top - 6) { DOJO.told = true; if (!save.punchTold) { save.punchTold = 1; persist(); flash('To punch: the F key, the right trigger, or the Punch button.', 6000); } }
     DOJO.posts.forEach(q => { if (q.wob > 0.002) { q.ph += dt * 17; q.wob *= Math.max(0, 1 - dt * 3.2); const w = Math.sin(q.ph) * q.wob; q.st.rotation.x = q.dir[1] * w; q.st.rotation.z = -q.dir[0] * w; } else if (q.wob) { q.wob = 0; q.st.rotation.set(0, 0, 0); } });
-    DOJO.bellT += dt; if (DOJO.bellT < 6) DOJO.bell.rotation.z = Math.sin(DOJO.bellT * 3.4) * 0.34 * Math.exp(-DOJO.bellT * 0.6); 
+    monksTick(t); DOJO.bellT += dt; if (DOJO.bellT < 6) DOJO.bell.rotation.z = Math.sin(DOJO.bellT * 3.4) * 0.34 * Math.exp(-DOJO.bellT * 0.6); 
     if (DOJO.flame) { DOJO.flame.scale.set(1 + Math.sin(t * 9) * 0.1, 1 + Math.sin(t * 13) * 0.16, 1 + Math.cos(t * 7) * 0.1); DOJO.fire.intensity = 1 + Math.sin(t * 11) * 0.14; }
     const d = DOJO.drill; if (!d || talking()) return;
     if (d.grace > 0) d.grace -= dt;
@@ -11763,7 +11993,7 @@ if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : key =
   }
   let restoreAfter = null;
   tapButton($('mapbtn'), toggleMap); tapButton($('saybtn'), () => openSay()); $('saybtn').hidden = fam.phrases === false; tapButton($('voicebtn'), () => NET.voice()); NET.voiceSync();
-  window.addEventListener('keydown', e => { if (!$('settings').hidden || bagOpen || drUp || tgUp || shUp) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
+  window.addEventListener('keydown', e => { if (!$('settings').hidden || !$('friends').hidden || bagOpen || drUp || tgUp || shUp || (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName))) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
   function launch(key) {
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; save.started = true; if (save.beetle && !beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(-3, 0, 8); restoreCompanion(); } if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
