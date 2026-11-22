@@ -163,6 +163,13 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## Cave mouths that sit on the ground (build 140)
+
+- **Rocks on the ground.** On Frostpeak the trail slopes, but the rocks round the cave mouths were placed at fixed heights, so on the downhill side they hung in the air and you could walk under them. Each rock that reaches the ground now looks at the ground under its whole footprint, and sits on the lowest of it. Where the ground falls away under one, another rock goes under it.
+- **The foot of the hill.** A ring of boulders now runs all the way round each cave's hill, bedded into the ground and solid, so there is no gap anywhere and nowhere to walk beneath. The body of the hill behind the tunnel is one mass.
+- **The threshold.** The tunnel floor runs out and down to meet the ground in front of the mouth, and stones go down under each side of the arch where the ground drops.
+- The Goblin Hole gets the same ring of boulders round its foot.
+
 ## Deeper water, and caves that look like caves (build 139)
 
 - **You float lower.** The game used to keep your feet the same distance under the surface whatever size you were, so a grown elf floated with the water barely past the knees. Now the water comes up to your shoulders when you tread water, at any size. When you swim, your back and the back of your head are just at the surface.

@@ -467,7 +467,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 139 · 22 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 140 · 22 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -3078,6 +3078,7 @@
   function rockSheetM(col, extra) { return new THREE.MeshStandardMaterial(Object.assign({ color: col, roughness: 1, flatShading: true, vertexColors: true, side: THREE.DoubleSide }, extra || {})); }
   function caveMouth(g, o) {
     const { rock, rock2 } = o, z0 = o.z0, hw = o.hw, h = o.h, dep = o.depth || 11, sh = h - hw, solid = [];   // straight sides up to sh, then a round top
+    const gr = o.ground || (() => 0);   // where the ground is, in the mouth's own frame: on a mountain trail it slopes, and every rock has to stand on it
     const M = (geo, m, x, y, z, sy) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); if (sy) q.scale.y = sy; q.castShadow = true; q.receiveShadow = true; g.add(q); return q; };
     // the arch, measured round from the bottom of the left side, over the top, to the bottom of the right side
     const L = 2 * sh + Math.PI * hw, arch = s => { let d = s * L; if (d < sh) return [-hw, d]; d -= sh; if (d < Math.PI * hw) { const a = Math.PI - d / hw; return [Math.cos(a) * hw, sh + Math.sin(a) * hw]; } d -= Math.PI * hw; return [hw, sh - d]; };
@@ -3092,8 +3093,23 @@
     [[-hw - 5.6, 4.2, -1.4, 5.4, 1.15], [hw + 5.7, 4.4, -1.8, 5.6, 1.1], [0, h + 4.4, -2.2, 5.8, 0.78], [-hw - 2.6, h + 1.2, -3.4, 4.6, 0.85], [hw + 2.9, h + 0.9, -3.8, 4.8, 0.85],
       [-hw - 2.9, 1.6, z0 - 2.4, 2.5, 1], [hw + 3.1, 1.8, z0 - 2.6, 2.7, 1], [0, 7.5, -dep - 9, 9.5, 1], [-hw - 9, 7, -9, 7, 1], [hw + 9, 7.4, -9.5, 7.2, 1],
       [-hw - 3.1, 3.2, z0 - 3.4, 3, 1.5], [hw + 3.1, 3.3, z0 - 3.2, 3, 1.5], [-hw - 2.8, 7.4, z0 - 3.8, 2.6, 1], [hw + 2.9, 7.2, z0 - 4, 2.6, 1], [0, h + 2.3, z0 - 3.6, 3.3, 0.8], [-hw - 3.3, 4, z0 - 8, 3.4, 1.4], [hw + 3.4, 4.2, z0 - 8.4, 3.4, 1.4]]
-      .forEach(([x, y, z, r, sy], i) => { const b = M(new THREE.IcosahedronGeometry(r, 1), i % 2 ? rock2 : rock, x, y, z, sy); b.rotation.y = i * 1.3; if (y - r * sy < 2.5) solid.push([x, z, r * 0.9]);
+      .forEach(([x, y0, z, r, sy], i) => { let y = y0; if (y0 - r * sy < 2.5) { const f = r * 0.75, lo = Math.min(gr(x, z), gr(x + f, z), gr(x - f, z), gr(x, z + f), gr(x, z - f)); y = y0 - 0.4 + (Math.abs(x) > hw + 4 ? Math.max(0, lo) * 0.6 : 0);
+          // where the ground falls away under a rock, another rock under it, down to the ground
+          if (lo < -0.4) { const r2 = r * 0.85, b2 = M(new THREE.IcosahedronGeometry(r2, 1), i % 2 ? rock : rock2, x, lo + r2 * 0.45, z + 0.3); b2.rotation.y = i * 2.1; } }
+        const b = M(new THREE.IcosahedronGeometry(r, 1), i % 2 ? rock2 : rock, x, y, z, sy); b.rotation.y = i * 1.3; if (y0 - r * sy < 2.5) solid.push([x, z, r * 0.9]);
         if (o.snow) { const cp = M(new THREE.SphereGeometry(r * 0.8, 9, 6), o.snow, x, y + r * sy * 0.55, z - 0.4, 0.35); } });
+    // a skirt of rock all round the foot of the hill, from above the ground to below it, so there is no gap under anything and nowhere to walk beneath it
+    { const P = [[-hw - 0.4, z0 - 0.2], [-hw - 5, z0 - 0.4], [-hw - 10, z0 - 4], [-hw - 13.5, -9], [-hw - 11, -18], [-4, -dep - 17], [4, -dep - 17], [hw + 11, -18], [hw + 13.5, -9], [hw + 10, z0 - 4], [hw + 5, z0 - 0.4], [hw + 0.4, z0 - 0.2]], seg = [];
+      for (let k = 0; k < P.length - 1; k++) { const [ax, az] = P[k], [bx, bz] = P[k + 1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 1.5)); for (let t = 0; t < n; t++) seg.push([ax + (bx - ax) * t / n, az + (bz - az) * t / n]); } seg.push(P[P.length - 1]);
+      // the foot of the hill: boulders all the way round, each bedded in the ground under it, so nothing hangs in the air and there is nowhere to walk beneath
+      for (let k = 0; k < seg.length; k += 2) { const [x, z] = seg[k], r = 2.3 + 0.9 * ((k * 5) % 4) / 3, f = r * 0.7, lo = Math.min(gr(x, z), gr(x + f, z), gr(x - f, z), gr(x, z + f), gr(x, z - f)), sy = 0.85 + 0.25 * ((k * 3) % 2);
+        const b = M(new THREE.IcosahedronGeometry(r, 1), k % 4 ? rock : rock2, x, lo + r * sy * 0.35, z, sy); b.rotation.y = k * 0.9; if (o.snow) M(new THREE.SphereGeometry(r * 0.75, 9, 6), o.snow, x, lo + r * sy * 0.35 + r * sy * 0.6, z - 0.3, 0.3); solid.push([x, z, r * 0.85]); }
+      // and the body of the hill behind, one mass, all of it further back than the end of the tunnel
+      { const lo = Math.min(gr(0, -19), gr(-12, -14), gr(12, -14), gr(0, -9)), b = M(new THREE.IcosahedronGeometry(1, 2), rock2, 0, lo + 3.5, -19); b.scale.set(15, 10, 11.4); if (o.snow) { const cp = M(new THREE.SphereGeometry(1, 12, 8), o.snow, 0, lo + 11.5, -19.5); cp.scale.set(12, 3, 9); } }
+      // the threshold: the tunnel's floor runs out and down to meet the ground in front of the mouth
+      rockSheet(g, 8, 4, (u, v) => { const x = (-hw - 1.2) + u * (2 * hw + 2.4), z = z0 - 0.6 + v * 3.4, gy = gr(x, z); return [x, 0.05 + (gy - 0.05) * v - 0.05 * v, z, 0.6 + 0.15 * rockN(x * 2, z * 2)]; }, rockSheetM(o.floor || '#5a554e'));
+      // under each side of the arch, stones down to the ground where it falls away
+      [-1, 1].forEach(d => { const x = d * (hw + 0.8); let gy = Math.min(gr(x, z0 - 0.2), gr(x, z0 + 0.8)); for (let yy = -0.4, k = 0; yy > gy - 1.2 && k < 8; yy -= 1.4, k++) M(new THREE.DodecahedronGeometry(1.15, 0), k % 2 ? rock : rock2, x, yy, z0 - 0.1).rotation.set(k, k * 1.7, 0); }); }
     if (o.ice) for (let i = 0; i < 9; i++) { const [ax, ay] = arch(0.18 + i * 0.08), ic = M(new THREE.ConeGeometry(0.2 + (i % 3) * 0.08, 1.1 + (i % 4) * 0.45, 5), o.ice, ax, ay - 0.5, z0 + 0.15); ic.rotation.x = Math.PI; }
     if (o.timber) { [-hw + 0.2, hw - 0.2].forEach(x => M(new THREE.BoxGeometry(0.7, sh + 0.6, 0.7), o.timber, x, (sh + 0.6) / 2, z0 + 0.3)); M(new THREE.BoxGeometry(hw * 2 + 1.4, 0.8, 0.8), o.timber, 0, sh + 0.6, z0 + 0.3); }
     return solid;   // the rocks that come down to the ground, as circles you cannot walk through
@@ -11226,7 +11242,7 @@
   }
   // the mouths of the caves, on the uphill side of the trail: rock, a fringe of icicles, and snow thrown out across the path
   [[FP.cave, 'The Ice Cave'], [FP.cave2, 'The Glass Cave']].forEach(([C, label]) => { const y = worldH(C.dx, C.dz), g = new THREE.Group(); g.position.set(C.x, y, C.z); g.rotation.y = C.yaw; worldScene.add(g); const rock = mat('#6f7a86', { roughness: 1 }), rock2 = mat('#5a6470', { roughness: 1 }), ice = mat('#bfe4f4', { roughness: 0.15, emissive: '#2a6a8a', emissiveIntensity: 0.3 }), snow = mat('#f4f7fb'), M = (geo, m, x, yy, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, yy, z); q.castShadow = true; g.add(q); return q; };
-    caveMouth(g, { rock, rock2, z0: 4.8, hw: 2.6, h: 8.8, depth: 12, snow, ice, tunnel: '#7f97ab', floor: '#9fb3c4' }).forEach(([lx, lz, r]) => DOJO.wsol.push({ x: C.x + lx * Math.cos(C.yaw) + lz * Math.sin(C.yaw), z: C.z - lx * Math.sin(C.yaw) + lz * Math.cos(C.yaw), r }));
+    caveMouth(g, { rock, rock2, z0: 4.8, hw: 2.6, h: 8.8, depth: 12, snow, ice, tunnel: '#7f97ab', floor: '#9fb3c4', ground: (lx, lz) => worldH(C.x + lx * Math.cos(C.yaw) + lz * Math.sin(C.yaw), C.z - lx * Math.sin(C.yaw) + lz * Math.cos(C.yaw)) - y }).forEach(([lx, lz, r]) => DOJO.wsol.push({ x: C.x + lx * Math.cos(C.yaw) + lz * Math.sin(C.yaw), z: C.z - lx * Math.sin(C.yaw) + lz * Math.cos(C.yaw), r }));
     [[-3.4, 5], [3.6, 5.4], [-1.5, 7.5], [2.2, 8.2], [0.4, 10]].forEach(([x, z], i) => { M(new THREE.SphereGeometry(0.75, 8, 6), snow, x, 0.5, z); });
     const sg = signBoard(label, 4.6, 0.95, '#3d4a5c', '#f6f7fb'); sg.position.set(0, 11.2, 5.7); g.add(sg);
     [[-6.6, -1, 4.2], [6.8, -1.2, 4.4], [0, -4.2, 6.5]].forEach(([lx, lz, r]) => DOJO.wsol.push({ x: C.x + lx * Math.cos(C.yaw) + lz * Math.sin(C.yaw), z: C.z - lx * Math.sin(C.yaw) + lz * Math.cos(C.yaw), r })); });
