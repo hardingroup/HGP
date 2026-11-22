@@ -163,6 +163,14 @@ Mallow Orchards (nine lessons) and Fernwater Crossing (nine lessons) are playabl
 - **The sky-lift** comes down to the pier. The gondola waits with its floor level with the deck at the end of the pier, and you walk straight in.
 - **Not yet:** you cannot look through the observatory telescope. The two painted hills that stood west of the town are gone, because the row stands where they were.
 
+## Deeper water, and caves that look like caves (build 139)
+
+- **You float lower.** The game used to keep your feet the same distance under the surface whatever size you were, so a grown elf floated with the water barely past the knees. Now the water comes up to your shoulders when you tread water, at any size. When you swim, your back and the back of your head are just at the surface.
+- **Deeper rivers and sea.** The riverbed drops away from each bank to well past anybody's depth in the middle. The sea off Lanternreach is deep too.
+- **Wading.** You wade in from the bank, getting deeper with each step, until you are out of your depth and start to swim. Wading is walking: it does not use up breath, and you cannot drown in the shallows.
+- **Cave mouths.** The Goblin Hole, the Ice Cave and the Glass Cave used to be a dark panel standing against a boulder. Each is now an arched opening in a mass of rock, ringed with rough stones, with a tunnel behind it that narrows and darkens as it goes into the hill. The rock comes down round the sides and over the top. The Goblin Hole keeps its mine timbers; the Frostpeak caves have snow on the rock and icicles round the arch. The rocks that reach the ground are solid.
+- **Inside the caves.** No more straight walls, flat floor, beamed ceiling or wooden door. The walls are rough rock that bulges in and out and leans in overhead to a low, lumpy roof. The floor rises and dips a little underfoot, and you walk on it as it is. The way out is a rough opening in the rock with daylight beyond. The fights, chests, riddles and glass walls are where they were.
+
 ## Swimming, the pier ladders, softer water and fire, and the camera at doors (build 138)
 
 - **Swimming.** When you swim somewhere, your elf lies flat and does a front crawl: one arm comes over the top while the other pulls underneath, the legs flutter, and the head turns to the side for a breath every other stroke. When you stop, you tread water upright, sculling with your arms out. Other players' elves swim the same way.

@@ -467,7 +467,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 138 · 21 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 139 · 22 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -1396,10 +1396,8 @@
     const shedSign = signBoard('Fernsby Nursery', 5.2, 1.1, '#3e6b52', '#f6e7c2'); shedSign.position.set(0, 5.75, 3.7); shed.add(shedSign);
     // the goblin cave: a mound of rock against the north fence with a timbered mouth, and a post beside it with a note and a tin
     { const cx = 40, cz = -47, rock = mat('#6f6a60', { roughness: 1 }), rock2 = mat('#5c574e', { roughness: 1 }), tim = mat('#4a3320'), M = (geo, m, x, y, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); q.castShadow = true; q.receiveShadow = true; scene.add(q); return q; };
-      [[0, 6, -3.6, 8.4, 1.05], [-6.2, 3.6, -0.6, 5, 1], [6.4, 4, -0.8, 5.2, 1], [-2.5, 10, -4, 4.6, 0.8], [3, 9.4, -4.4, 4.8, 0.8]].forEach(([x, y, z, r, sy], i) => { const b = M(new THREE.IcosahedronGeometry(r, 1), i % 2 ? rock2 : rock, cx + x, y * 0.6, cz + z); b.scale.y = sy; b.rotation.y = i * 1.3; });
-      const dark = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 8.6), new THREE.MeshBasicMaterial({ color: '#0b0a09' })); dark.position.set(cx, 4.3, cz + 5.32); scene.add(dark);
-      [-2.6, 2.6].forEach(x => M(new THREE.BoxGeometry(0.7, 9.2, 0.7), tim, cx + x, 4.6, cz + 5.4)); M(new THREE.BoxGeometry(6.6, 0.8, 0.8), tim, cx, 9.3, cz + 5.4);
-      const sg = signBoard('Goblin Hole', 4.4, 0.9, '#3a2a18', '#e8d9a8'); sg.position.set(cx, 10.4, cz + 5.5); scene.add(sg);
+      { const cg = new THREE.Group(); cg.position.set(cx, 0, cz); scene.add(cg); caveMouth(cg, { rock, rock2, z0: 5.0, hw: 2.6, h: 8.8, depth: 11, timber: tim, tunnel: '#5e584f', floor: '#4d473e' }).forEach(([x, z, r]) => solids.push({ x: cx + x, z: cz + z, r })); }
+      const sg = signBoard('Goblin Hole', 4.4, 0.9, '#3a2a18', '#e8d9a8'); sg.position.set(cx, 11.2, cz + 5.9); scene.add(sg);
       M(new THREE.CylinderGeometry(0.2, 0.24, 5, 8), tim, cx + 6.5, 2.5, cz + 7); const note = M(new THREE.BoxGeometry(1.5, 1.1, 0.08), mat('#efe3c4'), cx + 6.5, 4.2, cz + 7.2); note.rotation.z = 0.06; M(new THREE.CylinderGeometry(0.55, 0.55, 0.7, 12), mat('#8a8f96', { metalness: 0.5, roughness: 0.5 }), cx + 6.5, 0.35, cz + 7.9);
       solids.push({ x: cx + 6.5, z: cz + 7.2, r: 0.8 }); hollowBoxes.push({ id: 'cave1', x: cx, z: cz, hw: 7, hd: 5, door: { x: cx, z: cz + 5.4 } });
       const sp = new THREE.Object3D(); sp.position.set(cx + 6.5, 0, cz + 8.6); scene.add(sp); sp.userData = { pickable: true, kind: 'cavetin', world: 'village' }; storeSpots.push(sp); }
@@ -1889,8 +1887,8 @@
   function kneeFlex(hip) { const s = hip.rotation.x; hip.userData.knee.rotation.x = 0.04 + (s > 0 ? s * 1.3 : s < -0.5 ? Math.min(-s, (-s - 0.5) * 2) : 0); }
   // b: 0 is treading water upright, 1 is lying flat doing the crawl. ph counts strokes. sc is how big the elf has grown, because the water is the same depth whatever size you are.
   function swimPose(k, t, b, ph, sc) {
-    const B = k.body, ws = 1.45 / sc, u = ph % 1, odd = Math.floor(ph) % 2;
-    B.rotation.x = 1.38 * b; B.position.set(0, b * (ws - 0.48) + (1 - b) * Math.sin(t * 2.4) * 0.05, -1.55 * b);
+    const B = k.body, ws = floatD(sc) / sc, u = ph % 1, odd = Math.floor(ph) % 2;
+    B.rotation.x = 1.38 * b; B.position.set(0, b * (ws - 0.75) + (1 - b) * Math.sin(t * 2.4) * 0.05, -1.55 * b);
     k.arms.forEach((sh, i) => { const d = i ? 1 : -1, ui = (u + i * 0.5) % 1;
       // one arm comes over the top, elbow high, while the other pulls back under the water; the pull takes longer than the reach
       const a = ui < 0.4 ? Math.PI * (ui / 0.4) : Math.PI + Math.PI * ((ui - 0.4) / 0.6), up = a < Math.PI;
@@ -2563,7 +2561,7 @@
       const T = rlz < RIVER.z ? 0.35 + 0.85 * ss(640, 840, Math.abs(lx - MERE.lx)) : 1.2;
       // a river runs in the lowest ground: the land beside it never lies below its banks, and comes up to them gently
       if (h < T) h += (T - h) * ss(hw + 330, hw + 70, rd) * e;
-      if (rd < hw + 70) { const bed = rd < hw ? -1.45 : -1.45 + (T + 1.45) * ss(hw, hw + 10, rd), b = ss(hw + 10, hw + 70, rd), hr = rd < hw + 10 ? bed : T * (1 - b) + Math.max(h, T) * b; h = h * (1 - e) + hr * e; } }
+      if (rd < hw + 70) { const bed = rd < hw ? -1.45 - 6.5 * ss(hw, hw - 9, rd) : -1.45 + (T + 1.45) * ss(hw, hw + 10, rd), b = ss(hw + 10, hw + 70, rd), hr = rd < hw + 10 ? bed : T * (1 - b) + Math.max(h, T) * b; h = h * (1 - e) + hr * e; } }
     // the gorge
     const [glx, glz] = toLocal(tileC, x, z), gd = Math.abs(glz - GW.zc), gax = Math.abs(glx);
     if (gd < GW.out && gax < GW.half + 40) { const G = gorgeG(glx), e = ss(GW.half + 40, GW.half, gax), hg = gd < GW.hw ? G - gorgeDepth(glx) : gd < GW.rim ? G : G + (h - G) * ss(GW.rim, GW.out, gd); h = h * (1 - e) + hg * e; }
@@ -3067,6 +3065,39 @@
   const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
   // ---------- interiors: every building is its own room, loaded when you walk through its door ----------
+  // ---------- a cave mouth: an arched opening in a mass of rock, with a tunnel behind it that goes back into the dark
+  // g is a group whose +z faces out of the hill. o: { rock, rock2, z0 (where the mouth's face is), hw (half its width), h (its height), depth, ice, snow, timber }
+  function rockN(a, b) { return Math.sin(a * 0.9 + b * 0.4) * 0.5 + Math.sin(a * 0.31 - b * 1.3 + 1.7) * 0.35 + Math.sin(a * 2.1 + b * 1.7 + 0.5) * 0.15; }
+  // a sheet of rock from a grid: f(u, v) gives [x, y, z, shade]; hole(u, v) leaves a gap
+  function rockSheet(parent, nu, nv, f, m, hole) {
+    const pos = [], col = [], idx = [];
+    for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) { const [x, y, z, c] = f(i / nu, j / nv); pos.push(x, y, z); col.push(c, c, c); }
+    for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) { if (hole && hole((i + 0.5) / nu, (j + 0.5) / nv)) continue; const a = j * (nu + 1) + i, b = a + 1, c = a + nu + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    const q = new THREE.Mesh(geo, m); q.receiveShadow = true; q.userData.sheet = true; parent.add(q); return q; }
+  function rockSheetM(col, extra) { return new THREE.MeshStandardMaterial(Object.assign({ color: col, roughness: 1, flatShading: true, vertexColors: true, side: THREE.DoubleSide }, extra || {})); }
+  function caveMouth(g, o) {
+    const { rock, rock2 } = o, z0 = o.z0, hw = o.hw, h = o.h, dep = o.depth || 11, sh = h - hw, solid = [];   // straight sides up to sh, then a round top
+    const M = (geo, m, x, y, z, sy) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); if (sy) q.scale.y = sy; q.castShadow = true; q.receiveShadow = true; g.add(q); return q; };
+    // the arch, measured round from the bottom of the left side, over the top, to the bottom of the right side
+    const L = 2 * sh + Math.PI * hw, arch = s => { let d = s * L; if (d < sh) return [-hw, d]; d -= sh; if (d < Math.PI * hw) { const a = Math.PI - d / hw; return [Math.cos(a) * hw, sh + Math.sin(a) * hw]; } d -= Math.PI * hw; return [hw, sh - d]; };
+    // the tunnel: rough, narrowing a little, and darker the further in it goes
+    rockSheet(g, 22, 10, (u, v) => { const [ax, ay] = arch(u), n = 1 - 0.22 * v, j = 0.28 * rockN(u * 9, v * 6) * (v > 0.02 ? 1 : 0.3); return [ax * n + Math.sign(ax) * j, Math.max(0, ay * n + (ay > 0.5 ? j : 0)), z0 - v * dep, 0.62 * Math.pow(1 - v, 2.2)]; }, rockSheetM(o.tunnel || '#6a6560'));
+    rockSheet(g, 6, 10, (u, v) => { const n = 1 - 0.22 * v; return [(-hw + u * 2 * hw) * n, 0.04 + 0.08 * rockN(u * 5, v * 7), z0 - v * dep, 0.55 * Math.pow(1 - v, 2.2)]; }, rockSheetM(o.floor || '#5a554e'));
+    const end = new THREE.Mesh(new THREE.PlaneGeometry(hw * 2, h + 1), new THREE.MeshBasicMaterial({ color: '#030304' })); end.position.set(0, h / 2, z0 - dep + 0.05); g.add(end);
+    // a ring of rough stones round the mouth, so it reads as cut into the rock
+    for (let k = 0; k <= 13; k++) { const [ax, ay] = arch(k / 13), out = ay > sh ? [ax / hw, (ay - sh) / hw] : [Math.sign(ax), 0], r = 1.05 + 0.35 * ((k * 7) % 3) / 2;
+      M(new THREE.DodecahedronGeometry(r, 0), k % 2 ? rock2 : rock, ax + out[0] * (r * 0.7), ay + out[1] * (r * 0.7), z0 - 0.2).rotation.set(k, k * 2, 0); }
+    // the hill the cave goes into: rock on both sides, over the top, and behind, none of it across the opening
+    [[-hw - 5.6, 4.2, -1.4, 5.4, 1.15], [hw + 5.7, 4.4, -1.8, 5.6, 1.1], [0, h + 4.4, -2.2, 5.8, 0.78], [-hw - 2.6, h + 1.2, -3.4, 4.6, 0.85], [hw + 2.9, h + 0.9, -3.8, 4.8, 0.85],
+      [-hw - 2.9, 1.6, z0 - 2.4, 2.5, 1], [hw + 3.1, 1.8, z0 - 2.6, 2.7, 1], [0, 7.5, -dep - 9, 9.5, 1], [-hw - 9, 7, -9, 7, 1], [hw + 9, 7.4, -9.5, 7.2, 1],
+      [-hw - 3.1, 3.2, z0 - 3.4, 3, 1.5], [hw + 3.1, 3.3, z0 - 3.2, 3, 1.5], [-hw - 2.8, 7.4, z0 - 3.8, 2.6, 1], [hw + 2.9, 7.2, z0 - 4, 2.6, 1], [0, h + 2.3, z0 - 3.6, 3.3, 0.8], [-hw - 3.3, 4, z0 - 8, 3.4, 1.4], [hw + 3.4, 4.2, z0 - 8.4, 3.4, 1.4]]
+      .forEach(([x, y, z, r, sy], i) => { const b = M(new THREE.IcosahedronGeometry(r, 1), i % 2 ? rock2 : rock, x, y, z, sy); b.rotation.y = i * 1.3; if (y - r * sy < 2.5) solid.push([x, z, r * 0.9]);
+        if (o.snow) { const cp = M(new THREE.SphereGeometry(r * 0.8, 9, 6), o.snow, x, y + r * sy * 0.55, z - 0.4, 0.35); } });
+    if (o.ice) for (let i = 0; i < 9; i++) { const [ax, ay] = arch(0.18 + i * 0.08), ic = M(new THREE.ConeGeometry(0.2 + (i % 3) * 0.08, 1.1 + (i % 4) * 0.45, 5), o.ice, ax, ay - 0.5, z0 + 0.15); ic.rotation.x = Math.PI; }
+    if (o.timber) { [-hw + 0.2, hw - 0.2].forEach(x => M(new THREE.BoxGeometry(0.7, sh + 0.6, 0.7), o.timber, x, (sh + 0.6) / 2, z0 + 0.3)); M(new THREE.BoxGeometry(hw * 2 + 1.4, 0.8, 0.8), o.timber, 0, sh + 0.6, z0 + 0.3); }
+    return solid;   // the rocks that come down to the ground, as circles you cannot walk through
+  }
   function makeRoom(id, o) {
     const sc = new THREE.Scene(); const G = o.grow || 1, W = o.w * G, D = o.d * G, H = (o.h || 9) * G, DH = o.doorH || clamp(H - 1.4, 6.4, 9);   // the way out is as tall as the room allows, up to a grown elf's door
     const night = o.region === 'lantern';   // it is always night outside in Lanternreach
@@ -3079,27 +3110,45 @@
     const outside = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), mat(night ? '#1c2a24' : '#7a9c45')); outside.rotation.x = -Math.PI / 2; outside.position.y = -0.22; sc.add(outside);
     const floor = new THREE.Mesh(new THREE.BoxGeometry(W, 0.4, D), floorM); floor.position.y = -0.2; floor.receiveShadow = true; sc.add(floor);
     const wall = (w, h, d, x, y, z, m) => { const m1 = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m || wallM); m1.position.set(x, y, z); m1.receiveShadow = true; sc.add(m1); return m1; };
-    wall(W + 1, H, 0.5, 0, H / 2, -D / 2 - 0.25); wall(0.5, H, D + 1, -W / 2 - 0.25, H / 2, 0); wall(0.5, H, D + 1, W / 2 + 0.25, H / 2, 0);
-    const gap = 2.2; wall(W / 2 - gap, H, 0.5, -(gap + W / 4) + gap / 2, H / 2, D / 2 + 0.25); wall(W / 2 - gap, H, 0.5, (gap + W / 4) - gap / 2, H / 2, D / 2 + 0.25);
-    wall(gap * 2 + 0.4, H - DH, 0.5, 0, DH + (H - DH) / 2, D / 2 + 0.25);
+    const gap = 2.2;
+    if (!o.cave) { wall(W + 1, H, 0.5, 0, H / 2, -D / 2 - 0.25); wall(0.5, H, D + 1, -W / 2 - 0.25, H / 2, 0); wall(0.5, H, D + 1, W / 2 + 0.25, H / 2, 0);
+      wall(W / 2 - gap, H, 0.5, -(gap + W / 4) + gap / 2, H / 2, D / 2 + 0.25); wall(W / 2 - gap, H, 0.5, (gap + W / 4) - gap / 2, H / 2, D / 2 + 0.25);
+      wall(gap * 2 + 0.4, H - DH, 0.5, 0, DH + (H - DH) / 2, D / 2 + 0.25); }
+    // a cave is not a room: its walls are rough rock that bulges in and out and leans in overhead into a low, lumpy roof, and its floor rises and dips underfoot
+    if (o.cave) { const rm = rockSheetM(o.wall || '#6a6560'), top = H + 3, out = (a, b) => Math.max(-0.35, 0.8 + 1.3 * rockN(a / 3.1, b / 2.7)), lean = y => { const t = Math.max(0, (y - 0.62 * H) / (top - 0.62 * H)); return t * t * 3.4; }, shade = (a, b, v) => (0.78 + 0.22 * rockN(a / 1.7 + 3, b / 1.9)) * (1 - 0.45 * v);
+      const nv = Math.ceil(top / 1.4), nx = Math.ceil((W + 2) / 1.6), nz = Math.ceil((D + 2) / 1.6);
+      rockSheet(sc, nx, nv, (u, v) => { const x = -W / 2 - 1 + u * (W + 2), y = -0.3 + v * (top + 0.3); return [x, y, -D / 2 - out(x, y) + lean(y), shade(x, y, v)]; }, rm);
+      [-1, 1].forEach(d => rockSheet(sc, nz, nv, (u, v) => { const z = -D / 2 - 1 + u * (D + 2), y = -0.3 + v * (top + 0.3); return [d * (W / 2 + out(z + d * 40, y) - lean(y)), y, z, shade(z, y + d * 9, v)]; }, rm));
+      // the front, with the way out left open: rock right round it, and daylight beyond
+      const fx = Math.ceil((W + 2) / 0.9), fv = Math.ceil(top / 0.9), fX = u => -W / 2 - 1 + u * (W + 2), fY = v => -0.3 + v * (top + 0.3);
+      rockSheet(sc, fx, fv, (u, v) => { const x = fX(u), y = fY(v), near = Math.abs(x) < gap + 2.2 && y < DH + 1.6; return [x, y, D / 2 + (near ? Math.max(0.15, out(x - 70, y) * 0.4) : out(x - 70, y)) - lean(y), shade(x - 70, y, v)]; }, rm,
+        (u, v) => { const x = fX(u), y = fY(v); return Math.abs(x) < gap + 0.35 && y < DH - 0.2 + Math.cos(Math.min(1, Math.abs(x) / (gap + 0.35)) * Math.PI / 2) * 0.6; });
+      // the roof: lumps hanging down between the leaning walls
+      rockSheet(sc, Math.ceil((W + 8) / 1.8), Math.ceil((D + 8) / 1.8), (u, v) => { const x = -W / 2 - 4 + u * (W + 8), z = -D / 2 - 4 + v * (D + 8); return [x, H + 1.2 - Math.max(0, 1.2 + 1.3 * rockN(x / 3.3 + 5, z / 2.9)), z, 0.5 + 0.2 * rockN(x / 2, z / 2)]; }, rm);
+      // the floor: rock and grit, rising and dipping a little; you walk on it as it is
+      const fh = (x, z) => 0.16 + 0.14 * rockN(x / 2.3 + 11, z / 2.1);
+      rockSheet(sc, Math.ceil((W + 4) / 1.3), Math.ceil((D + 4) / 1.3), (u, v) => { const x = -W / 2 - 2 + u * (W + 4), z = -D / 2 - 2 + v * (D + 4); return [x, fh(x, z), z, 0.7 + 0.3 * rockN(x / 1.3, z / 1.5)]; }, rockSheetM(o.floorCol || (o.region === 'wild' ? '#8aa0b2' : '#4d473e')));
+      var caveFloor = fh; }
     // dark wainscot, posts, beams and a plank ceiling
     if (!o.cave) [[0, -D / 2 - 0.2, W + 1, 0], [-W / 2 - 0.2, 0, D + 1, Math.PI / 2], [W / 2 + 0.2, 0, D + 1, Math.PI / 2]].forEach(([x, z, len, ry]) => { const b = wall(len, 1.6, 0.6, x, 0.8, z, trimM); b.rotation.y = ry; });
     if (!o.cave) [[-W / 2, -D / 2], [W / 2, -D / 2], [-W / 2, D / 2], [W / 2, D / 2]].forEach(([x, z]) => wall(0.7, H, 0.7, x, H / 2, z, trimM));
     if (!o.cave) for (let x = -W / 2 + 4; x < W / 2; x += 4) wall(0.45, 0.45, D + 1, x, H - 0.25, 0, trimM);
-    wall(W + 1, 0.3, D + 1, 0, H + 0.15, 0, o.cave ? wallM : mat('#6b4a2b'));
+    if (!o.cave) wall(W + 1, 0.3, D + 1, 0, H + 0.15, 0, mat('#6b4a2b'));
     // a cave's roof is the rock itself: lumps of it hanging down, the same stone as the walls
     if (o.cave) for (let k = 0; k < Math.round(W * D / 70); k++) { const r = 2.4 + (k % 5) * 0.8, q = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), wallM); q.position.set(((k * 37.3) % (W - 4)) - (W - 4) / 2, H + 0.2 - r * 0.25, ((k * 61.7) % (D - 4)) - (D - 4) / 2); q.scale.y = 0.45; q.rotation.y = k; sc.add(q); }
-    const dframe = wall(gap * 2 + 0.8, 0.5, 0.8, 0, DH - 0.1, D / 2 + 0.25, trimM); dframe.castShadow = true;
+    const dframe = wall(gap * 2 + 0.8, 0.5, 0.8, 0, DH - 0.1, D / 2 + 0.25, trimM); dframe.castShadow = true; if (o.cave) dframe.visible = false;
     const hinge = new THREE.Group(); hinge.position.set(-gap, 0, D / 2 + 0.4); sc.add(hinge);
     const leaf = new THREE.Mesh(new THREE.BoxGeometry(gap * 2, DH - 0.35, 0.2), mat('#3e2812')); leaf.position.set(gap, (DH - 0.35) / 2, 0); leaf.castShadow = true; hinge.add(leaf);
     { const knob = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), mat('#d8b24a', { metalness: 0.6, roughness: 0.3 })); knob.position.set(gap * 2 - 0.45, DH * 0.44, -0.24); hinge.add(knob); }
+    if (o.cave) hinge.visible = false;   // a cave has no door
     // windows along the side walls
     if (!o.cave) [-1, 1].forEach(d => { for (let z = -D / 2 + 4; z < D / 2 - 2; z += 6) { const w = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), winM); w.position.set(d * (W / 2 - 0.05), H * 0.55, z); w.rotation.y = -d * Math.PI / 2; sc.add(w); [[0, 0, 3, 0.2], [0, 0, 0.2, 3]].forEach(([ox, oy, ww, hh]) => { const fr = new THREE.Mesh(new THREE.BoxGeometry(0.25, hh, ww), trimM); fr.position.set(d * (W / 2 - 0.1), H * 0.55 + oy, z + ox); sc.add(fr); }); } });
     const it = { id, scene: sc, w: W, d: D, h: H, solids: [], boxes: [], label: o.label, region: o.region, hint: o.hint || '', door: null, hinge, doorA: 0, out: o.out, city: !!o.city, cave: !!o.cave, sky: skyM, win: winM, dayl, ground: outside, nn: -1 };
     const n0 = sc.children.length;
     o.decorate && o.decorate(sc, it.solids, { wall, W: W / G, D: D / G, H: H / G, trimM, id, boxes: it.boxes, room: it, seat: (x, z, yaw, top, label, y0) => seatSpot(sc, 'in:' + id, x, z, yaw, top, label, y0) });
     if (G !== 1) { sc.children.slice(n0).forEach(c => { c.position.multiplyScalar(G); c.scale.multiplyScalar(G); }); it.solids.forEach(q => { q.x *= G; q.z *= G; q.r *= G; }); it.boxes.forEach(q => { q.x *= G; q.z *= G; q.hw *= G; q.hd *= G; }); }   // a room first drawn small, made the size grown elves need, with everything in it
-    sc.traverse(m => { if (m.isMesh && m !== outside && m !== floor) { m.castShadow = true; m.receiveShadow = true; } });
+    sc.traverse(m => { if (m.isMesh && m !== outside && m !== floor && !m.userData.sheet) { m.castShadow = true; m.receiveShadow = true; } });
+    if (o.cave && !it.floorAt) it.floorAt = (x, z) => caveFloor(x, z);
     interiors[id] = it; return it;
   }
   // through a room's windows it is the same hour as it is outside
@@ -4921,7 +4970,7 @@
     const cove = Math.exp(-(Math.pow((z - COVE.z) / 30, 2))); // the beach: a notch in the cliff, gentle enough to walk
     const edge = 58 + cove * -14; // the cliff edge comes inland at the cove
     if (x > edge) { const d = x - edge; h -= Math.min(d * Math.max(0.48, 3.5 - 3.02 * cove), 30); }
-    return Math.max(h, SEA_Y - 4);
+    return Math.max(h, SEA_Y - 14);
   }
   const PIER_LADDERS = [74, 82, 90, 98, 106, 113].flatMap(x => [[x, 1], [x, -1]]);
   function atLadder(x, z) { return ladderAt(x, z) !== null; }
@@ -7505,7 +7554,7 @@
         { let dr = tr - g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); g.rotation.y += dr * Math.min(1, dt * 16); }
         // the legs: the same stride the elf's own player sees, paced by how fast it is going between the two positions, never by one frame's movement
         p.sp += (Math.min(vv, 20) - p.sp) * Math.min(1, dt * 5); const going = p.sp > 0.5 && !p.sit;
-        p.ph = (p.ph || 0) + (going ? dt * (p.run ? 16 : 11) * Math.min(1.2, Math.max(0.45, p.sp / 7.5)) : 0); p.amp = (p.amp || 0) + ((going ? (p.run ? 1.0 : 0.7) : 0) - (p.amp || 0)) * Math.min(1, dt * 7); const sw = Math.sin(p.ph) * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; { const rd = p.mt === 2; if (rd) ridePose(p.k); if (rd !== !!p.rd) { p.rd = rd; if (!rd) { p.k.legs.forEach(l => { l.rotation.z = 0; l.userData.knee.rotation.z = 0; }); gripAll(p.k.hands, 0.35); } } } bubbleTick(p, g, now); pose(p, p.k, now); { const sw = !p.sit && p.mt !== 2 && inRiver(g.position.x, g.position.z); if (sw) { const sp = Math.min(1, (p.sp || 0) / 2.2); p.k.swimB = (p.k.swimB || 0) + (sp - (p.k.swimB || 0)) * Math.min(1, dt * 2.5); p.k.swimPh = (p.k.swimPh || 0) + dt * (0.12 + 0.55 * sp); swimPose(p.k, now / 1000, p.k.swimB, p.k.swimPh, g.scale.x); p.k.hd.rotation.x = p.k.swimHX; p.k.hd.rotation.y = p.k.swimHY; } else if (p.k.swum) swimOff(p.k); } });
+        p.ph = (p.ph || 0) + (going ? dt * (p.run ? 16 : 11) * Math.min(1.2, Math.max(0.45, p.sp / 7.5)) : 0); p.amp = (p.amp || 0) + ((going ? (p.run ? 1.0 : 0.7) : 0) - (p.amp || 0)) * Math.min(1, dt * 7); const sw = Math.sin(p.ph) * p.amp; p.k.legs[0].rotation.x = p.sit ? -1.5 : sw; p.k.legs[1].rotation.x = p.sit ? -1.5 : -sw; p.k.arms[0].rotation.x = -sw * 0.8; p.k.arms[1].rotation.x = sw * 0.8; { const rd = p.mt === 2; if (rd) ridePose(p.k); if (rd !== !!p.rd) { p.rd = rd; if (!rd) { p.k.legs.forEach(l => { l.rotation.z = 0; l.userData.knee.rotation.z = 0; }); gripAll(p.k.hands, 0.35); } } } bubbleTick(p, g, now); pose(p, p.k, now); { const sw = !p.sit && p.mt !== 2 && swimmingAt(g.position.x, g.position.z, g.position.y, g.scale.x); if (sw) { const sp = Math.min(1, (p.sp || 0) / 2.2); p.k.swimB = (p.k.swimB || 0) + (sp - (p.k.swimB || 0)) * Math.min(1, dt * 2.5); p.k.swimPh = (p.k.swimPh || 0) + dt * (0.12 + 0.55 * sp); swimPose(p.k, now / 1000, p.k.swimB, p.k.swimPh, g.scale.x); p.k.hd.rotation.x = p.k.swimHX; p.k.hd.rotation.y = p.k.swimHY; } else if (p.k.swum) swimOff(p.k); } });
     }
     function farList() { return Array.from(FAR.values()); }
     function send(extra) { if (ws && state === 'on') push('realtime:' + topic, 'broadcast', { type: 'broadcast', event: 'p', payload: Object.assign({ id: myId }, extra) }); }
@@ -10376,20 +10425,24 @@
     if (x > 10.2 && x < 21.8 && z >= 63.2 && z < 68.8) return (fernScene.userData.ferry ? fernScene.userData.ferry.position.y : 0.1) + 1.6;
     return null;
   }
+  const floatD = sc => 1.9 * sc;   // feet to shoulders
+  function waterTop(x, z) { if (where === 'lantern') return SEA_Y; if (where === 'wild') return wildRiver(x, z) ? 0 : wildSea(x, z) ? SEA_L : null; if (where === 'fernwater') return 0; return null; }
+  // swimming means out of your depth; in the shallows you wade, with your feet on the bottom
+  function swimmingAt(x, z, y, sc) { if (!inRiver(x, z)) return false; const t = waterTop(x, z); return t !== null && t - y > floatD(sc) - 0.2; }
   function groundAt(x, z) {
     if (where === 'in') return interior.floorAt ? interior.floorAt(x, z, player.position.y) : 0;   // a house with an upstairs says which floor you are on
     if (ferryRide && where === 'wild' && Math.hypot(x - ferryRide.x, z - ferryRide.z) < 12) return FERRY_DECK;
-    if (where === 'wild') { const dk = cityDeck(x, z); return dk !== null ? dk : wildRiver(x, z) ? Math.min(worldH(x, z), -1.45) : wildSea(x, z) ? SEA_L - 1.45 : worldH(x, z); }
+    if (where === 'wild') { const dk = cityDeck(x, z); return dk !== null ? dk : wildRiver(x, z) ? Math.max(Math.min(worldH(x, z), -0.5), -floatD(player.scale.x)) : wildSea(x, z) ? Math.max(worldH(x, z), SEA_L - floatD(player.scale.x)) : worldH(x, z); }
     if (where === 'cairnhold') return (z > GORGE.z0 && z < GORGE.z1 && !(bridgeBuilt && Math.abs(x) < 3.5)) ? -GORGE.depth : 0;
     if (where === 'cogsworth') return cogH(x, z);
     if (where === 'village') return stairH(x, z, lastGY + py);
-    if (where === 'lantern') return onPier(x, z) ? PIER.y : Math.max(lantH(x, z), SEA_Y - 1.45);   // you float at swimming depth, and the seabed lifts you out smoothly where it shoals
+    if (where === 'lantern') return onPier(x, z) ? PIER.y : Math.max(lantH(x, z), SEA_Y - floatD(player.scale.x));   // you float at swimming depth, and the seabed lifts you out smoothly where it shoals
     if (where === 'lift') return gondola.position.y;
     if (where === 'flight') return flier.position.y + 0.9;
     if (where === 'skyhaven') return (onIsland(x, z) || onBridge(x, z) || (z < 4 * SKY_K && Math.abs(x) < 6 * SKY_K)) ? skyH(x, z) : -600;
     if (where !== 'fernwater') return 0;
     { const dk = fernDeck(x, z); if (dk !== null) return dk; }
-    if (inRiver(x, z)) return -1.45;
+    if (inRiver(x, z)) return -floatD(player.scale.x);
     if (Math.abs(x) > 5.2) return 0;
     const top = 1.85;
     if (z >= 56.5 && z <= 99.5) return top;
@@ -10447,7 +10500,7 @@
       // the bridge rails are solid: you leave the bridge at its ends
       if (Math.abs(prev.x) <= 5.2 && prev.z > 56 && prev.z < 100 && p.z > 56 && p.z < 100) p.x = clamp(p.x, -4.05, 4.05);
       // the dock, its ramp and the barge: you get up by the ramp (or a good jump), and you can step off any edge
-      { const dk = fernDeck(p.x, p.z); if (dk !== null) { const pk = fernDeck(prev.x, prev.z), from = pk !== null ? pk : (inRiver(prev.x, prev.z) ? -1.45 : 0) + py; if (dk - from > 0.8) { p.x = prev.x; p.z = prev.z; } } }
+      { const dk = fernDeck(p.x, p.z); if (dk !== null) { const pk = fernDeck(prev.x, prev.z), from = pk !== null ? pk : (inRiver(prev.x, prev.z) ? -floatD(player.scale.x) : 0) + py; if (dk - from > 0.8) { p.x = prev.x; p.z = prev.z; } } }
       // the shop buildings: solid boxes, except at the door, which takes you inside
       for (const bx of fernHB) { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (bx.id && Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.6) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } }
       fernBoxes.forEach(bx => { const ex = bx.hw + 0.6, ez = bx.hd + 0.6, dx = p.x - bx.x, dz = p.z - bx.z; if (Math.abs(dx) < ex && Math.abs(dz) < ez) { if (Math.hypot(p.x - bx.door.x, p.z - bx.door.z) < 2.3) { if (!fading) enterInterior(bx.id); return; } const px = ex - Math.abs(dx), pz = ez - Math.abs(dz); if (px < pz) p.x = bx.x + (dx < 0 ? -1 : 1) * ex; else p.z = bx.z + (dz < 0 ? -1 : 1) * ez; } });
@@ -10684,12 +10737,13 @@
     running = wantRun && (running || stamina > 15);
     const onLadder = inWater && ladderAt(player.position.x, player.position.z) !== null;
     if (onLadder && !ladderAt.told) { ladderAt.told = true; hint('A ladder. Swim into it, or jump, to climb up onto the pier.'); } else if (!onLadder) ladderAt.told = false;
-    if (running) stamina -= dt * 22 * (has('boots') ? 0.75 : 1); else if (onLadder) stamina += dt * 12; else if (inWater) stamina -= dt * (moving ? 4 : 2.5); else stamina += dt * (moving ? 10 : 20) * (has('stick') ? 1.3 : 1);   // good boots make running cheaper; a stick gets your breath back sooner
+    const deepW = inWater && swimmingAt(player.position.x, player.position.z, player.position.y, player.scale.x);
+    if (running) stamina -= dt * 22 * (has('boots') ? 0.75 : 1); else if (onLadder) stamina += dt * 12; else if (deepW) stamina -= dt * (moving ? 4 : 2.5); else stamina += dt * (moving ? 10 : 20) * (has('stick') ? 1.3 : 1);   // good boots make running cheaper; a stick gets your breath back sooner
     stamina = clamp(stamina, 0, stamMax);
     // stamina grows from your own effort: running, swimming, climbing, and pedalling hard (never from coasting)
     if (moving && (running || inWater)) growStam(dt * (inWater ? 0.035 : riding ? 0.02 : 0.025));
     // out of breath in the water: you start to drown
-    if (inWater && stamina <= 0 && !dead) { if (!drowning) { drowning = true; flash('Out of breath. Get to shore, a ladder, or the beach!'); } if (hp - dt * 10 <= 0) die('You drowned.'); else hurt(dt * 10); } else drowning = false;
+    if (deepW && stamina <= 0 && !dead) { if (!drowning) { drowning = true; flash('Out of breath. Get to shore, a ladder, or the beach!'); } if (hp - dt * 10 <= 0) die('You drowned.'); else hurt(dt * 10); } else drowning = false;
     if (stamina <= 0) running = false;
     stamEl.style.width = Math.min(420, 180 * stamMax / 100) + 'px'; stamFill.style.width = (stamina / stamMax * 100) + '%'; stamEl.classList.toggle('low', stamina < 20); stamEl.classList.toggle('show', stamina < stamMax - 0.5 || inWater);
     if (moving || riding) {
@@ -10748,7 +10802,7 @@
     const onGround = sitting || py <= 0.001;
     const gliding = vel.length() > 0.4;
     const swing = Math.sin(walkPhase) * (gliding && onGround ? (running ? 1.0 : 0.7) : 0);
-    const swimA = inRiver(player.position.x, player.position.z) && !sitting && !riding; if (!swimA && kid.swum) swimOff(kid);
+    const swimA = swimmingAt(player.position.x, player.position.z, player.position.y, player.scale.x) && !sitting && !riding; if (!swimA && kid.swum) swimOff(kid);
     if (swimA) { const sp = Math.min(1, vel.length() / 2.2); kid.swimB = (kid.swimB || 0) + (sp - (kid.swimB || 0)) * Math.min(1, dt * 2.5); kid.swimPh = (kid.swimPh || 0) + dt * (0.12 + 0.55 * sp); swimPose(kid, t, kid.swimB, kid.swimPh, player.scale.x); }
     else if (sitting) { kid.legs[0].rotation.x = kid.legs[1].rotation.x = -1.5; kid.arms[0].rotation.x = kid.arms[1].rotation.x = -0.5; }
     else {
@@ -11172,11 +11226,9 @@
   }
   // the mouths of the caves, on the uphill side of the trail: rock, a fringe of icicles, and snow thrown out across the path
   [[FP.cave, 'The Ice Cave'], [FP.cave2, 'The Glass Cave']].forEach(([C, label]) => { const y = worldH(C.dx, C.dz), g = new THREE.Group(); g.position.set(C.x, y, C.z); g.rotation.y = C.yaw; worldScene.add(g); const rock = mat('#6f7a86', { roughness: 1 }), rock2 = mat('#5a6470', { roughness: 1 }), ice = mat('#bfe4f4', { roughness: 0.15, emissive: '#2a6a8a', emissiveIntensity: 0.3 }), snow = mat('#f4f7fb'), M = (geo, m, x, yy, z) => { const q = new THREE.Mesh(geo, m); q.position.set(x, yy, z); q.castShadow = true; g.add(q); return q; };
-    [[0, 6.5, -4.2, 8.6, 1.05], [-6.6, 3.8, -1, 5.2, 1], [6.8, 4.2, -1.2, 5.4, 1], [-2.6, 10.4, -4.6, 4.8, 0.8], [3.2, 9.8, -5, 5, 0.8]].forEach(([x, yy, z, r, sy], i) => { const b = M(new THREE.IcosahedronGeometry(r, 1), i % 2 ? rock2 : rock, x, yy * 0.6, z); b.scale.y = sy; b.rotation.y = i * 1.3; const cp = M(new THREE.SphereGeometry(r * 0.8, 9, 6), snow, x, yy * 0.6 + r * sy * 0.55, z - 0.4); cp.scale.y = 0.35; });
-    const dark = new THREE.Mesh(new THREE.PlaneGeometry(5, 8.8), new THREE.MeshBasicMaterial({ color: '#0a0d12' })); dark.position.set(0, 4.4, 4.72); g.add(dark);
-    for (let i = 0; i < 7; i++) { const ic = M(new THREE.ConeGeometry(0.22 + (i % 3) * 0.08, 1.2 + (i % 4) * 0.5, 5), ice, -2.3 + i * 0.77, 8.6 - (i % 4) * 0.2, 4.9); ic.rotation.x = Math.PI; }
+    caveMouth(g, { rock, rock2, z0: 4.8, hw: 2.6, h: 8.8, depth: 12, snow, ice, tunnel: '#7f97ab', floor: '#9fb3c4' }).forEach(([lx, lz, r]) => DOJO.wsol.push({ x: C.x + lx * Math.cos(C.yaw) + lz * Math.sin(C.yaw), z: C.z - lx * Math.sin(C.yaw) + lz * Math.cos(C.yaw), r }));
     [[-3.4, 5], [3.6, 5.4], [-1.5, 7.5], [2.2, 8.2], [0.4, 10]].forEach(([x, z], i) => { M(new THREE.SphereGeometry(0.75, 8, 6), snow, x, 0.5, z); });
-    const sg = signBoard(label, 4.6, 0.95, '#3d4a5c', '#f6f7fb'); sg.position.set(0, 10.6, 5.4); g.add(sg);
+    const sg = signBoard(label, 4.6, 0.95, '#3d4a5c', '#f6f7fb'); sg.position.set(0, 11.2, 5.7); g.add(sg);
     [[-6.6, -1, 4.2], [6.8, -1.2, 4.4], [0, -4.2, 6.5]].forEach(([lx, lz, r]) => DOJO.wsol.push({ x: C.x + lx * Math.cos(C.yaw) + lz * Math.sin(C.yaw), z: C.z - lx * Math.sin(C.yaw) + lz * Math.cos(C.yaw), r })); });
   // walls and posts on the crown (in the monastery's own frame), and the pines and cairns on the slopes
   function frostCollide(p) { if (!fading && gameStarted && where === 'wild') { if (Math.hypot(p.x - FP.cave.dx, p.z - FP.cave.dz) < 2.6) { enterInterior('frost1'); return; } if (Math.hypot(p.x - FP.cave2.dx, p.z - FP.cave2.dz) < 2.6) { enterInterior('frost2'); return; } } const dx = p.x - FP.x, dz = p.z - FP.z; if (Math.abs(dx) > FP.R + 900 || Math.abs(dz) > FP.R + 900) return;
