@@ -341,7 +341,7 @@
   @media (prefers-reduced-motion: reduce) { .tok { transition: none; } }
 </style>
 
-<canvas id="scene" aria-label="Bramblewick's shop and the forest clearing outside, seen from seven inches tall"></canvas>
+<canvas id="scene" aria-label="Bramblewick's shop and the forest clearing outside, seen through your own eyes"></canvas>
 <div class="fade" id="fade" aria-live="polite"></div>
 <div id="rdbar" hidden><button class="btn" id="rdclose">Close</button><button class="btn" id="rdplain">Plain text</button><span id="rdsr" aria-live="polite"></span></div> <div id="shelf" hidden><div class="drsheet" role="dialog" aria-label="Bookshelf"><div id="shhead"></div><div id="shrow"></div><div id="shinfo" aria-live="polite"></div><div id="shacts"></div></div></div>
 <div id="tgame" hidden><div class="drsheet" role="dialog" aria-label="Table game"><div id="tghead" aria-live="polite"></div><div id="tggrid"></div><div id="tgfoot"><button class="btn" id="tgnew">New game</button><button class="btn" id="tgleave">Stand up</button></div></div></div>
@@ -414,7 +414,7 @@
 <div class="titleview" id="title" hidden>
   <div class="titlecard" id="titlemain">
     <h1>The Long Road</h1>
-    <p class="tag">Seven inches tall, eight towns to cross, and everything worth knowing along the way.</p>
+    <p class="tag">Eight towns to cross, a whole world to grow up in, and everything worth knowing along the way.</p>
     <p class="tag" id="tgate" hidden><b>You need an account to play.</b> It keeps your elf, your room and your things under your own name, on any device.</p>
     <button class="btn primary big" id="tcontinue" hidden>Continue</button>
     <button class="btn big" id="tnew">New game</button>
@@ -425,15 +425,16 @@
   </div>
   <div class="titlecard" id="agecard" hidden>
     <h2>One question first</h2>
-    <label>What year were you born? <select id="ageyear"></select></label>
+    <label>When were you born? <select id="agemonth"></select> <select id="ageyear"></select></label>
     <p class="warn" id="agewarn" hidden>Choose the year you were born.</p>
     <div class="row"><button class="btn primary" id="agego">Carry on</button></div>
   </div>
   <div class="titlecard creator" id="creator" hidden>
     <h2>Who is setting out?</h2>
-    <p style="margin:0;font-size:13px;opacity:.8">Drag or swipe your elf to turn it round (or the arrow keys, or the right stick).</p>
-    <label>Your elf's name <input id="elfname" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Elfling"></label>
-    <div class="swrow"><span>Elf</span><div class="faces" id="elfsex"></div></div>
+    <p style="margin:0;font-size:13px;opacity:.8">Drag or swipe to turn yourself round (or the arrow keys, or the right stick).</p>
+    <label>Your name <input id="elfname" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Elfling"></label>
+    <div class="swrow"><span>Kind</span><div class="faces" id="elfkind"></div></div>
+    <div class="swrow"><span>I am a</span><div class="faces" id="elfsex"></div></div>
     <div class="swrow"><span>Skin</span><div class="sw" data-k="skin"></div></div>
     <div class="swrow"><span>Hair</span><div class="sw" data-k="hair"></div></div>
     <div class="swrow"><span>Hair style</span><div class="faces" id="elfhair"></div></div>
@@ -441,9 +442,9 @@
     <div class="swrow"><span>Hat colour</span><div class="sw" data-k="hat"></div></div>
     <div class="swrow"><span>Tunic</span><div class="sw" data-k="tunic"></div></div>
     <div class="swrow"><span>Face</span><div class="faces" id="elffaces"></div></div>
-    <div class="swrow" id="elfyearrow"><span>Year you were born</span><div><select id="elfyear"></select></div></div>
+    <div class="swrow" id="elfyearrow"><span>When you were born</span><div><select id="elfmonth"></select> <select id="elfyear"></select></div></div>
     <div class="swrow" id="elflevelrow"><span>I am working on</span><div class="faces" id="elflevel"></div></div>
-    <div class="swrow"><span>Height</span><div><input type="range" id="elfheight" min="1" max="2.45" step="0.05" value="1" style="width:100%"><div id="elfheightval" style="font-size:13px"></div></div></div>
+    <div class="swrow"><span>Height</span><div><input type="range" id="elfheight" min="0.8" max="2.6" step="0.01" value="1" style="width:100%" hidden><div id="elfheightval" style="font-size:13px"></div></div></div>
     <p class="warn" id="creatorwarn" hidden></p>
     <div class="row"><button class="btn" id="creatorback">Back</button><button class="btn primary" id="creatorgo">Begin</button></div>
   </div>
@@ -469,7 +470,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 145 · 24 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 146 · 24 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -1965,10 +1966,11 @@
     });
     kid.hands = handify(arms);
     const hd = new THREE.Group(); hd.position.y = 2.87; player.add(hd);
-    const faceBits = { w: [], p: [], c: [] };
+    const faceBits = { w: [], p: [], c: [] }, earsP = [], earsR = [];
     hd.add(new THREE.Mesh(new THREE.SphereGeometry(0.55, 20, 16), skinK));
     [-1, 1].forEach(d => {
-      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.75, 8), skinK); ear.position.set(d * 0.58, 0.12, -0.05); ear.rotation.z = -d * 1.15; hd.add(ear);
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.75, 8), skinK); ear.position.set(d * 0.58, 0.12, -0.05); ear.rotation.z = -d * 1.15; hd.add(ear); earsP.push(ear);
+      const earR = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), skinK); earR.scale.set(0.45, 1, 0.8); earR.position.set(d * 0.55, 0.02, -0.04); earR.visible = false; hd.add(earR); earsR.push(earR);
       const eyeW = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), white); eyeW.position.set(d * 0.2, 0.06, 0.48); hd.add(eyeW); faceBits.w.push(eyeW);
       const eye = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 6), mat('#2a3a2a')); eye.position.set(d * 0.2, 0.06, 0.56); hd.add(eye); faceBits.p.push(eye);
       const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), mat('#eaa28c')); cheek.position.set(d * 0.36, -0.12, 0.4); hd.add(cheek); faceBits.c.push(cheek);
@@ -2038,12 +2040,17 @@
     kid.setHair = st => { hair.visible = st !== 'bald'; for (const k in hairG) hairG[k].visible = k === st; };
     // growing up: a taller elf is slimmer for its height and has a smaller head for its body, not a child blown up
     kid.tall = 1;
-    kid.setBuild = (h, girl) => { h = clamp(+h || 1, 1, 2.45); const w = 1 + (h - 1) * 0.66, r = h / w, hs = (1 + (h - 1) * 0.45) / w;
+    kid.setBuild = (h, girl) => { h = clamp(+h || 1, 0.8, 2.6); const w = 1 + (h - 1) * 0.66, r = h / w, hs = (1 + (h - 1) * 0.45) / w;
       kid.tall = h; player.scale.setScalar(w);
       legs.forEach(l => { l.position.y = 1.15 * r; l.scale.y = r; }); arms.forEach(q => { q.position.y = 1.88 * r; q.scale.y = r; });
       tunic.scale.y = r; dress.scale.y = r; tunic.visible = !girl; dress.visible = !!girl; satchel.scale.y = r;
       belt.position.y = 1.35 * r; buckle.position.y = 1.35 * r; belt.scale.set(girl ? 0.83 : 1, girl ? 0.83 : 1, 1); buckle.position.z = girl ? 0.52 : 0.62;
       shoulders.position.y = 2.05 * r; neck.position.y = 2.05 * r + 0.25; hd.scale.setScalar(hs); hd.position.y = 2.05 * r + 0.5 * hs + 0.32 + (h - 1) * 0.01; };
+    const beard = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 10), hairM); beard.scale.set(1, 1.15, 0.6); beard.position.set(0, -0.42, 0.28); beard.visible = false; hd.add(beard);
+    const boots = []; legs.forEach(l => l.userData.knee.children.forEach(c => { if (c.material === bootM) boots.push(c); }));
+    kid.setKind = (kind, grown, girl) => { kind = KINDS[kind] ? kind : 'elf'; earsP.forEach(e => e.visible = kind === 'elf'); earsR.forEach(e => e.visible = kind !== 'elf'); beard.visible = kind === 'dwarf' && grown && !girl;
+      const wide = kind === 'dwarf' ? 1.16 : kind === 'halfling' ? 1.06 : 1; kid.body.scale.set(wide, 1, wide);
+      boots.forEach(b => { b.material = kind === 'halfling' ? skinK : bootM; b.scale.set(kind === 'halfling' ? 1.12 : 1, 0.7, kind === 'halfling' ? 1.6 : 1.45); }); kid.kind = kind; };
     Object.assign(kid, { legs, arms, hd, satchel, beltMesh: belt, mats: { tunic: tunicM, skin: skinK, hair: hairM, hat: cap.material } });
     kid.body = new THREE.Group(); player.children.slice().forEach(o => kid.body.add(o)); player.add(kid.body);
     return kid;
@@ -7342,6 +7349,9 @@
   const famTier = () => { const a = famAge(); return !fam.year || a < 13 ? 'child' : a < 18 ? 'teen' : 'adult'; };
   const voiceRule = () => fam.voice || { child: 'off', teen: 'friends', adult: 'all' }[famTier()];   // voice chat works only when this says 'all'; 'friends' counts as off until there is a friends list
   const pinHash = p => { let h = 5381; ('long-road:' + p).split('').forEach(c => { h = ((h << 5) + h + c.charCodeAt(0)) | 0; }); return String(h); };
+  const monthOptions = () => '<option value="">Month…</option>' + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => `<option value="${i + 1}">${m}</option>`).join('');
+  // how old you are, in years and a fraction, from the month and year you were born (no month: the middle of the year)
+  function ageNow(year, month) { year = year || fam.year; if (!year) return 10; const now = new Date(); return Math.max(2, now.getFullYear() - year + (now.getMonth() + 1 - (month || fam.month || 7)) / 12); }
   const yearOptions = () => { const y = new Date().getFullYear(); let s = '<option value="">Choose…</option>'; for (let q = y - 3; q >= y - 100; q--) s += `<option value="${q}">${q}</option>`; return s; };
   function renderFam() {
     const tier = famTier(), locked = !!fam.pin && !famOpen, can = !locked && (famOpen || tier !== 'child'), VW = { off: 'Off', friends: 'Friends and party only', all: 'Anyone nearby' };
@@ -10202,7 +10212,7 @@
       { num: ['From Astra, in Lanternreach: “sin 90°.”', 1, unitSvg(90, 'straight up: (0, 1)'), ['sin 90° = ' + G(1)]] },
       { say: ['Seven for seven. Then build. Fen! Pip! Bring the wing and the engine.'] },
       { do: () => { if (fenSky) { fenSky.position.set(4 * SKY_K, 0, 38 * SKY_K); fenSky.lookAt(player.position.x, 0, player.position.z); } if (pipSky) { pipSky.position.set(18 * SKY_K, 0, 38 * SKY_K); pipSky.lookAt(player.position.x, 0, player.position.z); } } },
-      { who: 'Fen', say: ['It’s been a while. You were seven inches tall and I was counting your acorns. Here’s the wing. Span 8, chord 1.5. Area first: a wing’s lift goes with its area.'] },
+      { who: 'Fen', say: ['It’s been a while. You were half the size you are now and I was counting your acorns. Here’s the wing. Span 8, chord 1.5. Area first: a wing’s lift goes with its area.'] },
       { num: ['Wing span 8, chord 1.5. Wing area?', 12, rectSvg(8, 1.5), ['8 × 1.5 = ' + G(12)]] },
       { who: 'Pip', say: ['And the tunnel numbers: at the best angle the wing makes 24 of lift for 2 of drag. Lift over drag is the <b>glide ratio</b>: how far forward for each unit of height you lose.'] },
       { num: ['Lift 24, drag 2. Glide ratio?', 12, exprSvg('24 ÷ 2'), ['24 ÷ 2 = ' + G(12) + ' forward for every 1 down']] },
@@ -10246,7 +10256,7 @@
   function mapName() { return settings.input === 'gamepad' ? 'Start' : settings.input === 'touch' ? 'the map button' : keyLabel(settings.binds.map); }
   function devText(t) { return (t || '').replace(/\b([Pp]ress) E\b/g, (m, v) => v + ' ' + pickName()).replace(/\b([Pp]ress) M\b/g, (m, v) => v + ' ' + mapName()); }
   let stamina = 100, running = false, sitting = false, sitSeat = null;
-  const UNIT_IN = 2.25; // one game unit in real inches (the elf stands about 7 inches tall)
+  const UNIT_IN = 9.84; // one game unit is 25 centimetres: a grown townsperson stands about 7 units tall
   function realLen(u) { const inch = u * UNIT_IN; if (inch < 24) return Math.round(inch) + ' inches'; const ft = inch / 12; return (ft < 10 ? ft.toFixed(1) : Math.round(ft)) + ' feet'; }
   let hp = 100, dead = false, lastGY = 0, fallPeak = 0, wasAir = false, stamMax = 100, stamInit = false, stamTen = 10, drowning = false;
   function growStam(n) { stamMax = Math.min(300, stamMax + n); save.stamMax = +stamMax.toFixed(2); const ten = Math.floor(stamMax / 10); if (ten > stamTen) { stamTen = ten; flash('Your stamina grew. ' + Math.round(stamMax) + ' now.'); persist(); } }
@@ -12048,6 +12058,8 @@ if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : key =
   let resetArmed = false;
   mapReset.addEventListener('click', () => { if (!resetArmed) { resetArmed = true; mapReset.textContent = 'Really start over? Click again'; setTimeout(() => { resetArmed = false; mapReset.textContent = 'Start over'; }, 4000); return; } clearSave(); if (session) { cloudDirty = true; cloudPush().finally(() => { location.hash = ''; location.reload(); }); } else { location.hash = ''; location.reload(); } });
   function continueGame() {
+    // townsfolk at real size: one unit is 25 cm, so a grown townsperson stands about 7 units (1.75 m) and a child about 5
+    { const G0 = growLook(save.look); if (save.look && save.look.m && G0.m - save.look.m >= 0.01) setTimeout(() => flash(`You have grown! You are ${G0.m.toFixed(2)} m tall now.`, 4500), 2500); save.look = G0; applyLook(save.look); }
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false;
     kid.satchel.visible = save.done.length > 0; setCoins(save.coins || 0); phase = 'free'; bikeOwned = !!save.bike || (save.done.includes('cog-10') && !(save.tested || []).includes('cog-10'));
     if (save.beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(save.pos[0] - 2, 0, save.pos[2] - 2); restoreCompanion(); }
@@ -12120,17 +12132,27 @@ if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : key =
     else { placeInShop(); player.rotation.y = bodyYaw; setTimeout(start, 500); }
   }
   // ---------- the title screen and the making of your elf ----------
+  const KINDS = { elf: { n: 'Elf', k: 1.08 }, human: { n: 'Human', k: 1 }, dwarf: { n: 'Dwarf', k: 0.78 }, halfling: { n: 'Halfling', k: 0.62 } };
   const LOOKS = { skin: ['#f6dcc0', '#f0c9a0', '#e3b184', '#d9a273', '#b07a4f', '#8f5f3c', '#7d5234', '#573823', '#3d2618', '#cfe0b8'], hair: ['#8a4b22', '#2a2420', '#5a3a1e', '#c9a14a', '#e8d27a', '#b5432a', '#d8702a', '#e9e2d0', '#9a9a9a', '#6a4a8a', '#3a6ea5', '#c95fa0'], hat: ['#b0472f', '#2f6f9a', '#6a4a8a', '#d99a2b', '#3f7a44', '#3a3a3a', '#c95fa0', '#2e8a8a', '#8a5a2b', '#e9e2d0', '#7a1f2a', '#1f3a5a'], tunic: ['#6f9a3a', '#3f7a8a', '#9a5a3a', '#7a5aa0', '#c4a03a', '#b05070', '#3a5fa8', '#b53a3a', '#3e7a3a', '#e08a3a', '#4a4a52', '#e9e2d0', '#2e8a8a', '#d98aa8'] };
-  const DEFAULT_LOOK = { skin: LOOKS.skin[1], hair: LOOKS.hair[0], hat: LOOKS.hat[0], tunic: LOOKS.tunic[0], height: 1, face: 0, sex: 'boy', hairStyle: 'short', hatOn: true };
+  // how tall you are is not chosen: it comes from your kind and your real age, and you grow as you really do, a growth spurt and all, until you are grown.
+  // Heights for a human are the usual middle heights for each age; other kinds are taller or shorter in the same pattern. One unit is 25 cm; height 1 is 77.5 cm.
+  const HUMAN_CM = { boy: [[2, 87], [3, 96], [4, 103], [5, 110], [6, 116], [7, 122], [8, 128], [9, 133], [10, 138], [11, 143], [12, 149], [13, 156], [14, 164], [15, 170], [16, 173], [17, 175], [18, 176], [20, 177]], girl: [[2, 86], [3, 95], [4, 102], [5, 109], [6, 115], [7, 121], [8, 127], [9, 133], [10, 138], [11, 144], [12, 151], [13, 157], [14, 160], [15, 162], [16, 163], [17, 163], [18, 163.5], [20, 164]] };
+  function heightM(kind, sex, age, hv) { const T = HUMAN_CM[sex === 'girl' ? 'girl' : 'boy'], a = clamp(age, 2, 20); let cm = T[T.length - 1][1]; for (let i = 1; i < T.length; i++) if (T[i][0] >= a) { const [a0, c0] = T[i - 1], [a1, c1] = T[i]; cm = c0 + (c1 - c0) * (a - a0) / (a1 - a0); break; } return cm / 100 * (KINDS[kind] || KINDS.elf).k * (1 + (hv || 0) * 0.03); }
+  function growLook(look, year, month) { const L = Object.assign({}, DEFAULT_LOOK, look || {}); if (save.hv === undefined) save.hv = +(Math.random() * 2 - 1).toFixed(3); const age = ageNow(year, month), m = heightM(L.kind, L.sex, age, save.hv); L.height = +buildFor(m / 0.25 / 1.135).toFixed(3); L.grown = age >= (L.kind === 'dwarf' ? 16 : 18); L.m = +m.toFixed(2); return L; }
+  // the top of the head, in units, for a build value h (the same sums as kid.setBuild), and the build value that gives a wanted height
+  const headTop = h => { const w = 1 + (h - 1) * 0.66, r = h / w, hs = (1 + (h - 1) * 0.45) / w; return w * (2.05 * r + 0.5 * hs + 0.32 + (h - 1) * 0.01 + 0.55 * hs); };
+  function buildFor(u) { let a = 0.8, b = 2.6; for (let i = 0; i < 30; i++) { const c = (a + b) / 2; if (headTop(c) < u) a = c; else b = c; } return (a + b) / 2; }
+  const feetIn = m => { const i = Math.round(m / 0.0254); return `${Math.floor(i / 12)} ft ${i % 12} in`; };
+  const DEFAULT_LOOK = { kind: 'elf', skin: LOOKS.skin[1], hair: LOOKS.hair[0], hat: LOOKS.hat[0], tunic: LOOKS.tunic[0], height: 1, face: 0, sex: 'boy', hairStyle: 'short', hatOn: true };
   const HAIRS = [['short', 'Short'], ['long', 'Long'], ['tails', 'Pigtails'], ['braid', 'Braid'], ['bun', 'Bun'], ['curly', 'Curly'], ['bald', 'None']];
-  const FACES = ['Cheerful', 'Wide-eyed', 'Sleepy', 'Determined', 'Gentle', 'Mischief', 'Grumpy', 'Freckled'], heightWord = h => h < 1.2 ? 'a little one' : h < 1.6 ? 'a child' : h < 2.05 ? 'a youth' : 'grown';
-  function applyLookTo(k, look, hat) { const L = Object.assign({}, DEFAULT_LOOK, look || {}); Object.keys(k.mats).forEach(q => { if (/^#[0-9a-f]{6}$/i.test(L[q])) k.mats[q].color.set(L[q]); }); k.setBuild(L.height, L.sex === 'girl'); k.setHair(L.hairStyle || 'short'); k.setFace(L.face); k.setHat(hat || (L.hatOn === false ? 'none' : 'cap')); }
-  function applyLook(look) { applyLookTo(kid, look, save.hatStyle); }
+  const FACES = ['Cheerful', 'Wide-eyed', 'Sleepy', 'Determined', 'Gentle', 'Mischief', 'Grumpy', 'Freckled'], heightWord = a => a < 6 ? 'a little one' : a < 13 ? 'still growing' : a < 18 ? 'growing fast' : 'grown';
+  function applyLookTo(k, look, hat) { const L = Object.assign({}, DEFAULT_LOOK, look || {}); Object.keys(k.mats).forEach(q => { if (/^#[0-9a-f]{6}$/i.test(L[q])) k.mats[q].color.set(L[q]); }); k.setBuild(L.height, L.sex === 'girl'); if (k.setKind) k.setKind(L.kind, !!L.grown, L.sex === 'girl'); k.setHair(L.hairStyle || 'short'); k.setFace(L.face); k.setHat(hat || (L.hatOn === false ? 'none' : 'cap')); }
+  function applyLook(look) { applyLookTo(kid, growLook(look, creatorUp && $('elfyear').value ? +$('elfyear').value : 0, creatorUp && $('elfmonth').value ? +$('elfmonth').value : 0), save.hatStyle); }
   // the creator's other two choices: how tall (7 inches is the smallest child; a grown elf is about 17) and which face
-  function syncCreator() { const h = clamp(+draft.height || 1, 1, 2.45); $('elfheight').value = h; $('elfheightval').textContent = `${Math.round(7 * h)} inches · ${heightWord(h)}`; const box = $('elffaces'); box.innerHTML = ''; FACES.forEach((n, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft.face | 0) === i)); b.onclick = () => { draft.face = i; applyLook(draft); syncCreator(); }; box.appendChild(b); });
+  function syncCreator() { const yr = $('elfyear').value ? +$('elfyear').value : 0, mo = $('elfmonth').value ? +$('elfmonth').value : 0, G = growLook(draft, yr, mo), age = ageNow(yr, mo); $('elfheight').value = G.height; $('elfheightval').textContent = (fam.year || yr) ? `${G.m.toFixed(2)} m (${feetIn(G.m)}) · ${heightWord(age)}. You grow as you really do, every birthday, until you are a grown ${KINDS[G.kind].n.toLowerCase()}.` : 'Choose when you were born, and you will be as tall as you really are for your age.'; const box = $('elffaces'); box.innerHTML = ''; FACES.forEach((n, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft.face | 0) === i)); b.onclick = () => { draft.face = i; applyLook(draft); syncCreator(); }; box.appendChild(b); });
     const pick = (id, list, key) => { const bx = $(id); bx.innerHTML = ''; list.forEach(([v, n]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft[key] === undefined ? list[0][0] : draft[key]) === v)); b.onclick = () => { draft[key] = v; applyLook(draft); syncCreator(); }; bx.appendChild(b); }); };
-    pick('elfsex', [['boy', 'Boy (tunic)'], ['girl', 'Girl (dress)']], 'sex'); pick('elfhair', HAIRS, 'hairStyle'); pick('elfhat', [[true, 'Pointed cap'], [false, 'No hat']], 'hatOn'); $('elflevelrow').hidden = editLook; pick('elflevel', [[0, 'Counting and adding'], [1, 'Times tables'], [2, 'Fractions'], [3, 'Shapes and measuring'], [4, 'Ratios and percent'], [5, 'Algebra'], [6, 'Trigonometry'], [7, 'Calculus']], 'level'); }
-  $('elfheight').addEventListener('input', e => { if (!draft) return; draft.height = +e.target.value; applyLook(draft); syncCreator(); });
+    pick('elfkind', [['elf', 'Elf'], ['human', 'Human'], ['dwarf', 'Dwarf'], ['halfling', 'Halfling']], 'kind'); pick('elfsex', [['boy', 'Boy (tunic)'], ['girl', 'Girl (dress)']], 'sex'); pick('elfhair', HAIRS, 'hairStyle'); pick('elfhat', [[true, 'Pointed cap'], [false, 'No hat']], 'hatOn'); $('elflevelrow').hidden = editLook; pick('elflevel', [[0, 'Counting and adding'], [1, 'Times tables'], [2, 'Fractions'], [3, 'Shapes and measuring'], [4, 'Ratios and percent'], [5, 'Algebra'], [6, 'Trigonometry'], [7, 'Calculus']], 'level'); }
+  ['elfyear', 'elfmonth'].forEach(id => $(id).addEventListener('change', () => { if (!draft) return; applyLook(draft); syncCreator(); }));
   const titleEl = $('title'), titleMain = $('titlemain'), creatorEl = $('creator'); let draft = null, newArmed = false, editLook = false;
   $('titleacct').appendChild($('account'));   // signing in belongs on the title screen
   function refreshTitle() { const ok = mayPlay(), c = $('tcontinue'); c.hidden = !ok || !save.started; c.textContent = save.name ? `Continue as ${save.name}` : 'Continue'; $('tlook').hidden = !ok || !save.started; $('tnew').hidden = !ok; $('tlessons').hidden = !ok; $('tgate').hidden = ok; }
@@ -12162,23 +12184,23 @@ if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : key =
   const hasProgress = () => !!(save.started || save.done.length || save.coins);
   // an elf made before the question existed is asked it once, before going on
   let ageThen = null;
-  function askAge(then) { ageThen = then; $('ageyear').innerHTML = yearOptions(); $('agewarn').hidden = true; titleMain.hidden = true; $('agecard').hidden = false; }
+  function askAge(then) { ageThen = then; $('ageyear').innerHTML = yearOptions(); $('agemonth').innerHTML = monthOptions(); $('agewarn').hidden = true; titleMain.hidden = true; $('agecard').hidden = false; }
   $('tcontinue').addEventListener('click', () => { if (!mayPlay()) return; if (!fam.year && !devMode) { askAge(() => { hideTitle(); continueGame(); }); return; } hideTitle(); continueGame(); });
-  $('agego').addEventListener('click', () => { if (!$('ageyear').value) { $('agewarn').hidden = false; return; } fam.year = +$('ageyear').value; famSave(); $('agecard').hidden = true; titleMain.hidden = false; const t = ageThen; ageThen = null; if (t) t(); });
+  $('agego').addEventListener('click', () => { if (!$('ageyear').value) { $('agewarn').hidden = false; return; } fam.year = +$('ageyear').value; if ($('agemonth').value) fam.month = +$('agemonth').value; famSave(); $('agecard').hidden = true; titleMain.hidden = false; const t = ageThen; ageThen = null; if (t) t(); });
   $('tlessons').addEventListener('click', () => { if (!mayPlay()) return; hideTitle(); startEl.hidden = false; drawMap(); });
   $('maptitle').addEventListener('click', () => { if (!gameStarted) showTitle(); });
   $('tsettings').addEventListener('click', openSettings);
   $('tlook').addEventListener('click', () => { spinElf.yaw = 0; spinElf.v = 0; $('elfyearrow').hidden = true; creatorUp = true; editLook = true; newArmed = false; titleMain.hidden = true; creatorEl.hidden = false; draft = Object.assign({}, DEFAULT_LOOK, save.look || {}); $('elfname').value = save.name || ''; $('creatorwarn').hidden = true; $('creatorgo').textContent = 'Save'; applyLook(draft); drawSwatches(); syncCreator(); });
-  $('tnew').addEventListener('click', () => { if (!mayPlay()) return; spinElf.yaw = 0; spinElf.v = 0; $('elfyearrow').hidden = !!fam.year; $('elfyear').innerHTML = yearOptions(); creatorUp = true; editLook = false; newArmed = false; titleMain.hidden = true; creatorEl.hidden = false; draft = Object.assign({}, DEFAULT_LOOK, hasProgress() ? {} : save.look || {}); $('elfname').value = hasProgress() ? '' : save.name || ''; $('creatorwarn').hidden = true; $('creatorgo').textContent = 'Begin'; applyLook(draft); drawSwatches(); syncCreator(); });
+  $('tnew').addEventListener('click', () => { if (!mayPlay()) return; spinElf.yaw = 0; spinElf.v = 0; $('elfyearrow').hidden = !!fam.year; $('elfyear').innerHTML = yearOptions(); $('elfmonth').innerHTML = monthOptions(); creatorUp = true; editLook = false; newArmed = false; titleMain.hidden = true; creatorEl.hidden = false; draft = Object.assign({}, DEFAULT_LOOK, hasProgress() ? {} : save.look || {}); $('elfname').value = hasProgress() ? '' : save.name || ''; $('creatorwarn').hidden = true; $('creatorgo').textContent = 'Begin'; applyLook(draft); drawSwatches(); syncCreator(); });
   $('creatorback').addEventListener('click', () => showTitle());
   $('creatorgo').addEventListener('click', () => {
     const name = $('elfname').value.replace(/\s+/g, ' ').trim().slice(0, 16) || 'Elfling';
-    if (!editLook && !fam.year) { if (!$('elfyear').value) { const w = $('creatorwarn'); w.hidden = false; w.textContent = 'Choose the year you were born.'; return; } fam.year = +$('elfyear').value; famSave(); }
-    if (editLook) { save.name = name; save.look = draft; persist(); showTitle(); return; }   // the same elf, a new look: nothing else changes
+    if (!editLook && !fam.year) { if (!$('elfyear').value) { const w = $('creatorwarn'); w.hidden = false; w.textContent = 'Choose the year you were born.'; return; } fam.year = +$('elfyear').value; if ($('elfmonth').value) fam.month = +$('elfmonth').value; famSave(); }
+    if (editLook) { save.name = name; save.look = growLook(draft); persist(); showTitle(); return; }   // the same elf, a new look: nothing else changes
     if (hasProgress() && !newArmed) { newArmed = true; const w = $('creatorwarn'); w.hidden = false; w.textContent = `This starts a brand new elf. ${save.name || 'Your current elf'}, with ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished and ${save.coins || 0} acorn coins, will be gone for good. Press again if you are sure.`; $('creatorgo').textContent = 'Yes, start over'; return; }
     const lvl = draft.level | 0; delete draft.level;
-    if (hasProgress()) { clearSave(); save.name = name; save.look = draft; save.level = lvl; persist(); const first = save.level > 0 ? 'placed' : 'lesson-1', go = () => jump(first); if (session) { cloudDirty = true; cloudPush().finally(go); } else go(); return; }
-    save.name = name; save.look = draft; save.level = lvl; persist(); hideTitle(); launch(lvl > 0 ? 'placed' : 'lesson-1');
+    if (hasProgress()) { clearSave(); save.name = name; save.look = growLook(draft); save.level = lvl; persist(); const first = save.level > 0 ? 'placed' : 'lesson-1', go = () => jump(first); if (session) { cloudDirty = true; cloudPush().finally(go); } else go(); return; }
+    save.name = name; save.look = growLook(draft); save.level = lvl; persist(); hideTitle(); launch(lvl > 0 ? 'placed' : 'lesson-1');
   });
   applyLook(save.look);
   const h = location.hash.replace('#', '');
