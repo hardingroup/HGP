@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><title>The Long Road</title><style>[hidden]{display:none!important} html{height:100%} body{margin:0;height:100%;overflow:hidden}</style><title>Bramblewick's First Lesson</title>
+<title>Bramblewick's First Lesson</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Shantell+Sans:wght@400;600;700&display=swap">
@@ -337,7 +337,7 @@
   .account .status.ok { color: #7cc47a; }
   @media (max-width: 480px) { .line { font-size: 17px; } }
   @media (prefers-reduced-motion: reduce) { .tok { transition: none; } }
-</style></head><body>
+</style>
 
 <canvas id="scene" aria-label="Bramblewick's shop and the forest clearing outside, seen from seven inches tall"></canvas>
 <div class="fade" id="fade" aria-live="polite"></div>
@@ -467,7 +467,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 140 · 22 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 144 · 24 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -2283,7 +2283,7 @@
       put(new THREE.BoxGeometry(2.6, 0.3, 0.8), hoop, 1, 4.35, -6.4); put(new THREE.BoxGeometry(0.3, 0.3, 2.4), wd, 5.4, 4.35, -6.6); put(new THREE.TorusGeometry(1.2, 0.1, 5, 16), hoop, 6.2, 4.3, -6.9).rotation.x = Math.PI / 2;
       for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2, st = put(new THREE.BoxGeometry(0.9, 5, 0.2), pale, 1.5 + Math.cos(a) * 1.8, 2.5, 3.6 + Math.sin(a) * 1.8); st.rotation.y = -a + Math.PI / 2; st.rotation.z = 0; } put(new THREE.TorusGeometry(1.95, 0.12, 5, 16), hoop, 1.5, 1.2, 3.6).rotation.x = Math.PI / 2; orchSolids.push({ x: CX + 1.5, z: CZ + 3.6, r: 2.2 });
       for (let r = 0; r < 3; r++) for (let k = 0; k < 6 - r; k++) put(new THREE.BoxGeometry(7, 0.3, 0.9), pale, -6, 0.2 + r * 0.32, 5 + k * 1 + r * 0.5); orchSolids.push({ x: CX - 6, z: CZ + 7.5, r: 3.2 });
-      const sn = signBoard('Willowby, Cooper', 9, 1.8, '#3a4a9a', '#f6e7c2'); sn.position.set(CX, 11.6, CZ - 10.6); sn.rotation.y = Math.PI; orchScene.add(sn);
+      const sn = signBoard('Hoopwright, Cooper', 9, 1.8, '#6b3a1e', '#f6e7c2'); sn.position.set(CX, 11.6, CZ - 10.6); sn.rotation.y = Math.PI; orchScene.add(sn);
       const ft = dirtTex.clone(); ft.needsUpdate = true; ft.repeat.set(7, 5); const fl = new THREE.Mesh(new THREE.PlaneGeometry(34, 24), mat('#ffffff', { map: ft })); fl.rotation.x = -Math.PI / 2; fl.position.set(CX, 0.03, CZ); fl.receiveShadow = true; orchScene.add(fl);
       road(ORC.gx + 4, CZ - 14, CX - 10, CZ - 14, 6, 0.031);
       cg.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); bake(cg); }
@@ -2317,21 +2317,21 @@
     const capTop = new THREE.Mesh(new THREE.SphereGeometry(1.3, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat('#8a3a3a')); capTop.position.y = 1.3; capTop.scale.y = 0.5; holHead.add(capTop);
     const brim = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.12, 0.8), mat('#5a2a2a')); brim.position.set(0, 0.75, 1.3); holHead.add(brim);
   }
-  // Pip Willowby: a quiet kid with a blue cap, forever stacking crates
+  // Pip Willowby: a chatty nine-year-old in a patched green jumper, the Orchards' self-appointed tour guide, forever stacking crates
   const pip = new THREE.Group(); pip.position.copy(PIPPOS); orchScene.add(pip);
   const pipHead = new THREE.Group();
   {
-    const skinP = mat('#f0c9a0'), tunicP = mat('#4a5fb8');
+    const skinP = mat('#f0c8a8'), tunicP = mat('#4a7a3a');
     [-1, 1].forEach(d => { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 1.0, 8), mat('#6b5a3a')); leg.position.set(d * 0.28, 0.6, 0); pip.add(leg); const boot = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 8), mat('#5a3a1e')); boot.scale.set(1, 0.7, 1.45); boot.position.set(d * 0.28, 0.15, 0.1); pip.add(boot); });
     const tprof = []; for (let i = 0; i <= 8; i++) { const t = i / 8; tprof.push(new THREE.Vector2(0.78 - t * 0.35, 0.95 + t * 1.2)); }
     pip.add(new THREE.Mesh(new THREE.LatheGeometry(tprof, 18), tunicP));
     [-1, 1].forEach(d => { const sh = new THREE.Group(); sh.position.set(d * 0.5, 1.95, 0); pip.add(sh); const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.8, 8), tunicP); arm.position.y = -0.4; sh.add(arm); const hand = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), skinP); hand.position.y = -0.85; sh.add(hand); sh.rotation.set(-1.3, 0, d * 0.2); });
     pipHead.position.y = 2.65; pip.add(pipHead);
     pipHead.add(new THREE.Mesh(new THREE.SphereGeometry(0.55, 20, 16), skinP));
-    [-1, 1].forEach(d => { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.75, 8), skinP); ear.position.set(d * 0.58, 0.12, -0.05); ear.rotation.z = -d * 1.15; pipHead.add(ear); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), mat('#2a3a2a')); eye.position.set(d * 0.2, 0.06, 0.52); pipHead.add(eye); for (let k = 0; k < 3; k++) { const fr = new THREE.Mesh(new THREE.CircleGeometry(0.02, 6), mat('#b8865a')); fr.position.set(d * (0.12 + k * 0.1), -0.1 - (k % 2) * 0.06, 0.52); pipHead.add(fr); } });
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.58, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), mat('#2a2a2a')); hair.position.y = 0.05; hair.rotation.x = -0.55; pipHead.add(hair);
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.6, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat('#4a5fb8')); cap.position.y = 0.3; pipHead.add(cap);
-    const peak = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.4), mat('#3a4a9a')); peak.position.set(0, 0.4, 0.6); pipHead.add(peak);
+    [-1, 1].forEach(d => { const ear = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), skinP); ear.scale.set(0.45, 1, 0.8); ear.position.set(d * 0.55, 0.02, -0.03); pipHead.add(ear); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), mat('#3a5a7a')); eye.position.set(d * 0.2, 0.06, 0.52); pipHead.add(eye); for (let k = 0; k < 3; k++) { const fr = new THREE.Mesh(new THREE.CircleGeometry(0.02, 6), mat('#b8865a')); fr.position.set(d * (0.12 + k * 0.1), -0.1 - (k % 2) * 0.06, 0.52); pipHead.add(fr); } });
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.58, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), mat('#c8a45a')); hair.position.y = 0.05; hair.rotation.x = -0.55; pipHead.add(hair); for (let k = 0; k < 5; k++) { const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 6), mat('#c8a45a')); tuft.position.set(-0.12 + k * 0.06, 0.5, -0.32); tuft.rotation.x = -0.5; tuft.rotation.z = (k - 2) * 0.2; pipHead.add(tuft); }
+    
+    
     const held = crate(0.5); held.position.set(0, 1.6, 0.9); pip.add(held);
   }
   function goToOrchards() {
@@ -2367,7 +2367,7 @@
   const FERN_LEN = 320, FRN = { x: 110, lane: 205 };   // Fernwater: the old town and the river as they were, and Heron Row on the far bank
   const fernHB = [], fernBenches = [];   // the straight-sided things on the far bank: houses, their fences and sheds
   const FHOMES = [
-    { id: 'orihome', style: 'tower', no: 1, x: -62, face: 0, yard: 'frame', sign: 'Tideknot', wall: '#dfe6e8', trim: '#2f4a6a', roof: '#2f4a6a', door: '#2f4a6a', flower: '#9fb7f0' },
+    { id: 'orihome', style: 'tower', no: 1, x: -62, face: 0, yard: 'frame', sign: 'Reedwater', wall: '#dfe6e8', trim: '#2f4a6a', roof: '#2f4a6a', door: '#2f4a6a', flower: '#9fb7f0' },
     { id: 'maudhome', style: 'stone', no: 2, x: -62, face: Math.PI, yard: 'berries', sign: 'Crumb', wall: '#f0dfc0', trim: '#8a3a3a', roof: '#c8384a', door: '#8a3a3a', flower: '#e68fb0' },
     { id: 'corhome', style: 'gambrel', no: 3, x: 62, face: 0, yard: 'wood', sign: 'Sedge', wall: '#e8dcc0', trim: '#6b4a2b', roof: '#d9a33f', door: '#6b4a2b', flower: '#f4d35e' },
     { id: 'pellhome', style: 'thatch', no: 4, x: 62, face: Math.PI, yard: 'hive', sign: 'Reedmace', wall: '#e2e6d6', trim: '#3e6a4a', roof: '#3e8a52', door: '#3e6a4a', flower: '#ffffff' }];
@@ -3438,7 +3438,7 @@
   // ---- who lives in each house, and so how it is furnished. second: the other room upstairs (a child's room only where a child lives). game: what is set out on the table in the hall. mir: the plan is the other way round ----
   const HOUSEHOLD = {
     bwhome: { second: 'study', game: 'chess' }, marihome: { second: 'store', game: 'cards' }, aldhome: { second: 'hobby', game: 'puzzle' }, fenhome: { second: 'guest', game: 'dice' },
-    holhome: { mir: 1, second: 'store', game: 'tea', touch: ['flour'] }, piphome: { second: 'kid', game: 'checkers', touch: ['crates', 'crates2'] }, bramhome: { mir: 1, second: 'guest', game: 'none', touch: ['honey', 'honey2'] }, tanhome: { second: 'sewing', game: 'knuckle', touch: ['pears', 'pears2'] },
+    holhome: { mir: 1, second: 'store', game: 'tea', touch: ['flour'] }, piphome: { second: 'kid', game: 'checkers', touch: ['bread', 'crates'] }, bramhome: { mir: 1, second: 'guest', game: 'none', touch: ['honey', 'honey2'] }, tanhome: { second: 'sewing', game: 'knuckle', touch: ['pears', 'pears2'] },
     asthome: { mir: 1, second: 'study', game: 'chess', touch: ['starchart', 'sextant'] }, reefhome: { second: 'store', game: 'cards', touch: ['rope', 'rope2'] }, ebbhome: { mir: 1, second: 'music', game: 'tea', touch: ['tides'] }, wickhome: { second: 'guest', game: 'dice', touch: ['glasses'] },
     tamhome: { mir: 1, second: 'hobby', game: 'puzzle', touch: ['clocks', 'clocks2'] }, odehome: { second: 'sewing', game: 'stones', touch: ['wheel'] }, barhome: { mir: 1, second: 'music', game: 'checkers', touch: ['levers'] }, clemhome: { second: 'study', game: 'cards', touch: ['hands'] },
     wrenhome: { mir: 1, second: 'kid', game: 'stones', touch: ['plumb'] }, unahome: { second: 'sewing', game: 'none', touch: ['fleece'] }, garhome: { mir: 1, second: 'hobby', game: 'knuckle', touch: ['mallet'] }, tobhome: { second: 'study', game: 'map', touch: ['maps', 'chain'] },
@@ -3474,7 +3474,7 @@
     else if (name === 'bread') { floor = true; r = 1.8; B(3.4, 0.3, 2.4, 0, 3.4, 0, wood); [[-1.6, -1], [1.6, -1], [-1.6, 1], [1.6, 1]].forEach(([x, z]) => B(0.3, 3.3, 0.3, x, 1.65, z, dark)); [[-0.8, -0.4], [0.7, 0.3], [-0.2, 0.6]].forEach(([x, z]) => { const l = P(new THREE.SphereGeometry(0.6, 10, 8), mat('#d9a86a', { roughness: 1 }), x, 3.85, z); l.scale.set(1.3, 0.7, 0.9); }); const cl = B(1.6, 0.05, 1.2, 0.9, 3.58, -0.5, cream); const rp = P(new THREE.CylinderGeometry(0.18, 0.18, 2.4, 8), wood, -0.3, 3.75, 0.9); rp.rotation.z = Math.PI / 2; }
     return { g, floor, r }; }
   function familyHome(o, inner) { const body = (sc, solids, k) => {
-    const owner = { bwhome: 'Old Bramblewick', marihome: 'the Fernsbys', aldhome: 'the Boughs', fenhome: 'the Dewberrys', holhome: 'Hollis Quern', piphome: 'the Willowbys', bramhome: 'Bram Honeywell', tanhome: 'Tansy Applegarth', asthome: 'Astra Vell', reefhome: 'Rowan Reef', ebbhome: 'Marnie Ebb', wickhome: 'Jory Wick', durhome: 'Master Durna', brokhome: 'Brokk Cinder', hilhome: 'Hilda Slagg', odwhome: 'Odwin Flint', tamhome: 'Tamsin Gearwright', odehome: 'Odette Spindle', barhome: 'Barnaby Ratchet', clemhome: 'Clementine Verge', wrenhome: 'Wren Ashcombe', unahome: 'Una Fellwick', garhome: 'Garth Scree', tobhome: 'Tobias Marl', orihome: 'the Tideknots', maudhome: 'Maudie Crumb', corhome: 'Corwin Sedge', pellhome: 'Pell Reedmace' }[k.id] || 'the family who live here';
+    const owner = { bwhome: 'Old Bramblewick', marihome: 'the Fernsbys', aldhome: 'the Boughs', fenhome: 'the Dewberrys', holhome: 'Hollis Quern', piphome: 'the Willowbys', bramhome: 'Bram Honeywell', tanhome: 'Tansy Applegarth', asthome: 'Astra Vell', reefhome: 'Rowan Reef', ebbhome: 'Marnie Ebb', wickhome: 'Jory Wick', durhome: 'Master Durna', brokhome: 'Brokk Cinder', hilhome: 'Hilda Slagg', odwhome: 'Odwin Flint', tamhome: 'Tamsin Gearwright', odehome: 'Odette Spindle', barhome: 'Barnaby Ratchet', clemhome: 'Clementine Verge', wrenhome: 'Wren Ashcombe', unahome: 'Una Fellwick', garhome: 'Garth Scree', tobhome: 'Tobias Marl', orihome: 'the Reedwaters', maudhome: 'Maudie Crumb', corhome: 'Corwin Sedge', pellhome: 'Pell Reedmace' }[k.id] || 'the family who live here';
     const { wall, W, D, H, trimM } = k, S = 1.6, PX = -W / 2 + 22, lx = (PX + W / 2) / 2, wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 }), wm = mat(o.wall, { roughness: 1 }), cream = mat('#f2ead8');
     const lg = new THREE.Group(); lg.position.set(lx, 0, 0); lg.scale.setScalar(S); sc.add(lg);
     const vs = [], vwall = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; lg.add(b); return b; };
@@ -4099,7 +4099,7 @@
     const b2 = signBoard('10 leaves = 1 ring', 5, 1.1, '#f2e6c8', '#3a2a18'); b2.position.set(0, 4.8, -D / 2 + 0.3); sc.add(b2);
     for (let k = 0; k < 4; k++) { const ledger = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 1.6), mat(pick(['#7a2e2e', '#2e4a7a', '#4a3a2a']))); ledger.position.set(4 + k * 0.1, 0.15 + k * 0.3, -5.5); ledger.rotation.y = k * 0.1; sc.add(ledger); }
   } });
-  makeRoom('ropes', { w: 16, d: 14, h: 9, wall: '#e2e6d6', label: 'Tideknot Ropes', region: 'fernwater', hint: 'Coils, twine and the smell of tar. The rope-walk is out in the yard.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
+  makeRoom('ropes', { w: 16, d: 14, h: 9, wall: '#e2e6d6', label: 'Reedwater Ropes', region: 'fernwater', hint: 'Coils, twine and the smell of tar. The rope-walk is out in the yard.', decorate: (sc, solids, { wall, W, D, H, trimM }) => {
     for (let k = 0; k < 7; k++) { const coil = new THREE.Mesh(new THREE.TorusGeometry(0.8 + (k % 2) * 0.25, 0.22, 8, 22), mat('#c7b386', { roughness: 1 })); coil.position.set(-6 + k * 2, 5.2 - (k % 2) * 0.6, -D / 2 + 0.6); sc.add(coil); const peg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.8, 6), trimM); peg.rotation.x = Math.PI / 2; peg.position.set(-6 + k * 2, 6.2 - (k % 2) * 0.6, -D / 2 + 0.5); sc.add(peg); }
     const wheel = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.14, 8, 28), mat('#8a6438')); wheel.position.set(-5, 2.2, 0); wheel.rotation.y = Math.PI / 2; sc.add(wheel);
     for (let k = 0; k < 8; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 3.1, 0.08), mat('#8a6438')); sp.position.set(-5, 2.2, 0); sp.rotation.x = k * Math.PI / 8; sc.add(sp); }
@@ -4266,11 +4266,11 @@
     makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'cairnhold', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.roof, kidQuilt: h.flower, rug: '#b8a070' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.door, quilt: h.roof }); }) });
     interiors[id].door = { x: h.x, z: h.z + h.hd + 0.2 + 4.5, yaw: 0 }; });
   // the four houses on Heron Row, Fernwater
-  [['orihome', 'Tideknot House', 'Charts on the wall, and a coil of rope by every door.'], ['maudhome', 'Crumb Cottage', 'It smells of yesterday’s baking, and tomorrow’s is rising by the hearth.'], ['corhome', 'Sedge Cottage', 'A half-mended net hangs across one corner.'], ['pellhome', 'Reedmace Cottage', 'River marks pencilled up the door frame, with a date beside each.']].forEach(([id, label, hintT]) => { const h = FHOMES.find(q => q.id === id);
+  [['orihome', 'Reedwater House', 'Charts on the wall, and a coil of rope by every door.'], ['maudhome', 'Crumb Cottage', 'It smells of yesterday’s baking, and tomorrow’s is rising by the hearth.'], ['corhome', 'Sedge Cottage', 'A half-mended net hangs across one corner.'], ['pellhome', 'Reedmace Cottage', 'River marks pencilled up the door frame, with a date beside each.']].forEach(([id, label, hintT]) => { const h = FHOMES.find(q => q.id === id);
     makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'fernwater', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.roof, kidQuilt: h.flower, rug: '#b8a070' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.door, quilt: h.roof }); }) });
     interiors[id].door = { x: h.x, z: h.z + h.sg * (h.hd + 0.2 + 4.5), yaw: h.face }; });
   // the four houses on Windfall Lane
-  [['holhome', 'The Miller’s House', 'Everything in here has a little flour on it.'], ['piphome', 'Willowby Cottage', 'Crates, stacked in rows, even indoors.'], ['bramhome', 'Honeywell Cottage', 'It smells of beeswax, and there is a jar on every sill.'], ['tanhome', 'Applegarth Cottage', 'Baskets by the door, and pears ripening on the dresser.']].forEach(([id, label, hintT]) => { const h = OHOMES.find(q => q.id === id);
+  [['holhome', 'The Miller’s House', 'Everything in here has a little flour on it.'], ['piphome', 'Willowby Cottage', 'It smells of fresh bread, and something is stacked in rows on every surface.'], ['bramhome', 'Honeywell Cottage', 'It smells of beeswax, and there is a jar on every sill.'], ['tanhome', 'Applegarth Cottage', 'Baskets by the door, and pears ripening on the dresser.']].forEach(([id, label, hintT]) => { const h = OHOMES.find(q => q.id === id);
     makeRoom(id, { w: 76, d: 40, h: 20, doorH: 9.4, wall: h.wall, trim: h.trim, label, region: 'orchards', hint: hintT, decorate: familyHome({ wall: h.wall, quilt: h.roof, kidQuilt: h.flower, rug: '#b8a070' }, (sc, solids, k) => { homeKit(sc, solids, k, { rug: h.door, quilt: h.roof }); }) });
     interiors[id].door = { x: h.x, z: h.z + h.sg * (h.hd + 0.2 + 4.5), yaw: h.face }; });
   // the mill's door is in its south wall; the solid around the tower is trimmed so you can reach it
@@ -4355,7 +4355,7 @@
       interiors[id].door = { x: doorX + Math.sin(facing) * 4.5, z: doorZ + Math.cos(facing) * 4.5, yaw: facing };
       return g;
     }
-    shopExterior('ropes', -30, 6, Math.PI / 2, '#3e8a52', 'Tideknot Ropes');
+    shopExterior('ropes', -30, 6, Math.PI / 2, '#3e8a52', 'Reedwater Ropes');
     shopExterior('bakery', -30, 34, Math.PI / 2, '#c8384a', 'Crumb’s Bakery');
     shopExterior('changer', 30, 14, -Math.PI / 2, '#4a5fb8', 'Money-Changer');
     shopExterior('nets', 30, 40, -Math.PI / 2, '#d9a33f', 'Nets & Lines');
@@ -4364,7 +4364,7 @@
     const froad = (x0, z0, x1, z1, w, y = 0.03) => { const len = Math.hypot(x1 - x0, z1 - z0), tx = dirtTex.clone(); tx.needsUpdate = true; tx.repeat.set(w / 5, len / 5); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), mat('#ffffff', { map: tx })); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.atan2(x1 - x0, z1 - z0); m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); m.receiveShadow = true; fernScene.add(m); return m; };
     froad(0, 104, 0, FERN_LEN + 6, 8); froad(-102, FRN.lane, 102, FRN.lane, 10, 0.034); FHOMES.forEach(h => froad(h.x, h.z + h.sg * 30, h.x, FRN.lane, 7.4, 0.031));
     froad(20, 46.5, 51, 46.5, 5, 0.032);   // from the lane side of the dock to the ferry office door
-    // Oriel's ferry office: a proper building on the bank beside the dock, with a door you walk through
+    // Ezra's ferry office: a proper building on the bank beside the dock, with a door you walk through
     { const fx = 58, fz = 44, W = 18, D = 13, H = 6.4, g = new THREE.Group(); g.position.set(fx, 0, fz); g.rotation.y = -Math.PI / 2; fernScene.add(g);
       const blue = mat('#2f4a6a'), trimM = mat('#5a3d22'), cream = mat('#f2e6c8'), bx = (w, h, d, x, y, z, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = true; q.receiveShadow = true; g.add(q); return q; };
       bx(W + 0.5, 0.8, D + 0.5, 0, 0.4, 0, mat('#8d7a66')); bx(W, H, D, 0, H / 2 + 0.6, 0, blue);
@@ -4444,29 +4444,29 @@
     bench.userData = { pickable: true, kind: 'seat', yaw: Math.PI, seatTop: 1.51, label: 'bench by the river', world: 'fernwater' }; fernSolids.push({ x: -6, z: 50, r: 1.4 }); fernScene.userData.bench = bench;
     fernScene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o !== g && o !== water) { o.castShadow = true; o.receiveShadow = true; } });
   }
-  // Captain Oriel Tideknot: brisk, weathered, a long coat and a knotted scarf
+  // Ezra Reedwater, the ferryman: wiry and old, a white stubbly beard, a battered wide-brimmed hat, a patched oilskin coat, bare feet
   const ori = new THREE.Group(); ori.position.copy(ORIPOS); ori.position.y = 1.65; fernScene.add(ori);   // he stands on his dock
   const oriHead = new THREE.Group();
   {
-    const skinO = mat('#c9956a'), coatO = mat('#2f4a6a');
+    const skinO = mat('#b07a52'), coatO = mat('#7a7040');
     const prof = []; for (let i = 0; i <= 8; i++) { const t = i / 8; prof.push(new THREE.Vector2(1.7 - t * 0.6, t * 6.2)); }
     ori.add(new THREE.Mesh(new THREE.LatheGeometry(prof, 20), coatO));
-    const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3, 0.1), mat('#1f3348')); lapel.position.set(0, 4.5, 1.25); ori.add(lapel);
+    const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3, 0.1), mat('#5a5228')); lapel.position.set(0, 4.5, 1.25); ori.add(lapel);
     [4.0, 4.8, 5.6].forEach(y => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), mat('#e8b64c', { metalness: 0.6 })); b.position.set(0.35, y, 1.3); ori.add(b); });
-    const scarf = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.3, 8, 18), mat('#c8384a')); scarf.rotation.x = Math.PI / 2; scarf.position.y = 6.1; ori.add(scarf);
-    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), mat('#c8384a')); knot.position.set(0.6, 5.8, 1.0); ori.add(knot);
-    [-0.6, 0.6].forEach(x => { const boot = new THREE.Mesh(new THREE.SphereGeometry(0.45, 10, 8), mat('#2a2a2a')); boot.scale.set(1, 0.6, 1.6); boot.position.set(x, 0.15, 1.1); ori.add(boot); });
+    const scarf = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.3, 8, 18), mat('#5a5228')); scarf.rotation.x = Math.PI / 2; scarf.position.y = 6.1; ori.add(scarf);
+    
+    [-0.6, 0.6].forEach(x => { const boot = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), skinO); boot.scale.set(0.9, 0.5, 1.6); boot.position.set(x, 0.12, 1.1); ori.add(boot); });
     [-1, 1].forEach(d => { const sh = new THREE.Group(); sh.position.set(d * 1.6, 5.5, 0); ori.add(sh); const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 2.6, 8), coatO); arm.position.y = -1.3; sh.add(arm); const hand = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), skinO); hand.position.y = -2.7; sh.add(hand); sh.rotation.set(d === 1 ? -1.4 : -0.3, 0, d * 0.4); if (d === 1) { const rope = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.1, 6, 14), mat('#c7b386')); rope.position.y = -2.8; sh.add(rope); } });
     oriHead.position.y = 7.4; ori.add(oriHead);
     oriHead.add(new THREE.Mesh(new THREE.SphereGeometry(0.95, 20, 16), skinO));
-    [-1, 1].forEach(d => { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.26, 1.5, 8), skinO); ear.position.set(d * 1.0, 0.3, -0.05); ear.rotation.z = -d * 1.25; oriHead.add(ear); const eyeW = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), mat('#eee8dc')); eyeW.position.set(d * 0.35, 0.12, 0.85); oriHead.add(eyeW); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), mat('#2a3a4a')); eye.position.set(d * 0.35, 0.12, 0.97); oriHead.add(eye); const brow = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.1, 0.12), mat('#5a4a3a')); brow.position.set(d * 0.36, 0.4, 0.86); brow.rotation.z = -d * 0.3; oriHead.add(brow); });
+    [-1, 1].forEach(d => { const ear = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), skinO); ear.scale.set(0.45, 1, 0.8); ear.position.set(d * 0.95, 0.05, -0.05); oriHead.add(ear); const eyeW = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), mat('#eee8dc')); eyeW.position.set(d * 0.35, 0.12, 0.85); oriHead.add(eyeW); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), mat('#2a3a4a')); eye.position.set(d * 0.35, 0.12, 0.97); oriHead.add(eye); const brow = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.1, 0.12), mat('#5a4a3a')); brow.position.set(d * 0.36, 0.4, 0.86); brow.rotation.z = -d * 0.3; oriHead.add(brow); });
     const nose = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), skinO); nose.scale.z = 1.5; nose.position.set(0, -0.08, 0.95); oriHead.add(nose);
     const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.08), mat('#7a4a3a')); mouth.position.set(0, -0.4, 0.9); oriHead.add(mouth);
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(1.0, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), mat('#7a7a72')); hair.position.y = 0.1; oriHead.add(hair);
-    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.1, 1.8, 8), mat('#7a7a72')); tail.position.set(0, -0.3, -0.9); tail.rotation.x = 0.5; oriHead.add(tail);
-    const capO = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.05, 0.5, 18), mat('#1f3348')); capO.position.y = 0.95; oriHead.add(capO);
-    const peak = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.1, 0.7), mat('#111c28')); peak.position.set(0, 0.75, 1.0); oriHead.add(peak);
-    const badge = new THREE.Mesh(new THREE.CircleGeometry(0.18, 10), mat('#e8b64c', { metalness: 0.6 })); badge.position.set(0, 1.0, 1.02); oriHead.add(badge);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(1.0, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), mat('#e8e4dc')); hair.position.y = 0.1; oriHead.add(hair); const beardO = new THREE.Mesh(new THREE.SphereGeometry(0.75, 16, 10, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.4), mat('#e8e4dc', { roughness: 1 })); beardO.position.set(0, -0.15, 0.3); beardO.scale.set(1.05, 1, 0.9); oriHead.add(beardO);
+    
+    const capO = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.0, 0.7, 18), mat('#6a5a40')); capO.position.y = 1.0; oriHead.add(capO); const brimO = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 0.08, 24), mat('#6a5a40')); brimO.position.y = 0.7; brimO.rotation.x = 0.08; oriHead.add(brimO); const fly = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), mat('#e8b64c')); fly.position.set(0.8, 0.95, 0.45); oriHead.add(fly);
+    
+    
   }
   fernSolids.push({ x: ORIPOS.x, z: ORIPOS.z, r: 1.4 });
   // Maudie Crumb, the baker: round, floury, cheerful
@@ -4648,7 +4648,7 @@
   { const chain = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.08, 6, 24), mat('#8a8a8a', { metalness: 0.7, roughness: 0.4 })); chain.rotation.set(0.3, 0.2, 0.9); chain.position.set(0.4, 5.2, 0.2); wren.add(chain); wren.userData.arms[1].rotation.x = -1.3;
     const board = new THREE.Group(); board.position.set(WRENPOS.x + 2.4, 0, WRENPOS.z - 1.5); board.rotation.y = 2.4; cairnScene.add(board); [-1, 1].forEach(d => { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 5, 6), mat('#6b4a2b')); leg.position.set(d * 0.9, 2.5, 0); leg.rotation.z = -d * 0.12; board.add(leg); }); const sheet = new THREE.Mesh(new THREE.PlaneGeometry(3, 2.4), mat('#efe3c4', { side: THREE.DoubleSide })); sheet.position.set(0, 4.2, 0.1); sheet.rotation.x = -0.2; board.add(sheet); const ink = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.56, 24, 1, 0, Math.PI / 2), mat('#4a3420', { side: THREE.DoubleSide })); ink.position.set(-0.6, 3.6, 0.13); ink.rotation.x = -0.2; board.add(ink); cairnSolids.push({ x: board.position.x, z: board.position.z, r: 1.2 }); }
   // Pip Willowby, apprenticing again, with the hundred-link chain laid out on the ground
-  const pip2 = makeElfNPC({ coat: '#8a9a3a', skin: '#d9a97a', hair: '#c9641e', hat: 'point', capColor: '#4a7a31', tall: 4.4, wide: 1.2 }); pip2.position.copy(PIP2POS); pip2.rotation.y = -2.2; cairnScene.add(pip2); cairnSolids.push({ x: PIP2POS.x, z: PIP2POS.z, r: 1.2 });
+  const pip2 = makeElfNPC({ coat: '#4a7a3a', skin: '#f0c8a8', hair: '#c8a45a', hat: 'none', tall: 4.4, wide: 1.2 }); pip2.position.copy(PIP2POS); pip2.rotation.y = -2.2; cairnScene.add(pip2); cairnSolids.push({ x: PIP2POS.x, z: PIP2POS.z, r: 1.2 });
   { for (let k = 0; k < 100; k++) { const link = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.05, 5, 10), mat(k % 10 === 9 ? '#e8b64c' : '#8a8a8a', { metalness: 0.7, roughness: 0.4 })); link.position.set(PIP2POS.x + 2 + k * 0.3, 0.12, PIP2POS.z - 1 + Math.sin(k / 7) * 0.4); link.rotation.x = Math.PI / 2; link.rotation.z = k % 2 ? 0 : Math.PI / 2; cairnScene.add(link); }
     const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 3, 6), mat('#c9a06a')); stick.position.set(PIP2POS.x + 1.2, 1.5, PIP2POS.z + 1.2); stick.rotation.z = 0.3; cairnScene.add(stick); }
 
@@ -5397,7 +5397,7 @@
   ilsa = makeElfNPC({ coat: '#4a3a5a', skin: '#d8b89a', hair: '#2a2a2a', hat: 'cap', capColor: '#5a3d22', tall: 6.2, wide: 1.2 }); ilsa.position.copy(ILSPOS); ilsa.rotation.y = 2.6; skyScene.add(ilsa); skySolids.push({ x: ILSPOS.x, z: ILSPOS.z, r: 1.3 });
   { const gog = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.12, 6, 16), mat('#b08a3a', { metalness: 0.6 })); gog.position.set(0, 0.7, 0.4); gog.rotation.x = 0.5; ilsa.userData.head.add(gog); const scarf = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3, 0.2), mat('#c8384a')); scarf.position.set(-0.9, 4.6, -0.9); scarf.rotation.x = 0.5; ilsa.add(scarf); ilsa.userData.scarf = scarf; }
   fenSky = makeElfNPC({ coat: '#2e6b3a', skin: '#c9956a', hair: '#8a5a2a', hat: 'point', capColor: '#2e6b3a', tall: 6, wide: 1.3 }); fenSky.position.set(-62 * SKY_K, 0, 112 * SKY_K); fenSky.rotation.y = 2.6; skyScene.add(fenSky); skySolids.push({ x: -62 * SKY_K, z: 112 * SKY_K, r: 1.3 });
-  pipSky = makeElfNPC({ coat: '#8a4a2a', skin: '#b98a63', hair: '#1b1b1b', hat: 'none', tall: 5.8, wide: 1.2 }); pipSky.position.set(-56 * SKY_K, 0, 108 * SKY_K); pipSky.rotation.y = 2.2; skyScene.add(pipSky); skySolids.push({ x: -56 * SKY_K, z: 108 * SKY_K, r: 1.3 });
+  pipSky = makeElfNPC({ coat: '#4a7a3a', skin: '#f0c8a8', hair: '#c8a45a', hat: 'none', tall: 5.8, wide: 1.2 }); pipSky.position.set(-56 * SKY_K, 0, 108 * SKY_K); pipSky.rotation.y = 2.2; skyScene.add(pipSky); skySolids.push({ x: -56 * SKY_K, z: 108 * SKY_K, r: 1.3 });
   function goToSky() {
     fadeTo('Skyhaven', () => {
       moveCompany(where === 'lift' ? liftScene : curScene(), skyScene); where = 'skyhaven'; if (riding) setRiding(false); player.position.set(0, 0, 9); bodyYaw = camYaw = 0; player.rotation.y = 0; if (beetle) beetle.position.set(-2, 0, 3);
@@ -6916,7 +6916,7 @@
     cake: { n: 'Slice of cake', e: '🍰', v: 5, t: 2, c: 'food', eat: 45, d: 'Cut into fair eighths, as you know.' },
     pie: { n: 'Berry pie', e: '🥧', v: 6, t: 2, c: 'food', eat: 60, heal: 20, d: 'A whole one. It mends you a little, too.' },
     fish: { n: 'Smoked fish', e: '🐟', v: 5, t: 2, c: 'food', eat: 50, heal: 10, d: 'Caught at the Crossing, smoked over alder.' },
-    rope: { n: 'Coil of rope', e: '🪢', v: 6, t: 2, w: 2, c: 'goods', d: 'Tideknot’s best. Miners and sailors pay well for it.' },
+    rope: { n: 'Coil of rope', e: '🪢', v: 6, t: 2, w: 2, c: 'goods', d: 'Reedwater’s best. Miners and sailors pay well for it.' },
     cheese: { n: 'Highland cheese', e: '🧀', v: 5, t: 3, c: 'food', eat: 45, d: 'Hard, sharp, and it keeps for a month.' },
     woolcap: { n: 'Wool cap', e: '🧶', v: 10, t: 3, c: 'wear', hat: 'wool', d: 'Knitted for the wind on the Highlands.' },
     chalk: { n: 'Surveyor’s chalk', e: '🖍️', v: 2, t: 3, c: 'goods', d: 'Marks stone and washes off in rain.' },
@@ -6951,7 +6951,7 @@
     mill: { n: 'Quern Mill', t: 1, stock: ['apple', 'cider', 'flour'] },
     bakery: { n: 'Crumb’s Bakery', who: 'Maudie Crumb', t: 2, stock: ['bread', 'cake', 'pie'] },
     nets: { n: 'Nets & Lines', t: 2, stock: ['fish'] },
-    ropes: { n: 'Tideknot Ropes', t: 2, stock: ['rope'] },
+    ropes: { n: 'Reedwater Ropes', t: 2, stock: ['rope'] },
     lodge: { n: 'The Surveyors’ Lodge', t: 3, stock: ['cheese', 'woolcap', 'chalk', 'mapscroll'] },
     clockworks: { n: 'The Clockworks', t: 4, stock: ['gear', 'clock', 'flatcap'] },
     bikeworks: { n: 'The Bicycle Works', t: 4, stock: ['bell', 'boots'] },
@@ -7206,7 +7206,7 @@
   function ferryPath() { const P = (hx, hz) => toWorld(frameH, hx, hz), F0 = toWorld(tileF, -(FRN.x + 30), RIVER.z); return [F0, P(-640, 0), P(-420, 14), P(-372, 44), P(-361.5, 70)]; }
   function ferryStart(dir) {
     if (ferryRide || talking()) return;
-    const who = 'Captain Oriel', there = dir === 'down' ? 'Hearthmoor' : 'Fernwater Crossing';
+    const who = 'Ezra Reedwater', there = dir === 'down' ? 'Hearthmoor' : 'Fernwater Crossing';
     choose(who, `The barge goes ${dir === 'down' ? 'down the Fern to <b>Hearthmoor</b>' : 'back up the Fern to <b>Fernwater Crossing</b>'}. It is <b>${FERRY_FARE} coins</b>, and a little over a minute on the water.`, coins >= FERRY_FARE ? [[`Pay ${FERRY_FARE} coins and ride`, () => {
       setCoins(coins - FERRY_FARE); if (riding) setRiding(false); if (sitting) standUp();
       const pts = ferryPath(); if (dir === 'up') pts.reverse(); let len = 0; const seg = []; for (let k = 1; k < pts.length; k++) { const L = Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]); seg.push(L); len += L; }
@@ -8766,7 +8766,7 @@
         'Twenty-four. Six, twelve, eighteen, twenty-four. You added 6 four times.',
         'There\u2019s a shorter way to write that: <b>4 \u00d7 6 = 24</b>. The \u00d7 just means \u201crows of.\u201d Four rows of six.',
         'That\u2019s <b>multiplying</b>. Any time things sit in rows, you multiply instead of counting.',
-        'Now look at the crates by the mill door. Young Pip stacked them. Pip stacks everything in rows, it\u2019s a sickness.'
+        'Now look at the crates by the mill door. Young Pip stacked them. Pip stacks everything in rows. He gets that from his mum\u2019s bread trays.'
       ], () => ask('Pip\u2019s crates: <b>3</b> rows of <b>5</b>. How many crates?', ['12', '15', '18'], '15',
         back => { visual.hidden = false; visual.innerHTML = arraySvg(3, 5) + '<p style="text-align:center;margin:6px 0 0;color:var(--ink-soft)">3 rows of 5: 5, 10, 15.</p>'; setTimeout(back, 1800); },
         () => say([
@@ -8780,7 +8780,7 @@
               () => say([
                 'Forty-eight. <b>24 \u00d7 2 = 48</b>, or 2 rows of 24, same thing. Rows of trees, rows of crates, rows of anything.',
                 'You\u2019ll do. Here\u2019s <b>3 coins</b> and a mill token. Show it at the door and the mice will let you in.',
-                'And go say hello to Pip. Pip doesn\u2019t say much. You two will get on.'
+                'And go say hello to Pip. You won\u2019t need to look for him. He\u2019ll find you.'
               ], () => { setCoins(coins + 3); rewardO1(); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
   }
   function rewardO1() {
@@ -8799,9 +8799,9 @@
   }
   function reachPip() {
     if (phase === 'o5go') { pipPuzzle(); return; }
-    if (phase === 'opip') { phase = 'doneO1b'; say(['\u2026Hi.', 'Hollis says you count rows now.', 'I stack them. Twenty-four crates can go 4 by 6, or 6 by 4, or 3 by 8, or 2 by 12. Or 1 by 24, but that\u2019s silly.', 'I\u2019ll show you sometime. If you want.'], () => hint('Pip Willowby. Quiet, but Pip knows things about crates.'), 'Pip Willowby'); }
-    else if (phase === 'orows') say(['Flags. At the rows. Hollis said.'], null, 'Pip Willowby');
-    else if (['tomill', 'toorch'].includes(phase)) say(['\u2026Hollis is by the press. He\u2019s expecting you.'], null, 'Pip Willowby');
+    if (phase === 'opip') { phase = 'doneO1b'; say(['Hi! You\u2019re new! I\u2019m Pip. Pip Willowby. I\u2019m the tour guide. Of the whole Orchards, basically.', 'Hollis says you count rows now. I stack them! Twenty-four crates can go 4 by 6, or 6 by 4, or 3 by 8, or 2 by 12. Or 1 by 24, but that\u2019s silly, it goes right into the pond.', 'That tree is a thousand years old. Probably. And this is Sir Crumb. He\u2019s a snail. He\u2019s very fast for a snail.', 'I\u2019ll show you the crate thing. Tomorrow. Or now! No, Hollis said tomorrow.'], () => hint('Pip Willowby, the Orchards\u2019 self-appointed tour guide. He talks fast, and he is only sometimes right.'), 'Pip Willowby'); }
+    else if (phase === 'orows') say(['The flags! At the rows! Hollis said! Follow me! Actually, you go. I\u2019m guarding the crates.'], null, 'Pip Willowby');
+    else if (['tomill', 'toorch'].includes(phase)) say(['Hollis is by the press. He\u2019s expecting you. I told him you were coming. Twice.'], null, 'Pip Willowby');
   }
 
   // ---------- Region 2, Lessons 2 to 5: the mill songs, fair shares, leftovers, Pip's puzzle ----------
@@ -8893,12 +8893,12 @@
   // Lesson 5: Pip's puzzle (factors and multiples)
   function startO5() {
     phase = 'o5go'; nearPip = false;
-    say(['Pip\u2019s been waiting all week to show you the crate thing. Go on. By the crates, past the press.'], () => hint('Walk to Pip by the crates.'), 'Hollis Quern');
+    say(['Pip\u2019s been waiting all week to show you the crate thing. He\u2019s told me about it eleven times. Go on. By the crates, past the press.'], () => hint('Walk to Pip by the crates.'), 'Hollis Quern');
   }
   function pipPuzzle() {
     phase = 'o5';
     say([
-      'Twenty-four crates. Watch.',
+      'Twenty-four crates! I counted them three times. Well, twice. Watch!',
       '<b>4</b> rows of <b>6</b>. Or <b>6</b> rows of <b>4</b>. Same crates. Or <b>3</b> rows of <b>8</b>. Or <b>2</b> rows of <b>12</b>.',
       'Every number that makes a neat row is a <b>factor</b> of 24. Those are its factors: 1, 2, 3, 4, 6, 8, 12, 24.'
     ], () => ask('Which of these does <b>not</b> make a neat rectangle of 24 crates?', ['3 rows of 8', '5 rows of 5', '2 rows of 12'], '5 rows of 5',
@@ -8909,7 +8909,7 @@
           () => say(['Four. So 3 and 4 are factors of 12. And 1 and 12, and 2 and 6. Six factors.', 'Now the other word. 24 is a <b>multiple</b> of 6, because 6 rows reach it exactly: 6, 12, 18, 24.'],
             () => ask('Which of these is a <b>multiple of 6</b>?', ['20', '30', '32'], '30',
               back => stepLines(['Sing the six-song: 6, 12, 18, 24, <b style="color:var(--gold)">30</b>, 36', '20 and 32 never come up'], () => setTimeout(back, 1200)),
-              () => say(['Thirty. Five rows of six.', 'Factors go <b>into</b> a number. Multiples come <b>out</b> of it. Same rows, two directions.', '\u2026I made you a crate. A small one. It\u2019s 2 by 3. Six.'],
+              () => say(['Thirty. Five rows of six.', 'Factors go <b>into</b> a number. Multiples come <b>out</b> of it. Same rows, two directions.', 'I made you a crate! A small one. It\u2019s 2 by 3. Six! Sir Crumb helped. He didn\u2019t really, he just sat on it.'],
                 () => { setCoins(coins + 2); rewardOrch(5, 'Pip\u2019s little crate', 'You found the <b style="color:var(--gold)">factors</b> of 24 by stacking it in rows, and sang out its <b style="color:var(--gold)">multiples</b>.', startO6); }, 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby');
   }
 
@@ -9004,7 +9004,7 @@
     phase = 'o9'; fairScore = 0;
     say([
       'Season Fair! Once a year the whole orchard stops work and counts for fun. This year it\u2019s you against Pip.',
-      'Pip\u2019s quick. But Pip also forgets to carry. Five questions, Hollow stuff, nothing you haven\u2019t done. Ready?'
+      'Pip\u2019s quick, and he shouts his answers out. But Pip also forgets to carry, so check his sums. Five questions, Hollow stuff, nothing you haven\u2019t done. Ready?'
     ], () => fairQ(0), 'Hollis Quern');
   }
   const FAIR = [
@@ -9026,8 +9026,8 @@
     phase = 'o9b';
     const won = fairScore >= 3;
     say([
-      `Time! You got <b>${fairScore}</b> first time. Pip got 3, and then ate the leftovers bowl.`,
-      won ? 'You win the fair! The Hollow stuck. Bramblewick will be insufferable when he hears.' : 'Pip takes it this year, but you were close, and every one you missed you got on the second go. That counts.',
+      `Time! You got <b>${fairScore}</b> first time. Pip got 3, said he got 5, and then ate the leftovers bowl.`,
+      won ? 'You win the fair! The Hollow stuck. Bramblewick will be insufferable when he hears.' : 'Pip takes it this year, and he will tell everyone, but you were close, and every one you missed you got on the second go. That counts.',
       'Now. Before you go on down the road, I want to see that broken wing Bramblewick found. Show me the mark.',
       'Hm. Yes. The second symbol. I know that one. It\u2019s the old miller\u2019s sign for <b>\u201cmany.\u201d</b> One, then many. Two down, and the road goes on to the river.'
     ], () => { setCoins(coins + (won ? 4 : 2)); rewardOrch(9, won ? 'The Season Fair ribbon' : 'A Season Fair rosette', `The orchards are done. You re-tested the Hollow and read the second mark on the wing: <b style="color:var(--gold)">\u201cmany.\u201d</b> Fernwater Crossing is next.`, () => { phase = 'tofern'; hint('The road to Fernwater leaves past the mill, through the gate on the right.'); }); }, 'Hollis Quern');
@@ -9050,12 +9050,12 @@
     cuts.forEach(k => { const x = 10 + (W - 20) * k / knots; out += `<line x1="${x}" y1="${y - 16}" x2="${x}" y2="${y + 10}" stroke="var(--berry)" stroke-width="3"/>`; });
     return out + '</svg>';
   }
-  const ORI = 'Captain Oriel', MAUD = 'Maudie Crumb';
+  const ORI = 'Ezra Reedwater', MAUD = 'Maudie Crumb';
   function reachOriel() {
     if (['todock', 'tofern'].includes(phase)) {
       phase = 'ori1';
       say([
-        'You’ll be the one from the Hollow with the beetle. I’m <b>Oriel Tideknot</b>. Captain. Of that.',
+        'Hmph. You’ll be the one from the Hollow with the beetle. <b>Ezra Reedwater</b>. Ferryman. Fifty years on this river, and I know every fish in it by name.',
         'The ferry rope snapped in the night, so nobody’s crossing till it’s mended, and the rope-walk only has an 8-knot length left.',
         'I need it cut <b>in half</b>. Two pieces, and they must be <b>equal</b>, or the ferry pulls crooked. Where do you cut?'
       ], () => ask('An 8-knot rope, cut in <b>half</b>. Cut at which knot?', ['Knot 2', 'Knot 4', 'Knot 6'], 'Knot 4',
@@ -9066,7 +9066,7 @@
             () => say(['Two knots each. A <b>quarter</b>, 1/4: one of four equal pieces. Cut a half in half and you get quarters.', 'Now a plank. 16 notches long. The boatwright wants <b>eighths</b>.'],
               () => askNumber('A 16-notch plank cut into <b>eighths</b>. How many notches in each piece?', 2, '',
                 back => stepLines(['Eighths: eight equal pieces', '16 ÷ 8 = <b style="color:var(--gold)">2</b> notches each'], () => setTimeout(back, 900)),
-                () => say(['Two notches. The more pieces you cut, the <b>smaller</b> each one gets. Halves are big, quarters are smaller, eighths smaller still.', 'The bottom number says how many pieces. The top says how many you’ve got. Here’s <b>2 coins</b>. Now go and see Maudie at the bakery, she’s got cake.'],
+                () => say(['Two notches. The more pieces you cut, the <b>smaller</b> each one gets. Halves are big, quarters are smaller, eighths smaller still.', 'The bottom number says how many pieces. The top says how many you’ve got. Hmph. Not bad. Here’s <b>2 coins</b>. Now go and see Maudie at the bakery, she’s got cake. And tell her Old Barnaby the pike says hello. She won’t know who that is. He’s a fish.'],
                   () => { setCoins(coins + 2); rewardFern(1, 'The ferry rope, mended', 'You cut things into <b style="color:var(--gold)">halves, quarters and eighths</b>: equal pieces, named by how many.', () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb’s bakery is the red-and-cream stall, left of the lane.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI);
     } else if (phase === 'tomaud') { say(['Maudie’s stall. Left of the lane. Go on, she’ll feed you.'], null, ORI); }
     else if (phase === 'f4go') { startF4(); }
@@ -9089,7 +9089,7 @@
     if (phase === 'tomaud') {
       phase = 'f2';
       say([
-        'Hello, duck! Oriel sent you? Then you’re hungry. Everyone Oriel sends is hungry.',
+        'Hello, duck! Ezra sent you? Then you’re hungry. Everyone Ezra sends is hungry.',
         'This cake’s cut in <b>6</b> slices. Go on, have two. Now then, what fraction of the cake did you just eat?'
       ], () => ask('A cake cut into 6 slices. You ate 2. What fraction of the cake is that?', ['1/6', '2/6', '2/3'], '2/6',
         back => { visual.hidden = false; visual.innerHTML = '<div style="text-align:center">' + pieSvg(6, 2, 'var(--berry)') + '</div><p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">6 slices altogether, 2 of them yours: 2 out of 6, written 2/6.</p>'; setTimeout(back, 2000); },
@@ -9104,7 +9104,7 @@
                     back => stepLines(['One third of 12 is 12 ÷ 3 = 4', 'Two thirds is 2 × 4 = <b style="color:var(--gold)">8</b>'], () => setTimeout(back, 900)),
                     () => say(['Eight! Find one third, then take two of them. That’s every fraction of a group, duck.', 'Take a slice for the road, and <b>2 coins</b>. Come back when you want to learn to <b>add</b> slices.'],
                       () => { setCoins(coins + 2); rewardFern(2, 'A slice of Maudie’s cake', 'You named <b style="color:var(--gold)">fractions of a cake</b>, found two that are equal, and took a fraction of a group by dividing.', startF3); }, MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD);
-    } else if (['todock', 'tofern'].includes(phase)) say(['Oriel’s at the dock, duck, by the ferry. Then come back for cake.'], null, MAUD);
+    } else if (['todock', 'tofern'].includes(phase)) say(['Ezra’s at the dock, duck, by the ferry. Then come back for cake.'], null, MAUD);
   }
   // Lesson 3: adding slices (same and different denominators, and taking slices away)
   const pieRow = (a, b, c, op) => '<div style="text-align:center">' + pieSvg(...a) + `<span style="font-size:24px;color:var(--ink-soft)">${op}</span>` + pieSvg(...b) + '<span style="font-size:24px;color:var(--ink-soft)">=</span>' + pieSvg(...c) + '</div>';
@@ -9122,8 +9122,8 @@
                 () => say(['Half a pie! <b>1/3 = 2/6</b>, add the sixth, <b>3/6</b>, which is <b>1/2</b>. Match the slices, count, then say it the simple way.', 'Taking away works the same. Three quarters of a pie, and the kingfisher pinches a quarter.'],
                   () => ask('<b>3/4 − 1/4</b>. How much pie is left?', ['2/4', '2/0', '3/3'], '2/4',
                     back => { visual.hidden = false; visual.innerHTML = pieRow([4, 3], [4, 1], [4, 2], '−'); setTimeout(back, 1800); },
-                    () => say(['Two quarters, half a pie, and one fat kingfisher.', 'You can add and take away slices now. <b>2 coins</b>. Oriel wants you at the money-changer’s next. Mind your purse.'],
-                      () => { setCoins(coins + 2); rewardFern(3, 'Maudie’s pie slice', 'You <b style="color:var(--gold)">added and subtracted fractions</b>: match the slice sizes, then count.', () => { phase = 'f4go'; nearOri = false; hint('Back to Oriel at the dock.'); }); }, MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD);
+                    () => say(['Two quarters, half a pie, and one fat kingfisher.', 'You can add and take away slices now. <b>2 coins</b>. Ezra wants you at the money-changer’s next. Mind your purse.'],
+                      () => { setCoins(coins + 2); rewardFern(3, 'Maudie’s pie slice', 'You <b style="color:var(--gold)">added and subtracted fractions</b>: match the slice sizes, then count.', () => { phase = 'f4go'; nearOri = false; hint('Back to Ezra at the dock.'); }); }, MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD);
   }
   // Lesson 4: the money-changer (silver leaves, gold rings, and the decimal point)
   function coinsPage(c) { return `<div class="ledger"><h3>Your purse</h3><table><tr><td>Acorn coins</td><td>${c}</td></tr><tr><td>10 acorn coins</td><td>1 silver leaf</td></tr><tr><td>10 silver leaves</td><td>1 gold ring</td></tr><tr class="total"><td>Whole silver leaves</td><td><span class="blank"> </span></td></tr></table></div>`; }
@@ -9144,7 +9144,7 @@
                 () => askNumber('<b>1 gold ring, 2 silver leaves and 6 acorn coins.</b> How many acorn coins altogether?', 126, '',
                   back => stepLines(['1 ring = 100 coins', '2 leaves = 20 coins', '6 coins', '100 + 20 + 6 = <b style="color:var(--gold)">126</b>'], () => setTimeout(back, 1000)),
                   () => say(['A hundred and twenty-six. Rings, leaves, coins: hundreds, tens, ones. The same tens-and-ones you learned in the Hollow, just with a point in it.', 'Here, your purse changed, and <b>2 coins</b> on top. Now walk out to the gauge on the dock. The river’s got a number for you.'],
-                    () => { setCoins(coins + 2); rewardFern(4, 'A silver leaf', 'You changed coins into leaves and rings, and read the <b style="color:var(--gold)">decimal point</b>: wholes on the left, tenths on the right.', () => { phase = 'f5go'; nearOri = false; hint('Walk to the river gauge by the dock, near Oriel.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+                    () => { setCoins(coins + 2); rewardFern(4, 'A silver leaf', 'You changed coins into leaves and rings, and read the <b style="color:var(--gold)">decimal point</b>: wholes on the left, tenths on the right.', () => { phase = 'f5go'; nearOri = false; hint('Walk to the river gauge by the dock, near Ezra.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
   }
   // Lesson 5: decimals on the dock (reading the gauge, comparing, rounding)
   function gaugeSvg(level, marks, showLabel = !!marks) {
@@ -9259,8 +9259,8 @@
     if (phase !== 'tofen2') return;
     phase = 'f9';
     say([
-      'It’s you! Look at this. My own barge! Well, a third of it. Maudie and Oriel own the rest. We carry berries down from the Hollow.',
-      'I’ve been keeping the ledger myself and, um. It’s gone a bit wrong. Oriel says you’re good at this now. Would you check it?',
+      'It’s you! Look at this. My own barge! Well, a third of it. Maudie and Ezra own the rest. We carry berries down from the Hollow.',
+      'I’ve been keeping the ledger myself and, um. It’s gone a bit wrong. Ezra says you’re good at this now. Would you check it?',
       'First page. We loaded <b>3/4</b> of a crate of berries at the Hollow and <b>1/2</b> a crate at the orchards.'
     ], () => ask('<b>3/4 + 1/2</b> crates of berries. How much is that altogether?', ['4/6', '1 1/4', '5/4 of a half'], '1 1/4',
       back => { visual.hidden = false; visual.innerHTML = pieRow([4, 3], [4, 2], [4, 4], '+') + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">1/2 is 2/4. Then 3/4 + 2/4 = 5/4: one whole crate and a quarter left over.</p>'; setTimeout(back, 2400); },
@@ -9269,11 +9269,11 @@
           back => stepLines(['Line up the points', '2.4 + 1.8: tenths first, 4 + 8 = 12, that’s 1 and 2 tenths', '2 + 1 + 1 = 4, and 2 tenths: <b style="color:var(--gold)">4.2</b>'], () => setTimeout(back, 1100)),
           () => say(['4.2 leaves. Forty-two coins! I wrote 3.12. I didn’t line up the points.', 'Third page. The ferry charges <b>20%</b> of takings for the crossing.'],
             () => askNumber('20% of 4.2 leaves. How many <b>coins</b> is the ferry fee? (4.2 leaves is 42 coins.)', 8, '',
-              back => stepLines(['10% of 42 is 4.2', '20% is twice that: <b style="color:var(--gold)">8.4</b> coins, call it 8 and a bit', 'Oriel rounds down. 8.'], () => setTimeout(back, 1100)),
-              () => say(['Eight coins, give or take the bit Oriel rounds off. We keep <b>34</b>.', 'Last page. Thirty-four coins, split <b>three ways</b> between me, Maudie and Oriel. Equal shares.'],
+              back => stepLines(['10% of 42 is 4.2', '20% is twice that: <b style="color:var(--gold)">8.4</b> coins, call it 8 and a bit', 'Ezra rounds down. 8.'], () => setTimeout(back, 1100)),
+              () => say(['Eight coins, give or take the bit Ezra rounds off. We keep <b>34</b>.', 'Last page. Thirty-four coins, split <b>three ways</b> between me, Maudie and Ezra. Equal shares.'],
                 () => askNumber('<b>34 coins</b> shared three ways. How many coins each, with how many left over? (Write the coins each.)', 11, '',
                   back => dealRow(34, 3, 'coin', () => setTimeout(back, 1400)),
-                  () => say(['Eleven each, and one left over. The one goes in the barge’s jar for repairs. I wrote 12 each and wondered where the extra coins went.', 'You fixed the whole book. You know what, if you’re ever back this way… you could run a stall. Oriel! Tell them!'],
+                  () => say(['Eleven each, and one left over. The one goes in the barge’s jar for repairs. I wrote 12 each and wondered where the extra coins went.', 'You fixed the whole book. You know what, if you’re ever back this way… you could run a stall. Ezra! Tell them!'],
                     () => { setCoins(coins + 3); finishFern(); }, 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry');
   }
   function finishFern() {
@@ -10890,7 +10890,7 @@
       { const B = orchScene.userData.bees, out = clockNight() < 0.5; if (B && (out || B.mesh.visible)) { B.mesh.visible = out; const m4 = B.m4 || (B.m4 = new THREE.Matrix4()); B.seed.forEach(([bx, bz, ph, sp], i) => { const a = (netNow() % 100000) * sp + ph; m4.makeTranslation(bx + Math.sin(a * 1.3) * 3 + Math.sin(a * 0.31) * 5, 2.4 + Math.sin(a * 2.1 + ph) * 1.3 + Math.sin(a * 0.4) * 1.2, bz + Math.cos(a * 1.1) * 3 + Math.cos(a * 0.27) * 5); B.mesh.setMatrixAt(i, m4); }); B.mesh.instanceMatrix.needsUpdate = true; } }
       orchTrees.forEach(tr => { if (tr.userData.bounce > 0) { tr.userData.bounce = Math.max(0, tr.userData.bounce - dt * 1.6); tr.scale.setScalar(1 + Math.sin(tr.userData.bounce * Math.PI) * 0.12); } });
     }
-    // Fernwater: Oriel at the dock, Maudie at the bakery, the ferry rocking, the water moving
+    // Fernwater: Ezra at the dock, Maudie at the bakery, the ferry rocking, the water moving
     if (where === 'fernwater') {
       const dOri = Math.hypot(player.position.x - ORIPOS.x, player.position.z - ORIPOS.z);
       if (dOri < 30 && FOLK.ori.mode === 'post') ori.lookAt(player.position.x, 1.65, player.position.z); if (!reduce) oriHead.rotation.y = Math.sin(t * 0.7) * 0.1;
@@ -11093,7 +11093,7 @@
     tam: { g: tam, hd: tam.userData.head, n: 'Tamsin Gearwright', post: TAMPOS, home: 'tamhome', w: 'cogsworth', yaw0: 2.2, via: [[-12, 66], [-20, 80]] },
     wren: { g: wren, hd: wren.userData.head, n: 'Wren Ashcombe', post: WRENPOS, home: 'wrenhome', w: 'cairnhold', gx: CRN.w, yaw0: 2.4, via: [[-13, 50], [CRN.w, 50]] },
     pip2: { g: pip2, hd: pip2.userData.head, n: 'Pip Willowby', post: PIP2POS, home: 'wrenhome', w: 'cairnhold', gx: CRN.w, yaw0: -2.2, kid: true, noKnock: true, fire: [11, -8], via: [[13, 50], [CRN.w, 50]] },
-    ori: { g: ori, hd: oriHead, n: 'Captain Oriel Tideknot', post: ORIPOS, py: 1.65, home: 'orihome', w: 'fernwater', via: [[17, 57], [17, 50], [0, 50]] },
+    ori: { g: ori, hd: oriHead, n: 'Ezra Reedwater', post: ORIPOS, py: 1.65, home: 'orihome', w: 'fernwater', via: [[17, 57], [17, 50], [0, 50]] },
     maud: { g: maud, hd: maudHead, n: 'Maudie Crumb', post: maud.position.clone(), home: 'maudhome', w: 'fernwater', indoor: 'bakery', via: [], solid: interiors.bakery.solids.find(q => q.x === maud.position.x && q.z === maud.position.z) } };
   const FTOWN = { village: { homes: HOMES, lane: LANE.z, gx: 3, sc: scene, sol: solids }, orchards: { homes: OHOMES, lane: ORC.lane, gx: ORC.gx, sc: orchScene, sol: orchSolids }, fernwater: { homes: FHOMES, lane: FRN.lane, gx: 0, sc: fernScene, sol: fernSolids, gy: fernY }, cairnhold: { homes: CHOMES, lane: CRN.lane, gx: CRN.e, sc: cairnScene, sol: cairnSolids }, cogsworth: { homes: GHOMES, lane: CGW.lane, gx: CGW.gx, sc: cogScene, sol: cogSolids }, emberdeep: { homes: THOMES, lane: 0, gx: 0, sc: embScene, sol: embSolids }, wild: { homes: THOMES, lane: 0, gx: 0, sc: worldScene, sol: TF.wsol, gy: (x, z) => worldH(x, z) }, skyhaven: { homes: KHOMES, lane: 0, gx: 0, sc: skyScene, sol: skySolids }, lantern: { homes: LHOMES, lane: LNT.lane, gx: -2, sc: lantScene, sol: lantSolids, gy: lantH } };
   const lyingQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0)));
@@ -11124,7 +11124,7 @@
       [{ coat: '#6a4a6a', skin: '#b98560', hair: '#dcdcdc' }, 'Fennel Rook', ['Fennel Rook, pedlar. Needles, ribbon and buttons. I am two days out of Hearthmoor.', 'I never sleep under a hedge when there is an inn with a fire in it. That is the whole of my wisdom.', 'I will be gone in the morning. I always am.']]];
     guests.forEach(([o, n, lines], q) => { const [x, z, yaw] = INN_SEATS.guest[q]; o.sit = true; addFolk(isc, 'in:inn', o, x, z, yaw, n, lines, day(17, 23)); }); }
   { const always = () => true, staff = (id, o, n, lines) => { const [x, z, yaw] = CITY_SEATS[id]; addFolk(interiors[id].scene, 'in:' + id, o, x, z, yaw, n, lines, always); };
-    const KEEP = ['Nettie Thistle', 'Russet Quern', 'Marlow Tideknot', 'Hobb Cairnside', 'Tock Brasswell', 'Emberly Coalgate', 'Luma Wickfield', 'Zephyr Highmoor'];
+    const KEEP = ['Nettie Thistle', 'Russet Quern', 'Marlow Reedwater', 'Hobb Cairnside', 'Tock Brasswell', 'Emberly Coalgate', 'Luma Wickfield', 'Zephyr Highmoor'];
     TOWN8.forEach(([town, col], i) => staff('hall' + i, { coat: col, skin: ['#e8b890', '#c9956a', '#d9a070', '#b98560'][i % 4], hair: ['#8a4a2a', '#3a2a1e', '#c9b06a', '#dcdcdc'][i % 4] }, KEEP[i], [`${KEEP[i]}. I keep the ${town} Hall. Everything ${town} makes, we sell here. Ring the bell on the barrel.`, 'It is cheaper at home, of course. Here you are paying for the road it came down.', 'And I will buy whatever you have carried in, at the city’s price.']));
     staff('guildhall', { coat: '#3a2a18', skin: '#d9a070', hair: '#8a8a8a' }, 'Odo Ledgerwood', ['Odo Ledgerwood, clerk to the Guild. The eight towns sit at that table, each in its own chair.', 'I keep the register: who has which room, and who has which lot. One lot to each elf. Go and stand at the post by its gate, and claim it.', 'Nobody may build on a lot yet. The surveyors have not finished. But your name goes on the sign.', 'Sit in a chair if you like. Nobody is using them today.']);
     staff('bank', { coat: '#5a5a52', skin: '#f0c9a0', hair: '#2a2018' }, 'Penny Farthingale', ['Penny Farthingale. Your strongbox is on the east wall, the brass one. It holds forty, and nobody opens it but you.', 'We do not keep coins for people yet. Only things. The coins you may carry yourself.']);
@@ -11137,7 +11137,10 @@
   { const lt = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.7), lampGlass); lt.position.set(-1.7, 2.6, 0.5); BRYN.g.add(lt); const halo = new THREE.Sprite(haloM); halo.position.set(-1.7, 2.6, 0.5); halo.scale.setScalar(4); BRYN.g.add(halo); }
   // the Orchards' own people. Each has a place to stand by day and a house on Windfall Lane to walk home to.
   { const mk = (id, o, x, z, yaw, n, lines, home, via, extra) => { const F = addFolk(orchScene, 'orchards', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = Object.assign({ g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'orchards', via, solid: F.solid, yaw0: yaw }, extra || {}); folkInit(id, Object.keys(FOLK).length - 1); return F; };
-    mk('nell', { coat: '#3a4a9a', skin: '#f0c9a0', hair: '#2a2a2a' }, 102, 130, Math.PI, 'Nell Willowby', ['Nell Willowby, cooper. Every crate and every cider barrel in the Orchards came off this bench.', 'A barrel is staves, hoops and nothing else. No nails and no glue. The cider swells the wood and the wood holds the cider.', 'Pip is mine. The stacking in rows comes from me, and I will not hear a word against it.', 'I work till the light goes. Then it is home to Windfall Lane, number two.'], 'piphome', [[76, 118], [ORC.gx, 118]]);
+    mk('nell', { coat: '#4a5fb0', skin: '#ecc0a0', hair: '#c8a45a' }, 72, 116, Math.PI * 0.9, 'Nell Willowby', ['Nell Willowby, baker. Every loaf in the Orchards comes out of my oven, and most of them end up on this barrow.', 'Forty loaves every morning, five rows of eight, out of the oven before the sun is over the trees.', 'Pip is mine. The stacking in rows comes from me, and I will not hear a word against it. And if he told you that tree is a thousand years old, it is not.', 'I sell till the bread is gone. Then it is home to Windfall Lane, number two.'], 'piphome', [[76, 118], [ORC.gx, 118]]);
+    mk('rosie', { coat: '#4a6a3a', skin: '#f0c8a8', hair: '#c8a45a', braid: true, tall: 5.6 }, 69, 117, Math.PI * 0.85, 'Rosie Willowby', ['Rosie Willowby. Nell\u2019s my mum. Pip\u2019s my brother. Sorry about that.', 'I\u2019m minding the barrow while Mum fetches the next tray. You can look at the bread, but don\u2019t squash it.', 'School lets out at three, so I come straight here. I\u2019m the oldest at the Orchards school; I help the little ones with their letters.', 'Whatever Pip told you about that tree, it isn\u2019t a thousand years old. Maybe two hundred. I checked in a book.', 'I want to be a teacher one day. Or a librarian in Hearthmoor. Or both.'], 'piphome', [[76, 118], [ORC.gx, 118]]);
+    mk('tom', { coat: '#6a4426', skin: '#e0a888', hair: '#5a3a22', tall: 6.5, wide: 1.9 }, 9, 97, Math.PI * 0.8, 'Tom Willowby', ['Right then! Tom Willowby, carter. Forty sacks of Hollis\u2019s flour, twelve crates of apples, and Biscuit says that\u2019s plenty.', 'Down the Long Road to Fernwater, across on Ezra\u2019s ferry, and on to Hearthmoor. Two days there, two days back.', 'Gone Monday, home Friday. That\u2019s a carter\u2019s life, friend. I sing the last mile home so the lane knows I\u2019m coming.', 'Has our Pip shown you round? Course he has. He gets that from me.', 'A sack of flour weighs about as much as Pip. Don\u2019t tell him I said so.'], 'piphome', [[ORC.gx, 100], [ORC.gx, 118]]);
+    mk('abel', { coat: '#8a4a2a', skin: '#d89c80', hair: '#b8b4ae' }, 102, 130, Math.PI, 'Abel Hoopwright', ['Mm. Abel Hoopwright. Cooper. Every barrel and every crate in the Orchards came off my bench.', 'A barrel is staves, hoops and nothing else. No nails. No glue. Thirty-two staves. Count \u2019em if you like.', 'Hear that ring? That hoop\u2019s tight. Measure twice, cut once. Aye.', 'Young Pip\u2019s been at my crates again. Rows. Always rows.', 'I lodge with Hollis at the miller\u2019s house, number one. He snores. I hum. We get on.'], 'holhome', [[76, 118], [ORC.gx, 118]]);
     mk('bram', { coat: '#b08a3a', skin: '#d9a070', hair: '#dcdcdc' }, 124, 37, -Math.PI / 2, 'Bram Honeywell', ['Bram Honeywell. These are my bees, though the bees would put it the other way about.', 'No bees, no apples. A blossom that no bee visits sets no fruit. Hollis knows it, which is why he lets me have this corner.', 'Walk slowly near the skeps and they will not mind you. It is flapping that upsets them.', 'I wrote it all down once. The Library at Hearthmoor has the book.'], 'bramhome', [[124, 66], [60, 100], [ORC.gx, 104]]);
     mk('tan', { coat: '#4f6b3a', skin: '#c9956a', hair: '#8a4a2a' }, 73, 40.5, -Math.PI / 2, 'Tansy Applegarth', ['Tansy Applegarth. I pick the pears. Apples you can shake down. A pear you must take off by hand, or it bruises.', 'Four rows of six. You will have that worked out before I finish saying it, if Hollis has had you.', 'A pear is picked hard and ripens indoors. One left to go soft on the tree is brown in the middle.', 'Number four, Windfall Lane, with the berry bushes at the back. That is me.'], 'tanhome', [[58, 70], [50, 96], [ORC.gx, 104]]); }
   // ---- the sky-lift's working runs: the first car of the morning takes Skyhaven's people up, and the last at night brings them down ----
@@ -11329,7 +11332,8 @@
     mk('tob', { coat: '#4f7a5a', skin: '#d9a070', hair: '#8a4a2a' }, 49.5, 72, -Math.PI / 2, 'Tobias Marl', ['Tobias Marl. I carry the other end of the chain. A surveyor is no use alone: it takes two to measure anything longer than your arm.', 'A map is the land made small, by the same amount everywhere. Shrink one field more than its neighbour and the map is a lie.', 'That is the odd field. It will not fit one sum, so you cut it into two oblongs in your head and add them.', 'Number four, Rim Row, the last house east. I pace it home every night: it is the same number of steps every time, which is the point.'], 'tobhome', [[CRN.e, 72]]); }
   // Fernwater's own people
   { const mk = (id, o, x, z, yaw, n, lines, home, via) => { const F = addFolk(fernScene, 'fernwater', o, x, z, yaw, n, lines, () => F.g.visible); FOLK[id] = { g: F.g, hd: F.g.userData.head, n, post: new THREE.Vector3(x, 0, z), home, w: 'fernwater', via, solid: F.solid, yaw0: yaw }; folkInit(id, Object.keys(FOLK).length - 1); return F; };
-    mk('hes', { coat: '#3e8a52', skin: '#c9956a', hair: '#5a3d22' }, -12, 20, -Math.PI / 2, 'Hester Tideknot', ['Hester Tideknot. Oriel sails with rope and I make it. He is my brother, and he would be tied up with string without me.', 'A rope is yarns twisted one way into strands, and strands twisted the other way into rope. Each twist is trying to undo the other, and that is what holds it shut.', 'Three strands is the usual. Count them on any rope you pick up.', 'We are both at number one, Heron Row, over the bridge. I walk home when the light goes.'], 'orihome', [[0, 20]]);
+    mk('hes', { coat: '#9a3e26', skin: '#d8a888', hair: '#8a8a86', tall: 6.4 }, -12, 20, -Math.PI / 2, 'Hester Reedwater', ['Hester Reedwater. Ropemaker. Ezra poles the ferry with rope and I make it. He would be tied up with string without me.', 'Three strands. Twist each one right. Lay them together left. That\u2019s rope. Everything else is string.', 'The ferry rope is a hundred and twenty yards, nine turns to the foot. I\u2019ve made it three times. Count them if you don\u2019t believe me.', 'My brother says my rope\u2019s too stiff. My brother can\u2019t tie a bowline.', 'Mother taught me the trade. She\u2019s ninety-four and still splices by the fire at Reedwater House. Number one, Heron Row.'], 'orihome', [[0, 20]]);
+    mk('ada', { coat: '#c8962a', skin: '#8a5a3e', hair: '#4a4444', wide: 1.9 }, 49, 40.5, -Math.PI / 2, 'Ada Reedwater', ['Now then, petal! Ada Reedwater. I run the Ferry Office. Ezra poles the ferry; I run everything else.', 'One across is two coppers, a child is one. Let\u2019s count your change out together, shall we?', 'Ezra says hmph. That means hello. Fifty years and I\u2019ve still not got him to say it.', 'Have you seen my spectacles? Oh. They\u2019re round my neck. Again.', 'Brave on the ferry? Then you get a peppermint. Our Lily had three last summer.'], 'orihome', [[17, 50], [0, 50]]);
     mk('cor', { coat: '#d9a33f', skin: '#f0c9a0', hair: '#2a2a2a' }, 9.5, 48.5, 0.4, 'Corwin Sedge', ['Corwin Sedge. Nets and lines. If it came out of the Fern this morning, I caught it.', 'A net is all one knot, tied a few hundred times. The holes are made to a size: big enough that the small fish swim through and grow.', 'A net dries on the rack, or it rots. So every evening it goes up, wet or not.', 'Number three, Heron Row. You will know it by the smell of smoke. That is the fish.'], 'corhome', [[0, 48.5]]);
     mk('pell', { coat: '#3e6a4a', skin: '#d9a070', hair: '#dcdcdc' }, -9, 108, 2.4, 'Pell Reedmace', ['Pell Reedmace. I keep the bridge. Every plank and every post on it has been under my hand.', 'I read the river gauge at dawn and at dusk and write the number down. After rain in the hills the number goes up a day later, never the same day.', 'Wood that stays wet lasts. Wood that stays dry lasts. It is wood that is wet and then dry and then wet again that rots, so I watch the posts at the waterline.', 'Number four, Heron Row, this side of the water. I have the shortest walk home of anybody.'], 'pellhome', [[0, 108]]); }
   function residentTalk(who, knock) {
@@ -11339,12 +11343,16 @@
       fen: asleep ? ['Mmf. Is it morning? It is not morning. All right. I am up. For reading, I am always up.'] : ['Stall is shut, but I am still awake. Did you come to read?'],
       ald: asleep ? ['It is the middle of the night. The shop opens at seven. Whatever it is will keep till then. Good night.'] : ['Shop opens at seven. If it is a whistle you are after, it will keep. Good night.'],
       hol: asleep ? ['Hrm? The mill is… no. It is night. It is you. Well, a miller is up before the mice anyway. What do you need?'] : ['The mill is shut and the mice are fed. But I will always count with anyone who knocks.'],
-      pip: asleep ? ['…I was asleep. I was dreaming about crates. Twelve rows of twelve. It was a good dream.', 'Hollis teaches. I just stack. Come and find me in the yard tomorrow.'] : ['I am meant to be going to bed. I have stacked my boots in a row, though. Look.', 'Come and find me in the yard tomorrow.'],
-      nell: asleep ? ['Is something on fire? No? Then it will keep till morning, love. The cooperage opens with the light.'] : ['Workshop is shut for the night. Pip is meant to be in bed, so do not get that one started on crates.'],
+      pip: asleep ? ['Mmf. I wasn\u2019t asleep. I was resting my eyes. I was dreaming about crates. Twelve rows of twelve! It was brilliant.', 'Come and find me in the yard tomorrow. I\u2019ll show you everything. Again.'] : ['I\u2019m meant to be going to bed. I stacked my boots in a row, though. Look! And Sir Crumb is in a row. A row of one.', 'Come and find me in the yard tomorrow!'],
+      nell: asleep ? ['Is something on fire? No? Then it will keep till morning, love. The bakery opens before the light.'] : ['Bakery is shut for the night, love. Pip is meant to be in bed, so do not get him started.'],
+      rosie: asleep ? ['Mm? Oh. It\u2019s you. I was reading under the covers. Don\u2019t tell Mum.'] : ['I\u2019ve got school in the morning. Come by the barrow after three.'],
+      tom: asleep ? ['Eh? Who\u2019s that? Friend, I\u2019ve a cart to load at dawn. Off to bed with you!'] : ['Biscuit\u2019s in her stall and I\u2019ve had my supper. Fine evening, friend. Mind the lane in the dark.'],
+      abel: asleep ? ['Mm? \u2026Morning already? No. Go to bed, young\u2019un.'] : ['Mm. Barrels keep till morning. So do I.'],
       bram: asleep ? ['Mm. The bees are asleep and so was I. Come to the bee yard in the morning, when we are all in a better temper.'] : ['The bees are in for the night, and so am I. Find me by the skeps tomorrow.'],
       tan: asleep ? ['It is the middle of the night. The pears will still be there tomorrow, and so will I. Good night.'] : ['Done for the day. My arms have picked all they are going to. Come by the pear rows tomorrow.'],
-      ori: asleep ? ['Who is knocking at this hour? Oh. A ferryman sleeps light, as it happens. What do you want to work out?'] : ['The barge is moored and the lamp is out. But there is always a watch to keep, so come in. Fractions?'],
-      hes: asleep ? ['Mm. It is the middle of the night, and I have a hundred fathoms to lay tomorrow. Find me at the rope-walk.'] : ['The rope-walk is shut up for the night. Oriel is the one for lessons. I am the one for rope.'],
+      ori: asleep ? ['Hmph. Who is knocking at this hour? Oh. It\u2019s you. A ferryman sleeps light. Come in, then. What do you want to work out?'] : ['The barge is moored and the lamp is out. I was just singing to the kettle. Come in, come in. Fractions?'],
+      ada: asleep ? ['Mm? Goodness, petal, it\u2019s the middle of the night. Mother Martha\u2019s asleep by the fire. Come back at sunrise for the first crossing.'] : ['Office is shut, my love. I\u2019m just putting the kettle on. First crossing is at sunrise.'],
+      hes: asleep ? ['Mm. It is the middle of the night, and I have a hundred fathoms to lay tomorrow. Find me at the rope-walk.'] : ['The rope-walk is shut up for the night. Ezra is the one for lessons. I am the one for rope.'],
       maud: asleep ? ['Bless you, I am up at four for the ovens as it is. The bakery opens at seven. Go to bed, lamb.'] : ['The ovens are banked for the night, love. Fresh at seven. Off you go.'],
       cor: asleep ? ['The fish are asleep. I should like to be. Come by the nets in the morning.'] : ['Nets are up and I am in. Come by the rack tomorrow.'],
       astra: asleep ? ['Hm? Oh. It is you. I was asleep, though I grant you it is hard to tell when, in this town. What do you need?'] : ['The stars are the same at this hour as at any other, here. But I am done at the light for today. Come in.'],
@@ -12177,4 +12185,3 @@ if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : key =
   else { drawMap(); showTitle(); }
 })();
 </script>
-</body></html>
