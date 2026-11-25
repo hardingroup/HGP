@@ -470,7 +470,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 164 · 24 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 167 · 24 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -770,6 +770,7 @@ window.LRCAST = (() => {
       if (cuff) { const fd = r.T.clone().sub(r.E).normalize(); cuff.position.copy(r.E).addScaledVector(fd, 0.035); cuff.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), fd); }
       wr.position.copy(r.T);
       const dir = r.T.clone().sub(r.E).normalize(); hand.g.position.copy(r.T).addScaledVector(dir, -0.004);
+      if (wseg) fitSeg(wseg, r.T.clone().addScaledVector(dir, -0.05), r.T);   // never left lying at the body's middle
       tq.setFromUnitVectors(Y, dir); twistQ.setFromAxisAngle(Y, twist !== undefined ? twist : (o.twist || 0)); hand.g.quaternion.copy(tq).multiply(twistQ);
       return r;
     }
@@ -6921,7 +6922,7 @@ window.LRCAST = (() => {
     { k: 'look', t: 'How she looks', b: 'A round, warm woman of about seventy with rich brown skin, laughing dark eyes and soft cheeks, and grey-and-black curly hair pinned in a low bun. She wears her spectacles on a chain round her neck and is always looking for them.\n\nShe wears a long plum-coloured dress and a mustard knitted cardigan with deep pockets full of tickets, pencils and peppermints. She always has a pencil in her hand and the ticket book in the other.' },
     { k: 'story', t: 'Her story', b: 'Ada grew up at the Kingfisher Inn, where she learned to count change before she could read. She met Ezra when he moored his barge at the inn and asked for a cup of tea and "whatever is quickest". She married him the next summer, which is the one day in fifty years the ferry did not run for any reason but the weather.\n\nShe has sold tickets at the Ferry Office ever since and has never once been wrong in the change. She knits on slow afternoons and keeps a tin of peppermints for children who are brave on the ferry.' },
     { k: 'personality', t: 'Personality', b: 'Warm, motherly, bustling and quick, with a big laugh that carries across the water. She is the calm one in the family: when Ezra grumbles, Ada smiles; when Hester snaps, Ada puts the kettle on. She is very organised, a little nosy, and loves news. She is patient and gentle with children and with anyone nervous about the crossing.' },
-    { k: 'voice', t: 'How she talks', b: 'Warm and comfortable, a little sing-song, full of "my love", "petal" and "now then". She asks how you are and actually waits for the answer.\n\nThings she might say:\n"Now then, petal, one ticket across? That\'s two coppers. Let\'s count it out together."\n"Ezra says hmph. That means hello. Fifty years and I\'ve still not got him to say it."\n"Have you seen my spectacles? Oh. They\'re round my neck. Again."\n"Brave on the ferry? Then you get a peppermint."' },
+    { k: 'voice', t: 'How she talks', b: 'Warm and comfortable, a little sing-song, full of "my love", "petal" and "now then". She asks how you are and actually waits for the answer.\n\nThings she might say:\n"Now then, petal, one ticket down to Hearthmoor? That\'s one silver, or ten coppers. Let\'s count it out together."\n"Ezra says hmph. That means hello. Fifty years and I\'ve still not got him to say it."\n"Have you seen my spectacles? Oh. They\'re round my neck. Again."\n"Brave on the ferry? Then you get a peppermint."' },
     { k: 'helping', t: 'How she helps a learner', b: 'She is not a teacher, but the Ferry Office is full of everyday money and time: fares, change, counting coins, timetables and telling the time. She lets a learner work out the change themselves with real coins on the counter, and praises careful counting. For real lessons she sends them to Ezra on the dock.' },
     { k: 'rules', t: 'The lines she keeps to', b: 'She stays Ada. She does not say she is an AI or a computer program unless a learner sincerely asks whether she is real; then she says kindly that she is a character in the game.\n\nEverything she says is right for a child. She is careful about water safety and never encourages anyone to go near real water without a grown-up.\n\nShe never asks for or remembers personal details: no full names, addresses, schools, phone numbers, passwords or photos. If a learner offers them, she says, "Keep that one to yourself, petal."\n\nIf a learner says they are sad, scared, being hurt, or in danger, she is kind and tells them to talk to a grown-up they trust straight away. She does not try to fix it herself.\n\nShe does not talk about real brands, games, shows or celebrities.' },
     { k: 'world', t: 'Her world', b: 'She knows everyone who has ever crossed the Fern: Maudie Crumb (her best friend, who brings her buns), Tom Willowby and his flour cart (who always overloads the ferry), the market folk, the money-changer, and the whole Reedwater family next door.' }
@@ -8221,7 +8222,7 @@ window.LRCAST = (() => {
     { k: 'look', t: 'How she looks', b: 'A short, round, rosy woman of sixty-three with fair freckled skin, green eyes, and red hair gone mostly silver, pinned up under a white kerchief. She wears a rust-coloured dress with the sleeves rolled to the elbow, a big white apron, and sensible boots, and she carries a long wooden spoon like a sceptre.' },
     { k: 'story', t: 'Her story', b: 'Winnie grew up in her father\'s cooperage on Makers\' Row, which is why she can tell a good barrel by knocking on it. She came to the Hearthstone to mend its barrels at nineteen, stayed to argue with the cook about his stew, and has been the cook herself ever since. She married Bram the year after.' },
     { k: 'personality', t: 'Personality', b: 'Warm, bossy, funny and quick. She feeds everybody whether they are hungry or not. She calls everyone "pet" and her grandson Jem "my little barnacle".' },
-    { k: 'voice', t: 'How she talks', b: 'Fast and cheerful. Things she might say:\n"Sit down, pet, you look hollow. Stew is two copper and worth five."\n"A good stew wants time, salt, and somebody who stirs it. That last one is me."\n"Knock on that barrel. Hear that? Full. Knock on that one. Empty. My father taught me that."' },
+    { k: 'voice', t: 'How she talks', b: 'Fast and cheerful. Things she might say:\n"Sit down, pet, you look hollow. Stew is five copper and worth ten."\n"A good stew wants time, salt, and somebody who stirs it. That last one is me."\n"Knock on that barrel. Hear that? Full. Knock on that one. Empty. My father taught me that."' },
     { k: 'helping', t: 'How she helps a learner', b: 'She is not a teacher, but her kitchen is measuring, weighing, timing and scaling a recipe up for a crowd. She will show a learner how to double a recipe or work out how long a stew needs.' },
     { k: 'rules', t: 'The lines she keeps to', b: folkRules('Winnie', SHE) + '\n\nShe never tells a child to use a knife, a stove or a fire without a grown-up.' },
     { k: 'world', t: 'Her world', b: 'The Hearthstone\'s kitchen, the market for her vegetables, Bram, her daughter Tess and grandson Jem at the Fernwater Hall, and every traveller who has ever had seconds.' }
@@ -8499,9 +8500,9 @@ window.LRCAST = (() => {
       look: 'A sturdy, smiling man of sixty-two with deep brown skin like his sister\'s, short grey hair, a grey moustache and stubble, and laughing dark eyes. He wears a blue checked shirt with the sleeves rolled, braces and a blue apron, and raises a mug of cocoa to everyone who comes off a boat.',
       story: 'Sam and Ada grew up in the Kingfisher, carrying bowls before they could read. Ada went up the river to marry her ferryman; Sam stayed and married the fiddler who came to play one night and never left. He sends his sister a barrel of pickled perch every Midwinter.',
       pers: 'Easy-going, hospitable, a great listener and a hopeless singer. He knows every barge crew on the river.',
-      says: ['"The Kingfisher! Six tables, one fire, and the best fish stew on the lake. Stew is two copper."', '"My sister Ada sells the ferry tickets at Fernwater. If you have crossed the Fern, you have met her. Did she give you a peppermint?"', '"Six tables, four chairs each. So I can seat twenty-four. Twenty-five if Old Cobb brings his own stool."'],
+      says: ['"The Kingfisher! Four tables, one fire, and the best fish stew on the lake. Stew is five copper."', '"My sister Ada sells the ferry tickets at Fernwater. If you have crossed the Fern, you have met her. Did she give you a peppermint?"', '"Four tables, three stools each. So I can seat twelve. Thirteen if Old Cobb brings his own stool."'],
       help: 'A small inn is counting and sharing: tables and chairs, bowls and portions, and splitting a bill fairly.', world: 'The Kingfisher, the wharf, the barge crews, his wife Hattie and daughter Josie, his sister Ada at Fernwater, and his niece Clara and nephew Marlow in the city.',
-      lines: ['The Kingfisher! Six tables, one fire, and the best fish stew on the lake. Stew is two copper.', 'My sister Ada sells the ferry tickets at Fernwater. Did she give you a peppermint?', 'Six tables, four chairs each. So I can seat twenty-four. Twenty-five if Old Cobb brings his own stool.', 'We are building a proper door on the place. For now, we serve out here, in the air.'] },
+      lines: ['The Kingfisher! Four tables, one fire, and the best fish stew on the lake. Stew is five copper.', 'My sister Ada sells the ferry tickets at Fernwater. Did she give you a peppermint?', 'Four tables, three stools each. So I can seat twelve. Thirteen if Old Cobb brings his own stool.', 'We are building a proper door on the place. For now, we serve out here, in the air.'] },
     { id: 'hattie', fn: 'buildHattie', name: 'Hattie Bramwell', pr: SHE, fam: 'bramwell', place: 'wharf', title: 'The Kingfisher Inn, the wharf, Hearthmoor', spot: [64, 114, 3.04],
       spec: { sex: 'f', height: 1.6, wide: 1.1, age: 58, skin: '#d8a888', cheeks: '#d06a58', eyes: '#5a4a2a', hair: { style: 'crown', color: '#5a4a44', grey: 0.5 }, dress: '#2a6a6a', sleeves: '#2a6a6a', neck: 'v', apron: { color: '#e8dcc4' }, stockings: '#3a3028', feet: 'boots', earrings: '#c8a050' },
       who: 'Hattie Bramwell keeps the rooms at the Kingfisher and plays the fiddle there every night. The barge crews say you can hear her from the middle of the lake.',
@@ -8570,7 +8571,16 @@ window.LRCAST = (() => {
     sam(P) { const mug = GEAR.mug(); P.fig.add(mug); return t => { P.pose.hip(P.armL, -1); const fg = P.armR.fistAt(new THREE.Vector3(0.3, 1.36, 0.3), new THREE.Vector3(1, 0, -0.1), { r: 0.008, tilt: 0 }); mug.position.copy(fg.C).add(new THREE.Vector3(-0.082, 0, 0)); mug.rotation.set(0, 0, 0); }; },
     hattie(P) { const fd = new THREE.Group(); P.fig.add(fd); const wd = M('#8a4a22', { roughness: 0.35 }); const b1 = add(new THREE.SphereGeometry(0.1, 16, 12), wd, 0, -0.07, 0, fd); b1.scale.set(1, 1.15, 0.28); const b2 = add(new THREE.SphereGeometry(0.085, 16, 12), wd, 0, 0.08, 0, fd); b2.scale.set(1, 1.1, 0.28); add(new THREE.BoxGeometry(0.03, 0.26, 0.02), M('#1a1410'), 0, 0.26, 0.015, fd); add(new THREE.BoxGeometry(0.04, 0.05, 0.035), wd, 0, 0.41, 0.0, fd);
       const bow = GEAR._g(0.006); add(new THREE.CylinderGeometry(0.004, 0.005, 0.7, 6), M('#5a3a22'), 0, 0.35, 0, bow); add(new THREE.CylinderGeometry(0.0015, 0.0015, 0.64, 4), M('#f2eee4'), 0.012, 0.36, 0, bow); P.fig.add(bow);
-      return t => { fd.position.set(-0.24 - 0.05 * P.W, 1.12, 0.06); fd.rotation.set(0.25, Math.PI / 2, 0); P.armL.aim(new THREE.Vector3(-0.3 - 0.05 * P.W, 0.98, 0.18), { palm: new THREE.Vector3(0, 1.0, 0.0), dir: new THREE.Vector3(0.1, -0.3, 1), touch: 0.2 }); P.armL.hand.pose(0.3, 0.1); P.pose.shaft(P.armR, bow, new THREE.Vector3(0.3, 0.9, 0.16), new THREE.Vector3(1, 0, 0), 0.04); }; },
+      const V3 = (x, y, z) => new THREE.Vector3(x, y, z), _mb = new THREE.Matrix4();
+      // playing: the fiddle under her chin on the left collarbone, the neck out to the left, the bow across the strings in her right hand
+      const play = t => { const S = P.armR.S, A = V3(0.74, -0.1, 0.66).normalize(), N0 = V3(0.09, S.y + 0.13, 0.055), Z = V3(-0.42, 0.9, 0.05); Z.addScaledVector(A, -Z.dot(A)).normalize(); const X = new THREE.Vector3().crossVectors(A, Z);
+        fd.position.copy(N0).addScaledVector(A, 0.185); _mb.makeBasis(X, A, Z); fd.quaternion.setFromRotationMatrix(_mb);
+        const Hn = fd.position.clone().addScaledVector(A, 0.31); P.armR.aim(Hn.clone().addScaledVector(Z, -0.055).addScaledVector(X, -0.01), { palm: Hn, dir: X.clone().addScaledVector(Z, 0.5), touch: 0.05, pole: V3(0.2, -1, 0.3) }); P.armR.hand.pose(0.75, 0.05);
+        const beat = t * 4.2, s = 0.25 + 0.13 * Math.sin(beat), Bd = X.clone().addScaledVector(Z, 0.12).addScaledVector(A, 0.1).normalize(), Cp = fd.position.clone().addScaledVector(A, 0.06).addScaledVector(Z, 0.04), F = Cp.clone().addScaledVector(Bd, s);
+        const Yb = Bd.clone().multiplyScalar(-1), Xb = Z.clone().multiplyScalar(-1); Xb.addScaledVector(Yb, -Xb.dot(Yb)).normalize(); _mb.makeBasis(Xb, Yb, new THREE.Vector3().crossVectors(Xb, Yb)); bow.quaternion.setFromRotationMatrix(_mb); bow.position.copy(F).addScaledVector(Yb, -0.03);
+        P.armL.aim(F.clone().addScaledVector(Z, 0.045).addScaledVector(Bd, 0.03), { palm: F, dir: Yb.clone().addScaledVector(Z, -0.6), touch: 0.05, pole: V3(-0.6, -0.8, -0.2) }); P.armL.hand.pose(0.55, 0.05);
+        P.head.rotation.set(0.1, 0.3, -0.12 + Math.sin(beat * 0.5) * 0.03); };
+      return t => { if (HM2MODE.hattiePlay) return play(t); fd.position.set(-0.24 - 0.05 * P.W, 1.12, 0.06); fd.rotation.set(0.25, Math.PI / 2, 0); P.armL.aim(new THREE.Vector3(-0.3 - 0.05 * P.W, 0.98, 0.18), { palm: new THREE.Vector3(0, 1.0, 0.0), dir: new THREE.Vector3(0.1, -0.3, 1), touch: 0.2 }); P.armL.hand.pose(0.3, 0.1); P.pose.shaft(P.armR, bow, new THREE.Vector3(0.3, 0.9, 0.16), new THREE.Vector3(1, 0, 0), 0.04); }; },
     josie(P) { const tray = new THREE.Group(); P.fig.add(tray); add(new THREE.CylinderGeometry(0.17, 0.17, 0.012, 24), M('#7a5232', { roughness: 0.5 }), 0, 0, 0, tray); [[-0.07, -0.05], [0.07, -0.04], [0, 0.08]].forEach(([x, z]) => { const m = GEAR.mug(); m.position.set(x, 0.066, z); m.rotation.y = x * 9; tray.add(m); });
       return t => { P.pose.hip(P.armL, -1); P.pose.tips(P.armR, 1, null, 1.3); const q = P.armR.hand.g.quaternion, f = new THREE.Vector3(0, 1, 0).applyQuaternion(q); tray.position.copy(P.armR.hand.g.position).addScaledVector(f, 0.07).add(new THREE.Vector3(0, 0.035, 0)); }; },
     rose(P) { const b = GEAR.book('#6a3a5a'); P.fig.add(b); const st = P.makePole(0.012, M('#3a2a1e')); add(new THREE.SphereGeometry(0.02, 10, 8), M('#c8a050', { metalness: 0.8, roughness: 0.3 }), 0, 0.02, 0, st);
@@ -8589,9 +8599,20 @@ window.LRCAST = (() => {
   function buildDain() { return hm2Build('dain'); } function buildCaelan() { return hm2Build('caelan'); }
   function buildSam() { return hm2Build('sam'); } function buildHattie() { return hm2Build('hattie'); } function buildJosie() { return hm2Build('josie'); } function buildRose() { return hm2Build('rose'); }
 
+  const HM2MODE = {};   // the game sets hattiePlay in the evening, and she plays
+  // ================= BIRTHDAYS =================
+  // Everyone has a birthday: day, month and year. The game runs on the real calendar, so an age is never stored; it is worked out from today's date.
+  // (An elf of 430 was born in 1596.) Twins share a day. Change any date here and their age follows.
+  const BORN = {'marigold': '1935-12-15', 'elowen': '1845-12-10', 'quill': '1776-02-13', 'mara': '1976-01-24', 'bramblewick': '1506-06-21', 'fen': '2009-08-29', 'aldric': '1736-04-03', 'hollis': '1816-07-29', 'durna': '1985-11-26', 'astra': '1940-02-17', 'ottilie': '2003-01-09', 'silas': '1971-10-01', 'tobiah': '1951-09-30', 'tamsin': '1982-07-06', 'corwin': '1992-11-14', 'hedda': '1916-09-23', 'juniper': '2001-01-05', 'orrin': '1988-03-13', 'pip': '2017-05-19', 'nell': '1986-04-20', 'abel': '1962-06-01', 'ezra': '1952-04-01', 'rosie': '2012-01-07', 'tom': '1981-06-05', 'ada': '1956-05-18', 'hester': '1961-05-17', 'martha': '1932-07-02', 'maudie': '1968-10-20', 'wally': '1965-06-08', 'ned': '1994-07-09', 'isla': '1996-02-11', 'bea': '2018-06-03', 'alfie': '2021-07-16', 'wade': '1974-09-20', 'nora': '1978-03-24', 'finn': '2011-12-27', 'fia': '2011-12-27', 'gus': '1945-09-01', 'pell': '1960-04-08', 'iris': '1962-12-31', 'linus': '1991-01-22', 'delia': '1958-03-09', 'agatha': '1942-05-12', 'marlow': '1986-05-24', 'tess': '1990-09-14', 'jem': '2019-10-11', 'bram': '1960-06-26', 'winnie': '1963-10-21', 'samuel': '1977-12-25', 'clara': '1980-11-27', 'theo': '2010-11-10', 'lily': '2016-10-06', 'greta': '1971-06-07', 'oona': '1985-05-03', 'dob': '1988-06-27', 'poppy': '1990-04-21', 'taliesin': '1596-03-20', 'ysolde': '1616-04-09', 'sylvie': '1836-06-22', 'cobb': '1947-08-20', 'garrick': '1982-02-06', 'etta': '2007-04-16', 'emrys': '1766-11-13', 'borin': '1968-10-05', 'dain': '1999-03-10', 'caelan': '1930-12-23', 'sam': '1964-09-21', 'hattie': '1968-07-08', 'josie': '2002-06-23', 'rose': '1935-12-30'};
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const bornParts = id => { const b = BORN[id]; if (!b) return null; const [y, m, d] = b.split('-').map(Number); return { y, m, d }; };
+  const ageOf = (id, now) => { const b = bornParts(id); if (!b) return null; const n = now || new Date(); return n.getFullYear() - b.y - (n.getMonth() + 1 < b.m || (n.getMonth() + 1 === b.m && n.getDate() < b.d) ? 1 : 0); };
+  const birthdayText = id => { const b = bornParts(id); return b ? b.d + ' ' + MONTHS[b.m - 1] + ' ' + b.y : ''; };
+  const isBirthday = (id, now) => { const b = bornParts(id), n = now || new Date(); return !!b && n.getMonth() + 1 === b.m && n.getDate() === b.d; };
+
   const B = { marigold: buildMarigold, elowen: buildElowen, quill: buildQuill, mara: buildMara, bramblewick: buildBramblewick, fen: buildFen, aldric: buildAldric, hollis: buildHollis, durna: buildDurna, astra: buildAstra, ottilie: buildOttilie, silas: buildSilas, tobiah: buildTobiah, tamsin: buildTamsin, corwin: buildCorwin, hedda: buildHedda, juniper: buildJuniper, orrin: buildOrrin, pip: buildPip, nell: buildNell, abel: buildAbel, ezra: buildEzra, rosie: buildRosie, tom: buildTom, ada: buildAda, hester: buildHester, martha: buildMartha, maudie: buildMaudie, wally: buildWally, ned: buildNed, isla: buildIsla, bea: buildBea, alfie: buildAlfie, wade: buildWade, nora: buildNora, finn: buildFinn, fia: buildFia, gus: buildGus, pell: buildPell, iris: buildIris, linus: buildLinus, delia: buildDelia, agatha: buildAgatha, marlow: buildMarlow, tess: buildTess, jem: buildJem, bram: buildBram, winnie: buildWinnie, samuel: buildSamuel, clara: buildClara, theo: buildTheo, lily: buildLily, greta: buildGreta, oona: buildOona, dob: buildDob, poppy: buildPoppy, taliesin: buildTaliesin, ysolde: buildYsolde, sylvie: buildSylvie, cobb: buildCobb, garrick: buildGarrick, etta: buildEtta, emrys: buildEmrys, borin: buildBorin, dain: buildDain, caelan: buildCaelan, sam: buildSam, hattie: buildHattie, josie: buildJosie, rose: buildRose };
   function build(id) { seed = 7; const r = B[id](); let unit = r.figure; while (unit.parent && unit.parent !== r.scene) unit = unit.parent; if (unit.parent) unit.parent.remove(unit); return { unit, r }; }
-  return { build, ids: Object.keys(B), walk: w => { makeLeg.walk = w; }, hm2: HM2.map(c => ({ id: c.id, n: c.name, lines: c.lines, gate: c.place === 'gate' || c.id === 'taliesin', spot: c.spot, o: { coat: c.spec.dress || c.spec.jumper || c.spec.waistcoat || c.spec.shirt, skin: c.spec.skin, hair: c.spec.hair.color, tall: c.spec.height * 4 } })) };
+  return { build, ids: Object.keys(B), born: BORN, mode: HM2MODE, ageOf, isBirthday, birthdayText, walk: w => { makeLeg.walk = w; }, hm2: HM2.map(c => ({ id: c.id, n: c.name, lines: c.lines, gate: c.place === 'gate' || c.id === 'taliesin', spot: c.spot, o: { coat: c.spec.dress || c.spec.jumper || c.spec.waistcoat || c.spec.shirt, skin: c.spec.skin, hair: c.spec.hair.color, tall: c.spec.height * 4 } })) };
 })();
 </script>
 <script>
@@ -9865,6 +9886,17 @@ window.LRCAST = (() => {
 
   // ---------- The Sleepy Beetle: the inn on the green. Somebody is always awake here, so there is always somewhere to go and something to eat after the shops have shut. ----------
   // the beetle himself, asleep: carved for the sign outside and again over the mantel
+  // a kingfisher: blue back, orange front, a long dark bill
+  function kingfisherBird(parent, x, y, z, s, ry) {
+    const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(s); g.rotation.y = ry || 0; parent.add(g);
+    const blue = mat('#1f7ac0', { roughness: 0.4 }), teal = mat('#2aa0b8', { roughness: 0.4 }), orange = mat('#e8873a', { roughness: 0.6 }), dark = mat('#22201e'), white = mat('#f4f0e6');
+    const put = (geo, m, px, py, pz, sx, sy, sz) => { const q = new THREE.Mesh(geo, m); q.position.set(px, py, pz); if (sx) q.scale.set(sx, sy, sz); g.add(q); return q; };
+    put(new THREE.SphereGeometry(0.5, 14, 10), blue, 0, 0.5, 0, 0.82, 0.86, 1.15); put(new THREE.SphereGeometry(0.44, 14, 10), orange, 0, 0.44, 0.12, 0.8, 0.8, 1.0);
+    put(new THREE.SphereGeometry(0.36, 14, 10), teal, 0, 0.98, 0.3, 1, 0.92, 1.08); put(new THREE.SphereGeometry(0.16, 8, 6), white, 0, 0.8, 0.52, 1.2, 0.8, 0.7); put(new THREE.SphereGeometry(0.13, 8, 6), orange, 0.26, 0.96, 0.42, 0.5, 0.8, 1.2); put(new THREE.SphereGeometry(0.13, 8, 6), orange, -0.26, 0.96, 0.42, 0.5, 0.8, 1.2);
+    const bill = put(new THREE.ConeGeometry(0.1, 0.8, 8), dark, 0, 0.96, 0.98); bill.rotation.x = Math.PI / 2; [-1, 1].forEach(d => put(new THREE.SphereGeometry(0.05, 6, 6), dark, d * 0.2, 1.08, 0.56));
+    put(new THREE.BoxGeometry(0.3, 0.06, 0.5), blue, 0, 0.4, -0.66).rotation.x = 0.35; [-1, 1].forEach(d => put(new THREE.SphereGeometry(0.3, 10, 8), blue, d * 0.36, 0.56, -0.08, 0.3, 0.75, 1.25)); [-1, 1].forEach(d => put(new THREE.CylinderGeometry(0.03, 0.03, 0.14, 5), orange, d * 0.14, 0.06, 0.06));
+    g.traverse(q => { if (q.isMesh) q.castShadow = true; }); return g;
+  }
   function sleepyBeetle(parent, x, y, z, s, ry) {
     const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(s); g.rotation.y = ry || 0; parent.add(g);
     const shell = mat('#3f6a48', { roughness: 0.35, metalness: 0.2 }), darkM = mat('#2a2018'), put = (geo, m, px, py, pz, sx, sy, sz) => { const q = new THREE.Mesh(geo, m); q.position.set(px, py, pz); if (sx) q.scale.set(sx, sy, sz); g.add(q); return q; };
@@ -10883,6 +10915,14 @@ window.LRCAST = (() => {
     [28, 84, 140, 196].forEach(dx => big('', x4a + dx, zA0 + 14, 50, 24, 11, 1, '#bfae8c', '#5a3d22', { rh: 6, barn: true, nosign: true, msg: 'The warehouse is locked. Only the wharfingers go in.' }));
     // the Hearthstone, the city's inn, on South Street; and the streets of houses round it
     big('The Hearthstone', 186, zD0 + 20, 64, 36, 13, 1, '#e8dcc4', '#5a2a22', { inside: 'hearth' });
+    // the Kingfisher, the bargemen's inn, on the Wharf Road facing the quay
+    { const kx = 64, kz = zA0 + 20, zf = kz - 18, wd = M('#6a4a2a'); big('The Kingfisher Inn', kx, kz, 64, 36, 13, 1, '#e4e8ea', '#2a4a6a', { rh: 8, inside: 'kingfisher' }); CITY.kf = { x: kx, zf };
+      for (let i = trees.length - 1; i >= 0; i--) { const [tx, tz] = trees[i]; if (Math.abs(tx - kx) < 38 && Math.abs(tz - kz) < 25) { trees.splice(i, 1); const si = CITY.solids.findIndex(q => q.x === tx && q.z === tz); if (si >= 0) CITY.solids.splice(si, 1); } }
+      // a bench and two barrels by the door
+      add(new THREE.BoxGeometry(9, 0.4, 2.2), wd, kx - 18, Y + 1.9, zf - 1.7); [-3.8, 3.8].forEach(dx => add(new THREE.BoxGeometry(0.5, 1.9, 2), wd, kx - 18 + dx, Y + 0.95, zf - 1.7)); add(new THREE.BoxGeometry(9, 2.2, 0.3), wd, kx - 18, Y + 3.2, zf - 0.7); [-3, 0, 3].forEach(dx => CITY.solids.push({ x: kx - 18 + dx, z: zf - 1.7, r: 1.6 }));
+      [[kx + 17, 0], [kx + 21.5, 0.5]].forEach(([bx, dz]) => { add(new THREE.CylinderGeometry(1.7, 1.5, 3.8, 14), wd, bx, Y + 1.9, zf - 2.2 - dz); [1, 2.8].forEach(y => { add(new THREE.TorusGeometry(1.66, 0.09, 6, 18), M('#3a3a3a'), bx, Y + y, zf - 2.2 - dz).rotation.x = Math.PI / 2; }); CITY.solids.push({ x: bx, z: zf - 2.2 - dz, r: 1.9 }); });
+      // an iron arm over the door with the kingfisher himself sitting on it
+      add(new THREE.BoxGeometry(0.25, 0.25, 4.6), M('#2a2a2a'), kx + 10, Y + 11.2, zf - 2.3); kingfisherBird(G, kx + 10, Y + 11.32, zf - 3.6, 1.1, Math.PI); }
     fill(222, x3b, zD0, zD1, 'cool', 7.5, 10, { rows: [1], bare: true }); fill(150, x3b, zD0, zD1, 'cool', 7.5, 10, { rows: [0] }); fill(x4a, x4b, zD0, zD1, 'cool', 7.5, 10, { rows: [0] });
     // lodgings on South Street: three tall houses of rooms, for people who have come to the city to learn
     [36, 108, 180].forEach((dx, i) => big(['Lodgings · Rowan House', 'Lodgings · Hazel House', 'Lodgings · Alder House'][i], x4a + dx, zD0 + 20, 62, 36, 14.5, 1, '#eadfc8', ['#8a3a4a', '#4f6b52', '#3e5a6a'][i], { rh: 8, inside: ['rowan', 'hazel', 'alder'][i] }));
@@ -11469,15 +11509,15 @@ window.LRCAST = (() => {
       o.ph += dt * (moving ? 14 * moving + 4 : 0); const sw = moving ? Math.sin(o.ph) * 0.9 : 0; u.legs[0].rotation.x = sw; u.legs[1].rotation.x = -sw; if (moving && o.st !== 'wind') { u.arms[0].rotation.x = -sw * 0.8; u.arms[1].rotation.x = sw * 0.8; g.position.y = Math.abs(Math.sin(o.ph)) * 0.18; } u.hd.rotation.z = Math.sin(t * 2 + o.wa) * 0.08; });
     if (others.length) { CAVE.bt = (CAVE.bt || 0) - dt; if (CAVE.bt <= 0) { CAVE.bt = 0.12; caveSend(it); } } }
   // inside The Sleepy Beetle: the great hearth, the bar, tables and stools, and whoever is in tonight
-  const INN_SEATS = {}, HEARTH_SEATS = {};   // where the keepers stand and the travellers sit, for the night life to fill
-  const innDecor = (id, name, SEATS) => (sc, solids, k) => {
+  const INN_SEATS = {}, HEARTH_SEATS = {}, KING_SEATS = {}, KING = {};   // where the keepers stand and the travellers sit, for the night life to fill
+  const innDecor = (id, name, SEATS, opt = {}) => (sc, solids, k) => {
     const { wall, W, D, H, trimM } = k, wood = mat('#8a6438'), dark = mat('#5a3d22'), top = mat('#ffffff', { map: plankTex }), stone = mat('#8d8676', { roughness: 1 }), cream = mat('#f2ead8'), black = mat('#1a1410'), N = -D / 2, E = W / 2, S = D / 2;
     const so = (x, z, r) => solids.push({ x, z, r }), cyl = (r0, r1, hh, x, y, z, m, n) => { const q = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, hh, n || 14), m); q.position.set(x, y, z); sc.add(q); return q; };
     // the great hearth, in the middle of the back wall, with the beetle asleep over the mantel
     const hx = -8; [-6.5, 6.5].forEach(dx => { wall(3, 8, 3.2, hx + dx, 4, N + 1.6, stone); so(hx + dx, N + 1.6, 2.3); }); wall(16, 2.2, 3.4, hx, 9.1, N + 1.7, stone); wall(10, 8, 0.6, hx, 4, N + 0.4, black); wall(17.4, 0.6, 4, hx, 10.5, N + 2, dark); wall(11, H - 10.8, 2.4, hx, (H + 10.8) / 2, N + 1.2, stone);
     wall(11, 0.5, 4.4, hx, 0.25, N + 2.2, stone); [-1.6, 0.2, 1.7].forEach((dx, q) => { cyl(0.5, 0.5, 4.4, hx + dx * 0.4, 0.95 + (q === 1 ? 0.7 : 0), N + 2 + q * 0.2, dark, 8).rotation.z = Math.PI / 2; });
     const fl = new THREE.PointLight('#ff9a4a', 1.15, 70); fl.position.set(hx, 4.5, N + 6); sc.add(fl); makeFire(sc, sc, hx, 1.3, N + 2.1, 2.5, fl); [-3, 0, 3].forEach(dx => so(hx + dx, N + 1.6, 2.6));
-    sleepyBeetle(sc, hx, 12.9, N + 2.5, 1.7, 0);
+    if (opt.bird) kingfisherBird(sc, hx, 10.8, N + 2.6, 1.5, 0); else sleepyBeetle(sc, hx, 12.9, N + 2.5, 1.7, 0);
     // a settle each side of the fire, turned in to it
     [hx - 6, hx + 6].forEach(x => { const z = N + 11, g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.PI; sc.add(g); const b = (w, hh, d, px, py, pz, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m); q.position.set(px, py, pz); g.add(q); };
       b(8, 0.5, 2.8, 0, 2.5, 0, wood); b(8, 3.8, 0.4, 0, 4.6, -1.4, wood); [-1, 1].forEach(q => b(0.5, 4, 3, q * 4, 2, -0.1, dark)); b(7.4, 0.5, 2.4, 0, 2.95, 0.1, mat('#a8563a', { roughness: 1 }));
@@ -11505,6 +11545,13 @@ window.LRCAST = (() => {
   makeRoom('inn', { w: 72, d: 40, h: 16, doorH: 9.4, wall: '#ead9b8', trim: '#4a3320', label: 'The Sleepy Beetle', region: 'village', hint: 'A big fire, hot cocoa, and somebody always awake.', decorate: innDecor('inn', 'the Sleepy Beetle', INN_SEATS) });
   makeRoom('hearth', { w: 72, d: 40, h: 16, doorH: 9.4, wall: '#e8dcc4', trim: '#5a2a22', label: 'The Hearthstone', region: 'wild', out: 'South Street, Hearthmoor', city: true, hint: 'The Hearthstone: the city’s inn. Supper, a fire, and a chest for your things.', decorate: innDecor('hearth', 'the Hearthstone', HEARTH_SEATS) });
   HEARTH_SEATS.guest.forEach(([x, z, yaw]) => seatSpot(interiors.hearth.scene, 'in:hearth', x, z, yaw, 2.5, 'stool'));
+  // the Kingfisher, the bargemen's inn on the Wharf Road: the same good bones as the Hearthstone, with a kingfisher over the fire and a little stage in the corner for Hattie's fiddle
+  makeRoom('kingfisher', { w: 72, d: 40, h: 16, doorH: 9.4, wall: '#e4e8ea', trim: '#2a4a6a', label: 'The Kingfisher Inn', region: 'wild', out: 'The Wharf Road, Hearthmoor', city: true, hint: 'The Kingfisher: cocoa and fish stew at the bar, a fire, and Hattie’s fiddle from five o’clock.', decorate: (sc, solids, k) => { innDecor('kingfisher', 'the Kingfisher', KING_SEATS, { bird: true })(sc, solids, k);
+    const dk = mat('#5a3d22'), sx = -30.5, sz = -15.6; k.wall(10, 0.5, 7.6, sx, 0.25, sz, dk); k.wall(9.2, 0.06, 6.8, sx, 0.53, sz, mat('#2a4a6a', { roughness: 1 }));
+    const stl = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.7, 2.2, 12), mat('#8a6438')); stl.position.set(sx - 3.4, 1.6, sz - 1.8); sc.add(stl);
+    [[-3.3, -2], [0, -2.2], [3.3, -2], [-3.3, 1.6], [0, 1.6], [3.3, 1.6]].forEach(([a, b]) => solids.push({ x: sx + a, z: sz + b, r: 2.3 }));
+    const sg = signBoard('Fiddle from five o’clock', 8.6, 1.3, '#2a4a6a', '#f6e7c2'); sg.position.set(sx, 9.2, -k.D / 2 + 0.25); sc.add(sg); KING.stage = [sx, sz + 0.2, 0.75]; } });
+  KING_SEATS.guest.forEach(([x, z, yaw]) => seatSpot(interiors.kingfisher.scene, 'in:kingfisher', x, z, yaw, 2.5, 'stool'));
   interiors.inn.door = { x: INN.x, z: INN.z + 16.2 + 4.5, yaw: 0 };
   // the four homes: every one has a hearth, a bed, a table, and clear floor from the door to the fire
   // A family's house inside. The living room is the cottage's old single room, built at a grown elf's size (everything in it is 1.6 times what it was).
@@ -14020,8 +14067,22 @@ window.LRCAST = (() => {
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
   function harp(t, midi, vol) { const c = audioCtx, f = mtof(midi), g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.5); g.connect(snd.music); [['triangle', 1, 1], ['sine', 2, 0.28], ['sine', 3, 0.08]].forEach(([ty, h, a]) => { const o = c.createOscillator(), og = c.createGain(); o.type = ty; o.frequency.value = f * h; og.gain.value = a; o.connect(og); og.connect(g); o.start(t); o.stop(t + 1.55); }); }
   function flute(t, midi, dur, vol) { const c = audioCtx, f = mtof(midi), o = c.createOscillator(), o2 = c.createOscillator(), g2 = c.createGain(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(); o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = f; o2.frequency.value = f * 2; g2.gain.value = 0.12; lfo.frequency.value = 5.2; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.007, t + Math.min(dur, 0.35)); lfo.connect(lg); lg.connect(o.frequency); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.07); g.gain.setValueAtTime(vol, t + Math.max(0.08, dur - 0.1)); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.06); o.connect(g); o2.connect(g2); g2.connect(g); g.connect(snd.music); [o, o2, lfo].forEach(q => { q.start(t); q.stop(t + dur + 0.1); }); }
+  // Hattie's fiddle: a jig in D, in six, played while you are in the Kingfisher and she is on her stage
+  const JIG = (() => { const a1 = [74, 78, 81, 81, 78, 74], a2 = [76, 79, 83, 83, 79, 76], a3 = [78, 81, 86, 86, 81, 78], a4 = [76, 78, 76, 73, 71, 69], a7 = [81, 83, 81, 79, 78, 76], end = [74, -1, -1, 74, -1, 0], b1 = [86, 85, 83, 81, 78, 81], b2 = [83, 81, 79, 78, 74, 78], b3 = [79, 78, 76, 74, 76, 78], b4 = [76, -1, 69, 69, 73, 76], b7 = [79, 83, 79, 76, 78, 76];
+    const A = [a1, a2, a3, a4, a1, a2, a7, end], B = [b1, b2, b3, b4, b1, b2, b7, end]; return A.concat(A, B, B); })(), JIG_BASS = [50, 57, 50, 57, 50, 57, 57, 50];
+  const fid = { next: 0, step: 0 };
+  function fiddleOn() { return where === 'in' && !!interior && interior.id === 'kingfisher' && !!KING.hattie && KING.hattie.g.visible; }
+  function fiddleNote(t, midi, dur, vol) { const c = audioCtx, f = mtof(midi), o = c.createOscillator(), lp = c.createBiquadFilter(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(); o.type = 'sawtooth'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.value = 2400; lp.Q.value = 0.8;
+    lfo.frequency.value = 5.6; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.006, t + Math.min(0.25, dur)); lfo.connect(lg); lg.connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.025); g.gain.setValueAtTime(vol * 0.85, t + Math.max(0.03, dur - 0.04)); g.gain.linearRampToValueAtTime(0.0001, t + dur); o.connect(lp); lp.connect(g); g.connect(snd.music); o.start(t); lfo.start(t); o.stop(t + dur + 0.03); lfo.stop(t + dur + 0.03); }
+  function fiddleTick() { const c = audioCtx, E = 0.176; if (fid.next < c.currentTime - 0.05) { if (fid.next < c.currentTime - 2) fid.step -= fid.step % 6; fid.next = c.currentTime + 0.15; }
+    let guard = 0; while (fid.next < c.currentTime + 0.5 && guard++ < 16) { const bar = Math.floor(fid.step / 6) % JIG.length, k = fid.step % 6, m = JIG[bar][k], t = fid.next;
+      if (m > 0) { let len = 1; while (k + len < 6 && JIG[bar][k + len] === -1) len++; fiddleNote(t, m, E * len * 0.94, k % 3 === 0 ? 0.075 : 0.058); }
+      if (k === 0 || k === 3) sndNote(snd.music, 'triangle', mtof(JIG_BASS[bar % 8] - (k ? 0 : 12)), mtof(JIG_BASS[bar % 8] - (k ? 0 : 12)), t, E * 2.6, 0.06, 0.01);
+      fid.next += E; fid.step++; } }
   function musicTick() {
-    const c = audioCtx; if (!settings.music) { mu.next = 0; return; }
+    const c = audioCtx; if (!settings.music) { mu.next = 0; fid.next = 0; return; }
+    if (fiddleOn()) { mu.next = 0; mu.tune = null; fiddleTick(); return; } fid.next = 0;
     const want = where === 'in' ? (interior.city ? 'hearthmoor' : TUNES[interior.region] ? interior.region : 'village') : where === 'lift' ? 'skyhaven' : TUNES[where] ? where : CITY.here ? 'hearthmoor' : 'wild';
     if (!mu.tune) { mu.key = want; mu.tune = buildTune(want); mu.step = 0; mu.next = 0; }
     if (mu.next < c.currentTime - 0.05) { if (mu.next < c.currentTime - 2) mu.step -= mu.step % 8; mu.next = c.currentTime + 0.15; }   // fell behind (a slow frame, or the tab was away): pick up from here, never pile notes up
@@ -15061,6 +15122,7 @@ window.LRCAST = (() => {
     pack: { n: 'Traveller’s pack', e: '🎒', v: 40, t: 0, w: 0, c: 'tool', d: 'Carry it and you have room for 20 more.' },
     apple: { n: 'Apple', e: '🍎', v: 1, t: 1, c: 'food', eat: 12, d: 'A Mallow windfall.' },
     cocoa: { n: 'Hot cocoa', e: '☕', v: 3, t: 0, c: 'food', eat: 16, drink: true, d: 'From the Sleepy Beetle. Best by the fire.' },
+    fishstew: { n: 'Lake fish stew', e: '🍲', v: 5, t: 8, c: 'food', eat: 40, heal: 10, d: 'Sam Bramwell’s, from the Kingfisher on the wharf.' },
     stew: { n: 'Barley stew', e: '🍲', v: 5, t: 0, c: 'food', eat: 34, heal: 10, d: 'A bowl from the pot at the Sleepy Beetle.' },
     cider: { n: 'Sweet cider', e: '🧃', v: 4, t: 1, c: 'food', eat: 30, drink: true, d: 'Pressed at Quern Mill.' },
     flour: { n: 'Sack of flour', e: '🌾', v: 4, t: 1, w: 3, c: 'goods', d: 'Stone-ground. Bakers everywhere want it.' },
@@ -15098,7 +15160,8 @@ window.LRCAST = (() => {
     fen: { n: 'Dewberry’s stall', who: 'Fen Dewberry', t: 0, stock: ['jam', 'dyered', 'dyeblue', 'dyegreen', 'dyegold', 'dyeplum'] },
     nursery: { n: 'Fernsby’s Potting Shed', t: 0, stock: ['seeds', 'seedling', 'strawhat'] },
     wood: { n: 'Bough’s Woodshop', who: 'Aldric Bough', t: 0, stock: ['stick', 'whistle'] },
-    hearth: { n: 'The Hearthstone', who: 'Bram Kettleby', t: HUB, always: true, stock: ['stew', 'cocoa', 'bread', 'pie', 'cake', 'cider', 'skytea'] },
+    hearth: { n: 'The Hearthstone', who: 'Bram Kettleby', t: HUB, always: true, home: true, stock: ['stew', 'cocoa', 'bread', 'pie', 'cake', 'cider', 'skytea'] },
+    kingfisher: { n: 'The Kingfisher Inn', who: 'Sam Bramwell', t: HUB, always: true, home: true, stock: ['cocoa', 'fishstew', 'bread', 'fish', 'cider'] },
     inn: { n: 'The Sleepy Beetle', get who() { const h = clockHour(); return h >= 7 && h < 19 ? 'Posy Underbough' : 'Moss Underbough'; }, t: 0, always: true, stock: ['cocoa', 'stew', 'bread', 'pie', 'cider', 'nutmix'] },
     mill: { n: 'Quern Mill', t: 1, stock: ['apple', 'cider', 'flour'] },
     bakery: { n: 'Crumb’s Bakery', who: 'Maudie Crumb', t: 2, stock: ['bread', 'cake', 'pie'] },
@@ -15122,7 +15185,8 @@ window.LRCAST = (() => {
   ['Thistledown Hollow', 'Mallow Orchards', 'Fernwater Crossing', 'Cairnhold', 'Cogsworth', 'Emberdeep', 'Lanternreach', 'Skyhaven'].forEach((town, i) => { SHOPS['hall' + i] = { n: 'The ' + town + ' Hall', t: HUB, stock: madeIn(i) }; });
   const hops = (a, b) => a === HUB || b === HUB ? 3 : Math.abs(a - b);
   // where it is made you pay what it is worth; anywhere else, half as much again
-  function buyPrice(shop, id) { const it = ITEMS[id]; return it.t === undefined || it.t === shop.t ? it.v : Math.ceil(it.v * 1.5); }
+  function buyPrice(shop, id) { const it = ITEMS[id]; if (shop.home && it.c === 'food') return it.v;   // an inn cooks its own supper: no carriage to pay
+    return it.t === undefined || it.t === shop.t ? it.v : Math.ceil(it.v * 1.5); }
   // wild things fetch the same everywhere. Made things fetch little at home and more with every town you carry them past; the capital pays a steady fair price
   function sellPrice(shop, id) { const it = ITEMS[id]; if (it.t === undefined) return it.v; if (shop.t === HUB) return Math.max(1, Math.floor(it.v * 1.2)); return Math.max(1, Math.floor(it.v * Math.min(1.5, 0.6 + 0.15 * hops(it.t, shop.t)))); }
   function inv() { return save.inv && typeof save.inv === 'object' ? save.inv : (save.inv = {}); }
@@ -15355,7 +15419,7 @@ window.LRCAST = (() => {
         : [['I’ll go and find them', null]]);
   }
   // ---------- the ferry: the barge rides the Fern down to Hearthmoor and back ----------
-  let ferryRide = null, bargeW = null; const FERRY_DECK = 1.0, FERRY_FARE = 4;
+  let ferryRide = null, bargeW = null; const FERRY_DECK = 1.0, FERRY_FARE = 10;   // one silver: three or four early lessons' pay, so the barge is a trip you save for
   function buildBarge() {
     if (bargeW) return bargeW; const g = new THREE.Group(), wood = mat('#7a5632', { roughness: 0.9 }), dark = mat('#4a3420'), box = (w, h, d, x, y, z, m) => { const q = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; };
     box(10, 1.5, 22, 0, 0.45, 0, wood); box(9.4, 0.12, 21.4, 0, 1.2 + 0.02, 0, mat('#ffffff', { map: plankTex })); box(7, 1.2, 3, 0, 0.5, 12, wood).rotation.x = -0.35; box(7, 1.2, 3, 0, 0.5, -12, wood).rotation.x = 0.35;
@@ -15370,7 +15434,7 @@ window.LRCAST = (() => {
   function ferryStart(dir) {
     if (ferryRide || talking()) return;
     const who = 'Ezra Reedwater', there = dir === 'down' ? 'Hearthmoor' : 'Fernwater Crossing';
-    choose(who, `The barge goes ${dir === 'down' ? 'down the Fern to <b>Hearthmoor</b>' : 'back up the Fern to <b>Fernwater Crossing</b>'}. It is <b>${FERRY_FARE} coins</b>, and a little over a minute on the water.`, coins >= FERRY_FARE ? [[`Pay ${FERRY_FARE} coins and ride`, () => {
+    choose(who, `The barge goes ${dir === 'down' ? 'down the Fern to <b>Hearthmoor</b>' : 'back up the Fern to <b>Fernwater Crossing</b>'}. It is <b>${money(FERRY_FARE)}</b>, and a little over a minute on the water.`, coins >= FERRY_FARE ? [[`Pay ${money(FERRY_FARE)} and ride`, () => {
       setCoins(coins - FERRY_FARE); if (riding) setRiding(false); if (sitting) standUp();
       const pts = ferryPath(); if (dir === 'up') pts.reverse(); let len = 0; const seg = []; for (let k = 1; k < pts.length; k++) { const L = Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]); seg.push(L); len += L; }
       const b = buildBarge(); b.visible = true; b.position.set(pts[0][0], -0.2, pts[0][1]); b.rotation.y = Math.atan2(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1]);
@@ -15954,7 +16018,9 @@ window.LRCAST = (() => {
     else if (d.kind === 'lot') lotPick(d.no);
     else if (d.kind === 'mount') dogPick();
     else if (d.kind === 'stable') stablePick();
-    else if (d.kind === 'folk') { const F = folk[d.fi]; const ln = F.lines[F.k++ % F.lines.length]; if (F.n === 'Tom Willowby' && save.pack) { tomTalk(typeof ln === 'function' ? ln() : ln); return; } if (F.n === 'Ottilie Brimble') { ottTalk(typeof ln === 'function' ? ln() : ln); return; } say([typeof ln === 'function' ? ln() : ln], null, F.n); }
+    else if (d.kind === 'folk') { const F = folk[d.fi];
+      { const bc = window.LRCAST && LRCAST.isBirthday && !F.bdSaid ? CASTMAP.find(c => c.g === F.g) : null, now = bc ? gameNow() : null; if (bc && LRCAST.isBirthday(bc.id, now)) { F.bdSaid = true; const yk = bc.id + ':' + now.getFullYear(), bd = save.bdays || (save.bdays = []); let gift = ''; if (!bd.includes(yk)) { bd.push(yk); if (addItem('cake')) gift = ' Here, have a slice of my cake.'; persist(); } say(['It is my birthday today! I am ' + LRCAST.ageOf(bc.id, now) + '.' + gift], null, F.n); return; } }
+      const ln = F.lines[F.k++ % F.lines.length]; if (F.n === 'Tom Willowby' && save.pack) { tomTalk(typeof ln === 'function' ? ln() : ln); return; } if (F.n === 'Ottilie Brimble') { ottTalk(typeof ln === 'function' ? ln() : ln); return; } say([typeof ln === 'function' ? ln() : ln], null, F.n); }
     else if (d.kind === 'follower') companionMenu();
     else if (d.kind === 'teacher') teacherMenu(d.i);
     else if (d.kind === 'sci') sciPick(obj);
@@ -17464,8 +17530,8 @@ window.LRCAST = (() => {
           () => say(['Forty-five. Find the discount, take it off. Or notice you’re paying 75%, three quarters, and go straight there.', 'Now <b>10%</b>, the handiest one of all. Ten out of a hundred is a tenth. To find 10% of anything, divide by 10.'],
             () => askNumber('A 35-coin net at <b>10% off</b>. How much is 10% of 35? (Use the point.)', 3.5, hundredBar(10),
               back => stepLines(['10% is one tenth', '35 ÷ 10 = <b style="color:var(--gold)">3.5</b>'], () => setTimeout(back, 900)),
-              () => say(['3.5 coins off. Shift the point one place to the left and there’s your tenth.', 'And with that, every percent is easy. <b>30%</b> is three tenths. The ferry ticket is <b>20 copper</b>.'],
-                () => askNumber('A 20-coin ferry ticket at <b>30% off</b>. How much do you save?', 6, hundredBar(30),
+              () => say(['3.5 coins off. Shift the point one place to the left and there’s your tenth.', 'And with that, every percent is easy. <b>30%</b> is three tenths. A return ticket on the barge is <b>20 copper</b>.'],
+                () => askNumber('A 20-copper return ticket at <b>30% off</b>. How many copper do you save?', 6, hundredBar(30),
                   back => stepLines(['10% of 20 is 2', '30% is three of those: 3 × 2 = <b style="color:var(--gold)">6</b>'], () => setTimeout(back, 900)),
                   () => say(['Six coins off. Find 10%, then take as many of them as you need. 30%, 70%, 90%, all the same trick.', 'That’s the market beaten. <b>2 copper</b>. Now there’s a barge coming in with a very familiar face at the pole. Go and meet it at the dock.'],
                     () => { setCoins(coins + 2); rewardFern(8, 'A closing-day bargain', 'You read <b style="color:var(--gold)">percent</b> as parts of a hundred: 50% is a half, 25% a quarter, 10% a tenth, and the rest built from tenths.', () => { phase = 'tofen2'; nearFen2 = false; fenArrives(); hint('Fen’s barge is tying up at the dock. Go and say hello.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
@@ -19357,14 +19423,17 @@ window.LRCAST = (() => {
     const [kx, kz, ky] = HEARTH_SEATS.keeper; const BRAM = addFolk(interiors.hearth.scene, 'in:hearth', { coat: '#5a2a22', skin: '#d9a070', hair: '#3a2a1e' }, kx, kz, ky, 'Bram Kettleby', ['Bram Kettleby. The Hearthstone has had a fire in that grate since before the walls went up.', 'Supper is on the barrel: ring the bell. And the chest by the door is yours while you are in the city.', 'There is another inn like this in the Hollow, I hear. Smaller. Run by a pair of Underboughs.', 'My Winnie runs the kitchen. Two bowls of her stew if you have walked from Fernwater.', 'Our Tess married Marlow of the Fernwater Hall. Their Jem eats supper here most Sundays, and he puts his boat in the soup.'], always); HMC.push({ id: 'bram', g: BRAM.g, n: 'Bram Kettleby', world: 'in:hearth' });
     { const H2 = interiors.hall2.scene, F1 = addFolk(H2, 'in:hall2', { coat: '#4a6a3a', skin: '#ecc0a0', hair: '#8a3a1e' }, -6, -11.2, 0, 'Tess Reedwater', ['Tess Reedwater. I keep the Hall’s books, so I am the one who knows what everything costs.', 'Three jars of toffee and one coil of rope: four silver and two copper. Write it down. Always write it down.', 'My mum and dad keep the Hearthstone on South Street. I grew up doing sums on the backs of supper bills.', 'Jem! Shoes. Both of them.'], always); HMC.push({ id: 'tess', g: F1.g, n: 'Tess Reedwater', world: 'in:hall2' });
       const F2 = addFolk(H2, 'in:hall2', { coat: '#3a5a8a', skin: '#d4a07a', hair: '#6a3a22', tall: 4.4 }, 13, 8, -2.3, 'Jem Reedwater', ['This is the Little Heron. Grandad Ezra made her. She floats even upside down.', 'School lets out at three. I counted the bells.', 'My cousin Theo is going to run the ferry, and I am going to be his first mate.', 'Grandma Winnie calls me her little barnacle. I do not know why.'], day(7, 20)); HMC.push({ id: 'jem', g: F2.g, n: 'Jem Reedwater', world: 'in:hall2' });
-      const F3 = addFolk(interiors.hearth.scene, 'in:hearth', { coat: '#9a4a2a', skin: '#f0caae', hair: '#c88a6a' }, 4, -14, -0.3, 'Winnie Kettleby', ['Sit down, pet, you look hollow. Stew is two copper and worth five.', 'A good stew wants time, salt, and somebody who stirs it. That last one is me.', 'Knock on that barrel. Hear that? Full. My father was a cooper on Makers’ Row; he taught me that.', 'Our Tess is at the Fernwater Hall with her Marlow, and my little barnacle Jem.'], always); HMC.push({ id: 'winnie', g: F3.g, n: 'Winnie Kettleby', world: 'in:hearth' }); }
+      const F3 = addFolk(interiors.hearth.scene, 'in:hearth', { coat: '#9a4a2a', skin: '#f0caae', hair: '#c88a6a' }, 4, -14, -0.3, 'Winnie Kettleby', ['Sit down, pet, you look hollow. Stew is five copper and worth ten.', 'A good stew wants time, salt, and somebody who stirs it. That last one is me.', 'Knock on that barrel. Hear that? Full. My father was a cooper on Makers’ Row; he taught me that.', 'Our Tess is at the Fernwater Hall with her Marlow, and my little barnacle Jem.'], always); HMC.push({ id: 'winnie', g: F3.g, n: 'Winnie Kettleby', world: 'in:hearth' }); }
     // the Fairweathers on the wharf, out in the open world: placed by the city's own frame
     { const onQuay = (id, o, x, z, ry, n, lines, on) => { const [wx, wz] = toWorld(frameH, x, z), F = addFolk(worldScene, 'wild', o, wx, wz, ry + frameH.yaw, n, lines, on || always); F.g.position.y = CITY.y; CITY.solids.push({ x, z, r: 1.4 }); HMC.push({ id, g: F.g, n, world: 'wild', far: [wx, wz] }); };
-      if (window.LRCAST && LRCAST.hm2 && CITY.folkSpots) LRCAST.hm2.forEach((c, i) => { let sp = c.spot === 'rose' ? [-330, CITY.st.high[0] + 5, 0] : c.spot || CITY.folkSpots[i]; if (!sp) return;
-        if (c.spot) { sp = sp.slice(); for (let k = 0; k < 12 && CITY.solids.some(q => Math.hypot(q.x - sp[0], q.z - sp[1]) < (q.r || 1) + 1.6); k++) sp[1] += 1.5; }   // never inside a crate or a lamp-post
-        onQuay(c.id, c.o, sp[0], sp[1], sp[2], c.n, c.lines, c.gate ? always : day(7, c.id === 'rose' ? 18 : 21)); });
-      // the Kingfisher's sign, on a post on the wharf, until the inn has a door of its own
-      { const [kx, kz] = toWorld(frameH, 64, 119), post = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 9, 8), mat('#5a3d22')); post.position.set(kx, CITY.y + 4.5, kz); worldScene.add(post); const sg = signBoard('The Kingfisher Inn', 9, 1.6, '#2a4a6a', '#f6e7c2'); sg.position.set(kx, CITY.y + 9.8, kz); sg.rotation.y = frameH.yaw + Math.PI; worldScene.add(sg); CITY.solids.push({ x: 64, z: 119, r: 0.5 }); }
+      const KF = CITY.kf && interiors.kingfisher ? CITY.kf : null, KSPOT = KF ? { hattie: [KF.x - 7.5, KF.zf - 2.8, Math.PI + 0.14], josie: [KF.x + 7.5, KF.zf - 2.8, Math.PI - 0.14] } : {};
+      if (window.LRCAST && LRCAST.hm2 && CITY.folkSpots) LRCAST.hm2.forEach((c, i) => { if (KF && c.id === 'sam') return;   // Sam is behind his bar
+        let sp = KSPOT[c.id] || (c.spot === 'rose' ? [-330, CITY.st.high[0] + 5, 0] : c.spot || CITY.folkSpots[i]); if (!sp) return;
+        if (c.spot && !KSPOT[c.id]) { sp = sp.slice(); for (let k = 0; k < 12 && CITY.solids.some(q => Math.hypot(q.x - sp[0], q.z - sp[1]) < (q.r || 1) + 1.6); k++) sp[1] += 1.5; }   // never inside a crate or a lamp-post
+        onQuay(c.id, c.o, sp[0], sp[1], sp[2], c.n, c.lines, KSPOT[c.id] ? day(7, 17) : c.gate ? always : day(7, c.id === 'rose' ? 18 : 21)); });
+      // inside the Kingfisher: Sam at the bar all day; from five, Josie among the tables and Hattie on her stage
+      if (KF && window.LRCAST && LRCAST.hm2) { const K = interiors.kingfisher.scene, inK = (id, x, z, ry, on, y) => { const c = LRCAST.hm2.find(q => q.id === id); if (!c) return null; const F = addFolk(K, 'in:kingfisher', c.o, x, z, ry, c.n, c.lines, on); if (y) F.g.position.y = y; HMC.push({ id, g: F.g, n: c.n, world: 'in:kingfisher' }); return F; };
+        const [bx, bz, by] = KING_SEATS.keeper; inK('sam', bx, bz, by, day(7, 21)); inK('josie', -2, 2, 0, day(17, 21)); const [hx, hz, hy] = KING.stage; KING.hattie = inK('hattie', hx, hz, hy, day(17, 21), 0.56); }
       onQuay('samuel', { coat: '#1e2a44', skin: '#ecb898', hair: '#b89868' }, -9, 100.5, 0, 'Samuel Fairweather', ['Samuel Fairweather, harbourmaster. Every boat that ties up here goes in my book: where from, what aboard, how long. Mooring is three copper a night.', 'Blue flag up: safe to sail. Red flag up: stay ashore. No flag: ask me.', 'Wind from the west and clouds like that? Rain by four.', 'Real water is no game. Never go near deep water without a grown-up, and always wear a life jacket.'], day(6, 21));
       onQuay('theo', { coat: '#ece4d0', skin: '#c48c68', hair: '#1e1814' }, 7.5, 98, -0.5, 'Theo Fairweather', ['Theo Fairweather. Want to see a bowline? The rabbit comes out of the hole, round the tree, back down the hole.', 'Grandad Ezra says the river is a road that moves. I am going to run his ferry one day.', 'I am saving my wharf wages for a boat of my own. Forty-one copper so far.', 'Lily, get away from the edge. Lily. Lily!'], day(7, 20));
       onQuay('lily', { coat: '#b8302a', skin: '#b8805a', hair: '#2a1e16', tall: 4.8 }, 3.5, 95.5, Math.PI, 'Lily Fairweather', ['That barge is from Fernwater! I can see the blue on her bow. Look!', 'Why is the lake flat but the sea is lumpy? Do you know? Theo does not know.', 'Granny Ada gave me three peppermints for being brave on the ferry. I was not even scared.', 'Dad says never go near deep water without a grown-up. I am not near it. I am next to it.'], day(7, 19));
@@ -19643,6 +19712,7 @@ window.LRCAST = (() => {
     { const shut = abed; if (shutNow !== null && shut !== shutNow && where === 'wild' && live && Math.hypot(player.position.x - frameT.ox, player.position.z - frameT.oz) < 320 && !talking()) flash(shut ? 'Nine o\u2019clock. The carriage is coming down the hill to bring Emberdeep\u2019s people home to Tinderfold.' : 'Tinderfold is up. The carriage leaves for Emberdeep before seven.', 6000);
       if (shutNow !== null && shut !== shutNow && (seen || seenO) && !talking()) { const fw = where === 'fernwater', ch = where === 'cairnhold'; if (shut) flash(seen ? 'The shops are shut, and everyone is going home to bed. The Sleepy Beetle is open all night.' : where === 'skyhaven' ? 'Nine o\u2019clock. The Guild is shut, and everyone is going down on the lift to their homes in Lanternreach.' : where === 'lantern' ? 'Nine by the clock. The sky never changes here, but everyone is walking home to Windward Row.' : where === 'emberdeep' ? 'The forges are banked for the night. Everyone is going out to the carriage at the west gate, to ride home to Tinderfold.' : where === 'cogsworth' ? 'The works are shut for the night, and everyone is walking home to Cliff Row.' : ch ? 'The Lodge is shut for the night, and everyone is walking home to Rim Row.' : fw ? 'The shops are shut, and everyone is walking home over the bridge to Heron Row.' : 'The mill is shut for the night, and everyone is walking home to Windfall Lane.', 6000); else if (hr >= 6 && hr < 8) flash(seen ? 'The Hollow is waking up. The shops open at seven.' : where === 'skyhaven' ? 'The first car of the morning is bringing everyone up from Lanternreach. The Guild opens at seven.' : where === 'lantern' ? 'Seven by the clock, and Lanternreach is up, under the same stars.' : where === 'emberdeep' ? 'The carriage is bringing everyone up from Tinderfold. The forges are lit at seven.' : where === 'cogsworth' ? 'Cogsworth is waking up. The works open at seven.' : ch ? 'Cairnhold is waking up. The Lodge opens at seven.' : fw ? 'The Crossing is waking up. The shops open at seven.' : 'The Orchards are waking up. The mill opens at seven.', 6000); } shutNow = shut; }
     folk.forEach(F => { const on = F.on(hr); if (on !== F.g.visible) { F.g.visible = on; if (F.solid) F.solid.x = on ? F.sx : 1e6; } });
+    bdayTick();
     if (WICK.g.visible && seen) { const g = WICK.g, L = LANE.x1 - 28, u = (netNow() * 3.2) % (2 * L); WICK.dir = u < L ? 1 : -1; g.position.x = 10 + (u < L ? u : 2 * L - u); g.rotation.y = WICK.dir * Math.PI / 2; g.position.y = Math.abs(Math.sin(t * 5)) * 0.1; }
     if (where === 'in' && interior) roomNight(interior);
   }
@@ -19735,13 +19805,35 @@ window.LRCAST = (() => {
     choose(OTT_N, line + (next >= 0 ? `<br><br><small>She has ${OTT_L.length - done.length} bench lesson${OTT_L.length - done.length === 1 ? '' : 's'} left for you.</small>` : ''), opts); }
   function castBuild(c) { const built = window.LRCAST.build(c.id), r = built.r, g = c.g, gs = g.scale.x || 1;
     const unit = new THREE.Group(); unit.add(built.unit); built.unit.position.x = 0; built.unit.position.z = 0;   // a holder: their own tick sways and turns the body inside it, the holder keeps them on the ground at real size
-    unit.scale.setScalar(4); unit.updateMatrixWorld(true);
-    const B = new THREE.Box3(); unit.traverse(o => { if (o.isMesh && o.visible && !(o.userData && o.userData.body)) { let v = true, q = o; while (q && q !== unit) { if (!q.visible) v = false; q = q.parent; } if (v) B.expandByObject(o); } });
+    unit.scale.setScalar(4);
+    // pose them once before measuring, so a rod, peel or stick still lying at their middle is not taken for their feet
+    try { window.LRCAST.walk(null); r.tick(0.016, 0, 1, 0, CAST_MOOD); r.tick(0.016, 0.016, 1, 0, CAST_MOOD); } catch (e) {}
+    unit.updateMatrixWorld(true);
+    const B = new THREE.Box3(); unit.traverse(o => { if (o.isMesh && o.visible && !(o.userData && o.userData.body)) { let v = true, q = o; while (q && q !== unit) { if (!q.visible) v = false; q = q.parent; } if (v) { const b1 = new THREE.Box3().setFromObject(o); if (b1.min.y > -0.4) B.union(b1); } } });   // their own floor is at 0: anything hanging below it is a prop not yet in a hand, never their feet
     if (isFinite(B.min.y) && Math.abs(B.min.y) > 0.04) unit.position.y = -B.min.y;   // feet (or chair legs) on the ground
     unit.position.y /= gs; unit.scale.setScalar(4 / gs);
     g.children.forEach(ch => { if (!ch.userData.cast) ch.visible = false; }); unit.userData.cast = true; unit.traverse(o => { if (o.isMesh) o.castShadow = true; }); g.add(unit);
     c.unit = unit; c.r = r; c.built = true; CAST_ON.push(c); }
+  // ---------- birthdays: everyone in the cast has one (day, month and year), and on the day there is a cake on a little table beside them ----------
+  function gameNow() { try { return new Date(new Date().toLocaleString('en-US', { timeZone: ZONE })); } catch (e) { return new Date(); } }
+  const solidsOf = w => w === 'village' ? solids : w === 'orchards' ? orchSolids : w === 'fernwater' ? fernSolids : w === 'cairnhold' ? cairnSolids : w === 'cogsworth' ? cogSolids : w === 'emberdeep' ? embSolids : w === 'wild' ? TF.wsol : w === 'skyhaven' ? skySolids : w === 'lantern' ? lantSolids : w && w.startsWith('in:') && interiors[w.slice(3)] ? interiors[w.slice(3)].solids : null;
+  let bdayKey = '';
+  function bdayCake(c) {
+    const w = c.inw || c.world, list = solidsOf(w), g = c.g; g.updateMatrixWorld(true); const sc = g.scale.x || 1;
+    // a free place beside them: their left, their right, or just in front; if there is none, no table (they still tell you)
+    const free = (lx, lz) => { const v = new THREE.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld); if (list && list.some(q => q !== c.bdSolid && Math.hypot(q.x - v.x, q.z - v.z) < (q.r || 1) + 1.3)) return null; const it = w.startsWith('in:') ? interiors[w.slice(3)] : null; if (it && (Math.abs(v.x) > it.w / 2 - 1.6 || Math.abs(v.z) > it.d / 2 - 1.6)) return null; if (it && it.boxes && it.boxes.some(b => Math.abs(v.x - b.x) < b.hw + 1.2 && Math.abs(v.z - b.z) < b.hd + 1.2)) return null;
+      if (w === 'wild' && CITY.solids) { const [cx, cz] = toLocal(frameH, v.x, v.z); if (CITY.solids.some(q => Math.hypot(q.x - cx, q.z - cz) < (q.r || 1) + 1.3) || CITY.boxes.some(b => Math.abs(cx - b.x) < b.hw + 1.2 && Math.abs(cz - b.z) < b.hd + 1.2)) return null; } return v; };
+    let at = null, loc = null; for (const [lx, lz] of [[2.9, 0.6], [-2.9, 0.6], [2.4, 2.6], [-2.4, 2.6]]) { const v = free(lx / sc, lz / sc); if (v) { at = v; loc = [lx / sc, lz / sc]; break; } } if (!at) return null;
+    const b = new THREE.Group(); b.position.set(loc[0], 0, loc[1]); b.scale.setScalar(1 / sc); g.add(b); const put = (geo, m, y, x = 0, z = 0) => { const q = new THREE.Mesh(geo, m); q.position.set(x, y, z); q.castShadow = true; b.add(q); return q; };
+    const wood = mat('#8a6438'), cream = mat('#f6ecd8', { roughness: 0.9 }), pink = mat('#e88aa0', { roughness: 0.8 });
+    put(new THREE.CylinderGeometry(0.16, 0.22, 2.5, 8), wood, 1.25); put(new THREE.CylinderGeometry(0.7, 0.7, 0.1, 10), wood, 0.05); put(new THREE.CylinderGeometry(1, 1, 0.14, 18), wood, 2.57); put(new THREE.CylinderGeometry(0.72, 0.72, 0.05, 18), mat('#e8e2d6'), 2.665);
+    put(new THREE.CylinderGeometry(0.58, 0.6, 0.42, 18), cream, 2.9); put(new THREE.CylinderGeometry(0.6, 0.6, 0.09, 18), pink, 3.13); for (let q = 0; q < 8; q++) { const a = q / 8 * Math.PI * 2; put(new THREE.SphereGeometry(0.075, 6, 5), pink, 2.74, Math.cos(a) * 0.6, Math.sin(a) * 0.6); }
+    const flame = new THREE.MeshBasicMaterial({ color: '#ffd36a' }); for (let q = 0; q < 5; q++) { const a = q / 5 * Math.PI * 2 + 0.3, x = Math.cos(a) * 0.32, z = Math.sin(a) * 0.32; put(new THREE.CylinderGeometry(0.03, 0.03, 0.3, 5), mat(['#6ab0e8', '#f2d24a', '#7ac87a', '#e87a6a', '#b08ae8'][q]), 3.32, x, z); const f = put(new THREE.SphereGeometry(0.05, 6, 5), flame, 3.52, x, z); f.scale.y = 1.7; f.castShadow = false; }
+    if (list) { c.bdSolid = { x: at.x, z: at.z, r: 1.0 }; list.push(c.bdSolid); } return b; }
+  function bdayTick() { if (!window.LRCAST || !LRCAST.isBirthday || typeof CASTMAP === 'undefined') return; const n = gameNow(), key = n.getMonth() + '-' + n.getDate() + ':' + CASTMAP.length; if (key === bdayKey) return; bdayKey = key;
+    CASTMAP.forEach(c => { if (c.bd) { c.g.remove(c.bd); c.bd = null; } if (c.bdSolid) { c.bdSolid.x = 1e6; c.bdSolid = null; } if (LRCAST.isBirthday(c.id, n)) { try { c.bd = bdayCake(c); } catch (e) {} } }); }
   function castTick(dt, t) {
+    if (window.LRCAST && LRCAST.mode) LRCAST.mode.hattiePlay = where === 'in' && !!interior && interior.id === 'kingfisher';
     const w0 = 0; if (!window.LRCAST) { if (where === 'in' && interior && interior.id === 'potions') OTTD.tick(dt); return; } const w = where === 'in' ? (interior ? 'in:' + interior.id : null) : where;
     if (where === 'in' && interior && interior.id === 'potions') OTTD.tick(dt);
     if (w !== castW) { castW = w; castQ = CASTMAP.filter(c => (c.world === w || c.inw === w) && !c.built); }
