@@ -470,7 +470,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 167 · 24 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 168 · 24 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -15078,6 +15078,9 @@ window.LRCAST = (() => {
   try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const parsed = JSON.parse(raw); if (parsed && typeof parsed === 'object') save = Object.assign(save, parsed); } } catch (e) {}
   let saveTimer = 0;
   function persist() { save.ts = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} if (typeof cloudSoon === 'function') cloudSoon(); }
+  // what a finished lesson pays. Harder learning pays more: copper on the early road, silver in the middle, gold at the top
+  const LESSON_PAY = { early: 3, mid: 10, high: 30, top: 100 };
+  const lessonPay = key => /^(cairn|cog)-/.test(key) ? LESSON_PAY.mid : /^(ember|lant)-/.test(key) ? LESSON_PAY.high : /^sky-/.test(key) ? LESSON_PAY.top : LESSON_PAY.early;
   function markDone(key) { if (!save.done.includes(key)) { save.done.push(key); persist(); } }
   function isDone(key) { return save.done.includes(key); }
   function clearSave() { save = { coins: 0, done: [], where: 'village', pos: [0, 0, 6.5], yaw: Math.PI, beetle: '', started: false }; try { if (session) save.owner = uidOf(session); } catch (e) {} try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
@@ -15120,6 +15123,29 @@ window.LRCAST = (() => {
     dyeplum: { n: 'Plum dye', e: '🟪', v: 6, t: 0, c: 'wear', dye: '#7a3d7a', d: 'Turns your tunic purple. One jar does one tunic.' },
     stick: { n: 'Walking stick', e: '🪵', v: 15, t: 0, c: 'tool', d: 'Carry it and you get your breath back sooner.' },
     pack: { n: 'Traveller’s pack', e: '🎒', v: 40, t: 0, w: 0, c: 'tool', d: 'Carry it and you have room for 20 more.' },
+    // ---- the copper shelf: small things a few lessons' pay will buy, in every town ----
+    honeydrops: { n: 'Honey drops', e: '🍬', v: 1, t: 0, c: 'food', eat: 6, d: 'Six in a twist of paper. Gone before the next signpost.' },
+    pencil: { n: 'Pencil', e: '✏️', v: 2, t: 0, c: 'goods', d: 'Cedar, from Aldric’s offcuts. Sharpened with a knife.' },
+    top: { n: 'Spinning top', e: '🌀', v: 3, t: 0, c: 'goods', play: 'You set the top spinning. It hums, wanders, and falls over.', d: 'Turned on Aldric’s lathe. Wind the string and pull.' },
+    marbles: { n: 'Bag of marbles', e: '🔮', v: 3, t: 0, c: 'goods', play: 'You roll the marbles out and count them back in. Ten, as there should be.', d: 'Ten clay marbles in a cloth bag. One is always the favourite.' },
+    candle: { n: 'Beeswax candle', e: '🕯️', v: 2, t: 0, c: 'goods', d: 'Smells of honey. Burns for an evening.' },
+    pear: { n: 'Pear', e: '🍐', v: 1, t: 1, c: 'food', eat: 12, d: 'From the old tree behind the mill.' },
+    honey: { n: 'Jar of honey', e: '🐝', v: 4, t: 1, c: 'food', eat: 28, d: 'Orchard blossom honey. The bees do well among the apple trees.' },
+    twine: { n: 'Ball of twine', e: '🧵', v: 1, t: 2, c: 'goods', d: 'A hundred uses, and you will find the hundred-and-first.' },
+    hook: { n: 'Hook and line', e: '🪝', v: 3, t: 2, c: 'goods', d: 'A steel hook, a cork float and ten yards of line.' },
+    bun: { n: 'Currant bun', e: '🥯', v: 2, t: 2, c: 'food', eat: 20, d: 'Maudie counts the currants. There are always twelve.' },
+    gingerfish: { n: 'Gingerbread fish', e: '🍪', v: 2, t: 2, c: 'food', eat: 18, d: 'Shaped like a perch, with a currant for an eye.' },
+    paperboat: { n: 'Paper boat', e: '⛵', v: 1, t: 2, c: 'goods', play: 'You set the paper boat down and give it a push. It sails as far as your arm.', d: 'Folded and waxed, so it floats for a good while.' },
+    ribbon: { n: 'Wool ribbon', e: '🎀', v: 2, t: 3, c: 'goods', d: 'Woven on a hand loom in Highland colours.' },
+    pebble: { n: 'Polished pebble', e: '⚪', v: 1, t: 3, c: 'goods', d: 'River-smoothed, then rubbed with wax until it shines.' },
+    mouse: { n: 'Clockwork mouse', e: '🐭', v: 9, t: 4, c: 'goods', play: 'You wind the key. The mouse runs in a circle, bumps your boot, and stops.', d: 'Eleven gears inside. Wind it and let it go.' },
+    button: { n: 'Copper button', e: '🔘', v: 1, t: 5, c: 'goods', d: 'Stamped with a little hammer. Miners sew them on everything.' },
+    rock: { n: 'Stick of rock', e: '🍭', v: 2, t: 6, c: 'food', eat: 10, d: 'Peppermint, with a lighthouse all the way through.' },
+    dart: { n: 'Paper dart', e: '✈️', v: 1, t: 7, c: 'goods', play: 'You throw the dart. It loops once and comes down behind you.', d: 'Folded the Guild way. It flies further than you expect.' },
+    quill: { n: 'Gull-feather quill', e: '🪶', v: 3, t: 7, c: 'goods', d: 'Cut to a point. Needs ink.' },
+    paper: { n: 'Sheaf of paper', e: '📄', v: 2, t: 8, c: 'goods', d: 'Twelve sheets, made by hand in Hearthmoor.' },
+    ink: { n: 'Bottle of ink', e: '🖋️', v: 3, t: 8, c: 'goods', d: 'Oak-gall black. Mind the cork.' },
+    notebook: { n: 'Little notebook', e: '📓', v: 6, t: 8, c: 'goods', d: 'Stitched and bound by hand, with a ribbon to keep your place.' },
     apple: { n: 'Apple', e: '🍎', v: 1, t: 1, c: 'food', eat: 12, d: 'A Mallow windfall.' },
     cocoa: { n: 'Hot cocoa', e: '☕', v: 3, t: 0, c: 'food', eat: 16, drink: true, d: 'From the Sleepy Beetle. Best by the fire.' },
     fishstew: { n: 'Lake fish stew', e: '🍲', v: 5, t: 8, c: 'food', eat: 40, heal: 10, d: 'Sam Bramwell’s, from the Kingfisher on the wharf.' },
@@ -15156,30 +15182,30 @@ window.LRCAST = (() => {
   const madeIn = i => Object.keys(ITEMS).filter(k => ITEMS[k].t === i);
   // n the shop, who whoever serves (nobody: an honesty dish), t the town it stands in, stock what it sells
   const SHOPS = {
-    stores: { n: 'The Village Stores', who: 'Old Bramblewick', t: 0, stock: ['nutmix', 'toy', 'pack'] },
+    stores: { n: 'The Village Stores', who: 'Old Bramblewick', t: 0, stock: ['nutmix', 'toy', 'pack', 'honeydrops', 'marbles', 'candle'] },
     fen: { n: 'Dewberry’s stall', who: 'Fen Dewberry', t: 0, stock: ['jam', 'dyered', 'dyeblue', 'dyegreen', 'dyegold', 'dyeplum'] },
     nursery: { n: 'Fernsby’s Potting Shed', t: 0, stock: ['seeds', 'seedling', 'strawhat'] },
-    wood: { n: 'Bough’s Woodshop', who: 'Aldric Bough', t: 0, stock: ['stick', 'whistle'] },
+    wood: { n: 'Bough’s Woodshop', who: 'Aldric Bough', t: 0, stock: ['stick', 'whistle', 'pencil', 'top'] },
     hearth: { n: 'The Hearthstone', who: 'Bram Kettleby', t: HUB, always: true, home: true, stock: ['stew', 'cocoa', 'bread', 'pie', 'cake', 'cider', 'skytea'] },
     kingfisher: { n: 'The Kingfisher Inn', who: 'Sam Bramwell', t: HUB, always: true, home: true, stock: ['cocoa', 'fishstew', 'bread', 'fish', 'cider'] },
-    inn: { n: 'The Sleepy Beetle', get who() { const h = clockHour(); return h >= 7 && h < 19 ? 'Posy Underbough' : 'Moss Underbough'; }, t: 0, always: true, stock: ['cocoa', 'stew', 'bread', 'pie', 'cider', 'nutmix'] },
-    mill: { n: 'Quern Mill', t: 1, stock: ['apple', 'cider', 'flour'] },
-    bakery: { n: 'Crumb’s Bakery', who: 'Maudie Crumb', t: 2, stock: ['bread', 'cake', 'pie'] },
-    nets: { n: 'Nets & Lines', t: 2, stock: ['fish'] },
-    ropes: { n: 'Reedwater Ropes', t: 2, stock: ['rope'] },
-    lodge: { n: 'The Surveyors’ Lodge', t: 3, stock: ['cheese', 'woolcap', 'chalk', 'mapscroll'] },
-    clockworks: { n: 'The Clockworks', t: 4, stock: ['gear', 'clock', 'flatcap'] },
+    inn: { n: 'The Sleepy Beetle', get who() { const h = clockHour(); return h >= 7 && h < 19 ? 'Posy Underbough' : 'Moss Underbough'; }, t: 0, always: true, stock: ['cocoa', 'stew', 'bread', 'pie', 'cider', 'nutmix', 'honeydrops'] },
+    mill: { n: 'Quern Mill', t: 1, stock: ['apple', 'cider', 'flour', 'pear', 'honey'] },
+    bakery: { n: 'Crumb’s Bakery', who: 'Maudie Crumb', t: 2, stock: ['bread', 'cake', 'pie', 'bun', 'gingerfish'] },
+    nets: { n: 'Nets & Lines', t: 2, stock: ['fish', 'hook', 'paperboat'] },
+    ropes: { n: 'Reedwater Ropes', t: 2, stock: ['rope', 'twine'] },
+    lodge: { n: 'The Surveyors’ Lodge', t: 3, stock: ['cheese', 'woolcap', 'chalk', 'mapscroll', 'ribbon', 'pebble'] },
+    clockworks: { n: 'The Clockworks', t: 4, stock: ['gear', 'clock', 'flatcap', 'mouse'] },
     bikeworks: { n: 'The Bicycle Works', t: 4, stock: ['bell', 'boots'] },
-    durna: { n: 'Durna’s ore bench', who: 'Durna', t: 5, stock: ['iron', 'coal', 'crystal', 'helmet'] },
-    chandlery: { n: 'Reef & Rope Chandlery', t: 6, stock: ['lantern', 'oil', 'souwester', 'spyglass'] },
-    guild: { n: 'The Glider Guild', t: 7, stock: ['goggles', 'kite', 'silk', 'skytea'] },
-    stall0: { n: 'The pie stall', t: HUB, stock: ['bread', 'pie', 'cake'] },
-    stall1: { n: 'The fruit stall', t: HUB, stock: ['apple', 'cider', 'jam', 'nutmix'] },
+    durna: { n: 'Durna’s ore bench', who: 'Durna', t: 5, stock: ['iron', 'coal', 'crystal', 'helmet', 'button'] },
+    chandlery: { n: 'Reef & Rope Chandlery', t: 6, stock: ['lantern', 'oil', 'souwester', 'spyglass', 'rock'] },
+    guild: { n: 'The Glider Guild', t: 7, stock: ['goggles', 'kite', 'silk', 'skytea', 'dart', 'quill'] },
+    stall0: { n: 'The pie stall', t: HUB, stock: ['bread', 'pie', 'cake', 'bun', 'gingerfish'] },
+    stall1: { n: 'The fruit stall', t: HUB, stock: ['apple', 'cider', 'jam', 'nutmix', 'pear', 'honey', 'honeydrops'] },
     stall2: { n: 'The fish and cheese stall', t: HUB, stock: ['fish', 'cheese'] },
     stall3: { n: 'The hatter’s stall', t: HUB, stock: ['strawhat', 'woolcap', 'flatcap', 'souwester', 'goggles', 'helmet'] },
     stall4: { n: 'The dyer’s stall', t: HUB, stock: ['dyered', 'dyeblue', 'dyegreen', 'dyegold', 'dyeplum'] },
     stall5: { n: 'The seed stall', t: HUB, stock: ['seeds', 'seedling'] },
-    stall6: { n: 'The tinker’s stall', t: HUB, stock: ['lantern', 'stick', 'boots', 'pack'] },
+    stall6: { n: 'The tinker’s stall', t: HUB, stock: ['lantern', 'stick', 'boots', 'pack', 'candle', 'twine', 'marbles', 'paper', 'ink', 'notebook'] },
     stall7: { n: 'The tea stall', t: HUB, stock: ['skytea', 'cake'] }
   };
   ['Thistledown Hollow', 'Mallow Orchards', 'Fernwater Crossing', 'Cairnhold', 'Cogsworth', 'Emberdeep', 'Lanternreach', 'Skyhaven'].forEach((town, i) => { SHOPS['hall' + i] = { n: 'The ' + town + ' Hall', t: HUB, stock: madeIn(i) }; });
@@ -15274,6 +15300,7 @@ window.LRCAST = (() => {
         if (it.hat) b += `<button class="btn small primary" data-a="wear" data-i="${id}">${save.hatStyle === it.hat ? 'Take off' : 'Wear'}</button>`;
         if (it.dye) b += `<button class="btn small primary" data-a="dye" data-i="${id}">Dye my tunic</button>`;
         if (it.lamp) b += `<button class="btn small primary" data-a="lamp" data-i="${id}">${save.lamp ? 'Put out' : 'Light'}</button>`;
+        if (it.play) b += `<button class="btn small primary" data-a="play" data-i="${id}">Play</button>`;
         b += `<button class="btn small" data-a="drop" data-i="${id}">Drop</button>`; }
       return row(id, v[id], itemNote(id), b); }).join('') || `<div class="bagempty">${Object.keys(v).length ? 'Nothing of that kind.' : 'Nothing yet. Berries, mushrooms, feathers and the like lie beside the roads; walk up to one and pick it up.'}</div>`;
     // a redraw throws the buttons away: put the highlight back on the same one, or the nearest thing to it
@@ -15294,6 +15321,7 @@ window.LRCAST = (() => {
     else if (a === 'wear' && has(id)) { const on = save.hatStyle !== it.hat; save.hatStyle = on ? it.hat : ''; kid.setHat(save.hatStyle || 'cap'); persist(); bagMsg = on ? `You put on the ${it.n.toLowerCase()}.` : 'Back to your own pointed cap.'; }
     else if (a === 'dye' && has(id)) { removeItem(id); save.look = Object.assign({}, save.look || {}, { tunic: it.dye }); applyLook(save.look); persist(); bagMsg = 'Your tunic took the colour.'; }
     else if (a === 'lamp' && has(id)) { setLamp(!save.lamp); persist(); bagMsg = save.lamp ? 'The lantern is lit.' : 'You put the lantern out.'; }
+    else if (a === 'play' && has(id)) { bagMsg = it.play; }
     else if (a === 'drop' && has(id)) { removeItem(id); bagMsg = `You left the ${it.n.toLowerCase()} behind.`; }
   }
   $('bag').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const a = b.dataset.a, id = b.dataset.i; if (a === 'close') closeBag(); else if (a === 'readbook') { closeBag(); readBook(id); } else if (a === 'bike') { if (BIKE_PARTS.every(([q, n]) => (inv()[q] || 0) >= n) && coins >= BIKE_COINS) { BIKE_PARTS.forEach(([q, n]) => { for (let k = 0; k < n; k++) removeItem(q); }); setCoins(coins - BIKE_COINS); bikeOwned = true; save.bike = true; persist(); chink(1320); bagMsg = 'The apprentices bolt it together while you wait. The bicycle is yours: step outside and press the ride key.'; } renderBag(); } else if (a === 'whistle') { bagMsg = whistle(); renderBag(); } else if (a === 'tab') { bagTab = id; renderBag(); } else if (a) { bagAct(a, id); renderBag(); } });
@@ -15374,7 +15402,7 @@ window.LRCAST = (() => {
     const next = () => { if (n === qs.length) return done(); quizAsk(T.n, `Question ${n + 1} of ${qs.length}`, qs[n], ok => { if (ok) right++; n++; next(); }); };
     const done = () => {
       if (right < 4) { say([`That is <b>${right} of 5</b>. Not this time: it takes four.`, 'No shame in it. The lessons are here whenever you want them, and you may ask me to test you again.'], null, T.n); return; }
-      const fresh = L.filter(([, k]) => !isDone(k)), pay = fresh.length * 2; save.tested = (save.tested || []).concat(fresh.map(([, k]) => k)); fresh.forEach(([, k]) => markDone(k)); kid.satchel.visible = true; setCoins(coins + pay);
+      const fresh = L.filter(([, k]) => !isDone(k)), pay = fresh.reduce((a, [, k]) => a + lessonPay(k), 0); save.tested = (save.tested || []).concat(fresh.map(([, k]) => k)); fresh.forEach(([, k]) => markDone(k)); kid.satchel.visible = true; setCoins(coins + pay);
       if (i === 3) { try { buildBridge(); } catch (e) {} }
       say([`<b>${right} of 5</b>. You know this country’s arithmetic already, and I’ll not waste your time teaching it to you.`, `What you carry in your head is worth paying for. Here are <b>${pay} coins</b>, two for every lesson you did not need.`, i < 7 ? `The road goes on to <b>${REGIONS[i + 1].name}</b>. ${TEACH[i + 1].n} teaches there, and will test you the same way if you ask.` : 'There is nobody further up the road to send you to. This is the top of it.'], null, T.n);
     };
@@ -16178,8 +16206,8 @@ window.LRCAST = (() => {
     say([
       'Three jars! Now the paint has somewhere to live.',
       'You worked out what you were missing, earned the coins yourself, and caught a counting mistake. That’s a real helper.',
-      'Here’s <b>2 copper</b> for your trouble. Keep them safe in that satchel.'
-    ], () => { setCoins(coins + 2); reward2(); });
+      'Here’s <b>3 copper</b> for your trouble. Keep them safe in that satchel.'
+    ], () => { setCoins(coins + LESSON_PAY.early); reward2(); });
   }
   function reward2() {
     markDone('lesson-2');
@@ -16267,7 +16295,7 @@ window.LRCAST = (() => {
           () => say([
             `${cap(words(7 + total))}! <b>7 + ${total} = ${7 + total}</b>. ${Math.floor((7 + total) / 10)} full trays and ${(7 + total) % 10} left over.`,
             'You’re a proper gatherer now. The tray is yours to keep, and here’s <b>3 copper</b> for a hard day’s work.'
-          ], () => { setCoins(coins + 3); reward3(); })))));
+          ], () => { setCoins(coins + LESSON_PAY.early); reward3(); })))));
   }
   function reward3() {
     markDone('lesson-3');
@@ -16324,8 +16352,8 @@ window.LRCAST = (() => {
                 back => { stepSum([21, 35], () => { const box = visual.lastChild; box.innerHTML += `56 − 14 = <b style="color:var(--gold)">42</b><br>`; setTimeout(back, 1200); }); },
                 () => say([
                   'Forty-two! <b>21 + 35 = 56</b>, then <b>56 − 14 = 42</b>. Added what came in, took away what went out.',
-                  'You can keep a ledger. That’s rarer than you’d think. The quill is yours, and here’s <b>2 copper</b>.'
-                ], () => { setCoins(coins + 2); reward4(); }))));
+                  'You can keep a ledger. That’s rarer than you’d think. The quill is yours, and here’s <b>3 copper</b>.'
+                ], () => { setCoins(coins + LESSON_PAY.early); reward4(); }))));
           };
         }))));
   }
@@ -16437,9 +16465,9 @@ window.LRCAST = (() => {
       back => { visual.hidden = false; visual.innerHTML = '<p style="text-align:center;margin:0;color:var(--ink-soft)">Rain → ground → <b style="color:var(--gold)">roots and leaves</b> → mist → clouds → rain again.</p>'; setTimeout(back, 1800); },
       () => say([
         'Up through the roots, into the plants. Then out of the leaves as mist, up to the clouds, and down again. The <b>water cycle</b>. It never stops.',
-        'You planted thirty acorns in neat rows today, and counted them three different ways. Here’s <b>2 copper</b>, and this trowel is yours.',
+        'You planted thirty acorns in neat rows today, and counted them three different ways. Here’s <b>3 copper</b>, and this trowel is yours.',
         'Take a seedling home, too. Plant it by Bramblewick’s door. In a hundred years it’ll be an oak.'
-      ], () => { setCoins(coins + 2); reward5(); }, 'Marigold Fernsby'), 'Marigold Fernsby'), 700); }
+      ], () => { setCoins(coins + LESSON_PAY.early); reward5(); }, 'Marigold Fernsby'), 'Marigold Fernsby'), 700); }
     else hint('One bed watered. Fill the can again for the other.');
   }
   function reward5() {
@@ -16515,8 +16543,8 @@ window.LRCAST = (() => {
                       () => say([
                         'Zero. Empty. <b>13 − 13 = 0</b>, and spring is still weeks away.',
                         'That’s why we gather hard in autumn, and why we write it all down: so we see the empty barrel coming before it’s here.',
-                        'Tomorrow you and I go knocking on doors for spare acorns. Tonight, here’s <b>2 copper</b>, and the tally board is yours.'
-                      ], () => { setCoins(coins + 2); reward6(); }))));
+                        'Tomorrow you and I go knocking on doors for spare acorns. Tonight, here’s <b>3 copper</b>, and the tally board is yours.'
+                      ], () => { setCoins(coins + LESSON_PAY.early); reward6(); }))));
               }))))));
   }
   function reward6() {
@@ -16592,8 +16620,8 @@ window.LRCAST = (() => {
           back => countRow([{ kind: 'acorn', n: 6 }, { kind: 'acorn', n: 2, joiner: '+' }], () => { visual.innerHTML += '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">6 notches fill the gap. The board has 2 more that stick out.</p>'; setTimeout(back, 1800); }),
           () => say([
             'Too long by two. <b>8 − 6 = 2</b>. Aldric cuts off two notches and it fits like it grew there.',
-            'You measured three things and told a carver a number. Here’s <b>2 copper</b>, and the notched stick is yours.'
-          ], () => { clearLaid(); setCoins(coins + 2); reward7(); })))));
+            'You measured three things and told a carver a number. Here’s <b>3 copper</b>, and the notched stick is yours.'
+          ], () => { clearLaid(); setCoins(coins + LESSON_PAY.early); reward7(); })))));
   }
   function reward7() {
     markDone('lesson-7');
@@ -16671,8 +16699,8 @@ window.LRCAST = (() => {
                 back => { visual.hidden = false; visual.innerHTML = '<svg viewBox="0 0 200 100" width="200" style="display:block;margin:0 auto"><rect x="10" y="20" width="80" height="60" fill="none" stroke="var(--panel-edge)" stroke-width="3"/><rect x="90" y="20" width="80" height="60" fill="none" stroke="var(--panel-edge)" stroke-width="3"/><rect x="10" y="20" width="160" height="60" fill="none" stroke="var(--gold)" stroke-width="4"/><circle cx="10" cy="20" r="6" fill="var(--berry)"/><circle cx="170" cy="20" r="6" fill="var(--berry)"/><circle cx="10" cy="80" r="6" fill="var(--berry)"/><circle cx="170" cy="80" r="6" fill="var(--berry)"/></svg><p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">The two middle corners disappear into the join. Four are left, on the outside.</p>'; setTimeout(back, 2200); },
                 () => say([
                   'Four. The middle corners vanish when the squares join. Longer, but still four corners. That’s the shelf.',
-                  'You see shapes now. Here’s <b>2 copper</b>, and take this: a circle I turned on the lathe. Perfect, all the way round. Keep it and you’ll know what a curve should look like.'
-                ], () => { setCoins(coins + 2); reward8(); }, 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough');
+                  'You see shapes now. Here’s <b>3 copper</b>, and take this: a circle I turned on the lathe. Perfect, all the way round. Keep it and you’ll know what a curve should look like.'
+                ], () => { setCoins(coins + LESSON_PAY.early); reward8(); }, 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough'), 'Aldric Bough');
   }
   function reward8() {
     markDone('lesson-8');
@@ -16738,7 +16766,7 @@ window.LRCAST = (() => {
                       'Sixteen short. Sixteen! And do you know who turned up at the door just now with a sack of exactly sixteen? Old Hazel from the end of the lane.',
                       '<b>84 + 16 = 100</b>. A hundred acorns, counted by the whole village, and written down by you.',
                       'That’s <b>3 copper</b>, and the hundred-acorn tally goes on the wall with your name on it.'
-                    ], () => { setCoins(coins + 3); reward9(); })))))))));
+                    ], () => { setCoins(coins + LESSON_PAY.early); reward9(); })))))))));
   }
   function reward9() {
     markDone('lesson-9');
@@ -16896,7 +16924,7 @@ window.LRCAST = (() => {
   function namePony(name) {
     beetleName = name; beetle.userData.follow = true; save.beetle = name; save.names = Object.assign(save.names || {}, { pony: name }); persist();
     say([`<b>${name}</b>. She’ll follow you anywhere and carry ${PACK.pony.carry} things in her panniers. Speak to her to tell her to wait or to go home.`, `You raised a beetle from a grub, and you know how its whole life goes round. That’s <b>3 copper</b>, and ${save.pet} is worth more than all of them.`, 'That’s the Hollow done, little one. Out past the signpost, the Long Road starts. The orchards, and old Hollis Quern at the mill, are waiting.'],
-      () => { setCoins(coins + 3); reward10(); });
+      () => { setCoins(coins + LESSON_PAY.early); reward10(); });
   }
   function reward10() {
     markDone('lesson-10');
@@ -17068,7 +17096,7 @@ window.LRCAST = (() => {
                 'Forty-eight. <b>24 \u00d7 2 = 48</b>, or 2 rows of 24, same thing. Rows of trees, rows of crates, rows of anything.',
                 'You\u2019ll do. Here\u2019s <b>3 copper</b> and a mill token. Show it at the door and the mice will let you in.',
                 'And go say hello to Pip. You won\u2019t need to look for him. He\u2019ll find you.'
-              ], () => { setCoins(coins + 3); rewardO1(); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+              ], () => { setCoins(coins + LESSON_PAY.early); rewardO1(); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
   }
   function rewardO1() {
     markDone('orch-1');
@@ -17115,8 +17143,8 @@ window.LRCAST = (() => {
                       back => stepLines(['3, 6, 9, 12, 15, 18, <b style="color:var(--gold)">21</b>', 'Seven verses of the three-song'], () => setTimeout(back, 800)),
                       () => { wheelSpeed = 4.6; say([
                         'Twenty-one! Listen to that wheel go. The mice haven\u2019t run like that since spring.',
-                        'Every song, every verse, until you don\u2019t need to sing them. That\u2019s <b>2 copper</b>, and the mill songbook. It\u2019s mostly humming.'
-                      ], () => { setCoins(coins + 2); rewardOrch(2, 'The mill songbook', 'You sang the <b>times tables</b> as songs, and jumped straight to any verse.', startO3); }, 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern');
+                        'Every song, every verse, until you don\u2019t need to sing them. That\u2019s <b>3 copper</b>, and the mill songbook. It\u2019s mostly humming.'
+                      ], () => { setCoins(coins + LESSON_PAY.early); rewardOrch(2, 'The mill songbook', 'You sang the <b>times tables</b> as songs, and jumped straight to any verse.', startO3); }, 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern'); }, 'Hollis Quern'), 'Hollis Quern');
   }
   function rewardOrch(n, item, text, next) {
     markDone('orch-' + n);
@@ -17155,8 +17183,8 @@ window.LRCAST = (() => {
           () => say(['Four crates. <b>20 \u00f7 5 = 4</b>. Sharing or grouping, same sign.', 'One more. Eighteen hazelnuts, three mice, and mice are very particular about fair.'],
             () => askNumber('<b>18</b> hazelnuts shared between <b>3</b> mice. How many each?', 6, '',
               back => dealRow(18, 3, 'acorn', () => setTimeout(back, 1200)),
-              () => say(['Six each, and not a whisker of complaint. <b>18 \u00f7 3 = 6</b>.', 'You can share fair. That\u2019s worth <b>2 copper</b> and the pickers\u2019 bell, which rings when the apples are divided.'],
-                () => { setCoins(coins + 2); rewardOrch(3, 'The pickers\u2019 bell', 'You <b style="color:var(--gold)">divided</b> by sharing out, and by making groups: <b style="color:var(--gold)">12 \u00f7 4 = 3</b>.', startO4); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+              () => say(['Six each, and not a whisker of complaint. <b>18 \u00f7 3 = 6</b>.', 'You can share fair. That\u2019s worth <b>3 copper</b> and the pickers\u2019 bell, which rings when the apples are divided.'],
+                () => { setCoins(coins + LESSON_PAY.early); rewardOrch(3, 'The pickers\u2019 bell', 'You <b style="color:var(--gold)">divided</b> by sharing out, and by making groups: <b style="color:var(--gold)">12 \u00f7 4 = 3</b>.', startO4); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
   }
   // Lesson 4: leftovers (remainders)
   function startO4() {
@@ -17174,8 +17202,8 @@ window.LRCAST = (() => {
         back => dealRow(23, 5, 'acorn', () => { visual.lastChild.innerHTML = '5 bags, but only 4 are full. The fifth has 3 in it.'; setTimeout(back, 1400); }),
         () => askNumber('And how many hazelnuts are left over?', 3, '',
           back => stepLines(['4 bags of 5 = 20', '23 \u2212 20 = <b style="color:var(--gold)">3</b>'], () => setTimeout(back, 900)),
-          () => say(['Four bags and 3 left over. <b>23 \u00f7 5 = 4 remainder 3</b>.', 'Leftovers aren\u2019t a mistake. They\u2019re just what\u2019s true. <b>2 copper</b>, and the leftovers bowl. It\u2019s Pip\u2019s favourite bowl.'],
-            () => { setCoins(coins + 2); rewardOrch(4, 'The leftovers bowl', 'You divided when it didn\u2019t come out even, and named the <b style="color:var(--gold)">remainder</b>.', startO5); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+          () => say(['Four bags and 3 left over. <b>23 \u00f7 5 = 4 remainder 3</b>.', 'Leftovers aren\u2019t a mistake. They\u2019re just what\u2019s true. <b>3 copper</b>, and the leftovers bowl. It\u2019s Pip\u2019s favourite bowl.'],
+            () => { setCoins(coins + LESSON_PAY.early); rewardOrch(4, 'The leftovers bowl', 'You divided when it didn\u2019t come out even, and named the <b style="color:var(--gold)">remainder</b>.', startO5); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
   }
   // Lesson 5: Pip's puzzle (factors and multiples)
   function startO5() {
@@ -17197,7 +17225,7 @@ window.LRCAST = (() => {
             () => ask('Which of these is a <b>multiple of 6</b>?', ['20', '30', '32'], '30',
               back => stepLines(['Sing the six-song: 6, 12, 18, 24, <b style="color:var(--gold)">30</b>, 36', '20 and 32 never come up'], () => setTimeout(back, 1200)),
               () => say(['Thirty. Five rows of six.', 'Factors go <b>into</b> a number. Multiples come <b>out</b> of it. Same rows, two directions.', 'I made you a crate! A small one. It\u2019s 2 by 3. Six! Sir Crumb helped. He didn\u2019t really, he just sat on it.'],
-                () => { setCoins(coins + 2); rewardOrch(5, 'Pip\u2019s little crate', 'You found the <b style="color:var(--gold)">factors</b> of 24 by stacking it in rows, and sang out its <b style="color:var(--gold)">multiples</b>.', startO6); }, 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby');
+                () => { setCoins(coins + LESSON_PAY.early); rewardOrch(5, 'Pip\u2019s little crate', 'You found the <b style="color:var(--gold)">factors</b> of 24 by stacking it in rows, and sang out its <b style="color:var(--gold)">multiples</b>.', startO6); }, 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby'), 'Pip Willowby');
   }
 
   // ---------- Region 2, Lessons 6 to 9: big orders, the long split, the cider press, the Season Fair ----------
@@ -17233,7 +17261,7 @@ window.LRCAST = (() => {
             () => askNumber('<b>24 \u00d7 12</b>. Add up the four pieces.', 288, areaSvg(24, 12, 20, 10),
               back => stepLines(['20 \u00d7 10 = 200', '4 \u00d7 10 = 40', '20 \u00d7 2 = 40', '4 \u00d7 2 = 8', '200 + 40 + 40 + 8 = <b style="color:var(--gold)">288</b>'], () => setTimeout(back, 1100)),
               () => say(['Two hundred and eighty-eight crates! <b>24 \u00d7 12 = 288</b>. Four pieces, added up. That\u2019s the <b>area</b> way: the big rectangle is the sum of its little ones.', 'That buyer\u2019s going to need a bigger barge. <b>3 copper</b>, and the orchard map, with every row on it.'],
-                () => { setCoins(coins + 3); rewardOrch(6, 'The orchard map', 'You multiplied <b style="color:var(--gold)">big numbers</b> by breaking them into tens and ones and adding the pieces.', startO7); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+                () => { setCoins(coins + LESSON_PAY.early); rewardOrch(6, 'The orchard map', 'You multiplied <b style="color:var(--gold)">big numbers</b> by breaking them into tens and ones and adding the pieces.', startO7); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
   }
   // Lesson 7: the long split (long division by chunks)
   function startO7() {
@@ -17250,7 +17278,7 @@ window.LRCAST = (() => {
             () => askNumber('<b>648 \u00f7 12</b>. Fifty twelves, then the rest.', 54, '',
               back => stepLines(['50 \u00d7 12 = 600, so 50 sacks', '648 \u2212 600 = 48', '48 \u00f7 12 = 4 more sacks', '50 + 4 = <b style="color:var(--gold)">54</b>'], () => setTimeout(back, 1100)),
               () => say(['Fifty-four sacks, and not a nut left over. <b>648 \u00f7 12 = 54</b>.', 'Chunk, subtract, chunk again. That\u2019s long division, and most grown elves can\u2019t do it. <b>3 copper</b>, and the sack-tally string: one knot per sack.'],
-                () => { setCoins(coins + 3); rewardOrch(7, 'The sack-tally string', 'You divided <b style="color:var(--gold)">big numbers</b> in chunks: take an easy chunk, subtract, and finish the rest.', startO8); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+                () => { setCoins(coins + LESSON_PAY.early); rewardOrch(7, 'The sack-tally string', 'You divided <b style="color:var(--gold)">big numbers</b> in chunks: take an easy chunk, subtract, and finish the rest.', startO8); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
   }
   // Lesson 8: the cider press (mixed word problems, and you work the press)
   let presses = 0;
@@ -17283,7 +17311,7 @@ window.LRCAST = (() => {
               () => askNumber('<b>18</b> bottles at <b>3</b> coins each. How many coins?', 54, areaSvg(18, 3, 10, 3),
                 back => stepLines(['10 \u00d7 3 = 30', '8 \u00d7 3 = 24', '30 + 24 = <b style="color:var(--gold)">54</b>'], () => setTimeout(back, 900)),
                 () => say(['Fifty-four coins for a morning\u2019s pressing. Multiply, divide, divide, multiply, and you never once lost count.', 'Have a bottle. And <b>3 copper</b>. The rest goes to the mice.'],
-                  () => { setCoins(coins + 3); rewardOrch(8, 'A bottle of Quern cider', 'You chained <b style="color:var(--gold)">multiplying and dividing</b> through a whole day at the press.', startO9); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
+                  () => { setCoins(coins + LESSON_PAY.early); rewardOrch(8, 'A bottle of Quern cider', 'You chained <b style="color:var(--gold)">multiplying and dividing</b> through a whole day at the press.', startO9); }, 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern'), 'Hollis Quern');
   }
   // Lesson 9: the Season Fair (a contest against Pip that quietly re-tests the Hollow)
   let fairScore = 0;
@@ -17353,8 +17381,8 @@ window.LRCAST = (() => {
             () => say(['Two knots each. A <b>quarter</b>, 1/4: one of four equal pieces. Cut a half in half and you get quarters.', 'Now a plank. 16 notches long. The boatwright wants <b>eighths</b>.'],
               () => askNumber('A 16-notch plank cut into <b>eighths</b>. How many notches in each piece?', 2, '',
                 back => stepLines(['Eighths: eight equal pieces', '16 ÷ 8 = <b style="color:var(--gold)">2</b> notches each'], () => setTimeout(back, 900)),
-                () => say(['Two notches. The more pieces you cut, the <b>smaller</b> each one gets. Halves are big, quarters are smaller, eighths smaller still.', 'The bottom number says how many pieces. The top says how many you’ve got. Hmph. Not bad. Here’s <b>2 copper</b>. Now go and see Maudie at the bakery, she’s got cake. And tell her Old Barnaby the pike says hello. She won’t know who that is. He’s a fish.'],
-                  () => { setCoins(coins + 2); rewardFern(1, 'The ferry rope, mended', 'You cut things into <b style="color:var(--gold)">halves, quarters and eighths</b>: equal pieces, named by how many.', () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb’s bakery is the red-and-cream stall, left of the lane.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+                () => say(['Two notches. The more pieces you cut, the <b>smaller</b> each one gets. Halves are big, quarters are smaller, eighths smaller still.', 'The bottom number says how many pieces. The top says how many you’ve got. Hmph. Not bad. Here’s <b>3 copper</b>. Now go and see Maudie at the bakery, she’s got cake. And tell her Old Barnaby the pike says hello. She won’t know who that is. He’s a fish.'],
+                  () => { setCoins(coins + LESSON_PAY.early); rewardFern(1, 'The ferry rope, mended', 'You cut things into <b style="color:var(--gold)">halves, quarters and eighths</b>: equal pieces, named by how many.', () => { phase = 'tomaud'; nearMaud = false; hint('Maudie Crumb’s bakery is the red-and-cream stall, left of the lane.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI);
     } else if (phase === 'tomaud') { say(['Maudie’s stall. Left of the lane. Go on, she’ll feed you.'], null, ORI); }
     else if (phase === 'f4go') { startF4(); }
     else if (phase === 'f5go') { startF5(); }
@@ -17389,8 +17417,8 @@ window.LRCAST = (() => {
                 () => say(['Three buns. A quarter of 12 is 12 shared four ways: <b>12 ÷ 4 = 3</b>. Fractions of a group are just dividing.', 'And <b>two thirds</b> of the 12 go to the market.'],
                   () => askNumber('<b>Two thirds</b> of 12 buns. How many?', 8, '',
                     back => stepLines(['One third of 12 is 12 ÷ 3 = 4', 'Two thirds is 2 × 4 = <b style="color:var(--gold)">8</b>'], () => setTimeout(back, 900)),
-                    () => say(['Eight! Find one third, then take two of them. That’s every fraction of a group, duck.', 'Take a slice for the road, and <b>2 copper</b>. Come back when you want to learn to <b>add</b> slices.'],
-                      () => { setCoins(coins + 2); rewardFern(2, 'A slice of Maudie’s cake', 'You named <b style="color:var(--gold)">fractions of a cake</b>, found two that are equal, and took a fraction of a group by dividing.', startF3); }, MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD);
+                    () => say(['Eight! Find one third, then take two of them. That’s every fraction of a group, duck.', 'Take a slice for the road, and <b>3 copper</b>. Come back when you want to learn to <b>add</b> slices.'],
+                      () => { setCoins(coins + LESSON_PAY.early); rewardFern(2, 'A slice of Maudie’s cake', 'You named <b style="color:var(--gold)">fractions of a cake</b>, found two that are equal, and took a fraction of a group by dividing.', startF3); }, MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD);
     } else if (['todock', 'tofern'].includes(phase)) say(['Ezra’s at the dock, duck, by the ferry. Then come back for cake.'], null, MAUD);
   }
   // Lesson 3: adding slices (same and different denominators, and taking slices away)
@@ -17409,8 +17437,8 @@ window.LRCAST = (() => {
                 () => say(['Half a pie! <b>1/3 = 2/6</b>, add the sixth, <b>3/6</b>, which is <b>1/2</b>. Match the slices, count, then say it the simple way.', 'Taking away works the same. Three quarters of a pie, and the kingfisher pinches a quarter.'],
                   () => ask('<b>3/4 − 1/4</b>. How much pie is left?', ['2/4', '2/0', '3/3'], '2/4',
                     back => { visual.hidden = false; visual.innerHTML = pieRow([4, 3], [4, 1], [4, 2], '−'); setTimeout(back, 1800); },
-                    () => say(['Two quarters, half a pie, and one fat kingfisher.', 'You can add and take away slices now. <b>2 copper</b>. Ezra wants you at the money-changer’s next. Mind your purse.'],
-                      () => { setCoins(coins + 2); rewardFern(3, 'Maudie’s pie slice', 'You <b style="color:var(--gold)">added and subtracted fractions</b>: match the slice sizes, then count.', () => { phase = 'f4go'; nearOri = false; hint('Back to Ezra at the dock.'); }); }, MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD);
+                    () => say(['Two quarters, half a pie, and one fat kingfisher.', 'You can add and take away slices now. <b>3 copper</b>. Ezra wants you at the money-changer’s next. Mind your purse.'],
+                      () => { setCoins(coins + LESSON_PAY.early); rewardFern(3, 'Maudie’s pie slice', 'You <b style="color:var(--gold)">added and subtracted fractions</b>: match the slice sizes, then count.', () => { phase = 'f4go'; nearOri = false; hint('Back to Ezra at the dock.'); }); }, MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD), MAUD);
   }
   // Lesson 4: the money-changer (copper, silver and gold coins, and the decimal point)
   function coinsPage(c) { return `<div class="ledger"><h3>Your purse</h3><table><tr><td>Copper coins</td><td>${c}</td></tr><tr><td>10 copper</td><td>1 silver</td></tr><tr><td>10 silver</td><td>1 gold</td></tr><tr class="total"><td>Whole silver coins</td><td><span class="blank"> </span></td></tr></table></div>`; }
@@ -17430,8 +17458,8 @@ window.LRCAST = (() => {
               () => say(['<b>3.5</b> silver. Three and a half, which is three and five tenths, which is 35 copper. All the same money.', 'And bigger. <b>Ten silver</b> make a gold, so a gold coin is 100 copper. Linus will tell you about bars: a hundred coins melted into one lump.'],
                 () => askNumber('<b>1 gold, 2 silver and 6 copper.</b> How many copper coins altogether?', 126, '',
                   back => stepLines(['1 gold = 100 copper', '2 silver = 20 copper', '6 copper', '100 + 20 + 6 = <b style="color:var(--gold)">126</b>'], () => setTimeout(back, 1000)),
-                  () => say(['A hundred and twenty-six. Gold, silver, copper: hundreds, tens, ones. The same tens-and-ones you learned in the Hollow, just with a point in it.', 'Here, <b>2 copper</b> for your trouble. Now walk out to the gauge on the dock. The river’s got a number for you.'],
-                    () => { setCoins(coins + 2); rewardFern(4, 'A silver coin', 'You changed copper into silver and gold, and read the <b style="color:var(--gold)">decimal point</b>: wholes on the left, tenths on the right.', () => { phase = 'f5go'; nearOri = false; hint('Walk to the river gauge by the dock, near Ezra.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+                  () => say(['A hundred and twenty-six. Gold, silver, copper: hundreds, tens, ones. The same tens-and-ones you learned in the Hollow, just with a point in it.', 'Here, <b>3 copper</b> for your trouble. Now walk out to the gauge on the dock. The river’s got a number for you.'],
+                    () => { setCoins(coins + LESSON_PAY.early); rewardFern(4, 'A silver coin', 'You changed copper into silver and gold, and read the <b style="color:var(--gold)">decimal point</b>: wholes on the left, tenths on the right.', () => { phase = 'f5go'; nearOri = false; hint('Walk to the river gauge by the dock, near Ezra.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
   }
   // Lesson 5: decimals on the dock (reading the gauge, comparing, rounding)
   function gaugeSvg(level, marks, showLabel = !!marks) {
@@ -17457,8 +17485,8 @@ window.LRCAST = (() => {
               () => say(['<b>3.5</b>. Closer to 3.5 than 3.4, so up it goes. Five or more rounds up.', 'Last. A dry week. The gauge reads <b>2.38</b>, and the ferry needs 2.5.'],
                 () => ask('Gauge <b>2.38</b>, ferry needs <b>2.5</b>. Does she run?', ['Yes, 2.38 is more', 'No, 2.38 is less', 'Only at noon'], 'No, 2.38 is less',
                   back => { visual.hidden = false; visual.innerHTML = gaugeSvg(2.38, [2.5]) + '<p style="text-align:center;margin:4px 0 0;color:var(--ink-soft)">2.38 against 2.50: three tenths is less than five tenths. The water’s below the line.</p>'; setTimeout(back, 2200); },
-                  () => say(['She stays tied up. Three tenths is less than five, never mind the eight after it.', 'You can read a gauge, which is more than half my deckhands. <b>2 copper</b>, and the ferry log’s yours to keep this week.'],
-                    () => { setCoins(coins + 2); rewardFern(5, 'The ferry log', 'You read <b style="color:var(--gold)">decimals</b> off a gauge, compared them point to point, and rounded to the nearest tenth.', startF6); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+                  () => say(['She stays tied up. Three tenths is less than five, never mind the eight after it.', 'You can read a gauge, which is more than half my deckhands. <b>3 copper</b>, and the ferry log’s yours to keep this week.'],
+                    () => { setCoins(coins + LESSON_PAY.early); rewardFern(5, 'The ferry log', 'You read <b style="color:var(--gold)">decimals</b> off a gauge, compared them point to point, and rounded to the nearest tenth.', startF6); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
   }
 
   // ---------- Region 3, Lessons 6 to 9: fractions of a trip, price per, percent off, Fen's barge ----------
@@ -17487,8 +17515,8 @@ window.LRCAST = (() => {
               () => say(['Twelve sacks. Dividing by a quarter is the same as multiplying by 4: <b>3 ÷ 1/4 = 3 × 4 = 12</b>. Flip the fraction and multiply.', 'And a half day of ferrying, in trips of <b>1/6</b> day each.'],
                 () => askNumber('<b>1/2 ÷ 1/6</b>. How many sixth-day trips in half a day?', 3, '',
                   back => stepLines(['Half a day is 3 sixths', 'So <b style="color:var(--gold)">3</b> trips', 'Or flip and multiply: 1/2 × 6 = 3'], () => setTimeout(back, 1000)),
-                  () => say(['Three trips. Flip the one you’re dividing by, multiply, and you’re done.', '<b>2 copper</b>. Now to the market proper. Everybody here is trying to sell you something, and the only defence is arithmetic.'],
-                    () => { setCoins(coins + 2); rewardFern(6, 'A ferry timetable', 'You <b style="color:var(--gold)">multiplied fractions</b> (tops together, bottoms together) and <b style="color:var(--gold)">divided</b> by flipping and multiplying.', startF7); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+                  () => say(['Three trips. Flip the one you’re dividing by, multiply, and you’re done.', '<b>3 copper</b>. Now to the market proper. Everybody here is trying to sell you something, and the only defence is arithmetic.'],
+                    () => { setCoins(coins + LESSON_PAY.early); rewardFern(6, 'A ferry timetable', 'You <b style="color:var(--gold)">multiplied fractions</b> (tops together, bottoms together) and <b style="color:var(--gold)">divided</b> by flipping and multiplying.', startF7); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
   }
   // Lesson 7: price per (unit price)
   function startF7() {
@@ -17508,8 +17536,8 @@ window.LRCAST = (() => {
               () => say(['Fifteen. Price per one, then times how many you want. That works for anything in any market in the world.', 'And here’s the one that catches people. Apples: <b>3 for 2 coins</b>. You buy <b>9</b>.'],
                 () => askNumber('Apples at 3 for 2 coins. What do 9 apples cost?', 6, '',
                   back => stepLines(['9 apples is 3 lots of 3', '3 lots × 2 coins = <b style="color:var(--gold)">6</b>'], () => setTimeout(back, 900)),
-                  () => say(['Six coins. Three lots of three. Sometimes you work by the lot instead of by the one, whichever comes out cleaner.', '<b>2 copper</b>. Tomorrow the market closes for the season, and that means <b>prices come down</b>. Come find me early.'],
-                    () => { setCoins(coins + 2); rewardFern(7, 'A yard of good twine', 'You compared deals by the <b style="color:var(--gold)">price per one</b>, then scaled it back up to what you wanted.', startF8); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+                  () => say(['Six coins. Three lots of three. Sometimes you work by the lot instead of by the one, whichever comes out cleaner.', '<b>3 copper</b>. Tomorrow the market closes for the season, and that means <b>prices come down</b>. Come find me early.'],
+                    () => { setCoins(coins + LESSON_PAY.early); rewardFern(7, 'A yard of good twine', 'You compared deals by the <b style="color:var(--gold)">price per one</b>, then scaled it back up to what you wanted.', startF8); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
   }
   // Lesson 8: percent off (percent as parts of a hundred)
   function hundredBar(pct, color = 'var(--berry)') {
@@ -17533,8 +17561,8 @@ window.LRCAST = (() => {
               () => say(['3.5 coins off. Shift the point one place to the left and there’s your tenth.', 'And with that, every percent is easy. <b>30%</b> is three tenths. A return ticket on the barge is <b>20 copper</b>.'],
                 () => askNumber('A 20-copper return ticket at <b>30% off</b>. How many copper do you save?', 6, hundredBar(30),
                   back => stepLines(['10% of 20 is 2', '30% is three of those: 3 × 2 = <b style="color:var(--gold)">6</b>'], () => setTimeout(back, 900)),
-                  () => say(['Six coins off. Find 10%, then take as many of them as you need. 30%, 70%, 90%, all the same trick.', 'That’s the market beaten. <b>2 copper</b>. Now there’s a barge coming in with a very familiar face at the pole. Go and meet it at the dock.'],
-                    () => { setCoins(coins + 2); rewardFern(8, 'A closing-day bargain', 'You read <b style="color:var(--gold)">percent</b> as parts of a hundred: 50% is a half, 25% a quarter, 10% a tenth, and the rest built from tenths.', () => { phase = 'tofen2'; nearFen2 = false; fenArrives(); hint('Fen’s barge is tying up at the dock. Go and say hello.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
+                  () => say(['Six coins off. Find 10%, then take as many of them as you need. 30%, 70%, 90%, all the same trick.', 'That’s the market beaten. <b>3 copper</b>. Now there’s a barge coming in with a very familiar face at the pole. Go and meet it at the dock.'],
+                    () => { setCoins(coins + LESSON_PAY.early); rewardFern(8, 'A closing-day bargain', 'You read <b style="color:var(--gold)">percent</b> as parts of a hundred: 50% is a half, 25% a quarter, 10% a tenth, and the rest built from tenths.', () => { phase = 'tofen2'; nearFen2 = false; fenArrives(); hint('Fen’s barge is tying up at the dock. Go and say hello.'); }); }, ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI), ORI);
   }
   // Lesson 9: Fen's barge (a messy ledger, and everything from the river in one go)
   function fenArrives() {
@@ -17561,7 +17589,7 @@ window.LRCAST = (() => {
                 () => askNumber('<b>34 copper</b> shared three ways. How many coins each, with how many left over? (Write the coins each.)', 11, '',
                   back => dealRow(34, 3, 'coin', () => setTimeout(back, 1400)),
                   () => say(['Eleven each, and one left over. The one goes in the barge’s jar for repairs. I wrote 12 each and wondered where the extra coins went.', 'You fixed the whole book. You know what, if you’re ever back this way… you could run a stall. Ezra! Tell them!'],
-                    () => { setCoins(coins + 3); finishFern(); }, 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry');
+                    () => { setCoins(coins + LESSON_PAY.early); finishFern(); }, 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry'), 'Fen Dewberry');
   }
   function finishFern() {
     phase = 'f9b';
@@ -17594,6 +17622,7 @@ window.LRCAST = (() => {
   // show a worked explanation under the question for a moment, without wiping the number pad
   function showExpl(html, back, ms) { visual.hidden = false; const d = document.createElement('div'); d.innerHTML = html; visual.appendChild(d); setTimeout(() => { d.remove(); back(); }, ms); }
   function rewardCairn(n, item, text, next) {
+    if (!isDone('cairn-' + n)) { setCoins(coins + LESSON_PAY.mid); text += ` You are paid <b style="color:var(--gold)">${money(LESSON_PAY.mid)}</b>.`; }
     markDone('cairn-' + n);
     phase = 'doneC' + n; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
@@ -17803,6 +17832,7 @@ window.LRCAST = (() => {
   function percentSvg(total, pct, note) { const w = 280, h = 26, x0 = 20; let s = `<rect x="${x0}" y="30" width="${w}" height="${h}" fill="rgba(255,255,255,.08)" stroke="${SV.ink}"/><rect x="${x0}" y="30" width="${w * pct / 100}" height="${h}" fill="${SV.gold}"/>`; for (let k = 10; k < 100; k += 10) s += `<line x1="${x0 + w * k / 100}" y1="30" x2="${x0 + w * k / 100}" y2="56" stroke="rgba(0,0,0,.35)"/>`; s += `<text x="${x0}" y="20" font-size="11" fill="${SV.ink}">0</text><text x="${x0 + w}" y="20" text-anchor="end" font-size="11" fill="${SV.ink}">${total} (100%)</text><text x="${x0 + w * pct / 100}" y="76" text-anchor="middle" font-size="12" fill="${SV.gold}" font-weight="700">${pct}%</text>`; if (note) s += `<text x="160" y="100" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(320, 110, s); }
   function exprSvg(text) { return svgWrap(320, 60, `<rect x="20" y="10" width="280" height="40" rx="8" fill="rgba(232,182,76,.14)" stroke="${SV.gold}"/><text x="160" y="37" text-anchor="middle" font-size="20" fill="var(--ink)" font-weight="700">${text}</text>`); }
   function rewardCog(n, item, text, next) {
+    if (!isDone('cog-' + n)) { setCoins(coins + LESSON_PAY.mid); text += ` You are paid <b style="color:var(--gold)">${money(LESSON_PAY.mid)}</b>.`; }
     markDone('cog-' + n);
     phase = 'doneG' + n; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
@@ -17969,6 +17999,7 @@ window.LRCAST = (() => {
   // bars that double: the bellows
   function doubleSvg(start, pumps, note) { let s = ''; let v = start; const max = start * Math.pow(2, pumps); for (let k = 0; k <= pumps; k++) { const hgt = 120 * v / max; s += `<rect x="${30 + k * 44}" y="${140 - hgt}" width="30" height="${hgt}" fill="${k === pumps ? '#ff7a30' : SV.gold}" stroke="#3a2a18"/><text x="${45 + k * 44}" y="${134 - hgt}" text-anchor="middle" font-size="11" fill="var(--ink)">${v}</text><text x="${45 + k * 44}" y="156" text-anchor="middle" font-size="10" fill="${SV.ink}">${k === 0 ? 'start' : k + (k === 1 ? ' pump' : ' pumps')}</text>`; v *= 2; } if (note) s += `<text x="160" y="180" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(Math.max(320, 60 + (pumps + 1) * 44), 190, s); }
   function rewardEmb(n, item, text, next) {
+    if (!isDone('ember-' + n)) { setCoins(coins + LESSON_PAY.high); text += ` You are paid <b style="color:var(--gold)">${money(LESSON_PAY.high)}</b>.`; }
     markDone('ember-' + n);
     phase = 'doneE' + n; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
@@ -18140,6 +18171,7 @@ window.LRCAST = (() => {
   // the ship that halves its distance every hour
   function limitSvg(steps, note) { let s = `<line x1="20" y1="100" x2="300" y2="100" stroke="${SV.ink}" stroke-width="2"/><rect x="290" y="70" width="12" height="30" fill="#5a3d22"/><text x="296" y="62" text-anchor="middle" font-size="10" fill="${SV.ink}">pier</text>`; let d = 1; for (let k = 0; k < steps; k++) { const x = 290 - d * 260; s += `<polygon points="${x - 8},100 ${x + 8},100 ${x + 4},88 ${x - 4},88" fill="${k === steps - 1 ? '#c8384a' : SV.gold}"/><text x="${x}" y="118" text-anchor="middle" font-size="9" fill="${SV.ink}">${k}h</text>`; d /= 2; } if (note) s += `<text x="160" y="142" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(320, 150, s); }
   function rewardLant(n, item, text, next) {
+    if (!isDone('lant-' + n)) { setCoins(coins + LESSON_PAY.high); text += ` You are paid <b style="color:var(--gold)">${money(LESSON_PAY.high)}</b>.`; }
     markDone('lant-' + n);
     phase = 'doneL' + n; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
@@ -18311,6 +18343,7 @@ window.LRCAST = (() => {
   // a shape spun round the axis
   function spinSvg(f, a, b, note) { const X = x => 40 + (x - a) / (b - a) * 200, Y = v => 110 - v * 14; let s = `<line x1="30" y1="110" x2="260" y2="110" stroke="${SV.ink}" stroke-width="2" stroke-dasharray="4 3"/>`; const top = [], bot = []; for (let x = a; x <= b; x += (b - a) / 30) { top.push(`${X(x)},${Y(f(x))}`); bot.push(`${X(x)},${Y(-f(x))}`); } s += `<polygon points="${top.join(' ')} ${bot.reverse().join(' ')}" fill="rgba(159,200,232,.35)" stroke="${SV.ink}"/><polyline points="${top.join(' ')}" fill="none" stroke="${SV.gold}" stroke-width="3"/>`; [a, b].forEach(x => s += `<ellipse cx="${X(x)}" cy="110" rx="6" ry="${f(x) * 14}" fill="none" stroke="${SV.ink}"/>`); s += `<text x="${X(a)}" y="206" text-anchor="middle" font-size="11" fill="${SV.ink}">${a}</text><text x="${X(b)}" y="206" text-anchor="middle" font-size="11" fill="${SV.ink}">${b}</text>`; if (note) s += `<text x="160" y="226" text-anchor="middle" font-size="14" fill="${SV.gold}" font-weight="700">${note}</text>`; return svgWrap(320, 235, s); }
   function rewardSky(n, item, text, next) {
+    if (!isDone('sky-' + n)) { setCoins(coins + LESSON_PAY.top); text += ` You are paid <b style="color:var(--gold)">${money(LESSON_PAY.top)}</b>.`; }
     markDone('sky-' + n);
     phase = 'doneS' + n; $('tasks').innerHTML = '';
     showDialog(true); clearDialog(); line.innerHTML = ''; visual.hidden = false;
@@ -19965,7 +19998,7 @@ window.LRCAST = (() => {
       sort: (who, items, cats, label, tip) => T.touch(items.map(q => q[0]), label, (sp, done) => { const it = items.find(q => q[0] === sp.userData.id); choose(who, `<b>${sp.userData.label.replace(/^./, c => c.toUpperCase())}.</b> ${it[3] || ''} Which is it?`, cats.map((c, ci) => [c, () => say([ci === it[1] ? `<b>${c}.</b> ${it[2]}` : `Not that. ${it[4] || 'Look at it again and think what it does, or once did.'}`], () => done(ci === it[1]), who)])); }, tip),
       order: (who, ids, label, tip, wrong) => { let n = 0; return T.touch(ids, label, (sp, done) => { if (sp.userData.id === ids[n]) { n++; flash(`${n} of ${ids.length}: ${sp.userData.label}.`); done(true); } else say([wrong(sp, n)], () => done(false), who); }, tip); } };
     function sciTouch(obj) { const A = sciActive; if (!A || !A.left.has(obj.userData.id) || talking()) return; A.fn(obj, ok => { if (!ok || sciActive !== A) return; A.left.delete(obj.userData.id); tasks.sci.have++; renderTasks(); if (!A.left.size) { sciActive = null; setTasks([]); hint(''); A.next(); } }); }
-    const finish = (n, lines) => next => { markDone('sci-' + n); setCoins(coins + 2); say(lines.concat([`That is science lesson ${n} of 8 done. Here are <b>2 copper</b> for a good morning’s looking.`]), () => { phase = 'free'; sciActive = null; setTasks([]); hint(n < 8 ? 'Speak to Marigold when you want the next one.' : 'You have done all the science Marigold teaches in the Hollow.'); next(); }, MARI); };
+    const finish = (n, lines) => next => { markDone('sci-' + n); setCoins(coins + LESSON_PAY.early); say(lines.concat([`That is science lesson ${n} of 8 done. Here are <b>3 copper</b> for a good morning’s looking.`]), () => { phase = 'free'; sciActive = null; setTasks([]); hint(n < 8 ? 'Speak to Marigold when you want the next one.' : 'You have done all the science Marigold teaches in the Hollow.'); next(); }, MARI); };
     const LIVE = ['Alive now', 'Was alive once', 'Never alive'];
     const LESSON = [
       // 1
@@ -20093,7 +20126,7 @@ window.LRCAST = (() => {
         actions.appendChild(b); if (o[3]) { const sp = tool('🔊', () => seq([wd(o[3])])); sp.title = 'Hear its name'; sp.style.marginLeft = '-6px'; } });
       const f = actions.querySelector('.readopt'); if (f) f.focus({ preventScroll: true }); };
     const RQ = c => next => round(c, next), tell = lines => lines.map(l => next => { seq([[null, strip(l)]]); say([l], () => { hush(); next(); }, FENW); });
-    const finishR = (n, lines) => next => { markDone('read-' + n); setCoins(coins + 2); const all = lines.concat([`That is reading lesson ${n} of 8. Here are <b>2 copper</b>.`]), each = i => { if (i < all.length) { seq([[null, strip(all[i])]]); say([all[i]], () => each(i + 1), FENW); } else { hush(); phase = 'free'; sciActive = null; setTasks([]); hint(n < 8 ? 'Speak to Fen at her stall when you want the next one.' : 'You can read. Every sign in the Hollow is yours now.'); next(); } }; each(0); };
+    const finishR = (n, lines) => next => { markDone('read-' + n); setCoins(coins + LESSON_PAY.early); const all = lines.concat([`That is reading lesson ${n} of 8. Here are <b>3 copper</b>.`]), each = i => { if (i < all.length) { seq([[null, strip(all[i])]]); say([all[i]], () => each(i + 1), FENW); } else { hush(); phase = 'free'; sciActive = null; setTasks([]); hint(n < 8 ? 'Speak to Fen at her stall when you want the next one.' : 'You can read. Every sign in the Hollow is yours now.'); next(); } }; each(0); };
     // pictures: [emoji, word]
     const PIC = { sock: '🧦', apple: '🍎', fish: '🐟', moon: '🌙', dog: '🐕', sun: '☀️', tent: '⛺', cow: '🐄', pie: '🥧', bell: '🔔', cap: '🧢', egg: '🥚', orange: '🍊', pin: '📌', tap: '🚰', pan: '🍳', tin: '🥫', ant: '🐜', nap: '😴', cat: '🐈', hen: '🐔', bed: '🛏️', map: '🗺️', cup: '🥤', leg: '🦵', bug: '🐛', pig: '🐖', hat: '🎩', net: '🥅', ship: '🚢', shop: '🏪', chip: '🍟', bath: '🛁', chop: '🪓', shell: '🐚', chick: '🐤', kite: '🪁', kit: '🧰', pine: '🌲', cube: '🧊', cub: '🐻', cane: '🦯', cake: '🍰', bone: '🦴', nose: '👃', rope: '🪢', jam: '🍯', nut: '🌰', log: '🪵', fox: '🦊', mud: '🟫', insect: '🐞', goat: '🐐', umbrella: '☂️', can: '🥫' };
     const pic = (w, right, no) => [PIC[w], right, no, w];
