@@ -419,6 +419,7 @@
     <button class="btn primary big" id="tcontinue" hidden>Continue</button>
     <button class="btn big" id="tnew">New game</button>
     <button class="btn big" id="tlook" hidden>Change how my elf looks</button>
+    <button class="btn big" id="twhere" hidden>Change where I start</button>
     <button class="btn big" id="tlessons">Lessons and map</button>
     <button class="btn big" id="tsettings">Settings</button>
     <div id="titleacct"></div>
@@ -428,6 +429,12 @@
     <label>When were you born? <select id="agemonth"></select> <select id="ageyear"></select></label>
     <p class="warn" id="agewarn" hidden>Choose the year you were born.</p>
     <div class="row"><button class="btn primary" id="agego">Carry on</button></div>
+  </div>
+  <div class="titlecard creator" id="startcard" hidden>
+    <h2 id="sch"></h2>
+    <p id="scp" style="margin:0 0 4px;line-height:1.45"></p>
+    <div id="scb" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="row" id="scrow"></div>
   </div>
   <div class="titlecard creator" id="creator" hidden>
     <h2>Who is setting out?</h2>
@@ -470,7 +477,7 @@
         <button class="btn small" id="acctcancel" type="button">Cancel</button>
       </form>
       <div class="status" id="acctnote"></div>
-      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 168 · 24 Nov</div>
+      <div id="build" style="font-size:12px;opacity:.6;margin-top:6px;text-align:center">Build 169 · 24 Nov</div>
       <div class="status" id="acctstatus"></div>
     </div>
     <button class="btn" id="mapclose" hidden>Back to the game <kbd style="font-family:inherit;background:var(--bg);border:1px solid var(--panel-edge);border-radius:6px;padding:0 6px">M</kbd></button>
@@ -20548,7 +20555,11 @@ if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : key =
   tapButton($('mapbtn'), toggleMap); tapButton($('saybtn'), () => openSay()); $('saybtn').hidden = fam.phrases === false; tapButton($('voicebtn'), () => NET.voice()); NET.voiceSync();
   window.addEventListener('keydown', e => { if (!$('settings').hidden || !$('friends').hidden || bagOpen || drUp || tgUp || shUp || (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName))) return; const a = actionOf(e.code); if (a === 'map' && !e.repeat && !talking()) toggleMap(); if (a === 'settings' && !e.repeat && !talking()) openSettings(); if (e.code === 'Escape' && mapOpen && gameStarted) closeMap(); });
   function placeInShop() { player.position.set(0, 0, 6.5); bodyYaw = camYaw = Math.PI; const [p0, l0] = camTarget(); camPos.copy(p0); camLook.copy(l0); }
+  // the first thing a newly placed learner is told, once they have arrived and nothing else is being said
+  function startHello(text) { const t0 = Date.now(), t = setInterval(() => { const e = Date.now() - t0; if (e < 4000) return; if (e > 90000) { clearInterval(t); return; } if (gameStarted && !fading && !talking() && !bagOpen && !mapOpen) { clearInterval(t); say([text], null, 'The Long Road'); } }, 500); }
   function launch(key) {
+    if (/^at-/.test(key)) { const A = START_AT[key.slice(3)] || START_AT.hollow; save.where = A.w; save.pos = [A.x, 0, A.z]; save.yaw = A.yaw; save.started = true; save.lay = 2; persist(); try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} continueGame(); startHello(A.say); return; }
+    if (save.hello) { const m = save.hello; delete save.hello; persist(); startHello(m); }
     attachPet();
     startEl.hidden = true; mapOpen = false; gameStarted = true; mapClose.hidden = false; save.started = true; if (save.beetle && !beetle) { beetle = makeBeetle(); beetleName = save.beetle; beetle.userData.follow = true; scene.add(beetle); beetle.position.set(-3, 0, 8); restoreCompanion(); } if (location.hash !== '#' + key) { try { history.replaceState(null, '', '#' + key); } catch (e) {} }
     if (key === 'placed') { placeInShop(); phase = 'free'; setCoins(save.coins || 0); setTimeout(placedIntro, 700); }
@@ -20615,18 +20626,18 @@ if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : key =
   // the creator's other two choices: how tall (7 inches is the smallest child; a grown elf is about 17) and which face
   function syncCreator() { const yr = $('elfyear').value ? +$('elfyear').value : 0, mo = $('elfmonth').value ? +$('elfmonth').value : 0, G = growLook(draft, yr, mo), age = ageNow(yr, mo); $('elfheight').value = G.height; $('elfheightval').textContent = (fam.year || yr) ? `${G.m.toFixed(2)} m (${feetIn(G.m)}) · ${heightWord(age)}. You grow as you really do, every birthday, until you are a grown ${KINDS[G.kind].n.toLowerCase()}.` : 'Choose when you were born, and you will be as tall as you really are for your age.'; const box = $('elffaces'); box.innerHTML = ''; FACES.forEach((n, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft.face | 0) === i)); b.onclick = () => { draft.face = i; applyLook(draft); syncCreator(); }; box.appendChild(b); });
     const pick = (id, list, key) => { const bx = $(id); bx.innerHTML = ''; list.forEach(([v, n]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = n; b.setAttribute('aria-pressed', String((draft[key] === undefined ? list[0][0] : draft[key]) === v)); b.onclick = () => { draft[key] = v; applyLook(draft); syncCreator(); }; bx.appendChild(b); }); };
-    pick('elfkind', [['elf', 'Elf'], ['human', 'Human'], ['dwarf', 'Dwarf'], ['halfling', 'Halfling']], 'kind'); pick('elfsex', [['boy', 'Boy (tunic)'], ['girl', 'Girl (dress)']], 'sex'); pick('elfhair', HAIRS, 'hairStyle'); pick('elfhat', [[true, 'Pointed cap'], [false, 'No hat']], 'hatOn'); $('elflevelrow').hidden = editLook; pick('elflevel', [[0, 'Counting and adding'], [1, 'Times tables'], [2, 'Fractions'], [3, 'Shapes and measuring'], [4, 'Ratios and percent'], [5, 'Algebra'], [6, 'Trigonometry'], [7, 'Calculus']], 'level'); }
+    pick('elfkind', [['elf', 'Elf'], ['human', 'Human'], ['dwarf', 'Dwarf'], ['halfling', 'Halfling']], 'kind'); pick('elfsex', [['boy', 'Boy (tunic)'], ['girl', 'Girl (dress)']], 'sex'); pick('elfhair', HAIRS, 'hairStyle'); pick('elfhat', [[true, 'Pointed cap'], [false, 'No hat']], 'hatOn'); $('elflevelrow').hidden = true || editLook; pick('elflevel', [[0, 'Counting and adding'], [1, 'Times tables'], [2, 'Fractions'], [3, 'Shapes and measuring'], [4, 'Ratios and percent'], [5, 'Algebra'], [6, 'Trigonometry'], [7, 'Calculus']], 'level'); }
   ['elfyear', 'elfmonth'].forEach(id => $(id).addEventListener('change', () => { if (!draft) return; applyLook(draft); syncCreator(); }));
   const titleEl = $('title'), titleMain = $('titlemain'), creatorEl = $('creator'); let draft = null, newArmed = false, editLook = false;
   $('titleacct').appendChild($('account'));   // signing in belongs on the title screen
-  function refreshTitle() { const ok = mayPlay(), c = $('tcontinue'); c.hidden = !ok || !save.started; c.textContent = save.name ? `Continue as ${save.name}` : 'Continue'; $('tlook').hidden = !ok || !save.started; $('tnew').hidden = !ok; $('tlessons').hidden = !ok; $('tgate').hidden = ok; }
-  function showTitle() { titleUp = true; creatorUp = false; titleEl.hidden = false; titleMain.hidden = false; creatorEl.hidden = true; $('agecard').hidden = true; startEl.hidden = true; document.body.classList.add('titled'); refreshTitle(); applyLook(save.look); player.position.set(0, 0, 6.5); player.rotation.y = Math.PI; }
+  function refreshTitle() { const ok = mayPlay(), c = $('tcontinue'); c.hidden = !ok || !save.started; c.textContent = save.name ? `Continue as ${save.name}` : 'Continue'; $('tlook').hidden = !ok || !save.started; $('twhere').hidden = !ok || !save.started; $('tnew').hidden = !ok; $('tlessons').hidden = !ok; $('tgate').hidden = ok; }
+  function showTitle() { titleUp = true; creatorUp = false; titleEl.hidden = false; titleMain.hidden = false; creatorEl.hidden = true; $('startcard').hidden = true; $('agecard').hidden = true; startEl.hidden = true; document.body.classList.add('titled'); refreshTitle(); applyLook(save.look); player.position.set(0, 0, 6.5); player.rotation.y = Math.PI; }
   function hideTitle() { critters.forEach(c => { if (c._hid) { c.obj.visible = true; c._hid = false; } }); titleUp = false; creatorUp = false; titleEl.hidden = true; document.body.classList.remove('titled'); }
   // behind the title the camera drifts round the Hollow; in the creator it stands in front of your elf, which you turn yourself
   // in the creator your elf stands still, facing you, and you turn it yourself: drag it with the mouse, swipe it with a finger, the arrow keys or Q and E, or the right stick. It keeps turning a little after you let go.
   // A VR hand would call spinElf.grab(angle) / move(angle) / release() with the angle of its pinch round the elf.
   const spinElf = { yaw: 0, v: 0, down: false, lx: 0, lt: 0, keys: 0, pad: 0, grab(a) { this.down = true; this.ga = a; this.v = 0; }, move(a) { if (!this.down) return; const d = Math.atan2(Math.sin(a - this.ga), Math.cos(a - this.ga)); this.yaw += d; this.v = d * 60; this.ga = a; }, release() { this.down = false; } };
-  { const ok = e => creatorUp && !(e.target && e.target.closest && e.target.closest('#creator, button, input, select, a'));
+  { const ok = e => creatorUp && !(e.target && e.target.closest && e.target.closest('#creator, #startcard, button, input, select, a'));
     window.addEventListener('pointerdown', e => { if (!ok(e)) return; spinElf.down = true; spinElf.lx = e.clientX; spinElf.lt = performance.now(); spinElf.v = 0; spinElf.pid = e.pointerId; });
     window.addEventListener('pointermove', e => { if (!spinElf.down || e.pointerId !== spinElf.pid) return; const now = performance.now(), dx = e.clientX - spinElf.lx, d = dx * 0.012; spinElf.yaw += d; spinElf.v = d / Math.max(0.008, (now - spinElf.lt) / 1000); spinElf.lx = e.clientX; spinElf.lt = now; });
     ['pointerup', 'pointercancel'].forEach(n => window.addEventListener(n, e => { if (e.pointerId === spinElf.pid) { spinElf.down = false; if (performance.now() - spinElf.lt > 90) spinElf.v = 0; } }));
@@ -20657,19 +20668,82 @@ if (key === _foundW) return; _foundW = key; const i = key === 'city' ? 8 : key =
   $('tlook').addEventListener('click', () => { spinElf.yaw = 0; spinElf.v = 0; $('elfyearrow').hidden = true; creatorUp = true; editLook = true; newArmed = false; titleMain.hidden = true; creatorEl.hidden = false; draft = Object.assign({}, DEFAULT_LOOK, save.look || {}); $('elfname').value = save.name || ''; $('creatorwarn').hidden = true; $('creatorgo').textContent = 'Save'; applyLook(draft); drawSwatches(); syncCreator(); });
   $('tnew').addEventListener('click', () => { if (!mayPlay()) return; spinElf.yaw = 0; spinElf.v = 0; $('elfyearrow').hidden = !!fam.year; $('elfyear').innerHTML = yearOptions(); $('elfmonth').innerHTML = monthOptions(); creatorUp = true; editLook = false; newArmed = false; titleMain.hidden = true; creatorEl.hidden = false; draft = Object.assign({}, DEFAULT_LOOK, hasProgress() ? {} : save.look || {}); $('elfname').value = hasProgress() ? '' : save.name || ''; $('creatorwarn').hidden = true; $('creatorgo').textContent = 'Begin'; applyLook(draft); drawSwatches(); syncCreator(); });
   $('creatorback').addEventListener('click', () => showTitle());
+  $('twhere').addEventListener('click', () => { if (mayPlay()) startCheck(true); });
+  // ---------- where to start: the subject you find hardest decides which teacher you wake up beside. For maths, the game also checks the step below the one you name,
+  // and keeps stepping down until it finds firm ground. A parent's answer is the first guess; the questions confirm it. ----------
+  const START_SUBJ = [['maths', 'Maths'], ['reading', 'Reading and writing'], ['plants', 'Plants and living things'], ['chem', 'Mixing and materials'], ['maps', 'Maps and the world'], ['machines', 'Machines and how things work'], ['rocks', 'Rocks, metals and the earth'], ['stars', 'Stars and space'], ['history', 'History'], ['music', 'Music'], ['unsure', 'I’m not sure. Find out for me']];
+  const MATHS_LV = ['Counting, adding and taking away', 'Times tables and sharing', 'Fractions, decimals and percent', 'Measuring, angles and shapes', 'Ratios and negative numbers', 'Algebra', 'Trigonometry and functions', 'Calculus'], MATHS_KIT = [0, 22, 27, 50, 50, 150, 150, 500];
+  const START_AT = {
+    reading: { w: 'village', x: -28.6, z: 86, yaw: 0, who: 'Fen Dewberry', town: 'Thistledown Hollow', kit: 0, say: 'Fen Dewberry teaches reading here, at his berry stall. Speak to him when you are ready.' },
+    plants: { w: 'village', x: -36, z: 58.5, yaw: Math.PI, who: 'Marigold', town: 'Thistledown Hollow', kit: 0, say: 'Marigold teaches about plants and living things here, at her potting shed. Speak to her when you are ready.' },
+    chem: { w: 'fernwater', x: 47, z: 18, yaw: 2.25, who: 'Ottilie Brimble', town: 'Fernwater Crossing', kit: 27, say: 'Ottilie Brimble teaches mixing and materials at her bench. Her shop is the teal one beside you; the door is just ahead.' },
+    maps: { w: 'fernwater', x: 6, z: 24, yaw: Math.PI / 2, who: 'Juniper Farrow', town: 'Fernwater Crossing', kit: 27, say: 'Juniper Farrow, the map-maker, is in front of you. Her geography lessons are not built yet, but she is here to talk to.' },
+    machines: { w: 'cogsworth', x: -5.1, z: 36.5, yaw: 2.2 + Math.PI, who: 'Tamsin Gearwright', town: 'Cogsworth', kit: 50, say: 'Tamsin Gearwright, the engineer, is in front of you. Her machine lessons are not built yet; for now she teaches ratios here.' },
+    rocks: { w: 'emberdeep', x: -6, z: 37.6, yaw: 2.4 + Math.PI, who: 'Durna Ironvein', town: 'Emberdeep', kit: 150, bike: true, say: 'Durna Ironvein, the assayer, is in front of you. Her lessons on rocks and metals are not built yet; for now she teaches algebra here.' },
+    stars: { w: 'lantern', x: 18, z: 39.6, yaw: 2.4 + Math.PI, who: 'Astra Vell', town: 'Lanternreach', kit: 150, bike: true, say: 'Astra Vell, the star-watcher, is in front of you. Her lessons on the sky are not built yet; for now she teaches trigonometry here.' },
+    history: { w: 'village', x: 0, z: 6.5, yaw: Math.PI, who: 'Hedda Deepstone', town: 'Thistledown Hollow', kit: 0, wait: true, say: 'Hedda Deepstone teaches history, but her hall is not on the road yet. You start in the Hollow, and your answer is remembered for when it is.' },
+    music: { w: 'village', x: 0, z: 6.5, yaw: Math.PI, who: 'Orrin Bellweather', town: 'Thistledown Hollow', kit: 0, wait: true, say: 'Orrin Bellweather teaches music, but his bell loft is not on the road yet. You start in the Hollow, and your answer is remembered for when it is.' },
+    hollow: { w: 'village', x: 0, z: 6.5, yaw: Math.PI, who: 'Old Bramblewick', town: 'Thistledown Hollow', kit: 0, say: 'Old Bramblewick is at his counter. Speak to him when you are ready.' }
+  };
+  const scEl = $('startcard'); let scRedo = false, scBusy = false;
+  function scShow(h, p, opts, back) {
+    scEl.hidden = false; $('sch').textContent = h; $('scp').innerHTML = p; const b = $('scb'); b.innerHTML = '';
+    opts.forEach(([label, fn, cls]) => { const x = document.createElement('button'); x.className = 'btn ' + (cls || ''); x.style.textAlign = 'left'; x.innerHTML = label; x.onclick = () => { if (!scBusy) fn(x); }; b.appendChild(x); });
+    const r = $('scrow'); r.innerHTML = ''; if (back) { const x = document.createElement('button'); x.className = 'btn'; x.textContent = 'Back'; x.onclick = () => { if (!scBusy) back(); }; r.appendChild(x); }
+    scEl.scrollTop = 0; const f = b.querySelector('button'); if (f) f.focus({ preventScroll: true }); }
+  function startCheck(redo) { scRedo = !!redo; scBusy = false; titleMain.hidden = true; creatorEl.hidden = true; scSubject(); }
+  function scSubject() {
+    scShow('Where shall we start?', 'Which of these is <b>hardest for you</b> right now? A grown-up can answer. You will start beside the teacher for it, and the rest of the world is yours to explore whenever you like.',
+      START_SUBJ.map(([id, n]) => [n, () => id === 'maths' ? scLevel() : id === 'unsure' ? scSearch() : scPlan({ focus: id })]), scRedo ? () => showTitle() : () => { scEl.hidden = true; creatorEl.hidden = false; }); }
+  function scLevel() {
+    scShow('Which maths?', 'Pick what you are working on, or stuck on. We will ask a few questions from <b>the step before it</b>, to be sure the ground is firm.',
+      MATHS_LV.map((n, i) => [n, () => i === 0 ? scPlan({ focus: 'maths', L: 0 }) : scDown(i, true)]), scSubject); }
+  // four questions from one step of the road; three right means that step is firm
+  function scQuiz(k, cb) {
+    const qs = shuf(QBANK[k].slice()).slice(0, 4).map(f => f()); let n = 0, right = 0;
+    const ask = () => { if (n === qs.length || n - right >= 2) return cb(right >= 3 && n - right < 2); const q = qs[n];
+      const pick = (c, btn) => { scBusy = true; const ok = c !== null && c === q[2]; if (ok) right++; n++; Array.from($('scb').children).forEach(x => { x.disabled = true; if (x.dataset.right) x.classList.add('primary'); }); if (btn && !ok) btn.classList.add('wrong');
+        $('scp').innerHTML = q[0] + '<br><b>' + (ok ? 'Right.' : 'It is ' + q[2] + '.') + '</b>'; setTimeout(() => { scBusy = false; ask(); }, ok ? 700 : 1700); };
+      scShow(MATHS_LV[k] + ': question ' + (n + 1) + ' of 4', q[0], q[1].map(c => [String(c), btn => pick(c, btn), 'choice']).concat([['I don’t know yet', btn => pick(null, btn)]]));
+      Array.from($('scb').children).forEach((x, i) => { if (i < q[1].length && q[1][i] === q[2]) x.dataset.right = '1'; }); };
+    ask(); }
+  // the learner (or a parent) named level L: check the step below it, and keep stepping down until one is firm
+  function scDown(L, first) {
+    if (L <= 0) return scPlan({ focus: 'maths', L: 0, stepped: true });
+    const run = () => scQuiz(L - 1, pass => pass ? scPlan({ focus: 'maths', L, stepped: !first }) : scDown(L - 1, false));
+    if (first) run(); else scShow('One step back', 'That step needs a little more work first, and that is fine. Let’s look at the one before it: <b>' + MATHS_LV[L - 1] + '</b>.', [['Carry on', run, 'primary']]); }
+  // nobody is sure: start in the middle and halve the road each time
+  function scSearch() {
+    let lo = -1, hi = 7; const step = () => { if (lo >= hi) return scPlan({ focus: 'maths', L: Math.min(lo + 1, 7), found: true }); const mid = Math.ceil((lo + hi) / 2);
+      scShow(lo < 0 && hi === 7 ? 'Let’s find out' : 'A few more', (lo < 0 && hi === 7 ? 'A few short rounds of questions, and we will know where to start. It is fine not to know an answer: just say so. ' : '') + 'Next: <b>' + MATHS_LV[mid] + '</b>.', [['Carry on', () => scQuiz(mid, pass => { if (pass) lo = mid; else hi = mid - 1; step(); }), 'primary']]); };
+    step(); }
+  function scPlan(plan) {
+    let txt; if (plan.focus === 'maths') { const L = plan.L; txt = L === 0 ? 'You will start at the very beginning of the road, in <b>Thistledown Hollow</b>, with <b>Old Bramblewick</b>.' : `You will start in <b>${REGIONS[L].name}</b> with <b>${TEACH[L].n}</b>, on <b>${MATHS_LV[L].toLowerCase()}</b>. The lessons before it are marked as known, and you can walk back and take any of them whenever you like.`;
+      if (plan.stepped && L > 0) txt = 'We stepped back to find firm ground. ' + txt; }
+    else { const A = START_AT[plan.focus]; txt = `You will start in <b>${A.town}</b>. ${A.say}`; }
+    scShow('Here is the plan', txt, [[scRedo ? 'Go there' : 'Begin', () => startApply(plan), 'primary'], ['Choose again', scSubject]]); }
+  function startApply(plan) {
+    scBusy = true; let key, hello; save.focus = plan.focus;
+    if (plan.focus === 'maths') { const L = plan.L; save.tested = save.tested || [];
+      for (let i = 0; i < L; i++) REGIONS[i].lessons.forEach(([, k]) => { if (!save.done.includes(k)) { save.done.push(k); save.tested.push(k); } });   // known already: marked, and not paid for
+      if (!scRedo) save.coins = Math.max(save.coins || 0, MATHS_KIT[L]); if (L >= 5) save.bike = true;
+      const left = REGIONS[L].lessons.find(([, k]) => !save.done.includes(k)); key = L === 0 && !scRedo ? 'lesson-1' : (left || REGIONS[L].lessons[0])[1];
+      if (L > 0) hello = `You start in ${REGIONS[L].name}. ${TEACH[L].n} teaches ${MATHS_LV[L].toLowerCase()} here.`; }
+    else { const A = START_AT[plan.focus]; if (!scRedo) save.coins = Math.max(save.coins || 0, A.kit); if (A.bike) save.bike = true; key = 'at-' + plan.focus; }
+    if (hello) save.hello = hello; save.started = true; persist(); const go = () => jump(key); if (session) { cloudDirty = true; cloudPush().finally(go); } else go(); }
   $('creatorgo').addEventListener('click', () => {
     const name = $('elfname').value.replace(/\s+/g, ' ').trim().slice(0, 16) || 'Elfling';
     if (!editLook && !fam.year) { if (!$('elfyear').value) { const w = $('creatorwarn'); w.hidden = false; w.textContent = 'Choose the year you were born.'; return; } fam.year = +$('elfyear').value; if ($('elfmonth').value) fam.month = +$('elfmonth').value; famSave(); }
     if (editLook) { save.name = name; save.look = growLook(draft); persist(); showTitle(); return; }   // the same elf, a new look: nothing else changes
     if (hasProgress() && !newArmed) { newArmed = true; const w = $('creatorwarn'); w.hidden = false; w.textContent = `This starts a brand new elf. ${save.name || 'Your current elf'}, with ${save.done.length} lesson${save.done.length === 1 ? '' : 's'} finished and ${money(save.coins || 0)}, will be gone for good. Press again if you are sure.`; $('creatorgo').textContent = 'Yes, start over'; return; }
     const lvl = draft.level | 0; delete draft.level;
-    if (hasProgress()) { clearSave(); save.name = name; save.look = growLook(draft); save.level = lvl; persist(); const first = save.level > 0 ? 'placed' : 'lesson-1', go = () => jump(first); if (session) { cloudDirty = true; cloudPush().finally(go); } else go(); return; }
-    save.name = name; save.look = growLook(draft); save.level = lvl; persist(); hideTitle(); launch(lvl > 0 ? 'placed' : 'lesson-1');
+    if (hasProgress()) clearSave();
+    save.name = name; save.look = growLook(draft); save.level = 0; persist(); startCheck(false);   // where on the road this learner should begin
   });
   applyLook(save.look);
   const h = location.hash.replace('#', '');
   const hashOK = (() => { try { const g = sessionStorage.getItem('lr-go'); sessionStorage.removeItem('lr-go'); return g === h || localStorage.getItem('long-road-dev') === '1'; } catch (e) { return false; } })();   // a lesson in the address bar only counts when the game itself put it there
-  if (hashOK && mayPlay() && ['placed', 'lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'hills', 'high', 'cairn-1', 'cairn-2', 'cairn-3', 'cairn-4', 'cairn-5', 'cairn-6', 'cairn-7', 'cairn-8', 'cairn-9', 'cairn-10', 'cliff', 'cog-1', 'cog-2', 'cog-3', 'cog-4', 'cog-5', 'cog-6', 'cog-7', 'cog-8', 'cog-9', 'cog-10', 'mtn', 'ember-1', 'ember-2', 'ember-3', 'ember-4', 'ember-5', 'ember-6', 'ember-7', 'ember-8', 'ember-9', 'ember-10', 'sea', 'lant-1', 'lant-2', 'lant-3', 'lant-4', 'lant-5', 'lant-6', 'lant-7', 'lant-8', 'lant-9', 'lant-10', 'lift', 'sky-1', 'sky-2', 'sky-3', 'sky-4', 'sky-5', 'sky-6', 'sky-7', 'sky-8', 'sky-9', 'sky-10', 'sky-11', 'sky-12', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5', 'fern-6', 'fern-7', 'fern-8', 'fern-9'].includes(h)) launch(h);
+  if (hashOK && mayPlay() && (['placed', 'lesson-1', 'lesson-2', 'lesson-3', 'lesson-4', 'lesson-5', 'lesson-6', 'lesson-7', 'lesson-8', 'lesson-9', 'lesson-10', 'fen', 'street', 'gate', 'road', 'orch-1', 'orch-2', 'orch-3', 'orch-4', 'orch-5', 'orch-6', 'orch-7', 'orch-8', 'orch-9', 'hills', 'high', 'cairn-1', 'cairn-2', 'cairn-3', 'cairn-4', 'cairn-5', 'cairn-6', 'cairn-7', 'cairn-8', 'cairn-9', 'cairn-10', 'cliff', 'cog-1', 'cog-2', 'cog-3', 'cog-4', 'cog-5', 'cog-6', 'cog-7', 'cog-8', 'cog-9', 'cog-10', 'mtn', 'ember-1', 'ember-2', 'ember-3', 'ember-4', 'ember-5', 'ember-6', 'ember-7', 'ember-8', 'ember-9', 'ember-10', 'sea', 'lant-1', 'lant-2', 'lant-3', 'lant-4', 'lant-5', 'lant-6', 'lant-7', 'lant-8', 'lant-9', 'lant-10', 'lift', 'sky-1', 'sky-2', 'sky-3', 'sky-4', 'sky-5', 'sky-6', 'sky-7', 'sky-8', 'sky-9', 'sky-10', 'sky-11', 'sky-12', 'fern-1', 'fern-2', 'fern-3', 'fern-4', 'fern-5', 'fern-6', 'fern-7', 'fern-8', 'fern-9'].includes(h) || /^at-[a-z]+$/.test(h))) launch(h);
   else { drawMap(); showTitle(); }
 })();
 </script>
